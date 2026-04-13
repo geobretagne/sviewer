@@ -95,8 +95,15 @@ p.center {
     display: none;
 }
 
+#panelShareBtn {
+    width: auto;
+    padding: 0 12px;
+    min-width: 44px;
+}
+
 #panelShareBtn span {
     display: inline;
+    white-space: nowrap;
 }
 
 .sv-map-panels {
@@ -114,6 +121,12 @@ p.center {
         width: 32px;
         height: 32px;
         font-size: 0.6rem;
+    }
+    #panelShareBtn {
+        width: auto;
+        height: auto;
+        min-width: 32px;
+        padding: 0 8px;
     }
     .sv-map-panels {
         flex-direction: column;
