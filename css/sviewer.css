@@ -104,7 +104,7 @@ p.center {
     top: 4px;
     right: 4px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 4px;
     z-index: 8010;
 }
@@ -114,6 +114,9 @@ p.center {
         width: 32px;
         height: 32px;
         font-size: 0.6rem;
+    }
+    .sv-map-panels {
+        flex-direction: column;
     }
 }
 
