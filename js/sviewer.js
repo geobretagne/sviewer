@@ -564,7 +564,7 @@ var SViewer = function() {
                             case 'housenumber':   zoom = 18; break;
                         }
                         var label = props.label || props.name || coords.join(', ');
-                        var item = $('<li class="sv-location" data-icon="location"><a href="#"></a></li>')
+                        var item = $('<li class="list-group-item"><a href="#" style="text-decoration: none; color: inherit;"></a></li>')
                             .find('a')
                             .text(label)
                             .parent()
@@ -926,7 +926,7 @@ var SViewer = function() {
                 }
             });
 
-            $('<li class="sv-feature" data-icon="star"><a href="#"></a></li>')
+            $('<li class="list-group-item"><a href="#" style="text-decoration: none; color: inherit;"></a></li>')
                 .find("a")
                 .text(title.join(", "))
                 .click({
