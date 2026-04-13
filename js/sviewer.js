@@ -799,63 +799,54 @@ var SViewer = function() {
      * @param {String} mode local|remote
      */
     function activateSearchFeatures(mode) {
-        state.searchparams.mode = mode ;
+        state.searchparams.mode = mode;
         if (mode === 'remote') {
-            var searchLayer = config.layersQueryable[config.layersQueryable.length -1];
+            var searchLayer = config.layersQueryable[config.layersQueryable.length - 1];
             if (searchLayer) {
                 state.searchparams.title = searchLayer.md.title;
-                // get DescribeLayer from last Layer
-                var describeLayerUrl = searchLayer.options.wmsurl_ns;
                 $.ajax({
-                        url: ajaxURL(describeLayerUrl + "?" + $.param({
-                                'SERVICE': 'WMS',
-                                'VERSION': '1.1.1',
-                                'REQUEST': 'DescribeLayer',
-                                'LAYERS': searchLayer.options.layername
-                        })),
-                        type: 'GET',
-                        success: function(response) {
-                            state.searchparams.url = $(response).find("LayerDescription").attr("wfs");
-                            state.searchparams.typename = $(response).find("Query").attr("typeName");
-                            $.ajax({
-                                url: ajaxURL(
-                                        $(response).find("LayerDescription").attr("wfs") + 
-                                        $.param({
-                                            'SERVICE': 'WFS',
-                                            'VERSION': '1.0.0',
-                                            'REQUEST': 'DescribeFeatureType',
-                                            'TYPENAME': $(response).find("Query").attr("typeName")
-                                        })
-                                    ),
-                                type: 'GET',
-                                success: function(response) {
-                                    var fields = [];
-                                    $(response.getElementsByTagNameNS("*","sequence")).find('[type="xsd\\:string"]')
-                                        .each(function( i ) {
-                                            fields.push($(this).attr("name"));
-                                    });
-                                    state.searchparams.geom = $(response.getElementsByTagNameNS("*",
-                                        "sequence")).find('[type*="gml\\:"]').attr("name");
-                                    state.searchparams.searchfields = fields;
-                                    state.searchparams.ns = $(response.getElementsByTagNameNS("*","schema"))
-                                        .attr("targetNamespace");
-                                    state.searchparams.name = state.searchparams.typename.split(":")[1];
-                                },
-                                error: function() {
-                                    messagePopup(tr('query failed'));
-                                }
-                            });
-
-                        },
-                        error: function() {
-                            messagePopup(tr('query failed'));
-                        }
+                    url: ajaxURL(searchLayer.options.wmsurl_ns + '?' + $.param({
+                        'SERVICE': 'WMS',
+                        'VERSION': '1.1.1',
+                        'REQUEST': 'DescribeLayer',
+                        'LAYERS': searchLayer.options.layername
+                    })),
+                    type: 'GET'
+                }).then(function(r1) {
+                    state.searchparams.url = $(r1).find('LayerDescription').attr('wfs');
+                    state.searchparams.typename = $(r1).find('Query').attr('typeName');
+                    return $.ajax({
+                        url: ajaxURL(
+                            $(r1).find('LayerDescription').attr('wfs') +
+                            $.param({
+                                'SERVICE': 'WFS',
+                                'VERSION': '1.0.0',
+                                'REQUEST': 'DescribeFeatureType',
+                                'TYPENAME': $(r1).find('Query').attr('typeName')
+                            })
+                        ),
+                        type: 'GET'
                     });
-                }
+                }).then(function(r2) {
+                    var fields = [];
+                    $(r2.getElementsByTagNameNS('*', 'sequence')).find('[type="xsd\\:string"]')
+                        .each(function() {
+                            fields.push($(this).attr('name'));
+                        });
+                    state.searchparams.geom = $(r2.getElementsByTagNameNS('*', 'sequence'))
+                        .find('[type*="gml\\:"]').attr('name');
+                    state.searchparams.searchfields = fields;
+                    state.searchparams.ns = $(r2.getElementsByTagNameNS('*', 'schema'))
+                        .attr('targetNamespace');
+                    state.searchparams.name = state.searchparams.typename.split(':')[1];
+                }).fail(function() {
+                    messagePopup(tr('query failed'));
+                });
             }
-            if (mode === 'local') {
-                //nothing for the moment. the local search initializes on first search.
-            }
+        }
+        if (mode === 'local') {
+            //nothing for the moment. the local search initializes on first search.
+        }
     }
 
     /**
@@ -1081,11 +1072,10 @@ var SViewer = function() {
         // browser language
         var language = ((navigator.language) ? navigator.language : navigator.userLanguage).substring(0,2);
 
-        // current config
+        // static configuration (merged from hardConfig + customConfig)
         config = {
             lang: ((hardConfig.i18n.hasOwnProperty(language)) ? language : 'en'),
             wmc: '',
-            lb: 0,
             layersQueryable: [],
             layersQueryString: ''
         };
@@ -1093,6 +1083,18 @@ var SViewer = function() {
         $.extend(config, customConfig);
 
         config.projection = ol.proj.get(config.projcode);
+
+        // runtime state (mutable after init)
+        state = {
+            lb: 0,
+            gficoord: null,
+            gfiok: false,
+            gfiz: null,
+            wmctitle: '',
+            search: false,
+            searchindex: null,
+            searchparams: {}
+        };
 
         // querystring param: lb (selected background)
         if (qs.lb) {
