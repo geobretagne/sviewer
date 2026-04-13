@@ -1,0 +1,286 @@
+html,body{
+margin:0px;
+padding:0px;
+width:100%;
+height:100%;
+background-color:#333333;
+}
+body{
+display:flex;
+flex-direction:column;
+}
+.btn-dark{
+background-color:#626161;
+border-color:#aaa;
+color:#fff;
+}
+.btn-dark:hover,
+.btn-dark:focus{
+background-color:#3f3f3f;
+border-color:#888;
+}
+.ol-control button{
+color:#fff;
+background-color:#626161;
+}
+.ol-control button:hover,
+.ol-control button:focus{
+background-color:#888;
+}
+.ol-attribution ul{
+max-width:100%;
+}
+label{
+font-size:small !important;
+}
+p.center{
+text-align:center;
+}
+.sv-framemap{
+flex:1;
+padding:0px;
+background:transparent url('images/bgpaper.jpg');
+overflow:hidden;
+position:relative;
+}
+.sv-map-controls{
+position:absolute;
+top:4px;
+left:4px;
+display:flex;
+flex-direction:column;
+gap:4px;
+z-index:8000;
+}
+.sv-map-btn{
+width:44px;
+height:44px;
+padding:0;
+display:flex;
+align-items:center;
+justify-content:center;
+border-radius:4px;
+border:1px solid #1f1f1f;
+font-size:0.75rem;
+color:#fff;
+}
+.sv-panel-toggle.active{
+background-color:#3f3f3f;
+border-color:#666;
+box-shadow:inset 0 0 4px rgba(0,0,0,0.5);
+}
+.sv-map-btn svg,
+.sv-map-btn .icon-svg{
+width:20px;
+height:20px;
+display:inline;
+flex-shrink:0;
+margin-right:4px;
+fill:#fff;
+stroke:#fff;
+}
+.sv-map-btn iconoir-icon{
+display:none;
+}
+.sv-map-btn span{
+display:none;
+}
+#panelShareBtn{
+width:auto;
+padding:0 12px;
+min-width:44px;
+}
+#panelShareBtn span{
+display:inline;
+white-space:nowrap;
+}
+.sv-map-panels{
+position:absolute;
+top:4px;
+right:4px;
+display:flex;
+flex-direction:row;
+flex-wrap:wrap;
+gap:4px;
+z-index:8010;
+}
+@media screen and (max-width:600px){
+.sv-map-btn{
+width:32px;
+height:32px;
+font-size:0.6rem;
+}
+#panelShareBtn{
+width:auto;
+height:auto;
+min-width:32px;
+padding:0 8px;
+flex-basis:100%;
+}
+.sv-sidepanel{
+top:160px;
+height:calc(100% - 160px);
+}
+}
+.sv-map{
+width:100%;
+height:100%;
+cursor:hand;
+position:relative;
+}
+.sv-sidepanel{
+position:absolute;
+right:0;
+top:210px;
+width:0;
+height:calc(100% - 210px);
+background-color:#fff;
+border-left:1px solid #ddd;
+box-shadow:-2px 0 4px rgba(0,0,0,0.1);
+overflow:hidden;
+transition:width 0.3s ease;
+z-index:5000;
+display:flex;
+flex-direction:column;
+}
+.sv-sidepanel.active{
+width:350px;
+}
+.sv-sidepanel-close{
+display:none;
+position:absolute;
+top:10px;
+right:10px;
+background:none;
+border:none;
+font-size:24px;
+cursor:pointer;
+z-index:5001;
+}
+.sv-sidepanel.active .sv-sidepanel-close{
+display:block;
+}
+.sv-panel-section{
+height:100%;
+overflow-y:auto;
+padding:15px;
+display:flex;
+flex-direction:column;
+}
+.sv-panel-title{
+margin:0 0 15px 0;
+padding-bottom:10px;
+border-bottom:1px solid #ddd;
+font-size:1.1rem;
+color:#333;
+}
+.sv-panel-content{
+flex:1;
+overflow-y:auto;
+}
+@media screen and (max-width:600px){
+.sv-sidepanel.active{
+width:100%;
+}
+}
+#marker{
+width:30px;
+height:38px;
+background:transparent url('images/pin-red.png') no-repeat;
+}
+.sv-map .ol-zoom a{
+display:none;
+}
+.sv-map .ol-scale-line{
+background-color:rgba(255,255,255,0.7);
+}
+.sv-map .ol-scale-line-inner{
+color:#333333;
+border-color:#333333;
+}
+.sv-map .ol-attribution{
+color:#333333;
+background-color:rgba(255,255,255,0.7);
+border-top-left-radius:4px;
+}
+.sv-map .ol-attribution a{
+text-decoration:underline;
+}
+.modal-lg{
+max-width:900px;
+}
+.sv-spinner{
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+z-index:9999;
+display:none;
+}
+.sv-spinner.show{
+display:flex;
+}
+.sv-legend{
+font-size:small;
+}
+.sv-legend a{
+text-decoration:none;
+}
+.sv-legend h4,p{
+padding:0 0 2px 0 !important;
+margin:0;
+}
+.sv-legend hr{
+clear:both;
+}
+.sv-md{
+border:1px solid #cccccc;
+border-radius:4px;
+padding:6px;
+margin-bottom:6px;
+background-color:#ffffff;
+}
+.sv-md-title{
+font-size:x-small;
+}
+.sv-md-abstract{
+}
+.sv-md-attrib{
+display:block;
+float:right;
+text-align:right;
+max-width:80px;
+font-size:x-small;
+}
+.sv-md-logo{
+max-height:64px;
+max-width:64px;
+}
+.sv-md-legend{
+padding:4px;
+max-width:320px;
+}
+.sv-md-meta{
+text-decoration:none;
+}
+.sv-permalink-wrap{
+text-align:center;
+margin:0 0 0 8px;
+}
+.sv-noitem{
+font-style:italic;
+color:#666;
+}
+.sv-key{
+color:#999;
+font-size:small;
+}
+.sv-value{
+font-size:small;
+}
+.sv-feature a{
+font-size:0.7em;
+}
+.sv-location a{
+font-size:0.7em;
+}

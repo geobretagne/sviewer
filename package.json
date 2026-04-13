@@ -1,0 +1,24 @@
+{
+  "name": "sviewer",
+  "version": "2.0.0",
+  "description": "geOrchestra simple mobile map viewer",
+  "scripts": {
+    "minify": "npm run minify:js && npm run minify:css",
+    "minify:js": "terser js/sviewer.js -o js/sviewer.min.js -c -m",
+    "minify:css": "cssnano css/sviewer.css > css/sviewer.min.css",
+    "build": "npm run minify"
+  },
+  "devDependencies": {
+    "terser": "^5.31.0",
+    "cssnano": "^6.1.0",
+    "cssnano-cli": "^3.1.0"
+  },
+  "keywords": [
+    "map",
+    "viewer",
+    "mobile",
+    "openlayers"
+  ],
+  "author": "geoBretagne",
+  "license": "GPL-3.0-or-later"
+}

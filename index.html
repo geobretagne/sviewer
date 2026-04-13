@@ -5,9 +5,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <!-- Resource hints for external resources -->
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="dns-prefetch" href="https://data.geopf.fr">
     <!-- external libraries -->
     <script src="lib/jquery/jquery-1.12.4.min.js"></script>
-    <script src="lib/qrcode.js/qrcode.min.js"></script>
     <script src="build/proj4.js"></script>
     <!-- OpenLayers 10 -->
     <link rel="stylesheet" href="https://unpkg.com/ol@10.8.0/ol.css">
@@ -19,6 +21,7 @@
 var customConfig = {};
     </script>
     <!-- local -->
+    <!-- For production, use minified versions: css/sviewer.min.css and js/sviewer.min.js -->
     <link rel="stylesheet" href="css/sviewer.css">
     <script src="js/sviewer.js"></script>
     <script src="etc/i18n.js"></script>

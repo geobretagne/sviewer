@@ -1,4 +1,4 @@
-/*globals $:false, ol:false, proj4:false, QRCode:false*/
+/*globals $:false, ol:false, proj4:false*/
 
 // supported (re)projections. add more in customConfig.js
 proj4.defs([
@@ -62,6 +62,25 @@ var svModal = {
         }
     }
 };
+
+/**
+ * Lazy load QRCode library on demand
+ */
+var qrcodeLoaded = false;
+function loadQRCodeLibrary() {
+    if (qrcodeLoaded || typeof QRCode !== 'undefined') {
+        return Promise.resolve();
+    }
+    return new Promise(function(resolve) {
+        var script = document.createElement('script');
+        script.src = 'lib/qrcode.js/qrcode.min.js';
+        script.onload = function() {
+            qrcodeLoaded = true;
+            resolve();
+        };
+        document.head.appendChild(script);
+    });
+}
 
 var SViewer = function() {
     var map;
@@ -486,11 +505,13 @@ var SViewer = function() {
             $('#georchestraForm').attr('action', config.geOrchestraBaseUrl + 'mapfishapp/');
             if ($('#qrcode').css("visibility")==="visible") {
                 $('#qrcode').empty();
-                new QRCode("qrcode", {
-                    text: permalinkQuery,
-                    width: 130,
-                    height: 130,
-                    correctLevel: QRCode.CorrectLevel.L
+                loadQRCodeLibrary().then(function() {
+                    new QRCode("qrcode", {
+                        text: permalinkQuery,
+                        width: 130,
+                        height: 130,
+                        correctLevel: QRCode.CorrectLevel.L
+                    });
                 });
             }
             $('#permalink').prop('href',permalinkQuery);
