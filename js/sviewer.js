@@ -574,8 +574,8 @@ var SViewer = function() {
                         items.push(item);
                     });
                     $('#searchResults').prepend(items);
-                    $('#searchResults').prepend('<li data-role="list-divider">Localit&eacute;s</li>');
-                    $('#searchResults').listview().listview('refresh');
+                    $('#searchResults').prepend('<li class="list-group-item list-group-item-secondary">Localit&eacute;s</li>');
+                    $('#searchResults');
                 }
             } catch(err) {
                 $('#locateMsg').text(tr('Geolocation failed'));
@@ -906,7 +906,7 @@ var SViewer = function() {
      */
     function featuresToList (features) {
         var lib = state.searchparams.title || tr('Top layer');
-        $("#searchResults").append($('<li data-role="list-divider">').text(lib));
+        $("#searchResults").append($('<li class="list-group-item list-group-item-secondary">').text(lib));
 
         $.each(features, function(i, feature) {
             var geom = feature.getGeometry(),
@@ -934,7 +934,7 @@ var SViewer = function() {
                 .attr("title", tips.join('\n'))
                 .appendTo($("#searchResults"));
         });
-        $("#searchResults").listview().listview('refresh');
+        $("#searchResults");
     }
 
     /**
@@ -1051,7 +1051,7 @@ var SViewer = function() {
 
     //  info popup
     function messagePopup(msg){
-        $("<div class='ui-loader ui-overlay-shadow ui-body-e ui-corner-all'>")
+        $("<div class='alert alert-info' role='alert'>")
             .append($('<h3>').text(msg))
         .css({
             display: "block",
@@ -1060,8 +1060,11 @@ var SViewer = function() {
             "text-align": "center",
             "background-color": "#ffffff",
             width: "270px",
+            "border-radius": "4px",
+            "box-shadow": "0 2px 8px rgba(0,0,0,0.2)",
             left: ($(window).width() - 284)/2,
-            top: $(window).height()/2 })
+            top: $(window).height()/2,
+            "z-index": 9000 })
             .appendTo( $('body') ).delay( 1500 )
             .fadeOut( 1000, function(){
             $(this).remove();
