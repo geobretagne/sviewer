@@ -632,7 +632,7 @@ var SViewer = function() {
         marker.setPosition(state.gficoord);
         $('#marker').show();
         view.animate({center: state.gficoord, duration: 1000});
-        svModal.close('#panelInfo');
+        closePanel();
         $('#querycontent').html('');
 
         // WMS getFeatureInfo
@@ -659,16 +659,16 @@ var SViewer = function() {
                     // nonempty reponse detection
                     if (response.search(config.nodata)<0) {
                         $.each(['#panelInfo', '#panelLocate', '#panelShare'], function(i, p) {
-                            svModal.close(p);
+                            closePanel();
                         });
                         $(this).append(response);
                         state.gfiok = true;
                         $('#panelQuery a').attr("rel","external");
-                        svModal.open('#panelQuery');
+                        togglePanel('query');
                     }
                     else {
                         // disable jquery ajax for links
-                        svModal.open('#panelQuery');
+                        togglePanel('query');
                         $(this).append($('<p class="sv-noitem">').text(tr('no item found')));
                         state.gfiok = false;
                     }
@@ -690,7 +690,7 @@ var SViewer = function() {
             });
             if (features.length > 0) {
                 $.each(features, function() {
-                    svModal.open('#panelQuery');
+                    togglePanel('query');
                     if (this.get('description')) {
                         domResponse.append(this.get('description'));
                     }
@@ -717,7 +717,7 @@ var SViewer = function() {
      */
     function clearQuery() {
         $('#marker').hide('fast');
-        svModal.close('#panelQuery');
+        closePanel();
         $('#querycontent').text(tr('Query the map'));
         state.gficoord = null;
         state.gfiz = null;
@@ -966,29 +966,46 @@ var SViewer = function() {
         panel.css('max-height', $(window).height() - 64 + 'px');
     }
 
-    // bypass popup behavior
-    function panelButton(e) {
-        var target = $(e.target).closest('button');
-        var bsTarget = target.data('bs-target');
-        if (!bsTarget) return;
+    // toggle side panels
+    function togglePanel(panelName) {
+        var sidepanel = $('#sidepanel');
+        var targetSection = sidepanel.find('[data-section="' + panelName + '"]');
+        var button = $('[data-panel="' + panelName + '"]');
 
-        var idOn = bsTarget.split('#')[1];
-        if (idOn && idOn.endsWith('Modal')) {
-            idOn = idOn.replace('Modal', '');
+        // If clicking the same panel button, close it
+        if (button.hasClass('active') || targetSection.is(':visible')) {
+            closePanel();
+            return;
         }
 
-        $.each($('#panelcontrols button'), function() {
-            var id = $(this).data('bs-target')?.split('#')[1];
-            if (id && id.endsWith('Modal')) {
-                id = id.replace('Modal', '');
-            }
-            if (id!=idOn) {
-                svModal.close('#'+id);
-            }
-            else {
-                svModal.open('#'+id);
-            }
-        });
+        // Hide all sections
+        sidepanel.find('.sv-panel-section').hide();
+
+        // Show target section
+        targetSection.show();
+
+        // Update button states
+        $('#panelcontrols .sv-panel-toggle').removeClass('active');
+        button.addClass('active');
+
+        // Activate sidepanel
+        sidepanel.addClass('active');
+    }
+
+    function closePanel() {
+        var sidepanel = $('#sidepanel');
+        sidepanel.find('.sv-panel-section').hide();
+        sidepanel.removeClass('active');
+        $('#panelcontrols .sv-panel-toggle').removeClass('active');
+    }
+
+    // panelButton kept for compatibility, now delegates to togglePanel
+    function panelButton(e) {
+        var button = $(e.target).closest('button');
+        var panelName = button.data('panel');
+        if (panelName) {
+            togglePanel(panelName);
+        }
     }
 
    // updates title
@@ -1308,7 +1325,7 @@ var SViewer = function() {
         // opens permalink tab if required
         if (qs.qr) {
             setPermalink();
-            svModal.open('#panelShare');
+            togglePanel('share');
         }
 
         // map events
@@ -1340,17 +1357,20 @@ var SViewer = function() {
 
         // dynamic resize
         $(window).bind('orientationchange resize pageshow updatelayout', panelLayout);
-        $.each($('.sv-panel'), panelLayout);
 
-        // Bootstrap modals instead of jQuery Mobile popups
+        // Side panel toggles
         $('#panelcontrols button').on('click', panelButton);
+        $('.sv-sidepanel-close').on('click', closePanel);
 
-        // Handle Bootstrap modal events for layout and permalink updates
-        ['panelQueryModal', 'panelInfoModal', 'panelLocateModal', 'panelShareModal'].forEach(function(modalId) {
-            document.getElementById(modalId)?.addEventListener('shown.bs.modal', function() {
-                panelLayout();
+        // Handle sidepanel layout and permalink updates
+        var observer = new MutationObserver(function() {
+            if ($('#sidepanel').hasClass('active')) {
                 setPermalink();
-            });
+            }
+        });
+        observer.observe(document.getElementById('sidepanel'), {
+            attributes: true,
+            attributeFilter: ['class']
         });
 
         // i18n
