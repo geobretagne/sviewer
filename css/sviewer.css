@@ -80,6 +80,13 @@ p.center {
     border-radius: 4px;
     border: 1px solid #1f1f1f;
     font-size: 0.75rem;
+    color: #fff;
+}
+
+.sv-map-btn svg {
+    width: 20px;
+    height: 20px;
+    display: block;
 }
 
 .sv-map-panels {
