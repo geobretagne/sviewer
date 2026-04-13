@@ -88,6 +88,15 @@ p.center {
     height: 20px;
     display: inline;
     flex-shrink: 0;
+    margin-right: 4px;
+}
+
+.sv-map-btn span {
+    display: none;
+}
+
+#panelShareBtn span {
+    display: inline;
 }
 
 .sv-map-panels {

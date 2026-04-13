@@ -993,7 +993,7 @@ var SViewer = function() {
         config.title = title;
         document.title = config.title;
        if (config.title!=='') {
-            $('#panelShareBtn').text(config.title);
+            $('#panelShareBtnTitle').text(config.title);
        }
         if ($("#setTitle").val()==='') {
             $("#setTitle").val(config.title);
