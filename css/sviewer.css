@@ -86,7 +86,8 @@ p.center {
 .sv-map-btn svg {
     width: 20px;
     height: 20px;
-    display: block;
+    display: inline;
+    flex-shrink: 0;
 }
 
 .sv-map-panels {
