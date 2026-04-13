@@ -963,17 +963,17 @@ var SViewer = function() {
         panel.css('max-height', $(window).height() - 64 + 'px');
     }
 
-    // visible popup = highlight button
-    function panelToggle(e) {
-        $.each($("#panelcontrols a"), function() {
-            var id = this.href.split('#', 2)[1];
-            $(this).toggleClass('ui-btn-active', ($("#"+id).css('visibility')=='visible'));
-        });
-    }
-
     // bypass popup behavior
     function panelButton(e) {
-        var idOn = e.target.href.split('#',2)[1];
+        var target = $(e.target).closest('button');
+        var bsTarget = target.data('bs-target');
+        if (!bsTarget) return;
+
+        var idOn = bsTarget.split('#')[1];
+        if (idOn && idOn.endsWith('Modal')) {
+            idOn = idOn.replace('Modal', '');
+        }
+
         $.each($('#panelcontrols button'), function() {
             var id = $(this).data('bs-target')?.split('#')[1];
             if (id && id.endsWith('Modal')) {
@@ -1338,8 +1338,8 @@ var SViewer = function() {
         $('.sv-panel').bind('popupbeforeposition popupafteropen', panelLayout);
         $.each($('.sv-panel'), panelLayout);
         $('.sv-panel').bind('popupafteropen', setPermalink);
-        $('.sv-panel').bind('popupafterclose popupafteropen', panelToggle);
-        $('#panelcontrols a').bind('click', panelButton);
+        // Bootstrap modals instead of jQuery Mobile popups
+        $('#panelcontrols button').on('click', panelButton);
 
         // i18n
         if (config.lang !== 'en') {
