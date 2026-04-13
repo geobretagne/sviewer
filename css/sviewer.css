@@ -58,8 +58,7 @@ p.center {
     padding: 0px;
     background: transparent url('images/bgpaper.jpg');
     overflow: hidden;
-    display: flex;
-    flex-direction: row;
+    position: relative;
 }
 
 .sv-map-controls {
@@ -140,7 +139,7 @@ p.center {
         flex-direction: column;
     }
     .sv-sidepanel {
-        margin-top: 160px;
+        top: 160px;
         height: calc(100% - 160px);
     }
 }
@@ -148,7 +147,7 @@ p.center {
 /* map components */
 
 .sv-map {
-    flex: 1;
+    width: 100%;
     height: 100%;
     cursor: hand;
     position: relative;
@@ -156,9 +155,11 @@ p.center {
 
 /* side panel */
 .sv-sidepanel {
+    position: absolute;
+    right: 0;
+    top: 210px;
     width: 0;
     height: calc(100% - 210px);
-    margin-top: 210px;
     background-color: #fff;
     border-left: 1px solid #ddd;
     box-shadow: -2px 0 4px rgba(0,0,0,0.1);
