@@ -27,12 +27,7 @@ var hardConfig = {
         new ol.layer.Tile({
               source: new ol.source.OSM()
         })
-    ],
-    socialMedia: {
-        'Twitter'  : 'https://twitter.com/intent/tweet?text=',
-        'LinkedIn' : 'https://www.linkedin.com/sharing/share-offsite/?url=',
-        'Facebook' : 'https://www.facebook.com/sharer/sharer.php?u='
-    }
+    ]
 };
 
 /**
@@ -462,8 +457,8 @@ var SViewer = function() {
      * keeps permalinks synchronized with the map extent
      */
     function setPermalink () {
-        // permalink, social links & QR code update only if frame is visible
-        if ($('#panelShare').css('visibility')==='visible') {
+        // permalink, social links & QR code update only if share panel is visible
+        if ($('#sharePanel').is(':visible')) {
             var permalinkHash, permalinkQuery;
             var c = view.getCenter();
             var linkParams = {};
@@ -488,17 +483,6 @@ var SViewer = function() {
             permalinkHash = window.location.origin + window.location.pathname + "#" + $.param(linkParams);
             permalinkQuery = window.location.origin + window.location.pathname + "?" + $.param(linkParams);
 
-            $('#socialLinks').empty();
-            $.each(config.socialMedia, function(name, socialUrl) {
-                $('#socialLinks').append('<a class="btn btn-secondary d-block mb-2" target="_blank" href="' +
-                    socialUrl +
-                    encodeURIComponent(permalinkQuery) +
-                    '" title="' +
-                    tr('share on ') +
-                    name + '">' +
-                    name + '</a>'
-                );
-            });
             $('#georchestraForm').attr('action', config.geOrchestraBaseUrl + 'mapfishapp/');
             if ($('#qrcode').css("visibility")==="visible") {
                 $('#qrcode').empty();
@@ -990,6 +974,11 @@ var SViewer = function() {
 
         // Activate sidepanel
         sidepanel.addClass('active');
+
+        // Update permalink when share panel is opened
+        if (panelName === 'share') {
+            setPermalink();
+        }
     }
 
     function closePanel() {
@@ -1396,9 +1385,8 @@ var SViewer = function() {
     // ------ Main ------------------------------------------------------------------------------------------
 
     init();
-    
+
 
 };
-
 
 $(document).ready(SViewer);
