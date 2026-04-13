@@ -35,6 +35,38 @@ var hardConfig = {
     }
 };
 
+/**
+ * Loading spinner helper - replaces $.mobile.loading()
+ */
+var svSpinner = {
+    show: function() {
+        $('#svSpinner').addClass('show');
+    },
+    hide: function() {
+        $('#svSpinner').removeClass('show');
+    }
+};
+
+/**
+ * Modal helper - replaces jQuery Mobile popup()
+ */
+var svModal = {
+    open: function(id) {
+        var modalId = id.replace(/^#/, '') + 'Modal';
+        var modalEl = document.getElementById(modalId);
+        if (modalEl) {
+            new bootstrap.Modal(modalEl).show();
+        }
+    },
+    close: function(id) {
+        var modalId = id.replace(/^#/, '') + 'Modal';
+        var modalEl = document.getElementById(modalId);
+        if (modalEl) {
+            var m = bootstrap.Modal.getInstance(modalEl);
+            if (m) m.hide();
+        }
+    }
+};
 
 var SViewer = function() {
     var map;
@@ -377,7 +409,7 @@ var SViewer = function() {
                     var l = new LayerQueryable(options);
                     config.layersQueryable.push(l);
                     map.addLayer(l.wmslayer);
-                    $.mobile.loading('hide');
+                    svSpinner.hide();
                 }
             });
 
@@ -402,7 +434,7 @@ var SViewer = function() {
         }
 
         if (url!=='') {
-            $.mobile.loading('show');
+            svSpinner.show();
             $.ajax({
                 url: ajaxURL(url),
                 type: 'GET',
@@ -415,7 +447,7 @@ var SViewer = function() {
                     else {
                         messagePopup(tr("map context error"));
                     }
-                    $.mobile.loading('hide');
+                    svSpinner.hide();
                 }
             });
         }
@@ -513,7 +545,7 @@ var SViewer = function() {
     function openLsRequest(text) {
 
         function onGeocodeSuccess(response) {
-            $.mobile.loading('hide');
+            svSpinner.hide();
             try {
                 var features = response.features;
                 var items = [];
@@ -552,7 +584,7 @@ var SViewer = function() {
 
         function onGeocodeFailure() {
             $('#locateMsg').text(tr('Geolocation failed'));
-            $.mobile.loading('hide');
+            svSpinner.hide();
         }
 
         try {
@@ -576,11 +608,11 @@ var SViewer = function() {
                     success: onGeocodeSuccess,
                     error: onGeocodeFailure
                 });
-                $.mobile.loading('show', { text: tr('searching...') });
+                svSpinner.show();
             }
         } catch(err) {
             messagePopup(tr('Geolocation failed'));
-            $.mobile.loading('hide');
+            svSpinner.hide();
         }
     }
 
@@ -597,7 +629,7 @@ var SViewer = function() {
         marker.setPosition(state.gficoord);
         $('#marker').show();
         view.animate({center: state.gficoord, duration: 1000});
-        $('#panelInfo').popup('close');
+        svModal.close('#panelInfo');
         $('#querycontent').html('');
 
         // WMS getFeatureInfo
@@ -614,7 +646,7 @@ var SViewer = function() {
             var domResponse =  $($('<div>').append($('<span class="sv-md-title">').text(this.md.title)));
             $('#querycontent').append(domResponse);
             // ajax request
-            $.mobile.loading('show');
+            svSpinner.show();
             $.ajax({
                 url: ajaxURL(url),
                 type: 'GET',
@@ -624,23 +656,23 @@ var SViewer = function() {
                     // nonempty reponse detection
                     if (response.search(config.nodata)<0) {
                         $.each(['#panelInfo', '#panelLocate', '#panelShare'], function(i, p) {
-                            $(p).popup('close');
+                            svModal.close(p);
                         });
                         $(this).append(response);
                         state.gfiok = true;
                         $('#panelQuery a').attr("rel","external");
-                        $('#panelQuery').popup('open');
+                        svModal.open('#panelQuery');
                     }
                     else {
                         // disable jquery ajax for links
-                        $('#panelQuery').popup('open');
+                        svModal.open('#panelQuery');
                         $(this).append($('<p class="sv-noitem">').text(tr('no item found')));
                         state.gfiok = false;
                     }
-                    $.mobile.loading('hide');
+                    svSpinner.hide();
                 },
                 error: function() {
-                    $.mobile.loading('hide');
+                    svSpinner.hide();
                     $(this).append($('<p class="sv-noitem">').text(tr('query failed')));
                 }
             });
@@ -655,7 +687,7 @@ var SViewer = function() {
             });
             if (features.length > 0) {
                 $.each(features, function() {
-                    $('#panelQuery').popup('open');
+                    svModal.open('#panelQuery');
                     if (this.get('description')) {
                         domResponse.append(this.get('description'));
                     }
@@ -682,7 +714,7 @@ var SViewer = function() {
      */
     function clearQuery() {
         $('#marker').hide('fast');
-        $('#panelQuery').popup('close');
+        svModal.close('#panelQuery');
         $('#querycontent').text(tr('Query the map'));
         state.gficoord = null;
         state.gfiz = null;
@@ -919,7 +951,7 @@ var SViewer = function() {
         }
         catch(err) {
             messagePopup(tr('Geolocation failed'));
-            $.mobile.loading('hide');
+            svSpinner.hide();
         }
         return false;
     }
@@ -942,13 +974,16 @@ var SViewer = function() {
     // bypass popup behavior
     function panelButton(e) {
         var idOn = e.target.href.split('#',2)[1];
-        $.each($('#panelcontrols a'), function() {
-            var id = this.href.split('#',2)[1];
+        $.each($('#panelcontrols button'), function() {
+            var id = $(this).data('bs-target')?.split('#')[1];
+            if (id && id.endsWith('Modal')) {
+                id = id.replace('Modal', '');
+            }
             if (id!=idOn) {
-                $('#'+id).popup('close');
+                svModal.close('#'+id);
             }
             else {
-                $('#'+id).popup('open');
+                svModal.open('#'+id);
             }
         });
     }
@@ -1027,7 +1062,7 @@ var SViewer = function() {
             width: "270px",
             left: ($(window).width() - 284)/2,
             top: $(window).height()/2 })
-            .appendTo( $.mobile.pageContainer ).delay( 1500 )
+            .appendTo( $('body') ).delay( 1500 )
             .fadeOut( 1000, function(){
             $(this).remove();
         });
@@ -1268,7 +1303,7 @@ var SViewer = function() {
         // opens permalink tab if required
         if (qs.qr) {
             setPermalink();
-            $('#panelShare').popup('open');
+            svModal.open('#panelShare');
         }
 
         // map events

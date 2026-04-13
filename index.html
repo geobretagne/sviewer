@@ -16,137 +16,159 @@
     -->
     <link rel="stylesheet" href="build/ol.css">
     <script src="build/ol.js"></script>
-    <!-- jquery mobile -->
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="lib/bootstrap/bootstrap.min.css">
+    <script src="lib/bootstrap/bootstrap.bundle.min.js"></script>
     <script>
 var customConfig = {};
-$(document).bind("mobileinit", function(){
-    $.mobile.hashListeningEnabled = false;
-    $.mobile.loader.prototype.options.text = "loading";
-    $.mobile.loader.prototype.options.textVisible = false;
-    $.mobile.loader.prototype.options.theme = "a";
-    $.mobile.loader.prototype.options.html = "";
-    $.mobile.activeBtnClass = 'unused';
-});
-</script>
-    <link rel="stylesheet" href="lib/jquery/jquery.mobile-1.4.2.min.css">
-    <script src="lib/jquery/jquery.mobile-1.4.2.min.js"></script>
+    </script>
     <!-- local -->
     <link rel="stylesheet" href="css/sviewer.css">
     <script src="js/sviewer.js"></script>
     <script src="etc/i18n.js"></script>
   </head>
   <body>
-    <div data-role="page">
+    <!-- Loading spinner -->
+    <div id="svSpinner" class="sv-spinner">
+      <div class="spinner-border text-light" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
 
     <!-- content -->
-      <div data-role="content" id="frameMap" class="sv-framemap">
+      <div id="frameMap" class="sv-framemap">
         <!-- map -->
         <div id="map" class="sv-map" tabindex="0">
             <div id="marker"></div>
         </div>
 
         <!-- map controls -->
-        <div id="mapcontrols" class="sv-map-controls ui-nodisc-icon">
-          <a id="zeBt" href="#" accesskey="w" class="i18n ui-btn ui-icon-home-c ui-btn-icon-notext ui-btn-b" title="initial view">initial view</a>
-          <a id="ziBt" href="#" accesskey="+" class="i18n ui-btn ui-icon-plus-c ui-btn-icon-notext ui-btn-b" title="zoom +">zoom +</a>
-          <a id="zoBt" href="#" accesskey="-" class="i18n ui-btn ui-icon-minus-c ui-btn-icon-notext ui-btn-b" title="zoom -">zoom -</a>
-          <a id="bgBt" href="#" accesskey="b" class="i18n ui-btn ui-icon-layer-c ui-btn-icon-notext ui-btn-b" title="background">background</a>
+        <div id="mapcontrols" class="sv-map-controls">
+          <button id="zeBt" type="button" accesskey="w" class="i18n btn btn-dark sv-map-btn" title="initial view">initial view</button>
+          <button id="ziBt" type="button" accesskey="+" class="i18n btn btn-dark sv-map-btn" title="zoom +">zoom +</button>
+          <button id="zoBt" type="button" accesskey="-" class="i18n btn btn-dark sv-map-btn" title="zoom -">zoom -</button>
+          <button id="bgBt" type="button" accesskey="b" class="i18n btn btn-dark sv-map-btn" title="background">background</button>
         </div>
 
-        <div id="panelcontrols" class="sv-map-panels ui-btn-right" data-role="controlgroup" data-type="horizontal" data-theme="b">
-          <a href="#panelShare" accesskey="m" id="panelShareBtn" class="i18n ui-btn ui-icon-edit ui-btn-icon-right" data-rel="popup" data-position-to="window" title="Map">&nbsp;</a>
-          <a href="#panelInfo" accesskey="i" id="panelInfoBtn" class="i18n ui-btn ui-icon-bullets ui-btn-icon-notext" data-rel="popup" data-position-to="window" title="Legend">Legend</a>
-          <a href="#panelQuery" accesskey="q" id="panelQueryBtn" class="i18n ui-btn ui-icon-info ui-btn-icon-notext" data-rel="popup" data-position-to="window" title="Query">Query</a>
-          <a href="#panelLocate" accesskey="l" id="panelLocateBtn" class="i18n ui-btn ui-icon-search ui-btn-icon-notext" data-rel="popup" data-position-to="window" title="Locate">Locate</a>
+        <div id="panelcontrols" class="sv-map-panels btn-group-vertical" role="group">
+          <button type="button" accesskey="m" id="panelShareBtn" class="i18n btn btn-dark" data-bs-toggle="modal" data-bs-target="#panelShareModal" title="Map">Map</button>
+          <button type="button" accesskey="i" id="panelInfoBtn" class="i18n btn btn-dark" data-bs-toggle="modal" data-bs-target="#panelInfoModal" title="Legend">Legend</button>
+          <button type="button" accesskey="q" id="panelQueryBtn" class="i18n btn btn-dark" data-bs-toggle="modal" data-bs-target="#panelQueryModal" title="Query">Query</button>
+          <button type="button" accesskey="l" id="panelLocateBtn" class="i18n btn btn-dark" data-bs-toggle="modal" data-bs-target="#panelLocateModal" title="Locate">Locate</button>
         </div>
       </div>
       <!-- getfeatureinfo panel -->
-      <div id="panelQuery" class="sv-panel" data-role="popup">
-        <div data-role="header">
-          <a href="#" data-rel="back" class="i18n ui-btn ui-icon-delete ui-btn-icon-notext ui-corner-all ui-btn-right" title="Close">Close</a>
-          <h3 class="i18n">Query</h3>
-        </div>
-          <div data-role="content">
-            <div id="querycontent" class="i18n">Query the map</div>
+      <div id="panelQueryModal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title i18n">Query</h3>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div id="querycontent" class="i18n">Query the map</div>
+            </div>
           </div>
+        </div>
       </div>
       <!-- info panel -->
-      <div id="panelInfo" class="sv-panel" data-role="popup">
-        <div data-role="header">
-          <h3 class="i18n">Legend</h3>
-          <a href="#" data-rel="back" class="i18n ui-btn ui-icon-delete ui-btn-icon-notext ui-corner-all ui-btn-right" title="Close">Close</a>
-        </div>
-        <div data-role="content">
-          <div id="legend" class="sv-legend"></div>
+      <div id="panelInfoModal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title i18n">Legend</h3>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div id="legend" class="sv-legend"></div>
+            </div>
+          </div>
         </div>
       </div>
       <!-- locate panel -->
-      <div id="panelLocate" class="sv-panel" data-role="popup">
-        <div data-role="header">
-          <h3 class="i18n">Locate</h3>
-          <a href="#" data-rel="back" class="i18n ui-btn ui-icon-delete ui-btn-icon-notext ui-corner-all ui-btn-right" title="Close">Close</a>
-        </div>
-        <div data-role="content">
-          <form id="addressForm" method="post" action="#">
-            <label for="searchInput" class="i18n">Address and/or city</label>
-            <div data-role="controlgroup" data-type="horizontal" class="ui-mini">
-                <input type="text"
-                    name="searchInput"
-                    id="searchInput"
-                    data-wrapper-class="controlgroup-textinput ui-btn ui-mini"
-                    value=""
-                    title="Address and/or city"><button class="i18n ui-btn ui-icon-search ui-btn-icon-notext " title="Locate">Locate</button>
+      <div id="panelLocateModal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title i18n">Locate</h3>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <button id="zpBt" class="i18n ui-btn ui-icon-navigation ui-corner-all ui-mini " title="Where am I ?">Where am I ?</button>
-            <span id="locateMsg"></span>
-          </form>
-          <div>
-              <ul data-role="listview" data-inset="true" id="searchResults"></ul>
-          </div>
-        </div>
-      </div>
-      <!-- sld panel -->
-      <div id="panelSLD" class="sv-panel" data-role="popup">
-        <div data-role="header">
-          <h3 class="i18n">Parameters</h3>
-          <a href="#" data-rel="back" class="i18n ui-btn ui-icon-delete ui-btn-icon-notext ui-corner-all ui-btn-right" title="Close">Close</a>
-        </div>
-        <div data-role="content">
-            <!-- SLD controls -->
-            <div id="SLDsliders" data-theme="b">
-            </div>
-        </div>
-      </div>
-      <!-- share panel -->
-      <div id="panelShare" class="sv-panel" data-role="popup">
-        <div data-role="header">
-          <h3 class="i18n">Map</h3>
-          <a href="#" data-rel="back" class="i18n ui-btn ui-icon-delete ui-btn-icon-notext ui-corner-all ui-btn-right" title="Close">Close</a>
-        </div>
-        <div data-role="content" class="ui-mini">
-          <label for="setTitle" class="i18n">Title</label>
-          <input type="text" name="setTitle" id="setTitle" class="i18n" value="" placeholder="change title">
-          <div class="ui-grid-a">
-            <div class="ui-block-a">
-              <!-- social links -->
-              <div id="socialLinks"></div>
-              <!-- to georchestra viewer -->
-              <form id="georchestraForm" target="_blank" method="post" action="">
-                <input type="hidden" id="georchestraFormData" name="data" value="">
-                <input type="submit" class="i18n ui-btn ui-corner-all" title="Edit with geOrchestra" value="geOrchestra">
+            <div class="modal-body">
+              <form id="addressForm" method="post" action="#">
+                <div class="mb-3">
+                  <label for="searchInput" class="form-label i18n">Address and/or city</label>
+                  <div class="input-group">
+                    <input type="text"
+                        name="searchInput"
+                        id="searchInput"
+                        class="form-control"
+                        value=""
+                        title="Address and/or city">
+                    <button type="button" class="i18n btn btn-outline-secondary" title="Locate">Locate</button>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <button type="button" id="zpBt" class="i18n btn btn-secondary" title="Where am I ?">Where am I ?</button>
+                  <span id="locateMsg"></span>
+                </div>
               </form>
-            </div>
-            <!-- QQR code -->
-            <div class="ui-block-b">
-              <div class="center sv-permalink-wrap">
-                <a id="permalink" class="i18n ui-btn ui-shadow ui-corner-all" data-ajax="false" href="#" title="Permalink to this map">Permalink</a>
-                <div id="qrcode"></div>
+              <div>
+                <ul id="searchResults" class="list-group"></ul>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <!-- end page -->
-    </div>
+      <!-- sld panel -->
+      <div id="panelSLDModal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title i18n">Parameters</h3>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <!-- SLD controls -->
+              <div id="SLDsliders">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- share panel -->
+      <div id="panelShareModal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title i18n">Map</h3>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="setTitle" class="form-label i18n">Title</label>
+                <input type="text" name="setTitle" id="setTitle" class="form-control i18n" value="" placeholder="change title">
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <!-- social links -->
+                  <div id="socialLinks" class="mb-3"></div>
+                  <!-- to georchestra viewer -->
+                  <form id="georchestraForm" target="_blank" method="post" action="">
+                    <input type="hidden" id="georchestraFormData" name="data" value="">
+                    <input type="submit" class="i18n btn btn-primary w-100" title="Edit with geOrchestra" value="geOrchestra">
+                  </form>
+                </div>
+                <!-- QR code -->
+                <div class="col-md-6">
+                  <div class="sv-permalink-wrap">
+                    <a id="permalink" class="i18n btn btn-secondary d-block mb-3" data-ajax="false" href="#" title="Permalink to this map">Permalink</a>
+                    <div id="qrcode"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
   </body>
 </html>
