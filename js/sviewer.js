@@ -1225,8 +1225,7 @@ var SViewer = function() {
         console.log(config.projcode);
         map = new ol.Map({
             controls: [
-                new ol.control.ScaleLine(),
-                new ol.control.Attribution()
+                new ol.control.ScaleLine()
             ],
             // MouseWheelZoom defaults to focusWithTabindex in OL6+: zoom only works
             // when the map viewport has keyboard focus. Override with always so the
