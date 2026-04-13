@@ -139,6 +139,10 @@ p.center {
     .sv-map-panels {
         flex-direction: column;
     }
+    .sv-sidepanel {
+        margin-top: 160px;
+        height: calc(100% - 160px);
+    }
 }
 
 /* map components */
@@ -153,7 +157,8 @@ p.center {
 /* side panel */
 .sv-sidepanel {
     width: 0;
-    height: 100%;
+    height: calc(100% - 210px);
+    margin-top: 210px;
     background-color: #fff;
     border-left: 1px solid #ddd;
     box-shadow: -2px 0 4px rgba(0,0,0,0.1);
