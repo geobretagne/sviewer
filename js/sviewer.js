@@ -1187,6 +1187,14 @@ var SViewer = function() {
                 new ol.control.ScaleLine(),
                 new ol.control.Attribution()
             ],
+            // MouseWheelZoom defaults to focusWithTabindex in OL6+: zoom only works
+            // when the map viewport has keyboard focus. Override with always so the
+            // wheel works even after clicking jQuery Mobile panels or buttons.
+            interactions: ol.interaction.defaults({mouseWheelZoom: false}).extend([
+                new ol.interaction.MouseWheelZoom({
+                    condition: ol.events.condition.always
+                })
+            ]),
             layers: [],
             overlays: [],
             target: 'map',
