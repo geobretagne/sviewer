@@ -7,28 +7,31 @@ proj4.defs([
     ["EPSG:900913", "+title=Web Spherical Mercator, +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs"],
     ["EPSG:2154", "+title=RGF-93/Lambert 93, +proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"]
 ]);
+// Required since OL6: register proj4 definitions into OpenLayers
+ol.proj.proj4.register(proj4);
 
 var config = {};
+var state = {};
 var customConfig = {};
 var hardConfig = {
     title: 'geOrchestra mobile',
-    geOrchestraBaseUrl: 'https://sdi.georchestra.org/',
+    geOrchestraBaseUrl: 'https://geobretagne.fr/',
     projcode: 'EPSG:3857',
     initialExtent: [-12880000,-1080000,5890000,7540000],
     maxExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
     restrictedExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
     maxFeatures: 10,
     nodata: '<!--nodatadetect-->\n<!--nodatadetect-->',
-    openLSGeocodeUrl: "http://gpp3-wxs.ign.fr/[CLEF GEOPORTAIL]/geoportail/ols?",
+    openLSGeocodeUrl: "https://data.geopf.fr/geocodage/search",
     layersBackground: [
         new ol.layer.Tile({
               source: new ol.source.OSM()
         })
     ],
     socialMedia: {
-        'Twitter' : 'https://twitter.com/intent/tweet?text=',
-        'Google+' : 'https://plus.google.com/share?url=',
-        'Facebook': 'http://www.facebook.com/sharer/sharer.php?u='
+        'Twitter'  : 'https://twitter.com/intent/tweet?text=',
+        'LinkedIn' : 'https://www.linkedin.com/sharing/share-offsite/?url=',
+        'Facebook' : 'https://www.facebook.com/sharer/sharer.php?u='
     }
 };
 
@@ -51,7 +54,7 @@ var SViewer = function() {
             layername: '',
             namespace: '',
             stylename: '',
-            qcl_filter: '',
+            cql_filter: '',
             wmsurl_global: '',
             wmsurl_ns: '',
             wmsurl_layer: '',
@@ -157,8 +160,8 @@ var SViewer = function() {
                         // title
                         html.push('<p><h4 class="sv-md-title">' + escHTML(mdLayer.Title) + '</h4>');
                         self.md.title = mdLayer.Title;
-                        if (config.search) {
-                            config.searchparams.title = self.md.title;
+                        if (state.search) {
+                            state.searchparams.title = self.md.title;
                         }
 
                         // abstract
@@ -186,7 +189,7 @@ var SViewer = function() {
                         $('#legend').append(html.join(''));
                     }
                 },
-                failure: function() {
+                error: function() {
                 }
             });
         }
@@ -223,22 +226,12 @@ var SViewer = function() {
     }
 
     /**
-     * Returns a proxified URL for Ajax XSS
+     * Returns the URL as-is (CORS assumed to be enabled on all services).
      * @param {String} url
-     * @return {String} Ajax url
+     * @return {String} url
      */
     function ajaxURL (url) {
-        // relative path
-        if (url.indexOf('http')!==0) {
-            return url;
-        }
-        // same domain
-        else if (url.indexOf(location.protocol + '//' + location.host)===0) {
-            return url;
-        }
-        else {
-            return  '/proxy/?url=' + encodeURIComponent(url);
-        }
+        return url;
     }
 
     /**
@@ -335,14 +328,14 @@ var SViewer = function() {
         });
         // if lb specified, show this layer
         if (typeof(lb) === 'number') {
-            config.layersBackground[config.lb].setVisible(true);
+            config.layersBackground[state.lb].setVisible(true);
         }
         // otherwise, show next layer
         else {
-            config.lb = (lv+1)%n;
-            config.layersBackground[config.lb].setVisible(true);
+            state.lb = (lv+1)%n;
+            config.layersBackground[state.lb].setVisible(true);
         }
-        return config.layersBackground[config.lb];
+        return config.layersBackground[state.lb];
     }
 
 
@@ -356,15 +349,15 @@ var SViewer = function() {
         // todo : missing ol3 WMC native support
         function parseWMCResponse(response) {
             var wmc = $('ViewContext', response);
-            config.wmctitle = $(wmc).children('General').children('Title').text();
-            setTitle(config.wmctitle);
+            state.wmctitle = $(wmc).children('General').children('Title').text();
+            setTitle(state.wmctitle);
 
             // recenter on  WMC extent if xyz not specified
             if (isNaN(config.x)) {
                 var vgb = $(wmc).children('General').children('BoundingBox');
                 var srs = vgb.attr('SRS');
                 var extent = [vgb.attr('minx'), vgb.attr('miny'), vgb.attr('maxx'), vgb.attr('maxy')];
-                view.fit(ol.proj.transformExtent(extent, srs, config.projcode), map.getSize());
+                view.fit(ol.proj.transformExtent(extent, srs, config.projcode));
             }
 
             // we only consider visible and queryable layers
@@ -389,12 +382,12 @@ var SViewer = function() {
             });
 
             //activate search if required
-            if (config.search) {
+            if (state.search) {
                 activateSearchFeatures('remote');
             }
 
             // perform gfi if requied
-            if (config.gfiok) {
+            if (state.gfiok) {
                 queryMap(view.getCenter());
             }
         }
@@ -439,10 +432,10 @@ var SViewer = function() {
             var permalinkHash, permalinkQuery;
             var c = view.getCenter();
             var linkParams = {};
-            if (config.gficoord && config.gfiz && config.gfiok) {
-                linkParams.x = encodeURIComponent(Math.round(config.gficoord[0]));
-                linkParams.y = encodeURIComponent(Math.round(config.gficoord[1]));
-                linkParams.z = encodeURIComponent(config.gfiz);
+            if (state.gficoord && state.gfiz && state.gfiok) {
+                linkParams.x = encodeURIComponent(Math.round(state.gficoord[0]));
+                linkParams.y = encodeURIComponent(Math.round(state.gficoord[1]));
+                linkParams.z = encodeURIComponent(state.gfiz);
                 linkParams.q = '1';
             }
             else {
@@ -450,12 +443,12 @@ var SViewer = function() {
                 linkParams.y = encodeURIComponent(Math.round(c[1]));
                 linkParams.z = encodeURIComponent(view.getZoom());
             }
-            linkParams.lb = encodeURIComponent(config.lb);
+            linkParams.lb = encodeURIComponent(state.lb);
             if (config.customConfigName) { linkParams.c = config.customConfigName; }
             if (config.kmlUrl) { linkParams.kml = config.kmlUrl; }
-            if (config.search) { linkParams.s = '1'; }
+            if (state.search) { linkParams.s = '1'; }
             if (config.layersQueryString) { linkParams.layers = config.layersQueryString; }
-            if (config.title&&config.wmctitle!=config.title) { linkParams.title = config.title; }
+            if (config.title&&state.wmctitle!=config.title) { linkParams.title = config.title; }
             if (config.wmc) { linkParams.wmc = config.wmc; }
             permalinkHash = window.location.origin + window.location.pathname + "#" + $.param(linkParams);
             permalinkQuery = window.location.origin + window.location.pathname + "?" + $.param(linkParams);
@@ -512,139 +505,80 @@ var SViewer = function() {
 
 
     /**
-     * Queries the OpenLS service and recenters the map
-     * @param text {String} the OpenLS plain text query
+     * Queries the IGN Géoplateforme geocoding API and recenters the map.
+     * Replaces the former OpenLS/XLS implementation (gpp3-wxs.ign.fr, retired).
+     * API docs: https://geoservices.ign.fr/documentation/services/api-et-services-ogc/geocodage
+     * @param text {String} free-text address query
      */
     function openLsRequest(text) {
 
-        function onOpenLSSuccess (response) {
+        function onGeocodeSuccess(response) {
             $.mobile.loading('hide');
             try {
-                var zoom = false,
-                    extent = [],
-                    results = $(response).find('GeocodedAddress'),
-                    items = [];
-                if (results.length>0) {
-                    $.each(results, function(i, res) {
-                        var a = res.getElementsByTagNameNS('http://www.opengis.net/gml', 'pos')[0].textContent.split(' '),
-                            lonlat = [parseFloat(a[1]), parseFloat(a[0])],
-                            matchType = results.find('GeocodeMatchCode').attr('matchType'),
-                            ptResult = ol.proj.transform(lonlat, 'EPSG:4326', config.projcode),
-                            street = $(res).find("Street").text(),
-                            municipality = $(res).find('[type="Municipality"]').text();
-                        switch (matchType) {
-                            case 'City': zoom = 15; break;
-                            case 'Street': zoom = 17; break;
-                            case 'Street enhanced': zoom = 18; break;
-                            case 'Street number': zoom = 18; break;
+                var features = response.features;
+                var items = [];
+                if (features && features.length > 0) {
+                    $.each(features, function(_idx, feature) {
+                        var coords   = feature.geometry.coordinates; // [lon, lat]
+                        var props    = feature.properties;
+                        var ptResult = ol.proj.transform(coords, 'EPSG:4326', config.projcode);
+                        var zoom     = 16;
+                        switch (props.type) {
+                            case 'municipality':  zoom = 13; break;
+                            case 'street':        zoom = 17; break;
+                            case 'housenumber':   zoom = 18; break;
                         }
-                        if (!zoom) {
-                            extent = ol.proj.transformExtent(
-                                JSON.parse('[' +  $(results[i]).find('[type="Bbox"]').text().replace(/;/g,",") + ']'),
-                                'EPSG:4326',
-                                map.getView().getProjection().getCode()
-                            );
-                        }
-                        var code =  $(res).find('[type="INSEE"]').text();
-                        var resultElems = [municipality, code];
-                        if (street.length>1) {
-                            resultElems.unshift(street);
-                        }
-                        var label = resultElems.join (" ");
-                        var item =$('<li class="sv-location" data-icon="location"><a href="#"></a></li>')
-                                .find("a")
-                                .text(label)
-                                .parent()
-                                .attr("title", resultElems.join('\n'))
-                                .click({
-                                    'extent': extent,
-                                    'coordinates': ptResult,
-                                    'zoom': zoom
-                                }, onSearchItemClick);
+                        var label = props.label || props.name || coords.join(', ');
+                        var item = $('<li class="sv-location" data-icon="location"><a href="#"></a></li>')
+                            .find('a')
+                            .text(label)
+                            .parent()
+                            .attr('title', label)
+                            .click({
+                                'extent': [],
+                                'coordinates': ptResult,
+                                'zoom': zoom
+                            }, onSearchItemClick);
                         items.push(item);
                     });
-                    $("#searchResults").prepend(items);
-                    $("#searchResults").prepend('<li data-role="list-divider">Localit&eacute;s</li>');
-                    $("#searchResults").listview().listview('refresh');
-                }
-                else {
-                    //$('#locateMsg').text('No result');
-                    $.mobile.loading('hide');
+                    $('#searchResults').prepend(items);
+                    $('#searchResults').prepend('<li data-role="list-divider">Localit&eacute;s</li>');
+                    $('#searchResults').listview().listview('refresh');
                 }
             } catch(err) {
                 $('#locateMsg').text(tr('Geolocation failed'));
-                $.mobile.loading('hide');
             }
         }
 
-        function onOpenLSFailure (response) {
+        function onGeocodeFailure() {
             $('#locateMsg').text(tr('Geolocation failed'));
-                $.mobile.loading('hide');
+            $.mobile.loading('hide');
         }
 
         try {
-            var extent = ol.proj.transformExtent(config.initialExtent,map.getView().getProjection().getCode(), 'EPSG:4326');
             var q = text.trim();
-            var qa = q.split(',');
-            if (q.length>0) {
-                var countryCode ='ALL';
-                var freeFormAddress ='';
-                if (qa.length>1) {
-                    // address and municipality separated by a comma
-                    var address = qa.slice(0,qa.length-1).join(' ').trim();
-                    var municipality = qa[qa.length-1].trim();
-                    countryCode='StreetAddress';
-                    freeFormAddress = address + ' ' + municipality;
-                }
-                else {
-                    // municipality alone
-                    countryCode='StreetAddress';
-                    freeFormAddress = q;
-                }
-
+            if (q.length > 0) {
+                var bbox = ol.proj.transformExtent(
+                    config.initialExtent,
+                    map.getView().getProjection().getCode(),
+                    'EPSG:4326'
+                );
+                // Direct call — Géoplateforme supports CORS natively, no proxy needed
                 $.ajax({
-                    url: ajaxURL(config.openLSGeocodeUrl),
-                    type: 'POST',
-                    data: [
-                    /*jshint multistr: true */
-'<?xml version="1.0" encoding="UTF-8"?> \
-<XLS xmlns:xls="http://www.opengis.net/xls" \
-xmlns:gml="http://www.opengis.net/gml" \
-xmlns="http://www.opengis.net/xls" \
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" \
-version="1.2" \
-xsi:schemaLocation="http://www.opengis.net/xls http://schemas.opengis.net/ols/1.2/olsAll.xsd"> \
-<RequestHeader/> \
-<Request maximumResponses="'+config.maxFeatures+'" requestID="1" version="1.2" methodName="LocationUtilityService"> \
-<GeocodeRequest returnFreeForm="false"> \
-<Address countryCode="',
-countryCode,
-'">\n \
-<freeFormAddress>',
-freeFormAddress,
-'</freeFormAddress> \
-<gml:envelope> \
-<gml:pos>',
-ol.extent.getBottomLeft(extent).reverse().join(" "),
-'</gml:pos> \
-<gml:pos>',
-ol.extent.getTopRight(extent).reverse().join(" "),
-'</gml:pos> \
-</gml:envelope> \
-</Address> \
-</GeocodeRequest> \
-</Request> \
-</XLS>'].join(""),
-                    contentType: "application/xml",
-                    success: onOpenLSSuccess,
-                    failure: onOpenLSFailure
+                    url: config.openLSGeocodeUrl,
+                    type: 'GET',
+                    dataType: 'json',
+                    data: {
+                        q: q,
+                        limit: config.maxFeatures,
+                        bbox: bbox.join(',')
+                    },
+                    success: onGeocodeSuccess,
+                    error: onGeocodeFailure
                 });
-                $.mobile.loading('show', {
-                    text: tr("searching...")
-                });
+                $.mobile.loading('show', { text: tr('searching...') });
             }
-        }
-        catch(err) {
+        } catch(err) {
             messagePopup(tr('Geolocation failed'));
             $.mobile.loading('hide');
         }
@@ -655,27 +589,21 @@ ol.extent.getTopRight(extent).reverse().join(" "),
      */
     function queryMap(coord) {
         var p = map.getPixelFromCoordinate(coord);
-        config.gficoord = coord;
-        config.gfiok = false;
-        config.gfiz = view.getZoom();
+        state.gficoord = coord;
+        state.gfiok = false;
+        state.gfiz = view.getZoom();
         var viewResolution = view.getResolution();
 
-        marker.setPosition(config.gficoord);
+        marker.setPosition(state.gficoord);
         $('#marker').show();
-        // recenter anime
-        var pan = ol.animation.pan({
-            duration: 1000,
-            source: view.getCenter()
-        });
-        map.beforeRender(pan);
-        view.setCenter(config.gficoord);
+        view.animate({center: state.gficoord, duration: 1000});
         $('#panelInfo').popup('close');
         $('#querycontent').html('');
 
         // WMS getFeatureInfo
         $.each(config.layersQueryable, function() {
-            var url = this.wmslayer.getSource().getGetFeatureInfoUrl(
-                config.gficoord,
+            var url = this.wmslayer.getSource().getFeatureInfoUrl(
+                state.gficoord,
                 viewResolution,
                 config.projection,
                 {'INFO_FORMAT': 'text/html',
@@ -699,7 +627,7 @@ ol.extent.getTopRight(extent).reverse().join(" "),
                             $(p).popup('close');
                         });
                         $(this).append(response);
-                        config.gfiok = true;
+                        state.gfiok = true;
                         $('#panelQuery a').attr("rel","external");
                         $('#panelQuery').popup('open');
                     }
@@ -707,11 +635,11 @@ ol.extent.getTopRight(extent).reverse().join(" "),
                         // disable jquery ajax for links
                         $('#panelQuery').popup('open');
                         $(this).append($('<p class="sv-noitem">').text(tr('no item found')));
-                        config.gfiok = false;
+                        state.gfiok = false;
                     }
                     $.mobile.loading('hide');
                 },
-                failure: function() {
+                error: function() {
                     $.mobile.loading('hide');
                     $(this).append($('<p class="sv-noitem">').text(tr('query failed')));
                 }
@@ -756,9 +684,9 @@ ol.extent.getTopRight(extent).reverse().join(" "),
         $('#marker').hide('fast');
         $('#panelQuery').popup('close');
         $('#querycontent').text(tr('Query the map'));
-        config.gficoord = null;
-        config.gfiz = null;
-        config.gfiok = false;
+        state.gficoord = null;
+        state.gfiz = null;
+        state.gfiok = false;
     }
 
 
@@ -771,13 +699,13 @@ ol.extent.getTopRight(extent).reverse().join(" "),
      */
     function searchFeatures(value) {
         if (value.length>1) {
-            config.searchparams.term = value;
-            if (config.searchparams.mode === 'remote') {
+            state.searchparams.term = value;
+            if (state.searchparams.mode === 'remote') {
                 var ogcfilter = [],
                     propertynames = [],
                     getFeatureRequest;
 
-                $.each(config.searchparams.searchfields, function(i, fieldname) {
+                $.each(state.searchparams.searchfields, function(i, fieldname) {
                     /*matchCase="false" for PropertyIsLike don't works with geoserver 2.5.0* in wfs 2.0.0 version*/
                     ogcfilter.push(
                     '<ogc:PropertyIsLike wildCard="*" singleChar="." escapeChar="!" matchCase="false" >' +
@@ -785,14 +713,14 @@ ol.extent.getTopRight(extent).reverse().join(" "),
                     '<ogc:Literal>*'+value+'*</ogc:Literal></ogc:PropertyIsLike>');
                     propertynames.push('<ogc:PropertyName>'+fieldname+'</ogc:PropertyName>');
                 });
-                propertynames.push('<ogc:PropertyName>'+config.searchparams.geom+'</ogc:PropertyName>');
-                if (config.searchparams.searchfields.length > 1) {
+                propertynames.push('<ogc:PropertyName>'+state.searchparams.geom+'</ogc:PropertyName>');
+                if (state.searchparams.searchfields.length > 1) {
                     ogcfilter.unshift('<ogc:Or>');
                     ogcfilter.push('</ogc:Or>');
                 }
                 ogcfilter.unshift('<ogc:And>');
                 ogcfilter.push(['<ogc:BBOX>',
-                        '<ogc:PropertyName>'+config.searchparams.geom+'</ogc:PropertyName>',
+                        '<ogc:PropertyName>'+state.searchparams.geom+'</ogc:PropertyName>',
                         '<gml:Envelope xmlns:gml="http://www.opengis.net/gml" srsName="'+config.projection.getCode()+'">',
                           '<gml:lowerCorner>'+ol.extent.getBottomLeft(config.initialExtent).join(" ")+'</gml:lowerCorner>',
                           '<gml:upperCorner>'+ol.extent.getTopRight(config.initialExtent).join(" ")+'</gml:upperCorner>',
@@ -806,7 +734,7 @@ ol.extent.getTopRight(extent).reverse().join(" "),
                         'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd"',
                         'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" maxFeatures="'+config.maxFeatures+'" outputFormat="application/json">',
                           '<wfs:Query xmlns:ogc="http://www.opengis.net/ogc"' +
-                           ' typeName="'+config.searchparams.typename+'" srsName="'+config.projection.getCode()+'">',
+                           ' typeName="'+state.searchparams.typename+'" srsName="'+config.projection.getCode()+'">',
                             propertynames.join(' '),
                             '<ogc:Filter>',
                                ogcfilter.join(' '),
@@ -815,7 +743,7 @@ ol.extent.getTopRight(extent).reverse().join(" "),
                     '</wfs:GetFeature>'].join (' ');
                 $.ajax({
                     type: 'POST',
-                    url: ajaxURL(config.searchparams.url),
+                    url: ajaxURL(state.searchparams.url),
                     data: getFeatureRequest,
                     dataType: 'json',
                     contentType: "application/xml",
@@ -825,14 +753,14 @@ ol.extent.getTopRight(extent).reverse().join(" "),
                             featuresToList(f);
                         }
                     },
-                    failure: function() {
+                    error: function() {
                         console.log('error ');
                     }
                 });
             }
-            if (config.searchparams.mode === 'local') {
+            if (state.searchparams.mode === 'local') {
                 // construct a pseudo index the first use
-                if (!config.searchindex) {
+                if (!state.searchindex) {
                     var pseudoIndex = [];
                     $.each(config.kmlLayer.getSource().getFeatures(), function(i, feature) {
                         // construct an index with all text attributes
@@ -846,15 +774,15 @@ ol.extent.getTopRight(extent).reverse().join(" "),
                         })
                         pseudoIndex.push({id:id, data:idx});
                     });
-                    config.searchindex = pseudoIndex;
+                    state.searchindex = pseudoIndex;
                 }
                 // use pseudo index to retrieve matching features
-                if (config.searchindex) {
+                if (state.searchindex) {
                     var features = [];
                     var responses = 0;
-                    $.each(config.searchindex.slice(0,config.maxFeatures), function(i, v) {
-                        if (config.searchindex[i].data.indexOf(value.toLowerCase())!=-1) {
-                            features.push(config.kmlLayer.getSource().getFeatureById(config.searchindex[i].id));
+                    $.each(state.searchindex.slice(0,config.maxFeatures), function(i, v) {
+                        if (state.searchindex[i].data.indexOf(value.toLowerCase())!=-1) {
+                            features.push(config.kmlLayer.getSource().getFeatureById(state.searchindex[i].id));
                             responses +=1;
                         }
                     })
@@ -871,11 +799,11 @@ ol.extent.getTopRight(extent).reverse().join(" "),
      * @param {String} mode local|remote
      */
     function activateSearchFeatures(mode) {
-        config.searchparams.mode = mode ;
+        state.searchparams.mode = mode ;
         if (mode === 'remote') {
             var searchLayer = config.layersQueryable[config.layersQueryable.length -1];
             if (searchLayer) {
-                config.searchparams.title = searchLayer.md.title;
+                state.searchparams.title = searchLayer.md.title;
                 // get DescribeLayer from last Layer
                 var describeLayerUrl = searchLayer.options.wmsurl_ns;
                 $.ajax({
@@ -887,8 +815,8 @@ ol.extent.getTopRight(extent).reverse().join(" "),
                         })),
                         type: 'GET',
                         success: function(response) {
-                            config.searchparams.url = $(response).find("LayerDescription").attr("wfs");
-                            config.searchparams.typename = $(response).find("Query").attr("typeName");
+                            state.searchparams.url = $(response).find("LayerDescription").attr("wfs");
+                            state.searchparams.typename = $(response).find("Query").attr("typeName");
                             $.ajax({
                                 url: ajaxURL(
                                         $(response).find("LayerDescription").attr("wfs") + 
@@ -906,21 +834,21 @@ ol.extent.getTopRight(extent).reverse().join(" "),
                                         .each(function( i ) {
                                             fields.push($(this).attr("name"));
                                     });
-                                    config.searchparams.geom = $(response.getElementsByTagNameNS("*",
+                                    state.searchparams.geom = $(response.getElementsByTagNameNS("*",
                                         "sequence")).find('[type*="gml\\:"]').attr("name");
-                                    config.searchparams.searchfields = fields;
-                                    config.searchparams.ns = $(response.getElementsByTagNameNS("*","schema"))
+                                    state.searchparams.searchfields = fields;
+                                    state.searchparams.ns = $(response.getElementsByTagNameNS("*","schema"))
                                         .attr("targetNamespace");
-                                    config.searchparams.name = config.searchparams.typename.split(":")[1];
+                                    state.searchparams.name = state.searchparams.typename.split(":")[1];
                                 },
-                                failure: function() {
-                                    alert('error');
+                                error: function() {
+                                    messagePopup(tr('query failed'));
                                 }
                             });
 
                         },
-                        failure: function() {
-                            alert('error');
+                        error: function() {
+                            messagePopup(tr('query failed'));
                         }
                     });
                 }
@@ -939,9 +867,9 @@ ol.extent.getTopRight(extent).reverse().join(" "),
         var data = event.data;
         marker.setPosition(event.data.coordinates);
         if (data.extent.length===4 && !(data.extent[0] == data.extent[2] && data.extent[1] == data.extent[3])) {
-            view.fit(data.extent, map.getSize());
+            view.fit(data.extent);
         } else {
-            view.setCenter(data.coordinates,map.getSize());
+            view.setCenter(data.coordinates);
             view.setZoom(data.zoom || 16);
         }
         $('#marker').show();
@@ -954,7 +882,7 @@ ol.extent.getTopRight(extent).reverse().join(" "),
      * @param {ol.features} features
      */
     function featuresToList (features) {
-        var lib = config.searchparams.title || tr('Top layer');
+        var lib = state.searchparams.title || tr('Top layer');
         $("#searchResults").append($('<li data-role="list-divider">').text(lib));
 
         $.each(features, function(i, feature) {
@@ -966,7 +894,7 @@ ol.extent.getTopRight(extent).reverse().join(" "),
             $.map(attributes, function(val, i) {
                 if (typeof(val)=== 'string') {
                     tips.push(i + ' : ' + val);
-                    if (val.toLowerCase().search(config.searchparams.term.toLowerCase())!= -1) {
+                    if (val.toLowerCase().search(state.searchparams.term.toLowerCase())!= -1) {
                         title.push(val);
                     }
                 }
@@ -994,7 +922,7 @@ ol.extent.getTopRight(extent).reverse().join(" "),
         $("#searchResults").html("");
         try {
             openLsRequest($("#searchInput").val());
-            if (config.search) {
+            if (state.search) {
                 searchFeatures($("#searchInput").val());
             }
         }
@@ -1053,64 +981,29 @@ ol.extent.getTopRight(extent).reverse().join(" "),
 
     // Zoom +
     function zoomIn() {
-        var zoom = ol.animation.zoom({
-            duration: 500,
-            source: view.getCenter(),
-            resolution: view.getResolution()
-        });
-        map.beforeRender(zoom);
-        view.setZoom(view.getZoom()+1);
+        view.animate({zoom: view.getZoom() + 1, duration: 500});
     }
 
     //Zoom -
     function zoomOut() {
-        var zoom = ol.animation.zoom({
-            duration: 500,
-            source: view.getCenter(),
-            resolution: view.getResolution()
-        });
-        map.beforeRender(zoom);
-        view.setZoom(view.getZoom()-1);
+        view.animate({zoom: view.getZoom() - 1, duration: 500});
     }
 
     // Back to initial extent
     function zoomInit() {
-        var start = +new Date();
-        var pan = ol.animation.pan({
-            duration: 500,
-            source: view.getCenter(),
-            start: start
-        });
-        var zoom = ol.animation.zoom({
-            duration: 500,
-            source: view.getCenter(),
-            resolution: view.getResolution(),
-            start: start
-        });
-        map.beforeRender(pan, zoom);
-        view.fit(config.initialExtent, map.getSize());
+        view.fit(config.initialExtent, {duration: 500});
         view.setRotation(0);
     }
-    
+
     // recenter on device position
     function showPosition(pos) {
-        var p = ol.proj.transform([pos.coords.longitude, pos.coords.latitude], 'EPSG:4326', config.projcode),
-            start = +new Date(),
-            pan = ol.animation.pan({
-                duration: 1000,
-                source: view.getCenter(),
-                start: start
-            }),
-            zoom = ol.animation.zoom({
-                duration: 1000,
-                source: view.getCenter(),
-                resolution: view.getResolution(),
-                start: start
-            });
+        var p = ol.proj.transform([pos.coords.longitude, pos.coords.latitude], 'EPSG:4326', config.projcode);
         marker.setPosition(p);
-        map.beforeRender(pan, zoom);
-        view.setCenter(p);
-        if (view.getZoom()<17) view.setZoom(18) ;
+        view.animate({
+            center: p,
+            zoom: Math.max(view.getZoom(), 18),
+            duration: 1000
+        });
     }
     
     // get device position
@@ -1203,7 +1096,7 @@ ol.extent.getTopRight(extent).reverse().join(" "),
 
         // querystring param: lb (selected background)
         if (qs.lb) {
-            config.lb = parseInt(qs.lb) % config.layersBackground.length;
+            state.lb = parseInt(qs.lb) % config.layersBackground.length;
         }
 
         // querystring param: map id
@@ -1265,13 +1158,13 @@ ol.extent.getTopRight(extent).reverse().join(" "),
 
         // querystring param: perform getFeatureInfo on map center
         if (qs.q) {
-            config.gfiok = true;
+            state.gfiok = true;
         }
 
         // querystring param: activate search based on layer text attributes
         if (qs.s) {
-            config.search = true;
-            config.searchparams = {};
+            state.search = true;
+            state.searchparams = {};
             $("#addressForm label").text('Features or ' + $("#addressForm label").text());
         }
     }
@@ -1304,7 +1197,7 @@ ol.extent.getTopRight(extent).reverse().join(" "),
                 map.addLayer(this);
             }
         );
-        switchBackground(config.lb);
+        switchBackground(state.lb);
 
         // adding WMS layers from georchestra map (WMC)
         // try wmc=58a713a089cf408419b871b73110b7cb on dev.geobretagne.fr
@@ -1318,7 +1211,7 @@ ol.extent.getTopRight(extent).reverse().join(" "),
         });
 
         //activate search for WMS layer (origin : ?layers=...)
-        if (config.search && config.layersQueryable.length > 0) {
+        if (state.search && config.layersQueryable.length > 0) {
             activateSearchFeatures('remote');
         }
 
@@ -1326,7 +1219,6 @@ ol.extent.getTopRight(extent).reverse().join(" "),
         if (config.kmlUrl) {
             config.kmlLayer = new ol.layer.Vector({
                 source: new ol.source.Vector({
-                    projection: 'EPSG:3857',
                     url: ajaxURL(config.kmlUrl),
                     format: new ol.format.KML()
                 })
@@ -1334,7 +1226,7 @@ ol.extent.getTopRight(extent).reverse().join(" "),
             map.addLayer(config.kmlLayer);
 
             //activate search for kml layer (origin : ?kml=...)
-            if (config.search) {
+            if (state.search) {
                 activateSearchFeatures('local');
             }
         }
@@ -1345,7 +1237,7 @@ ol.extent.getTopRight(extent).reverse().join(" "),
             view.setZoom(config.z);
         }
          else {
-            view.fit(config.initialExtent, map.getSize());
+            view.fit(config.initialExtent);
             view.setRotation(0);
         }
 
@@ -1414,7 +1306,7 @@ ol.extent.getTopRight(extent).reverse().join(" "),
         $(window).bind("orientationchange resize pageshow", fixContentHeight);
         fixContentHeight();
 
-        if (config.gfiok && (!(config.wmc.length>0))) {
+        if (state.gfiok && (!(config.wmc.length>0))) {
             //~ queryMap(view.getCenter());
             setTimeout(
                 function() { queryMap(view.getCenter()); },

@@ -31,9 +31,10 @@ customConfig = {
     nodata: '<!--nodatadetect-->\n<!--nodatadetect-->',
 
     /**
-     * openLS control
+     * IGN Géoplateforme geocoding (replaces former OpenLS/gpp3-wxs.ign.fr)
+     * Docs: https://geoservices.ign.fr/documentation/services/api-et-services-ogc/geocodage
      */
-    openLSGeocodeUrl: "http://gpp3-wxs.ign.fr/[CLEF GEOPORTAIL]/geoportail/ols?",
+    openLSGeocodeUrl: "https://data.geopf.fr/geocodage/search",
 
     /**
      * background layers (EPSG:3857)
@@ -50,7 +51,7 @@ customConfig = {
                     'TILED': true
                 },
                 extent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
-                attributions: [new ol.Attribution({ html: 'tiles from geOrchestra, data <a href="http://www.cgiar-csi.org/data/srtm-90m-digital-elevation-database-v4-1">(c) CGIAR-CSI</a>'})],
+                attributions: ['tiles from geOrchestra, data <a href="https://www.cgiar-csi.org/data/srtm-90m-digital-elevation-database-v4-1">(c) CGIAR-CSI</a>']
             })
         }),
         new ol.layer.Tile({
@@ -61,7 +62,7 @@ customConfig = {
                     'TILED': true
                 },
                 extent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
-                attributions: [new ol.Attribution({ html: 'tiles from geOrchestra, data <a href="http://www.unearthedoutdoors.net/global_data/true_marble/">(c) Unearthed Outdoors</a>'})],
+                attributions: ['tiles from geOrchestra, data <a href="https://www.unearthedoutdoors.net/global_data/true_marble/">(c) Unearthed Outdoors</a>']
             })
         }),
         new ol.layer.Tile({
@@ -72,7 +73,7 @@ customConfig = {
                     'TILED': true
                 },
                 extent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
-                attributions: [new ol.Attribution({ html: 'tiles from geOrchestra, data <a href="http://earthobservatory.nasa.gov/Features/NightLights/page3.php">(c) NASA</a>'})],
+                attributions: ['tiles from geOrchestra, data <a href="https://earthobservatory.nasa.gov/Features/NightLights/page3.php">(c) NASA</a>']
             })
         })
     ],
@@ -81,8 +82,8 @@ customConfig = {
      * social media links (prefixes)
      */
     socialMedia: {
-        'Twitter' : 'https://twitter.com/intent/tweet?text=',
-        'Google+' : 'https://plus.google.com/share?url=',
-        'Facebook': 'http://www.facebook.com/sharer/sharer.php?u='
+        'Twitter'  : 'https://twitter.com/intent/tweet?text=',
+        'LinkedIn' : 'https://www.linkedin.com/sharing/share-offsite/?url=',
+        'Facebook' : 'https://www.facebook.com/sharer/sharer.php?u='
     }
 };
