@@ -85,6 +85,12 @@ p.center {
     color: #fff;
 }
 
+.sv-panel-toggle.active {
+    background-color: #3f3f3f;
+    border-color: #666;
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.5);
+}
+
 .sv-map-btn svg {
     width: 20px;
     height: 20px;
