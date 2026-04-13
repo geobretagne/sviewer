@@ -1,27 +1,23 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr" lang="fr">
+<!DOCTYPE html>
+<html lang="fr">
   <head>
     <title>geOrchestra sviewer</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=100" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="generator" content="HTML Tidy for Linux (vers 25 March 2009), see www.w3.org" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <!-- external libraries -->
-    <script type="text/javascript" src="lib/jquery/jquery-1.11.1.min.js"></script>
-    <script type="text/javascript" src="lib/qrcode.js/qrcode.min.js"></script>
+    <script src="lib/jquery/jquery-1.11.1.min.js"></script>
+    <script src="lib/qrcode.js/qrcode.min.js"></script>
     <script src="build/proj4.js"></script>
     <!-- OpenLayers -->
     <!--
-    <link rel="stylesheet" href="build/ol.css" type="text/css" />
-    <script src="build/ol-simple.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="build/ol.css">
+    <script src="build/ol-simple.js"></script>
     -->
-    <link rel="stylesheet" href="build/ol.css" type="text/css" />
-    <script src="build/ol.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="build/ol.css">
+    <script src="build/ol.js"></script>
     <!-- jquery mobile -->
-    <script type="text/javascript">
-//<![CDATA[
+    <script>
 var customConfig = {};
 $(document).bind("mobileinit", function(){
     $.mobile.hashListeningEnabled = false;
@@ -31,14 +27,13 @@ $(document).bind("mobileinit", function(){
     $.mobile.loader.prototype.options.html = "";
     $.mobile.activeBtnClass = 'unused';
 });
-//]]>
 </script>
-    <link rel="stylesheet" href="lib/jquery/jquery.mobile-1.4.2.min.css" />
-    <script src="lib/jquery/jquery.mobile-1.4.2.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="lib/jquery/jquery.mobile-1.4.2.min.css">
+    <script src="lib/jquery/jquery.mobile-1.4.2.min.js"></script>
     <!-- local -->
-    <link rel="stylesheet" href="css/sviewer.css" type="text/css" />
-    <script src="js/sviewer.js" type="text/javascript"></script>
-    <script src="etc/i18n.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="css/sviewer.css">
+    <script src="js/sviewer.js"></script>
+    <script src="etc/i18n.js"></script>
   </head>
   <body>
     <div data-role="page">
@@ -58,7 +53,7 @@ $(document).bind("mobileinit", function(){
           <a id="bgBt" href="#" accesskey="b" class="i18n ui-btn ui-icon-layer-c ui-btn-icon-notext ui-btn-b" title="background">background</a>
         </div>
 
-        <div id="panelcontrols" class="sv-map-panels" data-role="controlgroup" data-type="horizontal" class="ui-btn-right" data-theme="b">
+        <div id="panelcontrols" class="sv-map-panels ui-btn-right" data-role="controlgroup" data-type="horizontal" data-theme="b">
           <a href="#panelShare" accesskey="m" id="panelShareBtn" class="i18n ui-btn ui-icon-edit ui-btn-icon-right" data-rel="popup" data-position-to="window" title="Map">&nbsp;</a>
           <a href="#panelInfo" accesskey="i" id="panelInfoBtn" class="i18n ui-btn ui-icon-bullets ui-btn-icon-notext" data-rel="popup" data-position-to="window" title="Legend">Legend</a>
           <a href="#panelQuery" accesskey="q" id="panelQueryBtn" class="i18n ui-btn ui-icon-info ui-btn-icon-notext" data-rel="popup" data-position-to="window" title="Query">Query</a>
@@ -100,7 +95,7 @@ $(document).bind("mobileinit", function(){
                     id="searchInput"
                     data-wrapper-class="controlgroup-textinput ui-btn ui-mini"
                     value=""
-                    title="Address and/or city" /><button class="i18n ui-btn ui-icon-search ui-btn-icon-notext " title="Locate">Locate</button>
+                    title="Address and/or city"><button class="i18n ui-btn ui-icon-search ui-btn-icon-notext " title="Locate">Locate</button>
             </div>
             <button id="zpBt" class="i18n ui-btn ui-icon-navigation ui-corner-all ui-mini " title="Where am I ?">Where am I ?</button>
             <span id="locateMsg"></span>
@@ -130,15 +125,15 @@ $(document).bind("mobileinit", function(){
         </div>
         <div data-role="content" class="ui-mini">
           <label for="setTitle" class="i18n">Title</label>
-          <input type="text" name="setTitle" id="setTitle" class="i18n" value="" placeholder="change title"/>
+          <input type="text" name="setTitle" id="setTitle" class="i18n" value="" placeholder="change title">
           <div class="ui-grid-a">
             <div class="ui-block-a">
               <!-- social links -->
               <div id="socialLinks"></div>
               <!-- to georchestra viewer -->
               <form id="georchestraForm" target="_blank" method="post" action="">
-                <input type="hidden" id="georchestraFormData" name="data" value="" />
-                <input type="submit" class="i18n ui-btn ui-corner-all" title="Edit with geOrchestra" value="geOrchestra" />
+                <input type="hidden" id="georchestraFormData" name="data" value="">
+                <input type="submit" class="i18n ui-btn ui-corner-all" title="Edit with geOrchestra" value="geOrchestra">
               </form>
             </div>
             <!-- QQR code -->
