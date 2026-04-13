@@ -287,8 +287,11 @@ var SViewer = function() {
      */
     function translateDOM(selector, propnames) {
         $.each($(selector), function(i,e) {
-            // text translation
-            $(e).text(tr($(e).text()));
+            var $e = $(e);
+            // text translation - skip elements that contain SVG or other important children
+            if ($e.find('svg').length === 0 && $e.find('span').length === 0) {
+                $e.text(tr($e.text()));
+            }
             // properties translation
             $.each(propnames, function(j, p) {
                 if (p !== "value") {
