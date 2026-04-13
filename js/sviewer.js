@@ -487,7 +487,7 @@ var SViewer = function() {
 
             $('#socialLinks').empty();
             $.each(config.socialMedia, function(name, socialUrl) {
-                $('#socialLinks').append('<a class="ui-btn ui-shadow ui-corner-all" target="_blank" href="' +
+                $('#socialLinks').append('<a class="btn btn-secondary d-block mb-2" target="_blank" href="' +
                     socialUrl +
                     encodeURIComponent(permalinkQuery) +
                     '" title="' +
@@ -1335,11 +1335,18 @@ var SViewer = function() {
 
         // dynamic resize
         $(window).bind('orientationchange resize pageshow updatelayout', panelLayout);
-        $('.sv-panel').bind('popupbeforeposition popupafteropen', panelLayout);
         $.each($('.sv-panel'), panelLayout);
-        $('.sv-panel').bind('popupafteropen', setPermalink);
+
         // Bootstrap modals instead of jQuery Mobile popups
         $('#panelcontrols button').on('click', panelButton);
+
+        // Handle Bootstrap modal events for layout and permalink updates
+        ['panelQueryModal', 'panelInfoModal', 'panelLocateModal', 'panelShareModal'].forEach(function(modalId) {
+            document.getElementById(modalId)?.addEventListener('shown.bs.modal', function() {
+                panelLayout();
+                setPermalink();
+            });
+        });
 
         // i18n
         if (config.lang !== 'en') {
