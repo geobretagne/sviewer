@@ -1,3 +1,15 @@
+:root {
+    --btn-bg: #3a3a3a;
+    --btn-bg-hover: #797979;
+    --btn-border: #aaa;
+    --btn-border-hover: #888;
+    --btn-text: #fff;
+    --btn-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+    --btn-shadow-hover: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
 html, body {
     margin: 0px;
     padding: 0px;
@@ -11,18 +23,34 @@ body {
     flex-direction: column;
 }
 
+/* Scoped wrapper for sviewer embedding - matches body flex structure */
+.sv-scope {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+}
+
 
 /* Bootstrap button overrides */
 .btn-dark {
-    background-color: #626161;
-    border-color: #aaa;
-    color: #fff;
+    background-color: var(--btn-bg);
+    border-color: var(--btn-border);
+    color: var(--btn-text);
+    transition: var(--transition);
+    box-shadow: var(--btn-shadow);
 }
 
-.btn-dark:hover,
-.btn-dark:focus {
-    background-color: #3f3f3f;
-    border-color: #888;
+.btn-dark:hover {
+    background-color: var(--btn-bg-hover);
+    border-color: var(--btn-border-hover);
+    box-shadow: var(--btn-shadow-hover);
+    transform: translateY(-2px);
+}
+
+.btn-dark:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
 }
 
 
@@ -45,6 +73,11 @@ body {
 
 label {
     font-size: small !important;
+    font-weight: 500;
+}
+
+h3 {
+    font-weight: 500;
 }
 
 p.center {
@@ -78,16 +111,32 @@ p.center {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    border: 1px solid #1f1f1f;
-    font-size: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #fff;
+    font-size: 1rem;
     color: #fff;
+    transition: var(--transition);
+}
+
+.sv-map-btn:hover {
+    transform: translateY(-2px);
+}
+
+.sv-map-btn:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
 }
 
 .sv-panel-toggle.active {
-    background-color: #3f3f3f;
-    border-color: #666;
-    box-shadow: inset 0 0 4px rgba(0,0,0,0.5);
+    background-color: var(--btn-bg-hover);
+    border-color: var(--btn-border-hover);
+    box-shadow: var(--btn-shadow-hover), inset 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+.sv-map-btn:focus,
+.sv-map-btn:active {
+    background-color: var(--btn-bg-hover);
+    border-color: var(--btn-border-hover);
 }
 
 .sv-map-btn svg,
@@ -99,6 +148,22 @@ p.center {
     margin-right: 4px;
     fill: #fff;
     stroke: #fff;
+    transition: var(--transition);
+}
+
+.sv-map-btn i {
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    transition: var(--transition);
+}
+
+.sv-map-btn:hover i,
+.sv-map-btn:hover svg {
+    filter: brightness(1.1);
 }
 
 .sv-map-btn iconoir-icon {
@@ -131,22 +196,65 @@ p.center {
     z-index: 8010;
 }
 
+/* Responsive layout for medium screens */
+@media screen and (max-width: 1200px) {
+    .sv-sidepanel.active {
+        width: 350px;
+    }
+}
+
+@media screen and (max-width: 900px) {
+    .sv-sidepanel.active {
+        width: 300px;
+    }
+}
+
 @media screen and (max-width: 600px) {
     .sv-map-btn {
-        width: 32px;
-        height: 32px;
-        font-size: 0.6rem;
+        width: clamp(32px, 8vw, 44px);
+        height: clamp(32px, 8vw, 44px);
+        font-size: clamp(0.6rem, 2vw, 1rem);
     }
     #panelShareBtn {
-        width: auto;
-        height: auto;
-        min-width: 32px;
-        padding: 0 8px;
-        flex-basis: 100%;
+        width: clamp(32px, 8vw, 44px) !important;
+        height: clamp(32px, 8vw, 44px) !important;
+        padding: 0 !important;
+        min-width: unset !important;
+    }
+    #panelShareBtn span {
+        display: none;
     }
     .sv-sidepanel {
         top: 160px;
-        height: calc(100% - 160px);
+        max-height: calc(100% - 160px);
+        width: 0 !important;
+        right: 0;
+        z-index: 9000;
+    }
+    .sv-sidepanel-close {
+        z-index: 9001;
+    }
+    .sv-sidepanel.active {
+        width: 85vw !important;
+        max-width: 85vw;
+        box-shadow: -8px 0 24px rgba(0, 0, 0, 0.2), inset 2px 0 0 rgba(0, 0, 0, 0.05);
+    }
+    /* Prevent panel from blocking map interaction */
+    .sv-framemap::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0);
+        pointer-events: none;
+        transition: background-color var(--transition);
+        z-index: 4999;
+    }
+    .sv-framemap.panel-open::after {
+        background-color: rgba(0, 0, 0, 0.3);
+        pointer-events: auto;
     }
 }
 
@@ -155,29 +263,36 @@ p.center {
 .sv-map {
     width: 100%;
     height: 100%;
-    cursor: hand;
+    cursor: grab;
     position: relative;
+}
+
+.sv-map:active {
+    cursor: grabbing;
 }
 
 /* side panel */
 .sv-sidepanel {
     position: absolute;
     right: 0;
-    top: 210px;
+    top: 60px;
     width: 0;
-    height: calc(100% - 210px);
+    height: auto;
+    max-height: calc(100% - 60px);
     background-color: #fff;
-    border-left: 1px solid #ddd;
-    box-shadow: -2px 0 4px rgba(0,0,0,0.1);
+    border-left: none;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
     overflow: hidden;
-    transition: width 0.3s ease;
+    transition: width var(--transition), box-shadow var(--transition);
     z-index: 5000;
     display: flex;
     flex-direction: column;
+    border-radius: 0;
 }
 
 .sv-sidepanel.active {
-    width: 350px;
+    width: 450px;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.2);
 }
 
 .sv-sidepanel-close {
@@ -190,6 +305,26 @@ p.center {
     font-size: 24px;
     cursor: pointer;
     z-index: 5001;
+    color: #333;
+    transition: var(--transition);
+    padding: 8px;
+    line-height: 1;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sv-sidepanel-close:hover,
+.sv-sidepanel-close:focus {
+    color: #000;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.sv-sidepanel-close:focus-visible {
+    outline: 2px solid #333;
+    outline-offset: 2px;
 }
 
 .sv-sidepanel.active .sv-sidepanel-close {
@@ -197,7 +332,7 @@ p.center {
 }
 
 .sv-panel-section {
-    height: 100%;
+    height: auto;
     overflow-y: auto;
     padding: 15px;
     display: flex;
@@ -205,16 +340,48 @@ p.center {
 }
 
 .sv-panel-title {
-    margin: 0 0 15px 0;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #ddd;
-    font-size: 1.1rem;
-    color: #333;
+    margin: 0 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e0e0e0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #212121;
+    letter-spacing: 0.01em;
 }
 
 .sv-panel-content {
     flex: 1;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sv-panel-content > div {
+    display: flex;
+    flex-direction: column;
+}
+
+.sv-panel-content form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sv-panel-content .form-control {
+    font-size: 14px;
+    padding: 8px 12px;
+}
+
+.sv-panel-content .form-label {
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.sv-panel-content .btn {
+    padding: 10px 16px;
+    font-weight: 500;
+    border-radius: 4px;
 }
 
 @media screen and (max-width: 600px) {
@@ -348,4 +515,100 @@ p.center {
 }
 .sv-location a {
     font-size: 0.7em;
+}
+
+/* Form accessibility improvements */
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+    outline: none;
+}
+
+.form-control:focus-visible {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+    outline: none;
+}
+
+input, textarea, select {
+    font-size: 16px;
+}
+
+/* Ensure sufficient spacing for touch targets */
+button, [role="button"], input[type="submit"], input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Skip to content link for keyboard navigation */
+.skip-to-content {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #000;
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    z-index: 100;
+}
+
+.skip-to-content:focus {
+    top: 0;
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+    :root {
+        --btn-bg: #1a1a1a;
+        --btn-bg-hover: #4a4a4a;
+    }
+}
+
+
+/* List items styling for accessibility */
+.list-group {
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.list-group-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #dee2e6;
+    transition: var(--transition);
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+.list-group-item:focus-visible {
+    outline: 2px solid #0d6efd;
+    outline-offset: -2px;
+    background-color: #f8f9fa;
+}
+
+/* Error and status message styling */
+.alert {
+    padding: 12px;
+    margin: 8px 0;
+}
+
+.alert[role="alert"] {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
 }
