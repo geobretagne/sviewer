@@ -5,3 +5,4 @@ etc/customConfig_*
 *.swo
 node_modules
 npm-debug.log
+SUMMARY.md
