@@ -36,8 +36,8 @@ $.extend(hardConfig, {
             'change title': 'changer le titre',
             'Permalink': 'Permalien',
             'Permalink to this map': 'Lien permanent vers cette carte',
-            'Address and/or city': 'Adresse et/ou commune',
-            'Features or Address and/or city': 'Entités ou Adresse et/ou commune',
+            'Search place': 'Trouver un lieu',
+            'Search place/feature': 'Trouver un lieu ou un objet',
             'share on ' : 'partager sur ',
             'Edit with geOrchestra': 'éditer carte avec geOrchestra'
         },
@@ -57,7 +57,7 @@ $.extend(hardConfig, {
             'searching...': 'búsqueda...',
 
             'Permalink': 'Vínculo permanente',
-            'Address and/or city': 'Entrar dirección o lugar'
+            'Search place': 'Entrar dirección o lugar'
         },
         ru: {
             'geOrchestra mobile': 'мобильная версия программы geOrchestra',
@@ -74,7 +74,7 @@ $.extend(hardConfig, {
             'Geolocation failed': 'Геолокализация провалилась',
             'searching...': 'поиск',
             'Permalink': 'постоянная ссылка',
-            'Address and/or city': 'внести адрес или место'
+            'Search place': 'внести адрес или место'
         },
         de: {
             'geOrchestra mobile': 'geOrchestra mobile',
@@ -99,7 +99,7 @@ $.extend(hardConfig, {
             'Geolocation failed': 'Geolocation failed',
             'searching...': 'suche...',
 
-            'Address and/or city': 'Adresse eingeben',
+            'Search place': 'Adresse eingeben',
             'Title': 'Kartentitel',
             'change title': 'Titel ändern',
             'Permalink': 'Permalink',

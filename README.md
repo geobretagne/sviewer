@@ -16,28 +16,28 @@ Quick start
 What is sViewer ?
 --------------------------
 
-sViewer (simple Viewer) is a very simple web map viewer based on the OpenLayers and jQuery mobile libraries. Sviewer offers :
+sViewer (simple Viewer) is a very simple web map viewer based on the OpenLayers 10 and Bootstrap. Sviewer offers :
 
 * basic touch-enabled map controls
-* place search (OpenLS french geoportal based)
+* places search (french geoportal based)
 * queryable Web Map Service overlays
 * Web Map Context loader
 * permalinks, social links, QR code
 * geOrchestra viewer compatibility ('send to sviewer')
-* map edit with the geOrchestra viewer
 * easy to embed in a webpage through iframe or href
 * should work on small (phone), medium (tablet) and large (desktop) displays
 * i18n support : en (hardcoded), fr, es, de, ru. Feel free to contribute using fr as template.
+* no CDN allowed
 
 
-sViewer was designed to work within the geOrchestra SDI, but it also may work with any OGC-enabled SDI. There's a user tutorial here : http://cms.geobretagne.fr/content/visualiseur-simple-g%C3%A9obretagne
+sViewer was designed to work within the geOrchestra SDI. There's a user tutorial here : http://cms.geobretagne.fr/content/visualiseur-simple-g%C3%A9obretagne
 
 sViewer design notes
 ====================
 
-* ol3 + jQuery mobile
-* no server-side component except a required Ajax proxy (featured in geOrchestra and probably in other SDIs). Untar and it should work.
-* EPSG:3857 only : OpenStreetMap, MapQuest, Google...
+* ol8 + jquery + bootstrap
+* no server-side component except an optional Ajax proxy (featured in geOrchestra and probably in other SDIs).
+* EPSG:3857 only..
 * simple startup config with KVP in the querystring
 * shall work on phone, tablet, desktop browsers
 
@@ -195,7 +195,7 @@ TODO
 
 First item, highest priority
 
-* accessibility check
+* accessibility check, actually WCAG 2.1 AA (aria-labels, focus states, 44px targets)
 * special treatment for opaque layers
 * customisable splashscreen
 * check the genericity of the openLS helper

@@ -608,6 +608,50 @@ button, [role="button"], input[type="submit"], input[type="button"] {
     margin: 8px 0;
 }
 
+/* WebComponent modal styling */
+.sv-scope .modal {
+    display: flex !important;
+    z-index: 1070 !important;
+}
+
+.sv-scope .modal.show {
+    opacity: 1 !important;
+}
+
+.sv-scope .modal-backdrop {
+    z-index: 1060 !important;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.sv-scope .modal-dialog {
+    z-index: 1071 !important;
+}
+
+.sv-scope .modal-content {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+.sv-scope .modal-header {
+    background-color: #f8f9fa !important;
+    border-bottom: 1px solid #dee2e6 !important;
+}
+
+.sv-scope .modal-body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+.sv-scope .modal-body p {
+    color: #666 !important;
+}
+
+.sv-scope textarea.form-control {
+    background-color: #f8f9fa !important;
+    color: #000000 !important;
+    border: 1px solid #dee2e6 !important;
+}
+
 .alert[role="alert"] {
     outline: 2px solid currentColor;
     outline-offset: 2px;

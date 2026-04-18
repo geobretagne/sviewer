@@ -1,88 +1,82 @@
 /*globals $:false, ol:false, proj4:false*/
 
-// supported (re)projections. add more in customConfig.js
-proj4.defs([
-    ["EPSG:4326", "+title=WGS 84, +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"],
-    ["EPSG:3857", "+title=Web Spherical Mercator, +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs"],
-    ["EPSG:900913", "+title=Web Spherical Mercator, +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs"],
-    ["EPSG:2154", "+title=RGF-93/Lambert 93, +proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"]
-]);
-// Required since OL6: register proj4 definitions into OpenLayers
-ol.proj.proj4.register(proj4);
+// Isolated SViewer instance - encapsulates all state and DOM interactions
+window.SViewerApp = (function() {
+    // Projection: EPSG:3857 (Web Mercator)
+    proj4.defs([
+        ["EPSG:4326", "+title=WGS 84, +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"],
+        ["EPSG:3857", "+title=Web Spherical Mercator, +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs"]
+    ]);
+    // Required since OL6: register proj4 definitions into OpenLayers
+    ol.proj.proj4.register(proj4);
 
-var config = {};
-var state = {};
-var customConfig = {};
-var hardConfig = {
-    title: 'geOrchestra mobile',
-    geOrchestraBaseUrl: 'https://geobretagne.fr/',
-    projcode: 'EPSG:3857',
-    initialExtent: [-12880000,-1080000,5890000,7540000],
-    maxExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
-    restrictedExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
-    maxFeatures: 10,
-    nodata: '<!--nodatadetect-->\n<!--nodatadetect-->',
-    openLSGeocodeUrl: "https://data.geopf.fr/geocodage/search",
-    layersBackground: [
-        new ol.layer.Tile({
-              source: new ol.source.OSM()
-        })
-    ]
-};
+    var config = {};
+    var state = {};
+    var customConfig = window.customConfig || {};
+    var hardConfig = {
+        title: 'geOrchestra mobile',
+        geOrchestraBaseUrl: 'https://geobretagne.fr/',
+        projcode: 'EPSG:3857',
+        initialExtent: [-12880000,-1080000,5890000,7540000],
+        maxExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
+        restrictedExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
+        maxFeatures: 10,
+        nodata: '<!--nodatadetect-->\n<!--nodatadetect-->',
+        openLSGeocodeUrl: "https://data.geopf.fr/geocodage/search",
+        layersBackground: [
+            new ol.layer.Tile({
+                  source: new ol.source.OSM()
+            })
+        ]
+    };
 
-/**
- * Loading spinner helper - replaces $.mobile.loading()
- */
-var svSpinner = {
-    show: function() {
-        $('#svSpinner').addClass('show');
-    },
-    hide: function() {
-        $('#svSpinner').removeClass('show');
-    }
-};
+    // Expose globally for i18n.js (must happen early, before i18n.js loads)
+    window.hardConfig = hardConfig;
 
-/**
- * Modal helper - replaces jQuery Mobile popup()
- */
-var svModal = {
-    open: function(id) {
-        var modalId = id.replace(/^#/, '') + 'Modal';
-        var modalEl = document.getElementById(modalId);
-        if (modalEl) {
-            new bootstrap.Modal(modalEl).show();
+    var svSpinner = {
+        show: function() {
+            $('#svSpinner').addClass('show');
+        },
+        hide: function() {
+            $('#svSpinner').removeClass('show');
         }
-    },
-    close: function(id) {
-        var modalId = id.replace(/^#/, '') + 'Modal';
-        var modalEl = document.getElementById(modalId);
-        if (modalEl) {
-            var m = bootstrap.Modal.getInstance(modalEl);
-            if (m) m.hide();
+    };
+
+    var svModal = {
+        open: function(id) {
+            var modalId = id.replace(/^#/, '') + 'Modal';
+            var modalEl = document.getElementById(modalId);
+            if (modalEl) {
+                new bootstrap.Modal(modalEl).show();
+            }
+        },
+        close: function(id) {
+            var modalId = id.replace(/^#/, '') + 'Modal';
+            var modalEl = document.getElementById(modalId);
+            if (modalEl) {
+                var m = bootstrap.Modal.getInstance(modalEl);
+                if (m) m.hide();
+            }
         }
-    }
-};
+    };
 
-/**
- * Lazy load QRCode library on demand
- */
-var qrcodeLoaded = false;
-function loadQRCodeLibrary() {
-    if (qrcodeLoaded || typeof QRCode !== 'undefined') {
-        return Promise.resolve();
+    var qrcodeLoaded = false;
+    function loadQRCodeLibrary() {
+        if (qrcodeLoaded || typeof QRCode !== 'undefined') {
+            return Promise.resolve();
+        }
+        return new Promise(function(resolve) {
+            var script = document.createElement('script');
+            script.src = 'lib/qrcode/qrcode.min.js';
+            script.onload = function() {
+                qrcodeLoaded = true;
+                resolve();
+            };
+            document.head.appendChild(script);
+        });
     }
-    return new Promise(function(resolve) {
-        var script = document.createElement('script');
-        script.src = 'lib/qrcode.js/qrcode.min.js';
-        script.onload = function() {
-            qrcodeLoaded = true;
-            resolve();
-        };
-        document.head.appendChild(script);
-    });
-}
 
-var SViewer = function() {
+    function SViewer() {
     var map;
     var view;
     var marker;
@@ -164,19 +158,30 @@ var SViewer = function() {
          */
         function getMetadata(self) {
             var parser = new ol.format.WMSCapabilities();
+            var capabilitiesUrl = ajaxURL(self.options.wmsurl_ns + '?SERVICE=WMS&REQUEST=GetCapabilities');
+            console.log('Loading capabilities from:', capabilitiesUrl, 'for layer:', self.options.layername);
+
             $.ajax({
-                url: ajaxURL(self.options.wmsurl_ns + '?SERVICE=WMS&REQUEST=GetCapabilities'),
+                url: capabilitiesUrl,
                 type: 'GET',
                 success: function(response) {
                     var html = [];
                     var capabilities, mdLayer, legendArgs;
                     capabilities = parser.read(response);
+                    console.log('Capabilities loaded, version:', capabilities.version);
+
                     // searching for the layer in the capabilities
-                    $.each(capabilities.Capability.Layer.Layer, function() {
-                        if (this.Name === self.options.layername) {
-                            mdLayer = this;
-                        }
-                    });
+                    if (capabilities.Capability && capabilities.Capability.Layer && capabilities.Capability.Layer.Layer) {
+                        $.each(capabilities.Capability.Layer.Layer, function() {
+                            console.log('Found layer in capabilities:', this.Name);
+                            if (this.Name === self.options.nslayername) {
+                                mdLayer = this;
+                                console.log('Matched layer:', self.options.nslayername);
+                            }
+                        });
+                    } else {
+                        console.warn('No layers found in capabilities structure');
+                    }
 
                     if (mdLayer) {
                         html.push('<div class="sv-md">');
@@ -191,6 +196,9 @@ var SViewer = function() {
                         if (self.options.sldurl) {
                             legendArgs.SLD = self.options.sldurl;
                         }
+
+                        var legendUrl = self.options.wmsurl_ns + '?' + $.param(legendArgs);
+                        console.log('Legend URL:', legendUrl);
 
                         // attribution
                         if (mdLayer.Attribution) {
@@ -228,14 +236,19 @@ var SViewer = function() {
 
                         // legend
                         html.push('<img class="sv-md-legend" src="');
-                        html.push(self.options.wmsurl_ns + '?' + $.param(legendArgs));
+                        html.push(legendUrl);
                         html.push('" />');
                         html.push('</div>');
 
                         $('#legend').append(html.join(''));
+                        console.log('Legend appended to DOM');
+                    } else {
+                        console.warn('Layer not found in capabilities:', self.options.layername);
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error('GetCapabilities failed:', status, error, xhr.status);
+                    console.error('URL was:', capabilitiesUrl);
                 }
             });
         }
@@ -303,7 +316,7 @@ var SViewer = function() {
         $.each($(selector), function(i,e) {
             var $e = $(e);
             // text translation - skip elements that contain SVG or other important children
-            if ($e.find('svg').length === 0 && $e.find('span').length === 0) {
+            if ($e.find('svg').length === 0 && $e.find('span').length === 0 && $e.find('i').length === 0) {
                 $e.text(tr($e.text()));
             }
             // properties translation
@@ -506,11 +519,18 @@ var SViewer = function() {
             if ($('#qrcode').css("visibility")==="visible") {
                 $('#qrcode').empty();
                 loadQRCodeLibrary().then(function() {
-                    new QRCode("qrcode", {
-                        text: permalinkQuery,
-                        width: 130,
-                        height: 130,
-                        correctLevel: QRCode.CorrectLevel.L
+                    QRCode.toDataURL(permalinkQuery, {
+                        errorCorrectionLevel: 'L',
+                        type: 'image/webp',
+                        quality: 0.95,
+                        margin: 1,
+                        width: 200,
+                        color: {
+                            dark: '#000000',
+                            light: '#ffffff'
+                        }
+                    }).then(function(dataUrl) {
+                        $('#qrcode').html('<img src="' + dataUrl + '" alt="QR Code" style="max-width: 100%; height: auto;">');
                     });
                 });
             }
@@ -543,6 +563,45 @@ var SViewer = function() {
         }
     }
 
+
+    /**
+     * Generates embed code with current map state
+     * Includes all relevant URL parameters (x, y, z, layers, lb, title, etc.)
+     */
+    function generateEmbedCode() {
+        var c = view.getCenter();
+        var embedParams = {
+            geOrchestraBaseUrl: config.geOrchestraBaseUrl,
+            center: [Math.round(c[0]), Math.round(c[1])],
+            zoom: view.getZoom()
+        };
+        if (state.lb !== null && state.lb !== undefined) {
+            embedParams.lb = state.lb;
+        }
+        if (config.layersQueryString) {
+            embedParams.layers = config.layersQueryString;
+        }
+        if (config.title) {
+            embedParams.title = config.title;
+        }
+        if (config.kmlUrl) {
+            embedParams.kml = config.kmlUrl;
+        }
+        if (config.wmc) {
+            embedParams.wmc = config.wmc;
+        }
+        if (config.customConfigName) {
+            embedParams.c = config.customConfigName;
+        }
+
+        var baseUrl = window.SViewerBaseUrl || config.baseUrl || window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
+        var code = '<div id="sviewer-map" style="width: 100%; height: 500px;"></div>\n' +
+                   '<script src="' + baseUrl + 'js/embed.js"><\/script>\n' +
+                   '<script>\n' +
+                   '  SViewer.init("#sviewer-map", ' + JSON.stringify(embedParams, null, 2).split('\n').join('\n    ') + ');\n' +
+                   '<\/script>';
+        return code;
+    }
 
     /**
      * Queries the IGN Géoplateforme geocoding API and recenters the map.
@@ -995,6 +1054,7 @@ var SViewer = function() {
 
         // Activate sidepanel
         sidepanel.addClass('active');
+        $('#frameMap').addClass('panel-open');
 
         // Update permalink when share panel is opened
         if (panelName === 'share') {
@@ -1007,6 +1067,7 @@ var SViewer = function() {
         sidepanel.find('.sv-panel-section').hide();
         sidepanel.removeClass('active');
         $('#panelcontrols .sv-panel-toggle').removeClass('active');
+        $('#frameMap').removeClass('panel-open');
     }
 
     // panelButton kept for compatibility, now delegates to togglePanel
@@ -1025,14 +1086,17 @@ var SViewer = function() {
        if (config.title!=='') {
             $('#panelShareBtnTitle').text(config.title);
        }
-        if ($("#setTitle").val()==='') {
-            $("#setTitle").val(config.title);
+        if ($("#shareSetTitle").val()==='') {
+            $("#shareSetTitle").val(config.title);
+        }
+        if ($("#modalSetTitle").val()==='') {
+            $("#modalSetTitle").val(config.title);
         }
     }
 
     // updates title on keypress
     function onTitle(e) {
-        setTitle($("#setTitle").val());
+        setTitle($(this).val());
     }
 
     // Zoom +
@@ -1141,14 +1205,16 @@ var SViewer = function() {
         var language = ((navigator.language) ? navigator.language : navigator.userLanguage).substring(0,2);
 
         // static configuration (merged from hardConfig + customConfig)
+        // Check if i18n has been loaded (via i18n.js)
+        var i18n = (hardConfig && hardConfig.i18n) || {};
         config = {
-            lang: ((hardConfig.i18n.hasOwnProperty(language)) ? language : 'en'),
+            lang: ((i18n.hasOwnProperty(language)) ? language : 'en'),
             wmc: '',
             layersQueryable: [],
             layersQueryString: ''
         };
         $.extend(config, hardConfig);
-        $.extend(config, customConfig);
+        $.extend(config, window.customConfig || {});
 
         config.projection = ol.proj.get(config.projcode);
 
@@ -1248,8 +1314,6 @@ var SViewer = function() {
         view = new ol.View({
             projection: config.projection
         });
-        console.log(config.projection);
-        console.log(config.projcode);
         map = new ol.Map({
             controls: [
                 new ol.control.ScaleLine()
@@ -1354,15 +1418,60 @@ var SViewer = function() {
 
         // geolocation form
         $('#zpBt').click(locateMe);
-        $('#addressForm').on('submit', searchPlace);
 
-        // set title dialog
-        $('#setTitle').keyup(onTitle);
-        $('#setTitle').blur(setPermalink);
+        // search with autocomplete - trigger on keyup after 3 characters
+        $('#searchInput').on('keyup', function() {
+            var query = $(this).val();
+            if (query.length >= 3) {
+                searchPlace();
+            } else {
+                $("#searchResults").html("");
+            }
+        });
+
+        // set title dialog (both panel and modal)
+        $('#shareSetTitle, #modalSetTitle').keyup(onTitle);
+        $('#shareSetTitle, #modalSetTitle').blur(setPermalink);
 
         // sendto form
         $('#georchestraForm').submit(function(e) {
             sendMapTo('georchestra_viewer');
+        });
+
+        // WebComponent button (can appear in side panel or modal)
+        $(document).on('click', '.webcomponent-btn', function() {
+            var embedCode = generateEmbedCode();
+            $('#embedCodeTextarea').val(embedCode);
+            svModal.open('#webcomponent');
+        });
+
+        // Copy embed code button
+        $('#embedCodeCopyBtn').on('click', function() {
+            var textarea = document.getElementById('embedCodeTextarea');
+            var btn = $(this);
+            var originalText = btn.html();
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textarea.value).then(function() {
+                    btn.html('<i class="bi bi-check" aria-hidden="true"></i> Copied!');
+                    setTimeout(function() {
+                        btn.html(originalText);
+                    }, 2000);
+                }).catch(function() {
+                    textarea.select();
+                    document.execCommand('copy');
+                    btn.html('<i class="bi bi-check" aria-hidden="true"></i> Copied!');
+                    setTimeout(function() {
+                        btn.html(originalText);
+                    }, 2000);
+                });
+            } else {
+                textarea.select();
+                document.execCommand('copy');
+                btn.html('<i class="bi bi-check" aria-hidden="true"></i> Copied!');
+                setTimeout(function() {
+                    btn.html(originalText);
+                }, 2000);
+            }
         });
 
         // dynamic resize
@@ -1371,6 +1480,16 @@ var SViewer = function() {
         // Side panel toggles
         $('#panelcontrols button').on('click', panelButton);
         $('.sv-sidepanel-close').on('click', closePanel);
+
+        // Close panel when clicking on backdrop (small screens)
+        $('#frameMap').on('click', function(e) {
+            if ($(this).hasClass('panel-open') && window.innerWidth <= 600) {
+                // On small screens, close panel if clicking backdrop area (left 15%)
+                if (e.target === this && e.clientX < window.innerWidth * 0.15) {
+                    closePanel();
+                }
+            }
+        });
 
         // Handle sidepanel layout and permalink updates
         var observer = new MutationObserver(function() {
@@ -1405,9 +1524,29 @@ var SViewer = function() {
 
     // ------ Main ------------------------------------------------------------------------------------------
 
-    init();
+    this.init = init;
+    this.getMap = function() { return map; };
+    this.getView = function() { return view; };
+    this.getConfig = function() { return config; };
+    this.getState = function() { return state; };
+    }
 
+    // Create instance
+    var instance = new SViewer();
 
-};
+    // Expose configuration for external scripts (i18n.js, etc.)
+    window.hardConfig = hardConfig;
+    window.config = config;
+    window.state = state;
+    // Note: do NOT overwrite window.customConfig - it may have been set by embed.js or host page
+    // window.customConfig was already set before sviewer.js loaded
 
-$(document).ready(SViewer);
+    return instance;
+})();
+
+// Auto-initialize on document ready
+$(document).ready(function() {
+    if (window.SViewerApp && window.SViewerApp.init) {
+        window.SViewerApp.init();
+    }
+});
