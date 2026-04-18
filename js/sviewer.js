@@ -163,7 +163,7 @@ window.SViewerApp = (function() {
         function getMetadata(self) {
             var parser = new ol.format.WMSCapabilities();
             var capabilitiesUrl = ajaxURL(self.options.wmsurl_ns + '?SERVICE=WMS&REQUEST=GetCapabilities');
-            console.log('Loading capabilities from:', capabilitiesUrl, 'for layer:', self.options.layername);
+            console.log('Loading capabilities from:', capabilitiesUrl, 'for layer:', self.options.nslayername);
 
             $.ajax({
                 url: capabilitiesUrl,
@@ -175,12 +175,15 @@ window.SViewerApp = (function() {
                     console.log('Capabilities loaded, version:', capabilities.version);
 
                     // searching for the layer in the capabilities
+                    // Workspace virtual service (/geoserver/<ns>/wms) returns names without namespace prefix,
+                    // global endpoint (/geoserver/wms) returns names with namespace prefix.
+                    // Match either form for robustness.
                     if (capabilities.Capability && capabilities.Capability.Layer && capabilities.Capability.Layer.Layer) {
                         $.each(capabilities.Capability.Layer.Layer, function() {
                             console.log('Found layer in capabilities:', this.Name);
-                            if (this.Name === self.options.nslayername) {
+                            if (this.Name === self.options.nslayername || this.Name === self.options.layername) {
                                 mdLayer = this;
-                                console.log('Matched layer:', self.options.nslayername);
+                                console.log('Matched layer:', this.Name);
                             }
                         });
                     } else {
@@ -247,7 +250,7 @@ window.SViewerApp = (function() {
                         $('#legend').append(html.join(''));
                         console.log('Legend appended to DOM');
                     } else {
-                        console.warn('Layer not found in capabilities:', self.options.layername);
+                        console.warn('Layer not found in capabilities:', self.options.nslayername);
                     }
                 },
                 error: function(xhr, status, error) {
