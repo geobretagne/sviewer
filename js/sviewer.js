@@ -13,7 +13,12 @@ window.SViewerApp = (function() {
     var config = {};
     var state = {};
     var customConfig = window.customConfig || {};
-    var hardConfig = {
+
+    // Ensure hardConfig exists (created by embed.js before i18n.js loaded)
+    window.hardConfig = window.hardConfig || {};
+
+    // Merge default values while preserving i18n and customConfig properties
+    $.extend(window.hardConfig, {
         title: 'geOrchestra mobile',
         geOrchestraBaseUrl: 'https://geobretagne.fr/',
         projcode: 'EPSG:3857',
@@ -28,10 +33,9 @@ window.SViewerApp = (function() {
                   source: new ol.source.OSM()
             })
         ]
-    };
+    });
 
-    // Expose globally for i18n.js (must happen early, before i18n.js loads)
-    window.hardConfig = hardConfig;
+    var hardConfig = window.hardConfig;
 
     var svSpinner = {
         show: function() {
