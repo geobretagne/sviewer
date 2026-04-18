@@ -59,7 +59,7 @@ Cela ouvre sViewer centré sur les coordonnées indiquées et avec un titre pers
 **Avantages :**
 - Très simple à utiliser
 - Partage facile par lien web
-- Code QR généré automatiquement
+- Code QR accessible via le panneau de partage
 - Les paramètres sont mémorisés dans le permalink
 
 
@@ -184,9 +184,9 @@ https://geobretagne.fr/sviewer/?layers=geor:sdi&s=1
 
 #### Paramètres d'affichage et partage
 
-**`qr`** — Afficher le code QR au démarrage
+**`qr`** — Ouvrir la fenêtre code QR au démarrage
 
-Affiche automatiquement le code QR du permalink. Pratique pour un utilisateur sur mobile qui souhaite scanner rapidement.
+Ouvre automatiquement la modale contenant le code QR du permalink. Pratique pour un utilisateur sur mobile qui souhaite scanner rapidement.
 
 ```
 https://geobretagne.fr/sviewer/?x=-366959&y=2951352&z=5&qr=1

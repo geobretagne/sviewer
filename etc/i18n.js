@@ -37,7 +37,8 @@ $.extend(hardConfig, {
             'Search place': 'Find a place',
             'Search place/feature': 'Find a place or feature',
             'share on ' : 'Share on ',
-            'Edit with geOrchestra': 'Edit map with geOrchestra'
+            'Edit with geOrchestra': 'Edit map with geOrchestra',
+            'QR code': 'QR code'
         },
         fr: {
             'geOrchestra mobile': 'geOrchestra mobile',
@@ -76,7 +77,8 @@ $.extend(hardConfig, {
             'Search place': 'Trouver un lieu',
             'Search place/feature': 'Trouver un lieu ou un objet',
             'share on ' : 'partager sur ',
-            'Edit with geOrchestra': 'éditer carte avec geOrchestra'
+            'Edit with geOrchestra': 'éditer carte avec geOrchestra',
+            'QR code': 'code QR'
         },
         es: {
             'geOrchestra mobile': 'geOrchestra móvil',
@@ -115,7 +117,8 @@ $.extend(hardConfig, {
             'Search place': 'Encontrar un lugar',
             'Search place/feature': 'Encontrar lugar u objeto',
             'share on ' : 'Compartir en ',
-            'Edit with geOrchestra': 'Editar mapa con geOrchestra'
+            'Edit with geOrchestra': 'Editar mapa con geOrchestra',
+            'QR code': 'código QR'
         },
         de: {
             'geOrchestra mobile': 'geOrchestra mobile',
@@ -152,7 +155,8 @@ $.extend(hardConfig, {
             'Permalink': 'Permalink',
             'Permalink to this map': 'Permanenter link zur Karte',
             'share on ' : 'teilen',
-            'Edit with geOrchestra': 'Karte mittels georchestra ändern'
+            'Edit with geOrchestra': 'Karte mittels georchestra ändern',
+            'QR code': 'QR-Code'
         }
     }
 });

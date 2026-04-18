@@ -610,21 +610,22 @@ button, [role="button"], input[type="submit"], input[type="button"] {
 
 /* WebComponent modal styling */
 .sv-scope .modal {
-    display: flex !important;
-    z-index: 1070 !important;
+    z-index: 9100 !important;
 }
 
 .sv-scope .modal.show {
+    display: flex !important;
     opacity: 1 !important;
 }
 
 .sv-scope .modal-backdrop {
-    z-index: 1060 !important;
+    z-index: 9090 !important;
     background-color: rgba(0, 0, 0, 0.5);
 }
 
 .sv-scope .modal-dialog {
-    z-index: 1071 !important;
+    z-index: 9101 !important;
+    margin: auto;
 }
 
 .sv-scope .modal-content {

@@ -523,24 +523,6 @@ window.SViewerApp = (function() {
             permalinkQuery = window.location.origin + window.location.pathname + "?" + $.param(linkParams);
 
             $('#georchestraForm').attr('action', config.geOrchestraBaseUrl + 'mapfishapp/');
-            if ($('#qrcode').css("visibility")==="visible") {
-                $('#qrcode').empty();
-                loadQRCodeLibrary().then(function() {
-                    QRCode.toDataURL(permalinkQuery, {
-                        errorCorrectionLevel: 'L',
-                        type: 'image/webp',
-                        quality: 0.95,
-                        margin: 1,
-                        width: 200,
-                        color: {
-                            dark: '#000000',
-                            light: '#ffffff'
-                        }
-                    }).then(function(dataUrl) {
-                        $('#qrcode').html('<img src="' + dataUrl + '" alt="QR Code" style="max-width: 100%; height: auto;">');
-                    });
-                });
-            }
             $('#permalink').prop('href',permalinkQuery);
         }
     }
@@ -1406,7 +1388,7 @@ window.SViewerApp = (function() {
         // opens permalink tab if required
         if (qs.qr) {
             setPermalink();
-            togglePanel('share');
+            $('#qrcodeBtn').trigger('click');
         }
 
         // map events
@@ -1449,7 +1431,28 @@ window.SViewerApp = (function() {
         $(document).on('click', '.webcomponent-btn', function() {
             var embedCode = generateEmbedCode();
             $('#embedCodeTextarea').val(embedCode);
+            closePanel();
             svModal.open('#webcomponent');
+        });
+
+        // QR code button — close share panel and show QR in modal
+        $(document).on('click', '#qrcodeBtn', function() {
+            var href = $('#permalink').prop('href');
+            $('#qrcodeDisplay').empty();
+            loadQRCodeLibrary().then(function() {
+                QRCode.toDataURL(href, {
+                    errorCorrectionLevel: 'L',
+                    type: 'image/webp',
+                    quality: 0.95,
+                    margin: 1,
+                    width: 240,
+                    color: { dark: '#000000', light: '#ffffff' }
+                }).then(function(dataUrl) {
+                    $('#qrcodeDisplay').html('<img src="' + dataUrl + '" alt="QR Code" style="max-width: 100%; height: auto;">');
+                });
+            });
+            closePanel();
+            svModal.open('#qrcode');
         });
 
         // Copy embed code button

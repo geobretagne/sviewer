@@ -181,8 +181,10 @@
                             <div class="mb-3">
                                 <a id="permalink" class="i18n btn btn-secondary w-100" data-ajax="false" href="#" title="Permalink to this map">Permalink</a>
                             </div>
-                            <div class="text-center">
-                                <div id="qrcode"></div>
+                            <div class="mb-3">
+                                <button type="button" id="qrcodeBtn" class="i18n btn btn-secondary w-100" title="QR code">
+                                    <i class="bi bi-qr-code" aria-hidden="true"></i> QR code
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -255,6 +257,20 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="qrcodeModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="qrcodeModalTitle" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title i18n" id="qrcodeModalTitle" title="QR code">QR code</h3>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <div id="qrcodeDisplay"></div>
                         </div>
                     </div>
                 </div>

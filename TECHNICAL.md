@@ -168,13 +168,15 @@ Active la barre de recherche de lieux au démarrage.
 
 #### `qr` (QR code)
 
-Affiche automatiquement le code QR du permalink au démarrage.
+Ouvre automatiquement la modale affichant le code QR du permalink au démarrage.
 
 ```
 ?qr=1
 ```
 
 **Cas d'usage:** Utilisateur sur mobile veut partager instantanément la vue.
+
+**Note:** Le QR code est disponible à tout moment via le bouton « QR code » du panneau de partage.
 
 #### `c` (configuration)
 
@@ -244,7 +246,7 @@ Tableau de toutes les options (équivalent aux paramètres KVP en mode simple) :
 | `kml` | `string` | `''` | URL d'un fichier KML |
 | `q` | `boolean` | `false` | Activer requête GetFeatureInfo au démarrage |
 | `s` | `boolean` | `false` | Afficher la barre de recherche |
-| `qr` | `boolean` | `false` | Afficher le code QR |
+| `qr` | `boolean` | `false` | Ouvrir la modale code QR au démarrage |
 | `lang` | `string` | `'fr'` | Langue (fr, en, es, de, ru) |
 | `geOrchestraBaseUrl` | `string` | `'https://geobretagne.fr/'` | URL de base geOrchestra |
 | `maxFeatures` | `number` | `10` | Nombre max de résultats GetFeatureInfo |
