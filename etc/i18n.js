@@ -1,6 +1,43 @@
 $.extend(hardConfig, {
     i18n: {
         en: {
+            'geOrchestra mobile': 'geOrchestra mobile',
+
+            'Query': 'Query',
+            'Legend': 'Legend',
+            'Locate': 'Locate',
+            'Map': 'Map',
+            'initial view': 'Initial view',
+            'zoom +': 'Zoom +',
+            'zoom -': 'Zoom -',
+            'background': 'Background',
+            'Close': 'Close',
+
+            'Query the map': 'Query the map',
+            'Query results :': 'Results:',
+            'no item found': 'No item found',
+            'query failed': 'Query failed',
+
+            'metadata': 'View metadata',
+
+            'Results are off map': 'Results are off map',
+            'No result': 'No result',
+            'Geolocation failed': 'Geolocation failed',
+            'searching...': 'searching...',
+
+            'Where am I ?': 'Where am I ?',
+            'estimating device position ...': 'Estimating device position...',
+            'device position not available on this device': 'Device position not available on this device',
+            'device position error': 'Device position error',
+
+            'Title': 'Map title',
+            'change title': 'Change title',
+            'Permalink': 'Permalink',
+            'Permalink to this map': 'Permalink to this map',
+            'Search place': 'Find a place',
+            'Search place/feature': 'Find a place or feature',
+            'share on ' : 'Share on ',
+            'Edit with geOrchestra': 'Edit map with geOrchestra'
         },
         fr: {
             'geOrchestra mobile': 'geOrchestra mobile',
@@ -44,37 +81,41 @@ $.extend(hardConfig, {
         es: {
             'geOrchestra mobile': 'geOrchestra móvil',
 
+            'Query': 'Consultar',
             'Legend': 'Leyenda',
             'Locate': 'Encontrar',
             'Map': 'Mapa',
             'initial view': 'Vista inicial',
+            'zoom +': 'Zoom +',
+            'zoom -': 'Zoom -',
             'background': 'fondo de plano',
             'Close': 'Cerrar',
 
+            'Query the map': 'Consultar el mapa',
+            'Query results :': 'Resultados:',
+            'no item found': 'No se encontraron elementos',
+            'query failed': 'La consulta falló',
+
+            'metadata': 'Ver metadatos',
+
             'Results are off map': 'Los resultados están fuera de mapa',
-            'No result': 'no resultados',
+            'No result': 'Sin resultados',
             'Geolocation failed': 'La geolocalización ha fracasado',
             'searching...': 'búsqueda...',
 
+            'Where am I ?': '¿Dónde estoy?',
+            'estimating device position ...': 'Estimando la posición del dispositivo...',
+            'device position not available on this device': 'La posición del dispositivo no está disponible',
+            'device position error': 'Error de posición del dispositivo',
+
+            'Title': 'Título del mapa',
+            'change title': 'Cambiar título',
             'Permalink': 'Vínculo permanente',
-            'Search place': 'Entrar dirección o lugar'
-        },
-        ru: {
-            'geOrchestra mobile': 'мобильная версия программы geOrchestra',
-
-            'Legend': 'экспликация',
-            'Locate': 'найти',
-            'Share this map': 'делиться',
-            'initial view': 'изначальный вид',
-            'background': 'плановый фон',
-            'Close': 'закрыть',
-
-            'Results are off map': 'результаты вне карты',
-            'No result': 'Результаты отсутствуют ou bien результатов нет',
-            'Geolocation failed': 'Геолокализация провалилась',
-            'searching...': 'поиск',
-            'Permalink': 'постоянная ссылка',
-            'Search place': 'внести адрес или место'
+            'Permalink to this map': 'Vínculo permanente a este mapa',
+            'Search place': 'Encontrar un lugar',
+            'Search place/feature': 'Encontrar lugar u objeto',
+            'share on ' : 'Compartir en ',
+            'Edit with geOrchestra': 'Editar mapa con geOrchestra'
         },
         de: {
             'geOrchestra mobile': 'geOrchestra mobile',
@@ -96,10 +137,16 @@ $.extend(hardConfig, {
             'metadata': 'Metadaten',
             'Results are off map': 'Ergebnisse sind außerhalb der Karte',
             'No result': 'kein Ergebnis',
-            'Geolocation failed': 'Geolocation failed',
+            'Geolocation failed': 'Geolokalisierung fehlgeschlagen',
             'searching...': 'suche...',
 
+            'Where am I ?': 'Wo bin ich?',
+            'estimating device position ...': 'Geräteposition wird geschätzt...',
+            'device position not available on this device': 'Geräteposition auf diesem Gerät nicht verfügbar',
+            'device position error': 'Fehler bei der Geräteposition',
+
             'Search place': 'Adresse eingeben',
+            'Search place/feature': 'Ort oder Objekt suchen',
             'Title': 'Kartentitel',
             'change title': 'Titel ändern',
             'Permalink': 'Permalink',
