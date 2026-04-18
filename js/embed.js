@@ -49,27 +49,28 @@
         });
     }
 
-    // Load all required dependencies
+    // Load all required dependencies in correct order
     function loadDependencies() {
         var baseUrl = config.baseUrl;
-        var resources = [
-            { url: baseUrl + 'lib/jquery/jquery-1.12.4.min.js', type: 'js' },
-            { url: baseUrl + 'build/proj4.js', type: 'js' },
-            { url: baseUrl + 'build/ol.css', type: 'css' },
-            { url: baseUrl + 'build/ol.js', type: 'js' },
-            { url: baseUrl + 'lib/bootstrap/bootstrap-scoped.min.css', type: 'css' },
-            { url: baseUrl + 'lib/bootstrap/bootstrap.bundle.min.js', type: 'js' },
-            { url: baseUrl + 'lib/bootstrap-icons/bootstrap-icons.min.css', type: 'css' },
-            { url: baseUrl + 'css/sviewer.css', type: 'css' }
-        ];
 
-        return Promise.all(resources.map(function(resource) {
-            return loadResource(resource.url, resource.type);
-        }));
+        // Load in sequence: jQuery → proj4 → OL (CSS+JS) → Bootstrap (CSS+JS) → BootstrapIcons CSS
+        return loadResource(baseUrl + 'lib/jquery/jquery-1.12.4.min.js', 'js')
+            .then(function() { return loadResource(baseUrl + 'build/proj4.js', 'js'); })
+            .then(function() { return loadResource(baseUrl + 'build/ol.css', 'css'); })
+            .then(function() { return loadResource(baseUrl + 'build/ol.js', 'js'); })
+            .then(function() { return loadResource(baseUrl + 'lib/bootstrap/bootstrap-scoped.min.css', 'css'); })
+            .then(function() { return loadResource(baseUrl + 'lib/bootstrap/bootstrap.bundle.min.js', 'js'); })
+            .then(function() { return loadResource(baseUrl + 'lib/bootstrap-icons/bootstrap-icons.min.css', 'css'); })
+            .then(function() { return loadResource(baseUrl + 'etc/customConfig.js', 'js'); })
+            .then(function() { return loadResource(baseUrl + 'css/sviewer.css', 'css'); });
     }
 
     // Load i18n first (before sviewer.js initializes)
     function loadI18nScript() {
+        // Ensure hardConfig exists before i18n.js tries to extend it
+        if (!window.hardConfig) {
+            window.hardConfig = window.customConfig || {};
+        }
         return new Promise(function(resolve, reject) {
             var script = document.createElement('script');
             script.src = config.baseUrl + 'etc/i18n.js';
