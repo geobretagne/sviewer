@@ -53,16 +53,21 @@
     function loadDependencies() {
         var baseUrl = config.baseUrl;
 
-        // Load in sequence: jQuery → proj4 → OL (CSS+JS) → Bootstrap (CSS+JS) → BootstrapIcons CSS
+        // Load CSS in parallel immediately, JS in sequence for dependencies
+        var cssPromises = [
+            loadResource(baseUrl + 'build/ol.css', 'css'),
+            loadResource(baseUrl + 'lib/bootstrap/bootstrap-scoped.min.css', 'css'),
+            loadResource(baseUrl + 'lib/bootstrap-icons/bootstrap-icons.min.css', 'css'),
+            loadResource(baseUrl + 'css/sviewer.css', 'css')
+        ];
+
+        // Load JS in sequence: jQuery → proj4 → OL.js → Bootstrap.js → customConfig.js
         return loadResource(baseUrl + 'lib/jquery/jquery-1.12.4.min.js', 'js')
             .then(function() { return loadResource(baseUrl + 'build/proj4.js', 'js'); })
-            .then(function() { return loadResource(baseUrl + 'build/ol.css', 'css'); })
             .then(function() { return loadResource(baseUrl + 'build/ol.js', 'js'); })
-            .then(function() { return loadResource(baseUrl + 'lib/bootstrap/bootstrap-scoped.min.css', 'css'); })
             .then(function() { return loadResource(baseUrl + 'lib/bootstrap/bootstrap.bundle.min.js', 'js'); })
-            .then(function() { return loadResource(baseUrl + 'lib/bootstrap-icons/bootstrap-icons.min.css', 'css'); })
             .then(function() { return loadResource(baseUrl + 'etc/customConfig.js', 'js'); })
-            .then(function() { return loadResource(baseUrl + 'css/sviewer.css', 'css'); });
+            .then(function() { return Promise.all(cssPromises); });
     }
 
     // Load i18n first (before sviewer.js initializes)
