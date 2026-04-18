@@ -46,11 +46,25 @@ window.SViewerApp = (function() {
         }
     };
 
+    // Toggle inert on modal show/hide so focus is never trapped behind
+    // an inert/aria-hidden ancestor (WCAG a11y requirement).
+    function bindModalInert(modalEl) {
+        if (modalEl.dataset.svInertBound) return;
+        modalEl.dataset.svInertBound = '1';
+        modalEl.addEventListener('show.bs.modal', function() {
+            modalEl.removeAttribute('inert');
+        });
+        modalEl.addEventListener('hidden.bs.modal', function() {
+            modalEl.setAttribute('inert', '');
+        });
+    }
+
     var svModal = {
         open: function(id) {
             var modalId = id.replace(/^#/, '') + 'Modal';
             var modalEl = document.getElementById(modalId);
             if (modalEl) {
+                bindModalInert(modalEl);
                 new bootstrap.Modal(modalEl).show();
             }
         },
@@ -1078,9 +1092,6 @@ window.SViewerApp = (function() {
         if ($("#shareSetTitle").val()==='') {
             $("#shareSetTitle").val(config.title);
         }
-        if ($("#modalSetTitle").val()==='') {
-            $("#modalSetTitle").val(config.title);
-        }
     }
 
     // updates title on keypress
@@ -1419,8 +1430,8 @@ window.SViewerApp = (function() {
         });
 
         // set title dialog (both panel and modal)
-        $('#shareSetTitle, #modalSetTitle').keyup(onTitle);
-        $('#shareSetTitle, #modalSetTitle').blur(setPermalink);
+        $('#shareSetTitle').keyup(onTitle);
+        $('#shareSetTitle').blur(setPermalink);
 
         // sendto form
         $('#georchestraForm').submit(function(e) {

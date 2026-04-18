@@ -214,7 +214,7 @@
                 </div>
             </div>
 
-            <div id="panelSLDModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="sldModalTitle" aria-hidden="true">
+            <div id="panelSLDModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="sldModalTitle" inert>
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -228,41 +228,7 @@
                 </div>
             </div>
 
-            <div id="panelShareModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="shareModalTitle" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3 class="modal-title i18n" id="shareModalTitle">Map</h3>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label for="modalSetTitle" class="form-label i18n">Title</label>
-                                <input type="text" name="setTitle" id="modalSetTitle" class="form-control i18n" value="" placeholder="change title">
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <form id="georchestraForm" target="_blank" method="post" action="">
-                                        <input type="hidden" id="georchestraFormData" name="data" value="">
-                                        <input type="submit" class="i18n btn btn-primary w-100 mb-3" title="Edit with Mapfishapp" value="Mapfishapp">
-                                    </form>
-                                    <button type="button" class="webcomponent-btn btn btn-info w-100" title="Get embed code">
-                                        <i class="bi bi-code" aria-hidden="true"></i> WebComponent
-                                    </button>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="sv-permalink-wrap">
-                                        <a id="permalink" class="i18n btn btn-secondary d-block mb-3" data-ajax="false" href="#" title="Permalink to this map">Permalink</a>
-                                        <div id="qrcode"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="qrcodeModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="qrcodeModalTitle" aria-hidden="true">
+            <div id="qrcodeModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="qrcodeModalTitle" inert>
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -276,7 +242,7 @@
                 </div>
             </div>
 
-            <div id="webcomponentModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="webcomponentModalTitle" aria-hidden="true">
+            <div id="webcomponentModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="webcomponentModalTitle" inert>
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
