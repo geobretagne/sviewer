@@ -36,8 +36,8 @@ $.extend(hardConfig, {
             'Permalink to this map': 'Permalink to this map',
             'Search place': 'Find a place',
             'Search place/feature': 'Find a place or feature',
+            'Address and/or city': 'Address and/or city',
             'share on ' : 'Share on ',
-            'Edit with geOrchestra': 'Edit map with geOrchestra',
             'QR code': 'QR code'
         },
         fr: {
@@ -76,8 +76,8 @@ $.extend(hardConfig, {
             'Permalink to this map': 'Lien permanent vers cette carte',
             'Search place': 'Trouver un lieu',
             'Search place/feature': 'Trouver un lieu ou un objet',
+            'Address and/or city': 'Adresse et/ou commune',
             'share on ' : 'partager sur ',
-            'Edit with geOrchestra': 'éditer carte avec geOrchestra',
             'QR code': 'code QR'
         },
         es: {
@@ -116,8 +116,8 @@ $.extend(hardConfig, {
             'Permalink to this map': 'Vínculo permanente a este mapa',
             'Search place': 'Encontrar un lugar',
             'Search place/feature': 'Encontrar lugar u objeto',
+            'Address and/or city': 'Dirección y/o ciudad',
             'share on ' : 'Compartir en ',
-            'Edit with geOrchestra': 'Editar mapa con geOrchestra',
             'QR code': 'código QR'
         },
         de: {
@@ -150,12 +150,12 @@ $.extend(hardConfig, {
 
             'Search place': 'Adresse eingeben',
             'Search place/feature': 'Ort oder Objekt suchen',
+            'Address and/or city': 'Adresse und/oder Stadt',
             'Title': 'Kartentitel',
             'change title': 'Titel ändern',
             'Permalink': 'Permalink',
             'Permalink to this map': 'Permanenter link zur Karte',
             'share on ' : 'teilen',
-            'Edit with geOrchestra': 'Karte mittels georchestra ändern',
             'QR code': 'QR-Code'
         }
     }

@@ -1,13 +1,60 @@
 :root {
-    --btn-bg: #3a3a3a;
-    --btn-bg-hover: #797979;
-    --btn-border: #aaa;
-    --btn-border-hover: #888;
-    --btn-text: #fff;
-    --btn-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-    --btn-shadow-hover: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
-    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    /* neutral scale (zinc-like) */
+    --sv-surface: #ffffff;
+    --sv-surface-muted: #f4f4f5;
+    --sv-surface-glass: rgba(255, 255, 255, 0.78);
+    --sv-border: #e4e4e7;
+    --sv-fg: #18181b;
+    --sv-fg-muted: #52525b;
+
+    /* dark panel surface — used for side panels (share, legend, locate) */
+    --sv-panel-surface-dark: rgba(24, 24, 27, 0.82);
+    --sv-panel-fg-dark: #fafafa;
+    --sv-panel-fg-muted-dark: #a1a1aa;
+    --sv-panel-border-dark: rgba(255, 255, 255, 0.14);
+    --sv-panel-input-bg-dark: rgba(255, 255, 255, 0.08);
+    --sv-panel-input-bg-dark-hover: rgba(255, 255, 255, 0.12);
+
+    /* dark interactive (floating controls over the map) */
+    --sv-btn-bg: #18181b;
+    --sv-btn-bg-hover: #27272a;
+    --sv-btn-bg-glass: rgba(24, 24, 27, 0.85);
+    --sv-btn-bg-glass-hover: rgba(39, 39, 42, 0.92);
+    --sv-btn-fg: #fafafa;
+
+    /* accent */
+    --sv-accent: #2563eb;
+    --sv-accent-ring: rgba(37, 99, 235, 0.35);
+
+    /* radii */
+    --sv-radius-sm: 6px;
+    --sv-radius: 8px;
+    --sv-radius-lg: 12px;
+
+    /* shadows — single-layer, subtle */
+    --sv-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --sv-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --sv-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
+
+    /* motion */
+    --sv-duration: 150ms;
+    --sv-ease: cubic-bezier(0.2, 0, 0, 1);
+    --sv-transition: background-color var(--sv-duration) var(--sv-ease),
+                     border-color var(--sv-duration) var(--sv-ease),
+                     color var(--sv-duration) var(--sv-ease),
+                     box-shadow var(--sv-duration) var(--sv-ease);
+
+    /* legacy aliases — keep existing rules working without a rename pass */
+    --btn-bg: var(--sv-btn-bg);
+    --btn-bg-hover: var(--sv-btn-bg-hover);
+    --btn-border: transparent;
+    --btn-border-hover: transparent;
+    --btn-text: var(--sv-btn-fg);
+    --btn-shadow: var(--sv-shadow-sm);
+    --btn-shadow-hover: var(--sv-shadow);
+    --transition: var(--sv-transition);
+
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
 }
 
 html, body {
@@ -34,35 +81,37 @@ body {
 
 /* Bootstrap button overrides */
 .btn-dark {
-    background-color: var(--btn-bg);
-    border-color: var(--btn-border);
-    color: var(--btn-text);
-    transition: var(--transition);
-    box-shadow: var(--btn-shadow);
+    background-color: var(--sv-btn-bg);
+    border-color: transparent;
+    color: var(--sv-btn-fg);
+    border-radius: var(--sv-radius);
+    transition: var(--sv-transition);
+    box-shadow: var(--sv-shadow-sm);
 }
 
 .btn-dark:hover {
-    background-color: var(--btn-bg-hover);
-    border-color: var(--btn-border-hover);
-    box-shadow: var(--btn-shadow-hover);
-    transform: translateY(-2px);
+    background-color: var(--sv-btn-bg-hover);
+    box-shadow: var(--sv-shadow);
 }
 
 .btn-dark:focus-visible {
-    outline: 2px solid #fff;
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: 0 0 0 2px var(--sv-surface), 0 0 0 4px var(--sv-accent);
 }
 
 
 /* Overrides openlayers styles */
 .ol-control button {
     color: #fff;
-    background-color: #626161;
+    background-color: var(--sv-btn-bg-glass);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-radius: var(--sv-radius-sm);
 }
 
 .ol-control button:hover,
 .ol-control button:focus {
-    background-color: #888;
+    background-color: var(--sv-btn-bg-glass-hover);
 }
 
 .ol-attribution ul {
@@ -89,7 +138,7 @@ p.center {
 .sv-framemap {
     flex: 1;
     padding: 0px;
-    background: transparent url('images/bgpaper.jpg');
+    background-color: var(--sv-surface-muted);
     overflow: hidden;
     position: relative;
 }
@@ -111,32 +160,47 @@ p.center {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 6px;
-    border: 1px solid #fff;
+    border-radius: var(--sv-radius);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     font-size: 1rem;
     color: #fff;
-    transition: var(--transition);
+    background-color: var(--sv-btn-bg-glass);
+    backdrop-filter: blur(8px) saturate(140%);
+    -webkit-backdrop-filter: blur(8px) saturate(140%);
+    /* Inner dark edge anchors the silhouette over bright map tiles
+       (WCAG 1.4.11 non-text contrast), outer shadow adds lift. */
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+                0 1px 2px rgba(0, 0, 0, 0.25);
+    transition: var(--sv-transition);
 }
 
 .sv-map-btn:hover {
-    transform: translateY(-2px);
+    background-color: var(--sv-btn-bg-glass-hover);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+                0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .sv-map-btn:focus-visible {
-    outline: 2px solid #fff;
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95), 0 0 0 4px var(--sv-accent);
 }
 
 .sv-panel-toggle.active {
-    background-color: var(--btn-bg-hover);
-    border-color: var(--btn-border-hover);
-    box-shadow: var(--btn-shadow-hover), inset 0 0 4px rgba(0, 0, 0, 0.3);
+    background-color: rgba(255, 255, 255, 0.96);
+    border-color: rgba(255, 255, 255, 0.96);
+    color: var(--sv-btn-bg);
+}
+
+.sv-panel-toggle.active svg,
+.sv-panel-toggle.active i {
+    color: var(--sv-btn-bg);
+    fill: var(--sv-btn-bg);
+    stroke: var(--sv-btn-bg);
 }
 
 .sv-map-btn:focus,
 .sv-map-btn:active {
-    background-color: var(--btn-bg-hover);
-    border-color: var(--btn-border-hover);
+    background-color: var(--sv-btn-bg-glass-hover);
 }
 
 .sv-map-btn svg,
@@ -211,13 +275,13 @@ p.center {
 
 @media screen and (max-width: 600px) {
     .sv-map-btn {
-        width: clamp(32px, 8vw, 44px);
-        height: clamp(32px, 8vw, 44px);
-        font-size: clamp(0.6rem, 2vw, 1rem);
+        width: clamp(40px, 8vw, 44px);
+        height: clamp(40px, 8vw, 44px);
+        font-size: clamp(0.75rem, 2vw, 1rem);
     }
     #panelShareBtn {
-        width: clamp(32px, 8vw, 44px) !important;
-        height: clamp(32px, 8vw, 44px) !important;
+        width: clamp(40px, 8vw, 44px) !important;
+        height: clamp(40px, 8vw, 44px) !important;
         padding: 0 !important;
         min-width: unset !important;
     }
@@ -271,7 +335,7 @@ p.center {
     cursor: grabbing;
 }
 
-/* side panel */
+/* side panel — dark glass surface on top of the map */
 .sv-sidepanel {
     position: absolute;
     right: 0;
@@ -279,20 +343,32 @@ p.center {
     width: 0;
     height: auto;
     max-height: calc(100% - 60px);
-    background-color: #fff;
-    border-left: none;
-    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+    background-color: var(--sv-panel-surface-dark);
+    color: var(--sv-panel-fg-dark);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-left: 1px solid var(--sv-panel-border-dark);
+    box-shadow: -6px 0 18px rgba(0, 0, 0, 0.25);
     overflow: hidden;
-    transition: width var(--transition), box-shadow var(--transition);
+    transition: width var(--sv-duration) var(--sv-ease),
+                box-shadow var(--sv-duration) var(--sv-ease);
     z-index: 5000;
     display: flex;
     flex-direction: column;
-    border-radius: 0;
+    border-top-left-radius: var(--sv-radius-lg);
+    border-bottom-left-radius: var(--sv-radius-lg);
 }
 
 .sv-sidepanel.active {
     width: 450px;
-    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.2);
+    box-shadow: -10px 0 32px rgba(0, 0, 0, 0.35);
+}
+
+/* Safari < 14 / Firefox without backdrop-filter: fall back to opaque dark surface */
+@supports not (backdrop-filter: blur(1px)) {
+    .sv-sidepanel {
+        background-color: #18181b;
+    }
 }
 
 .sv-sidepanel-close {
@@ -305,8 +381,9 @@ p.center {
     font-size: 24px;
     cursor: pointer;
     z-index: 5001;
-    color: #333;
-    transition: var(--transition);
+    color: var(--sv-panel-fg-muted-dark);
+    border-radius: var(--sv-radius-sm);
+    transition: var(--sv-transition);
     padding: 8px;
     line-height: 1;
     min-width: 44px;
@@ -318,13 +395,14 @@ p.center {
 
 .sv-sidepanel-close:hover,
 .sv-sidepanel-close:focus {
-    color: #000;
-    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--sv-panel-fg-dark);
+    background-color: rgba(255, 255, 255, 0.10);
 }
 
 .sv-sidepanel-close:focus-visible {
-    outline: 2px solid #333;
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: 0 0 0 2px var(--sv-accent-ring);
+    border-radius: var(--sv-radius-sm);
 }
 
 .sv-sidepanel.active .sv-sidepanel-close {
@@ -342,11 +420,11 @@ p.center {
 .sv-panel-title {
     margin: 0 0 20px 0;
     padding-bottom: 12px;
-    border-bottom: 2px solid #e0e0e0;
+    border-bottom: 1px solid var(--sv-border);
     font-size: 1.125rem;
     font-weight: 600;
-    color: #212121;
-    letter-spacing: 0.01em;
+    color: var(--sv-fg);
+    letter-spacing: -0.01em;
 }
 
 .sv-panel-content {
@@ -368,20 +446,187 @@ p.center {
     gap: 12px;
 }
 
-.sv-panel-content .form-control {
+/* Form controls inside panels and modals — default light styling (used by modals) */
+.sv-panel-content .form-control,
+.sv-scope .modal .form-control {
     font-size: 14px;
     padding: 8px 12px;
+    background-color: var(--sv-surface);
+    color: var(--sv-fg);
+    border: 1px solid var(--sv-border);
+    border-radius: var(--sv-radius);
+    transition: var(--sv-transition);
 }
 
-.sv-panel-content .form-label {
+.sv-panel-content .form-control::placeholder,
+.sv-scope .modal .form-control::placeholder {
+    color: var(--sv-fg-muted);
+    opacity: 0.7;
+}
+
+.sv-panel-content .form-label,
+.sv-scope .modal .form-label {
     margin-bottom: 6px;
     font-weight: 500;
+    color: var(--sv-fg);
+    font-size: 0.875rem;
 }
 
-.sv-panel-content .btn {
+/* Dark sidepanel context — override for inputs/labels sitting over dark surface */
+.sv-sidepanel .form-control {
+    background-color: var(--sv-panel-input-bg-dark);
+    color: var(--sv-panel-fg-dark);
+    border-color: var(--sv-panel-border-dark);
+}
+
+.sv-sidepanel .form-control:hover {
+    background-color: var(--sv-panel-input-bg-dark-hover);
+}
+
+.sv-sidepanel .form-control:focus,
+.sv-sidepanel .form-control:focus-visible {
+    background-color: var(--sv-panel-input-bg-dark-hover);
+    border-color: var(--sv-accent);
+    color: var(--sv-panel-fg-dark);
+    box-shadow: 0 0 0 3px var(--sv-accent-ring);
+}
+
+.sv-sidepanel .form-control::placeholder {
+    color: var(--sv-panel-fg-muted-dark);
+    opacity: 0.9;
+}
+
+.sv-sidepanel .form-label {
+    color: var(--sv-panel-fg-dark);
+}
+
+/* Panel + modal buttons — flat, neutral by default */
+.sv-panel-content .btn,
+.sv-scope .modal .btn {
     padding: 10px 16px;
     font-weight: 500;
-    border-radius: 4px;
+    border: 1px solid transparent;
+    border-radius: var(--sv-radius);
+    box-shadow: none;
+    transition: var(--sv-transition);
+}
+
+.sv-panel-content .btn:focus-visible,
+.sv-scope .modal .btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--sv-accent-ring);
+}
+
+/* Primary action (Mapfishapp submit, copy-to-clipboard) */
+.sv-panel-content .btn-primary,
+.sv-scope .modal .btn-primary {
+    background-color: var(--sv-accent);
+    border-color: var(--sv-accent);
+    color: #fff;
+}
+
+.sv-panel-content .btn-primary:hover,
+.sv-scope .modal .btn-primary:hover,
+.sv-panel-content .btn-primary:focus,
+.sv-scope .modal .btn-primary:focus {
+    background-color: #1d4ed8;
+    border-color: #1d4ed8;
+    color: #fff;
+}
+
+/* Secondary / info / ad-hoc panel buttons — neutral outline (modals, light surfaces) */
+.sv-panel-content .btn-secondary,
+.sv-panel-content .btn-info,
+.sv-panel-content .webcomponent-btn,
+.sv-scope .modal .btn-secondary {
+    background-color: var(--sv-surface);
+    border-color: var(--sv-border);
+    color: var(--sv-fg);
+}
+
+.sv-panel-content .btn-secondary:hover,
+.sv-panel-content .btn-info:hover,
+.sv-panel-content .webcomponent-btn:hover,
+.sv-scope .modal .btn-secondary:hover {
+    background-color: var(--sv-surface-muted);
+    border-color: var(--sv-fg-muted);
+    color: var(--sv-fg);
+}
+
+/* Dark sidepanel context — secondary buttons adapt to dark surface */
+.sv-sidepanel .btn-secondary,
+.sv-sidepanel .btn-info,
+.sv-sidepanel .webcomponent-btn {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: var(--sv-panel-border-dark);
+    color: var(--sv-panel-fg-dark);
+}
+
+.sv-sidepanel .btn-secondary:hover,
+.sv-sidepanel .btn-info:hover,
+.sv-sidepanel .webcomponent-btn:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.28);
+    color: var(--sv-panel-fg-dark);
+}
+
+/* Pressed state — subtle inset */
+.sv-panel-content .btn:active,
+.sv-scope .modal .btn:active {
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Share panel layout — compact so an arbitrary number of share buttons fits */
+#sharePanel .sv-panel-content {
+    gap: 10px;
+}
+
+#sharePanel .sv-panel-content > .mb-3,
+#sharePanel .sv-panel-content > form.mb-3 {
+    margin-bottom: 0 !important;
+}
+
+/* Grid for secondary share actions (WebComponent, Permalink, QR, share-on-X...) */
+/* Double-class to outweigh `.sv-panel-content > div { display: flex }` */
+.sv-panel-content > .sv-share-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+}
+
+.sv-share-grid .btn {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 0.875rem;
+    min-height: 40px;
+}
+
+.sv-share-grid .btn i {
+    margin-right: 4px;
+}
+
+/* Query panel exception — geoserver HTML rendered in a light card */
+#queryPanel {
+    background-color: var(--sv-surface);
+    color: var(--sv-fg);
+    margin: 12px;
+    padding: 12px;
+    border-radius: var(--sv-radius);
+    box-shadow: var(--sv-shadow-sm);
+}
+
+#queryPanel a {
+    color: var(--sv-accent);
+}
+
+#queryPanel .sv-noitem {
+    color: var(--sv-fg-muted);
+}
+
+/* Small "copy" button floating over the embed textarea */
+#embedCodeCopyBtn {
+    padding: 6px 10px;
+    border-radius: var(--sv-radius-sm);
 }
 
 @media screen and (max-width: 600px) {
@@ -402,22 +647,30 @@ p.center {
 }
 
 .sv-map .ol-scale-line {
-    background-color: rgba(255,255,255,0.7);
+    background-color: var(--sv-surface-glass);
+    backdrop-filter: blur(6px) saturate(140%);
+    -webkit-backdrop-filter: blur(6px) saturate(140%);
+    border-radius: var(--sv-radius-sm);
+    padding: 2px 4px;
 }
 
 .sv-map .ol-scale-line-inner {
-    color: #333333;
-    border-color: #333333;
+    color: var(--sv-fg);
+    border-color: var(--sv-fg);
 }
 
 .sv-map .ol-attribution {
-    color: #333333;
-    background-color: rgba(255,255,255,0.7);
-    border-top-left-radius: 4px;
+    color: var(--sv-fg);
+    background-color: var(--sv-surface-glass);
+    backdrop-filter: blur(8px) saturate(140%);
+    -webkit-backdrop-filter: blur(8px) saturate(140%);
+    border-top-left-radius: var(--sv-radius);
+    font-size: 11px;
 }
 
 .sv-map .ol-attribution a {
     text-decoration: underline;
+    color: var(--sv-accent);
 }
 
 /* panels */
@@ -457,11 +710,11 @@ p.center {
     clear: both;
 }
 .sv-md {
-    border: 1px solid #cccccc;
-    border-radius: 4px;
-    padding: 6px;
-    margin-bottom: 6px;
-    background-color: #ffffff;
+    border: 1px solid var(--sv-border);
+    border-radius: var(--sv-radius);
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    background-color: var(--sv-surface);
 }
 .sv-md-title {
     font-size: x-small;
@@ -485,6 +738,29 @@ p.center {
 }
 .sv-md-meta {
     text-decoration: none;
+}
+
+/* Legend cards on the dark sidepanel — blend with the panel surface.
+   Keep a light backing strictly behind legend PNGs, since GetLegendGraphic
+   images often render dark strokes on a transparent background. */
+.sv-sidepanel .sv-md {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: var(--sv-panel-border-dark);
+    color: var(--sv-panel-fg-dark);
+}
+
+.sv-sidepanel .sv-md a,
+.sv-sidepanel .sv-md .sv-md-meta {
+    color: var(--sv-panel-fg-dark);
+}
+
+.sv-sidepanel .sv-md-attrib {
+    color: var(--sv-panel-fg-muted-dark);
+}
+
+.sv-sidepanel .sv-md-legend {
+    background-color: #ffffff;
+    border-radius: var(--sv-radius-sm);
 }
 
 /* share layout */
@@ -518,15 +794,10 @@ p.center {
 }
 
 /* Form accessibility improvements */
-.form-control:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
-    outline: none;
-}
-
+.form-control:focus,
 .form-control:focus-visible {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+    border-color: var(--sv-accent);
+    box-shadow: 0 0 0 3px var(--sv-accent-ring);
     outline: none;
 }
 
@@ -569,23 +840,29 @@ button, [role="button"], input[type="submit"], input[type="button"] {
 /* High contrast mode support */
 @media (prefers-contrast: more) {
     :root {
-        --btn-bg: #1a1a1a;
-        --btn-bg-hover: #4a4a4a;
+        --sv-btn-bg: #000000;
+        --sv-btn-bg-hover: #2a2a2a;
+        --sv-btn-bg-glass: #000000;
+        --sv-btn-bg-glass-hover: #2a2a2a;
+        --sv-border: #000000;
+        --sv-fg-muted: #000000;
+        --sv-surface-glass: #ffffff;
     }
 }
 
 
 /* List items styling for accessibility */
 .list-group {
-    border-radius: 4px;
-    border: 1px solid #dee2e6;
+    border-radius: var(--sv-radius);
+    border: 1px solid var(--sv-border);
+    overflow: hidden;
 }
 
 .list-group-item {
     padding: 12px 16px;
     cursor: pointer;
-    border-bottom: 1px solid #dee2e6;
-    transition: var(--transition);
+    border-bottom: 1px solid var(--sv-border);
+    transition: var(--sv-transition);
 }
 
 .list-group-item:last-child {
@@ -593,13 +870,13 @@ button, [role="button"], input[type="submit"], input[type="button"] {
 }
 
 .list-group-item:hover {
-    background-color: #f8f9fa;
+    background-color: var(--sv-surface-muted);
 }
 
 .list-group-item:focus-visible {
-    outline: 2px solid #0d6efd;
-    outline-offset: -2px;
-    background-color: #f8f9fa;
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--sv-accent);
+    background-color: var(--sv-surface-muted);
 }
 
 /* Error and status message styling */
@@ -629,28 +906,54 @@ button, [role="button"], input[type="submit"], input[type="button"] {
 }
 
 .sv-scope .modal-content {
-    background-color: #ffffff !important;
-    color: #000000 !important;
+    background-color: var(--sv-surface) !important;
+    color: var(--sv-fg) !important;
+    border: 1px solid var(--sv-border) !important;
+    border-radius: var(--sv-radius-lg) !important;
+    box-shadow: var(--sv-shadow-lg) !important;
 }
 
 .sv-scope .modal-header {
-    background-color: #f8f9fa !important;
-    border-bottom: 1px solid #dee2e6 !important;
+    background-color: var(--sv-surface) !important;
+    border-bottom: 1px solid var(--sv-border) !important;
+}
+
+/* Modal close (Bootstrap btn-close) — harmonised with panel close */
+.sv-scope .btn-close {
+    padding: 8px;
+    border-radius: var(--sv-radius-sm);
+    opacity: 0.6;
+    transition: var(--sv-transition);
+    /* Keep Bootstrap's built-in "×" SVG background; only tune the chrome */
+    box-shadow: none;
+}
+
+.sv-scope .btn-close:hover {
+    background-color: var(--sv-surface-muted);
+    opacity: 1;
+}
+
+.sv-scope .btn-close:focus,
+.sv-scope .btn-close:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--sv-accent-ring);
+    opacity: 1;
 }
 
 .sv-scope .modal-body {
-    background-color: #ffffff !important;
-    color: #000000 !important;
+    background-color: var(--sv-surface) !important;
+    color: var(--sv-fg) !important;
 }
 
 .sv-scope .modal-body p {
-    color: #666 !important;
+    color: var(--sv-fg-muted) !important;
 }
 
 .sv-scope textarea.form-control {
-    background-color: #f8f9fa !important;
-    color: #000000 !important;
-    border: 1px solid #dee2e6 !important;
+    background-color: var(--sv-surface-muted) !important;
+    color: var(--sv-fg) !important;
+    border: 1px solid var(--sv-border) !important;
+    border-radius: var(--sv-radius) !important;
 }
 
 .alert[role="alert"] {

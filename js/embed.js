@@ -169,21 +169,15 @@
                                 <label for="shareSetTitle" class="form-label i18n">Title</label>
                                 <input type="text" name="setTitle" id="shareSetTitle" class="form-control" value="" placeholder="change title">
                             </div>
-                            <form id="georchestraForm" target="_blank" method="post" action="" class="mb-3">
-                                <input type="hidden" id="georchestraFormData" name="data" value="">
-                                <input type="submit" class="i18n btn btn-primary w-100" title="Edit with Mapfishapp" value="Mapfishapp">
-                            </form>
-                            <div class="mb-3">
-                                <button type="button" class="webcomponent-btn btn btn-info w-100" title="Get embed code">
-                                    <i class="bi bi-code" aria-hidden="true"></i> WebComponent
+                            <div class="sv-share-grid">
+                                <a id="permalink" class="i18n btn btn-secondary" data-ajax="false" href="#" title="Permalink to this map">Permalink</a>
+                                <button type="button" id="qrcodeBtn" class="i18n btn btn-secondary" title="QR code">
+                                    <i class="bi bi-qr-code" aria-hidden="true"></i>
+                                    QR
                                 </button>
-                            </div>
-                            <div class="mb-3">
-                                <a id="permalink" class="i18n btn btn-secondary w-100" data-ajax="false" href="#" title="Permalink to this map">Permalink</a>
-                            </div>
-                            <div class="mb-3">
-                                <button type="button" id="qrcodeBtn" class="i18n btn btn-secondary w-100" title="QR code">
-                                    <i class="bi bi-qr-code" aria-hidden="true"></i> QR code
+                                <button type="button" class="webcomponent-btn btn btn-info" title="Get embed code">
+                                    <i class="bi bi-code" aria-hidden="true"></i>
+                                    HTML
                                 </button>
                             </div>
                         </div>
@@ -202,7 +196,7 @@
                             <form id="addressForm" method="post" action="#">
                                 <div class="mb-3">
                                     <label for="searchInput" class="form-label i18n">Address and/or city</label>
-                                    <input type="text" name="searchInput" id="searchInput" class="form-control" value="" title="Address and/or city" placeholder="ex: 10 rue Maurice Fabre, Rennes" autocomplete="off">
+                                    <input type="text" name="searchInput" id="searchInput" class="form-control i18n" value="" title="Address and/or city" placeholder="ex: 10 rue Maurice Fabre, Rennes" autocomplete="off">
                                 </div>
                             </form>
                             <div id="locateMsg" role="status" aria-live="polite" class="mb-3"></div>

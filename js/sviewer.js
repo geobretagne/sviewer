@@ -536,7 +536,6 @@ window.SViewerApp = (function() {
             permalinkHash = window.location.origin + window.location.pathname + "#" + $.param(linkParams);
             permalinkQuery = window.location.origin + window.location.pathname + "?" + $.param(linkParams);
 
-            $('#georchestraForm').attr('action', config.geOrchestraBaseUrl + 'mapfishapp/');
             $('#permalink').prop('href',permalinkQuery);
         }
     }
@@ -546,6 +545,7 @@ window.SViewerApp = (function() {
      * Call external viewers
      * @param viewerId {String} the external viewer codename
      */
+    /*
     function sendMapTo(viewerId) {
         // sendto : georchestra advanced viewer
         if (viewerId === "georchestra_viewer") {
@@ -565,6 +565,7 @@ window.SViewerApp = (function() {
             return false;
         }
     }
+    */
 
 
     /**
@@ -1314,9 +1315,18 @@ window.SViewerApp = (function() {
         view = new ol.View({
             projection: config.projection
         });
+        // Attribution must stay visible on desktop but fold into the "i" toggle
+        // on narrow containers (embed widgets, phones) where it would otherwise
+        // overlap the scale line.
+        var mapEl = document.getElementById('map');
+        var smallMap = !!(mapEl && mapEl.clientWidth && mapEl.clientWidth < 600);
         map = new ol.Map({
             controls: [
-                new ol.control.ScaleLine()
+                new ol.control.ScaleLine(),
+                new ol.control.Attribution({
+                    collapsible: smallMap,
+                    collapsed: smallMap
+                })
             ],
             // MouseWheelZoom defaults to focusWithTabindex in OL6+: zoom only works
             // when the map viewport has keyboard focus. Override with always so the
@@ -1434,9 +1444,11 @@ window.SViewerApp = (function() {
         $('#shareSetTitle').blur(setPermalink);
 
         // sendto form
+        /*
         $('#georchestraForm').submit(function(e) {
             sendMapTo('georchestra_viewer');
         });
+        */
 
         // WebComponent button (can appear in side panel or modal)
         $(document).on('click', '.webcomponent-btn', function() {
