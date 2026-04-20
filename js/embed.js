@@ -148,7 +148,7 @@
                 <div id="panelcontrols" class="sv-map-panels" role="group" aria-label="Side panels">
                     <button type="button" accesskey="m" id="panelShareBtn" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-panel="share" title="Map" aria-label="Map panel" aria-pressed="false">
                         <span id="panelShareBtnTitle">Map</span><span class="d-none">&nbsp;</span>
-                        <i class="bi bi-share" aria-hidden="true"></i>
+                        <i class="bi bi-share-fill" aria-hidden="true"></i>
                     </button>
                     <button type="button" accesskey="i" id="panelInfoBtn" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-panel="legend" title="Legend" aria-label="Legend panel" aria-pressed="false">
                         <i class="bi bi-list" aria-hidden="true"></i>
@@ -166,11 +166,14 @@
                     <div id="sharePanel" class="sv-panel-section" data-section="share" aria-label="Map sharing panel" style="display: none;">
                         <div class="sv-panel-content">
                             <div class="mb-3">
-                                <label for="shareSetTitle" class="form-label i18n">Title</label>
-                                <input type="text" name="setTitle" id="shareSetTitle" class="form-control" value="" placeholder="change title">
+                                <label for="shareSetTitle" class="form-label i18n">Edit title</label>
+                                <input type="text" name="setTitle" id="shareSetTitle" class="form-control" value="" placeholder="Edit title">
                             </div>
                             <div class="sv-share-grid">
-                                <a id="permalink" class="i18n btn btn-secondary" data-ajax="false" href="#" title="Permalink to this map">Permalink</a>
+                                <a id="permalink" class="i18n btn btn-secondary" data-ajax="false" href="#" title="Link to this map">
+                                    <i class="bi bi-link" aria-hidden="true"></i>
+                                    Link
+                                </a>
                                 <button type="button" id="qrcodeBtn" class="i18n btn btn-secondary" title="QR code">
                                     <i class="bi bi-qr-code" aria-hidden="true"></i>
                                     QR
@@ -195,8 +198,8 @@
                         <div class="sv-panel-content">
                             <form id="addressForm" method="post" action="#">
                                 <div class="mb-3">
-                                    <label for="searchInput" class="form-label i18n">Find place</label>
-                                    <input type="text" name="searchInput" id="searchInput" class="form-control i18n" value="" title="Find place" placeholder="ex: 10 rue Maurice Fabre, Rennes" autocomplete="off">
+                                    <label for="searchInput" class="form-label i18n">Search place</label>
+                                    <input type="text" name="searchInput" id="searchInput" class="form-control i18n" value="" title="Search place" placeholder="ex: 10 rue Maurice Fabre, Rennes" autocomplete="off">
                                 </div>
                             </form>
                             <div id="locateMsg" role="status" aria-live="polite" class="mb-3"></div>

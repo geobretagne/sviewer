@@ -242,17 +242,19 @@ window.SViewerApp = (function() {
                         html.push("<p class='sv-md-abstract'>" + escHTML(mdLayer.Abstract));
                         self.md.Abstract = mdLayer.Abstract;
 
+                        html.push("</p>");
+
                         // metadata
                         if (mdLayer.hasOwnProperty('MetadataURL')) {
                             $.each(mdLayer.MetadataURL, function() {
                                 if (this.Format === "text/html") {
-                                    html.push('&nbsp;<a target="_blank" class="sv-md-meta" href="' + escHTML(this.OnlineResource) + '">');
-                                    html.push(tr('metadata'));
-                                    html.push(" ... </a>");
+                                    html.push('<a target="_blank" class="sv-md-meta btn btn-sm btn-outline-secondary" href="' + escHTML(this.OnlineResource) + '">');
+                                    html.push('<i class="bi bi-info-circle" aria-hidden="true"></i> ');
+                                    html.push(tr('documentation'));
+                                    html.push('</a>');
                                 }
                             });
                         }
-                        html.push("</p>");
 
                         // legend
                         html.push('<img class="sv-md-legend" src="');
