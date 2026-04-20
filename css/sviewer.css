@@ -373,22 +373,19 @@ p.center {
 
 .sv-sidepanel-close {
     display: none;
-    position: absolute;
-    top: 10px;
-    right: 10px;
+    align-self: flex-end;
+    flex-shrink: 0;
     background: none;
     border: none;
     font-size: 24px;
     cursor: pointer;
-    z-index: 5001;
     color: var(--sv-panel-fg-muted-dark);
     border-radius: var(--sv-radius-sm);
     transition: var(--sv-transition);
-    padding: 8px;
+    padding: 4px 10px;
     line-height: 1;
     min-width: 44px;
-    min-height: 44px;
-    display: flex;
+    min-height: 36px;
     align-items: center;
     justify-content: center;
 }
@@ -406,7 +403,7 @@ p.center {
 }
 
 .sv-sidepanel.active .sv-sidepanel-close {
-    display: block;
+    display: flex;
 }
 
 .sv-panel-section {
@@ -447,9 +444,8 @@ p.center {
     gap: 12px;
 }
 
-/* Form controls inside panels and modals — default light styling (used by modals) */
-.sv-panel-content .form-control,
-.sv-scope .modal .form-control {
+/* Form controls inside panels — light base (dark panel overrides below) */
+.sv-panel-content .form-control {
     font-size: 14px;
     padding: 8px 12px;
     background-color: var(--sv-surface);
@@ -459,17 +455,38 @@ p.center {
     transition: var(--sv-transition);
 }
 
-.sv-panel-content .form-control::placeholder,
-.sv-scope .modal .form-control::placeholder {
+/* Form controls inside dark modals */
+.sv-scope .modal .form-control {
+    font-size: 14px;
+    padding: 8px 12px;
+    background-color: var(--sv-panel-input-bg-dark);
+    color: var(--sv-panel-fg-dark);
+    border: 1px solid var(--sv-panel-border-dark);
+    border-radius: var(--sv-radius);
+    transition: var(--sv-transition);
+}
+
+.sv-panel-content .form-control::placeholder {
     color: var(--sv-fg-muted);
     opacity: 0.7;
 }
 
-.sv-panel-content .form-label,
-.sv-scope .modal .form-label {
+.sv-scope .modal .form-control::placeholder {
+    color: var(--sv-panel-fg-muted-dark);
+    opacity: 0.7;
+}
+
+.sv-panel-content .form-label {
     margin-bottom: 6px;
     font-weight: 500;
     color: var(--sv-fg);
+    font-size: 0.875rem;
+}
+
+.sv-scope .modal .form-label {
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--sv-panel-fg-dark);
     font-size: 0.875rem;
 }
 
@@ -535,11 +552,10 @@ p.center {
     color: #fff;
 }
 
-/* Secondary / info / ad-hoc panel buttons — neutral outline (modals, light surfaces) */
+/* Secondary / info / ad-hoc panel buttons — neutral outline (light surfaces) */
 .sv-panel-content .btn-secondary,
 .sv-panel-content .btn-info,
-.sv-panel-content .webcomponent-btn,
-.sv-scope .modal .btn-secondary {
+.sv-panel-content .webcomponent-btn {
     background-color: var(--sv-surface);
     border-color: var(--sv-border);
     color: var(--sv-fg);
@@ -547,11 +563,23 @@ p.center {
 
 .sv-panel-content .btn-secondary:hover,
 .sv-panel-content .btn-info:hover,
-.sv-panel-content .webcomponent-btn:hover,
-.sv-scope .modal .btn-secondary:hover {
+.sv-panel-content .webcomponent-btn:hover {
     background-color: var(--sv-surface-muted);
     border-color: var(--sv-fg-muted);
     color: var(--sv-fg);
+}
+
+/* Dark modals — secondary buttons adapt to dark surface */
+.sv-scope .modal .btn-secondary {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: var(--sv-panel-border-dark);
+    color: var(--sv-panel-fg-dark);
+}
+
+.sv-scope .modal .btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.28);
+    color: var(--sv-panel-fg-dark);
 }
 
 /* Dark sidepanel context — secondary buttons adapt to dark surface */
@@ -740,6 +768,8 @@ p.center {
 .sv-md-legend {
     padding: 4px;
     max-width: 320px;
+    display: block;
+    margin: 0 auto;
 }
 .sv-md-meta {
     text-decoration: none;
@@ -942,30 +972,33 @@ button, [role="button"], input[type="submit"], input[type="button"] {
 }
 
 .sv-scope .modal-content {
-    background-color: var(--sv-surface) !important;
-    color: var(--sv-fg) !important;
-    border: 1px solid var(--sv-border) !important;
+    background-color: var(--sv-panel-surface-dark) !important;
+    color: var(--sv-panel-fg-dark) !important;
+    border: 1px solid var(--sv-panel-border-dark) !important;
     border-radius: var(--sv-radius-lg) !important;
     box-shadow: var(--sv-shadow-lg) !important;
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
 
 .sv-scope .modal-header {
-    background-color: var(--sv-surface) !important;
-    border-bottom: 1px solid var(--sv-border) !important;
+    background-color: transparent !important;
+    border-bottom: 1px solid var(--sv-panel-border-dark) !important;
+    color: var(--sv-panel-fg-dark) !important;
 }
 
-/* Modal close (Bootstrap btn-close) — harmonised with panel close */
+/* Modal close (Bootstrap btn-close) — white version for dark modal */
 .sv-scope .btn-close {
     padding: 8px;
     border-radius: var(--sv-radius-sm);
     opacity: 0.6;
     transition: var(--sv-transition);
-    /* Keep Bootstrap's built-in "×" SVG background; only tune the chrome */
+    filter: invert(1);
     box-shadow: none;
 }
 
 .sv-scope .btn-close:hover {
-    background-color: var(--sv-surface-muted);
+    background-color: rgba(255, 255, 255, 0.10);
     opacity: 1;
 }
 
@@ -977,18 +1010,18 @@ button, [role="button"], input[type="submit"], input[type="button"] {
 }
 
 .sv-scope .modal-body {
-    background-color: var(--sv-surface) !important;
-    color: var(--sv-fg) !important;
+    background-color: transparent !important;
+    color: var(--sv-panel-fg-dark) !important;
 }
 
 .sv-scope .modal-body p {
-    color: var(--sv-fg-muted) !important;
+    color: var(--sv-panel-fg-muted-dark) !important;
 }
 
 .sv-scope textarea.form-control {
-    background-color: var(--sv-surface-muted) !important;
-    color: var(--sv-fg) !important;
-    border: 1px solid var(--sv-border) !important;
+    background-color: var(--sv-panel-input-bg-dark) !important;
+    color: var(--sv-panel-fg-dark) !important;
+    border: 1px solid var(--sv-panel-border-dark) !important;
     border-radius: var(--sv-radius) !important;
 }
 
