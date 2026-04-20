@@ -360,7 +360,7 @@ p.center {
 }
 
 .sv-sidepanel.active {
-    width: 450px;
+    width: 460px;
     box-shadow: -10px 0 32px rgba(0, 0, 0, 0.35);
 }
 
@@ -433,6 +433,7 @@ p.center {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    border-radius: var(--sv-radius-sm);
 }
 
 .sv-panel-content > div {
@@ -607,16 +608,20 @@ p.center {
 
 /* Query panel exception — geoserver HTML rendered in a light card */
 #queryPanel {
-    background-color: var(--sv-surface);
     color: var(--sv-fg);
-    margin: 12px;
-    padding: 12px;
+    margin: 8px;
+    padding: 8px;
     border-radius: var(--sv-radius);
     box-shadow: var(--sv-shadow-sm);
 }
 
 #queryPanel a {
     color: var(--sv-accent);
+}
+
+#queryContent {
+    padding: 8px;
+    background-color: var(--sv-surface-glass);
 }
 
 #queryPanel .sv-noitem {
@@ -877,6 +882,37 @@ button, [role="button"], input[type="submit"], input[type="button"] {
     outline: none;
     box-shadow: inset 0 0 0 2px var(--sv-accent);
     background-color: var(--sv-surface-muted);
+}
+
+/* Dark sidepanel — search results list adapts to dark surface */
+.sv-sidepanel .list-group {
+    border: 1px solid var(--sv-panel-border-dark);
+}
+
+.sv-sidepanel .list-group-item {
+    background-color: var(--sv-panel-input-bg-dark);
+    color: var(--sv-panel-fg-dark);
+    border-bottom: 1px solid var(--sv-panel-border-dark);
+}
+
+.sv-sidepanel .list-group-item-secondary {
+    background-color: rgba(255, 255, 255, 0.04);
+    color: var(--sv-panel-fg-muted-dark);
+    font-size: 0.8em;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: default;
+    pointer-events: none;
+}
+
+.sv-sidepanel .list-group-item:hover {
+    background-color: var(--sv-panel-input-bg-dark-hover);
+    color: var(--sv-panel-fg-dark);
+}
+
+.sv-sidepanel .list-group-item:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--sv-accent);
+    background-color: var(--sv-panel-input-bg-dark-hover);
 }
 
 /* Error and status message styling */

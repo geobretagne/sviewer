@@ -526,7 +526,14 @@ window.SViewerApp = (function() {
      * API docs: https://geoservices.ign.fr/documentation/services/api-et-services-ogc/geocodage
      * @param text {String} free-text address query
      */
+    var openLsXhr = null;
+
     function openLsRequest(text) {
+
+        if (openLsXhr) {
+            openLsXhr.abort();
+            openLsXhr = null;
+        }
 
         function onGeocodeSuccess(response) {
             svSpinner.hide();
@@ -566,7 +573,8 @@ window.SViewerApp = (function() {
             }
         }
 
-        function onGeocodeFailure() {
+        function onGeocodeFailure(xhr) {
+            if (xhr.statusText === 'abort') { return; }
             $('#locateMsg').text(tr('Geolocation failed'));
             svSpinner.hide();
         }
@@ -580,7 +588,7 @@ window.SViewerApp = (function() {
                     'EPSG:4326'
                 );
                 // Direct call — Géoplateforme supports CORS natively, no proxy needed
-                $.ajax({
+                openLsXhr = $.ajax({
                     url: config.openLSGeocodeUrl,
                     type: 'GET',
                     dataType: 'json',
@@ -614,7 +622,7 @@ window.SViewerApp = (function() {
         $('#marker').show();
         view.animate({center: state.gficoord, duration: 1000});
         closePanel();
-        $('#querycontent').html('');
+        $('#queryContent').html('');
 
         // WMS getFeatureInfo
         $.each(config.layersQueryable, function() {
@@ -628,7 +636,7 @@ window.SViewerApp = (function() {
 
             // response order = layer order
             var domResponse =  $($('<div>').append($('<span class="sv-md-title">').text(this.md.title)));
-            $('#querycontent').append(domResponse);
+            $('#queryContent').append(domResponse);
             // ajax request
             svSpinner.show();
             $.ajax({
@@ -669,7 +677,7 @@ window.SViewerApp = (function() {
     function clearQuery() {
         $('#marker').hide('fast');
         closePanel();
-        $('#querycontent').text(tr('Query the map'));
+        $('#queryContent').text(tr('Query the map'));
         state.gficoord = null;
         state.gfiz = null;
         state.gfiok = false;
