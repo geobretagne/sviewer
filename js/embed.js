@@ -187,11 +187,15 @@
                     </div>
 
                     <div id="legendPanel" class="sv-panel-section" data-section="legend" aria-label="Map legend" style="display: none;">
+                        <label class="form-label i18n">Legend</label>
                         <div id="legend" class="sv-legend sv-panel-content"></div>
                     </div>
 
                     <div id="queryPanel" class="sv-panel-section" data-section="query" aria-label="Map query results" style="display: none;">
-                        <div id="querycontent" class="i18n sv-panel-content" role="status" aria-live="polite">Query the map</div>
+                        <div class="sv-panel-content">
+                            <label class="form-label i18n">Query the map</label>
+                            <div id="queryContent" class="sv-panel-content" role="status" aria-live="polite"></div>
+                        </div>
                     </div>
 
                     <div id="locatePanel" class="sv-panel-section" data-section="locate" aria-label="Location search panel" style="display: none;">
@@ -202,10 +206,10 @@
                                     <input type="text" name="searchInput" id="searchInput" class="form-control i18n" value="" title="Search place" placeholder="ex: 10 rue Maurice Fabre, Rennes" autocomplete="off">
                                 </div>
                             </form>
-                            <div id="locateMsg" role="status" aria-live="polite" class="mb-3"></div>
                             <div>
                                 <ul id="searchResults" class="list-group" role="listbox" aria-label="Search results"></ul>
                             </div>
+                            <div id="locateMsg" role="status" aria-live="polite" class="mb-3"></div>
                         </div>
                     </div>
                 </div>
