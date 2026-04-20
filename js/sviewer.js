@@ -7,7 +7,6 @@ window.SViewerApp = (function() {
         ["EPSG:4326", "+title=WGS 84, +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"],
         ["EPSG:3857", "+title=Web Spherical Mercator, +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs"]
     ]);
-    // Required since OL6: register proj4 definitions into OpenLayers
     ol.proj.proj4.register(proj4);
 
     var config = {};
@@ -19,7 +18,7 @@ window.SViewerApp = (function() {
 
     // Merge default values while preserving i18n and customConfig properties
     $.extend(window.hardConfig, {
-        title: 'geOrchestra mobile',
+        title: 'sViewer',
         geOrchestraBaseUrl: 'https://geobretagne.fr/',
         projcode: 'EPSG:3857',
         initialExtent: [-12880000,-1080000,5890000,7540000],
@@ -37,6 +36,7 @@ window.SViewerApp = (function() {
 
     var hardConfig = window.hardConfig;
 
+    // Spinner for the impatients
     var svSpinner = {
         show: function() {
             $('#svSpinner').addClass('show');
@@ -102,7 +102,7 @@ window.SViewerApp = (function() {
     // ----- pseudoclasses ------------------------------------------------------------------------------------
 
     /**
-     * LayerQueryable is an enhanced ol3.layer.wms
+     * LayerQueryable is an enhanced ol.layer.wms
      * @constructor
      * @param {Object} options or qs layer param (string)
      */
@@ -130,7 +130,7 @@ window.SViewerApp = (function() {
         var self = this;
 
         /**
-         * Parses a wms layer descriptor, calls the legend, returns the wms layer
+         * Parses a wms layer descriptor, query the legend, returns the wms layer
          * @param {String} s the querystring describing the layer
          */
         function parseLayerParam (s) {
@@ -176,7 +176,7 @@ window.SViewerApp = (function() {
          */
         function getMetadata(self) {
             var parser = new ol.format.WMSCapabilities();
-            var capabilitiesUrl = ajaxURL(self.options.wmsurl_ns + '?SERVICE=WMS&REQUEST=GetCapabilities');
+            var capabilitiesUrl = ajaxURL(self.options.wmsurl_layer + '?SERVICE=WMS&REQUEST=GetCapabilities');
             console.log('Loading capabilities from:', capabilitiesUrl, 'for layer:', self.options.nslayername);
 
             $.ajax({
@@ -189,9 +189,8 @@ window.SViewerApp = (function() {
                     console.log('Capabilities loaded, version:', capabilities.version);
 
                     // searching for the layer in the capabilities
-                    // Workspace virtual service (/geoserver/<ns>/wms) returns names without namespace prefix,
-                    // global endpoint (/geoserver/wms) returns names with namespace prefix.
-                    // Match either form for robustness.
+                    // Layer virtual service (/geoserver/<ns>/<layer>/wms) scopes the response to this single layer.
+                    // Name may appear with or without namespace prefix depending on GeoServer config; match either form.
                     if (capabilities.Capability && capabilities.Capability.Layer && capabilities.Capability.Layer.Layer) {
                         $.each(capabilities.Capability.Layer.Layer, function() {
                             console.log('Found layer in capabilities:', this.Name);
@@ -421,90 +420,6 @@ window.SViewerApp = (function() {
         return config.layersBackground[state.lb];
     }
 
-
-    /**
-     * Loads, parses a Web Map Context and instanciates layers
-     * ol3 does dot support WMC format for now
-     * @param {String} wmc id of the map or URL of the web map context
-     */
-    function parseWMC(wmc) {
-        var url = '';
-        // todo : missing ol3 WMC native support
-        function parseWMCResponse(response) {
-            var wmc = $('ViewContext', response);
-            state.wmctitle = $(wmc).children('General').children('Title').text();
-            setTitle(state.wmctitle);
-
-            // recenter on  WMC extent if xyz not specified
-            if (isNaN(config.x)) {
-                var vgb = $(wmc).children('General').children('BoundingBox');
-                var srs = vgb.attr('SRS');
-                var extent = [vgb.attr('minx'), vgb.attr('miny'), vgb.attr('maxx'), vgb.attr('maxy')];
-                view.fit(ol.proj.transformExtent(extent, srs, config.projcode));
-            }
-
-            // we only consider visible and queryable layers
-            $(wmc).find('LayerList > Layer[queryable=1]').each(function() {
-                if ($(this).attr('hidden')!='1') {
-                    var options = {};
-                    options.nslayername = $(this).children('Name').text();
-                    options.namespace = '';
-                    options.layername = $(this).children('Name').text();
-                    options.wmsurl_global = $(this).find('Server > OnlineResource').attr('xlink:href');
-                    options.wmsurl_ns = options.wmsurl_global;
-                    options.wmsurl_layer = options.wmsurl_global;
-                    options.format = $(this).find("FormatList  > Format[current='1']").text();
-                    options.sldurl = ($(this).find("StyleList  > Style[current='1'] > SLD > OnlineResource").attr('xlink:href'));
-                    options.stylename = $(this).find("StyleList  > Style[current='1'] > Name").text();
-                    options.opacity = parseFloat($(this).find("opacity").text());
-                    var l = new LayerQueryable(options);
-                    config.layersQueryable.push(l);
-                    map.addLayer(l.wmslayer);
-                    svSpinner.hide();
-                }
-            });
-
-            //activate search if required
-            if (state.search) {
-                activateSearchFeatures('remote');
-            }
-
-            // perform gfi if requied
-            if (state.gfiok) {
-                queryMap(view.getCenter());
-            }
-        }
-
-        // wmc comes from a geOrchestra map id
-        if (wmc.match(wmc.match(/^[a-z\d]{32}$/))) {
-            url = config.geOrchestraBaseUrl + 'mapfishapp/ws/wmc/geodoc' + wmc + '.wmc';
-        }
-        // wmc is an url
-        else {
-            url = wmc;
-        }
-
-        if (url!=='') {
-            svSpinner.show();
-            $.ajax({
-                url: ajaxURL(url),
-                type: 'GET',
-                dataType: 'XML',
-                success: parseWMCResponse,
-                error: function(xhr) {
-                    if (xhr.status==404) {
-                        messagePopup(tr("map context not found"));
-                    }
-                    else {
-                        messagePopup(tr("map context error"));
-                    }
-                    svSpinner.hide();
-                }
-            });
-        }
-    }
-
-
     /**
      * Method: setPermalink
      * keeps permalinks synchronized with the map extent
@@ -528,11 +443,8 @@ window.SViewerApp = (function() {
             }
             linkParams.lb = encodeURIComponent(state.lb);
             if (config.customConfigName) { linkParams.c = config.customConfigName; }
-            if (config.kmlUrl) { linkParams.kml = config.kmlUrl; }
             if (state.search) { linkParams.s = '1'; }
             if (config.layersQueryString) { linkParams.layers = config.layersQueryString; }
-            if (config.title&&state.wmctitle!=config.title) { linkParams.title = config.title; }
-            if (config.wmc) { linkParams.wmc = config.wmc; }
             permalinkHash = window.location.origin + window.location.pathname + "#" + $.param(linkParams);
             permalinkQuery = window.location.origin + window.location.pathname + "?" + $.param(linkParams);
 
@@ -587,12 +499,6 @@ window.SViewerApp = (function() {
         }
         if (config.title) {
             embedParams.title = config.title;
-        }
-        if (config.kmlUrl) {
-            embedParams.kml = config.kmlUrl;
-        }
-        if (config.wmc) {
-            embedParams.wmc = config.wmc;
         }
         if (config.customConfigName) {
             embedParams.c = config.customConfigName;
@@ -748,36 +654,6 @@ window.SViewerApp = (function() {
                 }
             });
         });
-
-        // KML getFeatureInfo
-        if (config.kmlLayer) {
-            var features = [];
-            var domResponse =  $('<div class="sv-kml"></div>');
-            map.forEachFeatureAtPixel(p, function(feature, layer) {
-                features.push(feature);
-            });
-            if (features.length > 0) {
-                $.each(features, function() {
-                    togglePanel('query');
-                    if (this.get('description')) {
-                        domResponse.append(this.get('description'));
-                    }
-                    else {
-                        $.each(this.getProperties(), function(k, v) {
-                            if ($.type(v)==="string") {
-                                domResponse.append($('<span class="sv-key">').text(k + ':'));
-                                domResponse.append($('<span class="sv-value">').text(v));
-                                domResponse.append($('<br>'));
-
-                            }
-                        });
-                    }
-                });
-                $('#querycontent').append(domResponse);
-            }
-        }
-
-
     }
 
     /**
@@ -796,7 +672,6 @@ window.SViewerApp = (function() {
     /**
      * method: searchFeatures
      * search features whose string attributes match a pattern;
-     * 'local' mode handles KML featureCollections
      * 'remote' mode performs a WFS getFeature query,
      * @param {String} value search pattern
      */
@@ -860,37 +735,6 @@ window.SViewerApp = (function() {
                         console.log('error ');
                     }
                 });
-            }
-            if (state.searchparams.mode === 'local') {
-                // construct a pseudo index the first use
-                if (!state.searchindex) {
-                    var pseudoIndex = [];
-                    $.each(config.kmlLayer.getSource().getFeatures(), function(i, feature) {
-                        // construct an index with all text attributes
-                        var id = feature.getId();
-                        var props = feature.getProperties();
-                        var idx = "";
-                        $.each(props, function(key, value) {
-                            if (key=="name" && typeof(value==='string')) {
-                                idx+='|' + value.toLowerCase();
-                            }
-                        })
-                        pseudoIndex.push({id:id, data:idx});
-                    });
-                    state.searchindex = pseudoIndex;
-                }
-                // use pseudo index to retrieve matching features
-                if (state.searchindex) {
-                    var features = [];
-                    var responses = 0;
-                    $.each(state.searchindex.slice(0,config.maxFeatures), function(i, v) {
-                        if (state.searchindex[i].data.indexOf(value.toLowerCase())!=-1) {
-                            features.push(config.kmlLayer.getSource().getFeatureById(state.searchindex[i].id));
-                            responses +=1;
-                        }
-                    })
-                    featuresToList(features);
-                }
             }
         }
     }
@@ -1210,7 +1054,6 @@ window.SViewerApp = (function() {
         var i18n = (hardConfig && hardConfig.i18n) || {};
         config = {
             lang: ((i18n.hasOwnProperty(language)) ? language : 'en'),
-            wmc: '',
             layersQueryable: [],
             layersQueryString: ''
         };
@@ -1225,7 +1068,6 @@ window.SViewerApp = (function() {
             gficoord: null,
             gfiok: false,
             gfiz: null,
-            wmctitle: '',
             search: false,
             searchindex: null,
             searchparams: {}
@@ -1234,11 +1076,6 @@ window.SViewerApp = (function() {
         // querystring param: lb (selected background)
         if (qs.lb) {
             state.lb = parseInt(qs.lb) % config.layersBackground.length;
-        }
-
-        // querystring param: map id
-        if (qs.wmc) {
-            config.wmc = qs.wmc;
         }
 
         // querystring param: layers
@@ -1286,11 +1123,6 @@ window.SViewerApp = (function() {
         }
         else {
             setTitle(config.title);
-        }
-
-        // querystring param: kml overlay url
-        if (qs.kml) {
-            config.kmlUrl = qs.kml;
         }
 
         // querystring param: perform getFeatureInfo on map center
@@ -1350,12 +1182,6 @@ window.SViewerApp = (function() {
         );
         switchBackground(state.lb);
 
-        // adding WMS layers from georchestra map (WMC)
-        // try wmc=58a713a089cf408419b871b73110b7cb on dev.geobretagne.fr
-        if (config.wmc) {
-            parseWMC(config.wmc);
-        }
-
         // adding queryable WMS layers from querystring
         $.each(config.layersQueryable, function() {
             map.addLayer(this.wmslayer);
@@ -1364,22 +1190,6 @@ window.SViewerApp = (function() {
         //activate search for WMS layer (origin : ?layers=...)
         if (state.search && config.layersQueryable.length > 0) {
             activateSearchFeatures('remote');
-        }
-
-        // adding kml overlay
-        if (config.kmlUrl) {
-            config.kmlLayer = new ol.layer.Vector({
-                source: new ol.source.Vector({
-                    url: ajaxURL(config.kmlUrl),
-                    format: new ol.format.KML()
-                })
-            });
-            map.addLayer(config.kmlLayer);
-
-            //activate search for kml layer (origin : ?kml=...)
-            if (state.search) {
-                activateSearchFeatures('local');
-            }
         }
 
         // map recentering
@@ -1545,7 +1355,7 @@ window.SViewerApp = (function() {
         $(window).bind("orientationchange resize pageshow", fixContentHeight);
         fixContentHeight();
 
-        if (state.gfiok && (!(config.wmc.length>0))) {
+        if (state.gfiok) {
             //~ queryMap(view.getCenter());
             setTimeout(
                 function() { queryMap(view.getCenter()); },

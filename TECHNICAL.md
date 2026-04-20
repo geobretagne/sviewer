@@ -104,38 +104,6 @@ Ajoute une ou plusieurs couches WMS à la carte. Format : liste séparée par de
 - Les styles doivent exister sur le serveur pour être appliqués
 - Les filtres CQL utilisent la syntaxe OGC standard
 
-#### `wmc` (Web Map Context)
-
-Charge un contexte cartographique complet (couches + propriétés).
-
-**Par identifiant geOrchestra :**
-```
-?wmc=9be95a6894a3dc6135c8cd760d83f6ef
-```
-
-**Par URL complète :**
-```
-?wmc=https://geobretagne.fr/context/default/05.xml
-```
-
-**Format WMC :** Fichier XML OGC WMC 1.1.1 ou 1.3.0.
-**CORS :** Le serveur WMC doit supporter CORS.
-
-#### `kml`
-
-Ajoute des entités géographiques depuis un fichier KML.
-
-```
-?kml=https://exemple.com/mes-points.kml
-```
-
-**Format :** KML 2.2 standard.
-**Contenu:** Points, lignes, polygones, MultiGeometry.
-**Popup :** Les attributs `<description>` s'affichent au clic sur une entité.
-**CORS :** L'URL doit supporter CORS.
-
----
-
 ### Paramètres de requête et recherche
 
 #### `q` (query)
@@ -209,8 +177,6 @@ Les paramètres suivants sont **mémorisés** dans le permalien et le code QR :
 - `x`, `y`, `z`
 - `title`
 - `layers`
-- `wmc`
-- `kml`
 - `q`
 - `c`
 
@@ -242,8 +208,6 @@ Tableau de toutes les options (équivalent aux paramètres KVP en mode simple) :
 | `title` | `string` | `'Map'` | Titre de la carte |
 | `lb` | `number` | `0` | Index de la couche de fond |
 | `layers` | `string` | `''` | Couches à afficher (séparées par virgules) |
-| `wmc` | `string` | `''` | Identifiant ou URL d'un Web Map Context |
-| `kml` | `string` | `''` | URL d'un fichier KML |
 | `q` | `boolean` | `false` | Activer requête GetFeatureInfo au démarrage |
 | `s` | `boolean` | `false` | Afficher la barre de recherche |
 | `qr` | `boolean` | `false` | Ouvrir la modale code QR au démarrage |
@@ -269,8 +233,7 @@ SViewer.init('#ma-carte', {
     center: [0, 2000000],
     zoom: 6,
     title: 'Ressources nationales',
-    layers: 'geor:commune,geor:departement',
-    wmc: '9be95a6894a3dc6135c8cd760d83f6ef'
+    layers: 'geor:commune,geor:departement'
 });
 ```
 
@@ -440,56 +403,6 @@ Chaque couche WMS doit :
 - Supporter **HTTPS** (pas d'URLs non chiffrées)
 - Supporter **CORS** (pas de proxy nécessaire)
 
-### Web Map Context (WMC)
-
-Format OGC pour sauvegarder une configuration de carte (couches + vue).
-
-**Versions supportées :** WMC 1.1.1 et 1.3.0.
-
-**Exemple de WMC minimal :**
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<ViewContext version="1.3.0">
-  <General>
-    <Window width="800" height="600"/>
-    <BoundingBox minx="-180" miny="-85" maxx="180" maxy="85" srs="EPSG:3857"/>
-  </General>
-  <LayerList>
-    <Layer queryable="1" visible="1">
-      <Name>geor:commune</Name>
-      <Server service="OGC:WMS" version="1.3.0">
-        <OnlineResource href="https://geobretagne.fr/geoserver/wms"/>
-      </Server>
-    </Layer>
-  </LayerList>
-</ViewContext>
-```
-
-### KML (Keyhole Markup Language)
-
-Format texte pour des entités géographiques (points, lignes, polygones).
-
-**Exemple KML :**
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Document>
-    <Placemark>
-      <name>Mairie de Rennes</name>
-      <description>8, Boulevard de la Paix</description>
-      <Point>
-        <coordinates>-1.68,48.11,0</coordinates>
-      </Point>
-    </Placemark>
-  </Document>
-</kml>
-```
-
-**Notes :**
-- Les coordonnées sont en EPSG:4326 (longitude, latitude)
-- sViewer projette automatiquement en EPSG:3857
-- Les descriptions s'affichent au clic sur une entité
-
 ---
 
 ## Projections et Repères
@@ -498,7 +411,7 @@ Format texte pour des entités géographiques (points, lignes, polygones).
 
 **EPSG:3857 (Web Mercator) est l'unique projection supportée.**
 
-Toutes les couches WMS, KML et contextes doivent être dans cette projection ou seront reprojetées automatiquement.
+Toutes les couches WMS doivent être dans cette projection ou seront reprojetées automatiquement.
 
 ### EPSG:3857 (Web Mercator)
 
@@ -509,7 +422,7 @@ Toutes les couches WMS, KML et contextes doivent être dans cette projection ou 
 
 ### EPSG:4326 (WGS84)
 
-Utilisé en entrée (URL KML, résultats de géocodage).
+Utilisé en entrée (résultats de géocodage).
 
 **Conversion approximative :**
 ```
@@ -562,21 +475,7 @@ Bouton **« Éditer avec geOrchestra »** → exporte la carte vers l'éditeur a
 
 **Lien généré :**
 ```
-https://geobretagne.fr/mapfishapp/
-  ?wmc=IDENTIFIANT_WMC&layers=...
-```
-
-### Lecture de contextes (WMC)
-
-sViewer peut charger des contextes sauvegardés depuis geOrchestra :
-
-```
-?wmc=9be95a6894a3dc6135c8cd760d83f6ef
-```
-
-geOrchestra expose les contextes à :
-```
-https://geobretagne.fr/geonetwork/api/records/{uuid}/attachments
+https://geobretagne.fr/mapfishapp/?layers=...
 ```
 
 ### Légendes et métadonnées
@@ -851,7 +750,5 @@ SViewer.init('#map', { layers: 'geor:commune', q: false });
 
 - **OpenLayers 10** : https://openlayers.org/
 - **OGC WMS 1.3.0** : https://www.ogc.org/standards/wms
-- **OGC WMC 1.3.0** : https://www.ogc.org/standards/wmc
 - **geOrchestra** : https://www.georchestra.org/
 - **GeoServer** : https://geoserver.org/
-- **KML 2.2** : https://www.ogc.org/standards/kml

@@ -66,14 +66,13 @@ sViewer est un **visualiseur cartographique minimaliste** conçu pour :
 ## Règles de sécurité
 
 ### Input Validation — Paramètres KVP
-- **Tous les paramètres URL** (x, y, z, title, layers, wmc, kml, q, etc.) doivent être validés avant utilisation
+- **Tous les paramètres URL** (x, y, z, title, layers, q, etc.) doivent être validés avant utilisation
 - **Échapper** tout contenu utilisateur avant insertion dans le DOM (prévenir XSS)
 - **Rejeter** les URLs malformées, les valeurs non-numériques sur x/y/z, les fichiers non-autorisés
 - Les labels, titres, messages affichés doivent être HTML-échappés
 
-### Sécurité XML — WMS/KML/WMC
+### Sécurité XML — WMS
 - **Désactiver les entités externes** lors du parsing XML (prévenir XXE — XML External Entity attacks)
-- Valider la structure des fichiers KML et WMC avant chargement
 - Rejeter les archives malveillantes ou les fichiers corrompus
 
 ### Stockage client — Pas de données sensibles
@@ -98,12 +97,13 @@ sViewer est un **visualiseur cartographique minimaliste** conçu pour :
 ### TECHNICAL.md — Guide de référence pour développeurs
 - **Public** : Développeurs, intégrateurs, spécialistes
 - **Contenu** : Tous les paramètres KVP, toutes les options JavaScript, API complète, cas avancés
-- **Langage** : Français, peut inclure termes techniques OGC/WMS/WMC/KML
+- **Langage** : Français, peut inclure termes techniques OGC/WMS
 
 ### Style général
 - Tous les titres et descriptions en **français**
 - Exemples avec URLs réelles (`https://geobretagne.fr/sviewer/`)
 - Code en `monospace` pour clarifier syntaxe
+- Le mot "couche" ne doit pas être employé à la place de "donnée"
 
 ---
 
@@ -160,7 +160,7 @@ var msg = hardConfig.i18n[lang]['ma clé'];
 
 ### Termes techniques non-traduits
 Les acronymes et codes standards restent **non-traduits** :
-- `WMS`, `WMC`, `KML`, `OGC`, `CORS`
+- `WMS`, `OGC`, `CORS`
 - `EPSG:3857`, `Web Mercator`
 - `geOrchestra` (nom propre)
 
@@ -214,10 +214,8 @@ Les paramètres suivants fonctionnent dans l'URL en mode simple :
 
 - `x`, `y`, `z` : position et zoom
 - `title` : titre personnalisé
-- `lb` : couche de fond (background layer)
-- `layers` : couches à afficher
-- `wmc` : fichier Web Map Context
-- `kml` : fichier KML
+- `lb` : fond de carte (background layer)
+- `layers` : données à afficher
 - `q` : requête au démarrage
 - `s` : activation de la recherche
 - `qr` : affichage du code QR au démarrage

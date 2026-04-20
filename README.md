@@ -1,7 +1,7 @@
 sViewer - Visualiseur de cartes simple
 =====================================
 
-sViewer est un visualiseur de cartes web simple et léger, basé sur [OpenLayers 10](https://openlayers.org/) et Bootstrap. Il vous permet d'afficher et d'explorer des couches cartographiques (services WMS, fichiers KML, contextes Web Map Context) sur tous les appareils : téléphone, tablette et ordinateur.
+sViewer est un visualiseur de cartes web simple et léger. Il vous permet d'afficher et d'explorer des données cartographiques WMS sur tous les appareils : téléphone, tablette et ordinateur. SViewer est prévu pour s'intégrer à l'écosystème geOrchestra.
 
 
 Qu'offre sViewer ?
@@ -9,10 +9,10 @@ Qu'offre sViewer ?
 
 * **Visualisation cartographique** simple et intuitive
 * **Contrôles tactiles** compatibles avec tous les appareils mobiles
-* **Recherche de lieux** basée sur le géoportail français
+* **Recherche de lieux** basée sur la géoplateforme française
 * **Requêtes cartographiques** sur les services Web Map Service (WMS)
 * **Partage de cartes** avec permaliens, codes QR et intégration à geOrchestra
-* **Langues multiples** : français, anglais, espagnol, allemand, russe
+* **Langues multiples** : français, anglais, espagnol, allemand
 * **Facilement intégrable** dans vos propres pages web
 * **Entièrement autonome** : aucune dépendance externe (CDN)
 
@@ -29,8 +29,8 @@ cp etc/customConfig.DIST.js etc/customConfig.js
 ```
 
 Éditez `etc/customConfig.js` pour personnaliser :
-- L'adresse de votre serveur geOrchestra (ou GeoServer)
-- Les couches de fond par défaut
+- L'adresse de votre serveur geOrchestra (ou votre GeoServer)
+- Les fonds de carte fond par défaut
 - Les couleurs et l'apparence générale
 
 ### 2. Télécharger le code sur votre serveur
@@ -115,18 +115,18 @@ https://geobretagne.fr/sviewer/?x=-366959&y=2951352&z=5&title=Centre%20de%20Renn
 
 **`lb`** — Choisir le fond de carte
 
-Affiche la couche de fond `#lb` (la couche 0 est par défaut). Consultez `etc/customConfig.js` pour voir les fonds disponibles.
+Affiche le fond de carte `#lb` (le fond de carte 0 est par défaut). Consultez `etc/customConfig.js` pour voir les fonds disponibles.
 
 ```
 https://geobretagne.fr/sviewer/?lb=1
 ```
 
 
-#### Paramètres de couches cartographiques
+#### Paramètres de données cartographiques
 
-**`layers`** — Afficher des couches geOrchestra ou GeoServer
+**`layers`** — Afficher des données geOrchestra ou GeoServer
 
-Liste séparée par des virgules. Les couches doivent être publiées sur votre serveur geOrchestra ou GeoServer.
+Liste séparée par des virgules. Les données doivent être publiées sur votre serveur geOrchestra ou GeoServer.
 
 ```
 https://geobretagne.fr/sviewer/?layers=geor:sdi
@@ -134,40 +134,17 @@ https://geobretagne.fr/sviewer/?layers=geor:sdi
 
 **Avec un style personnalisé :**
 
-Ajoutez `*nomstyle` au nom de la couche :
+Ajoutez `*nomstyle` au nom de la donnée :
 
 ```
 https://geobretagne.fr/sviewer/?layers=geor:sdi*mon_style
 ```
 
-**`wmc`** — Charger un contexte cartographique
-
-Charger un fichier Web Map Context (WMC) qui définit plusieurs couches et leurs propriétés. Vous pouvez fournir une URL ou un identifiant geOrchestra.
-
-```
-https://geobretagne.fr/sviewer/?wmc=9be95a6894a3dc6135c8cd760d83f6ef
-```
-
-Ou avec une URL complète :
-
-```
-https://geobretagne.fr/sviewer/?wmc=https://geobretagne.fr/context/default/05.xml
-```
-
-**`kml`** — Charger un fichier KML
-
-Ajoute des éléments depuis un fichier KML (points, lignes, polygones). Le popup affiche la description ou les attributs.
-
-```
-https://geobretagne.fr/sviewer/?kml=https://exemple.com/mes-points.kml
-```
-
-
 #### Paramètres de recherche et requête
 
 **`q`** — Interroger la carte au démarrage
 
-Affiche les informations d'une couche WMS à une position donnée. Utile pour mettre en évidence une entité spécifique.
+Affiche les informations d'une donnée WMS à une position donnée. Utile pour mettre en évidence une entité spécifique.
 
 ```
 https://geobretagne.fr/sviewer/?layers=geor:sdi&q=1
@@ -175,7 +152,7 @@ https://geobretagne.fr/sviewer/?layers=geor:sdi&q=1
 
 **`s`** — Activer la recherche par texte
 
-Active la recherche dans les attributs texte de la première couche affichée.
+Active la recherche dans les attributs texte de la première donnée affichée.
 
 ```
 https://geobretagne.fr/sviewer/?layers=geor:sdi&s=1
@@ -201,7 +178,7 @@ https://geobretagne.fr/sviewer/?c=ma_config
 ```
 
 
-**Note :** Les paramètres `x`, `y`, `z`, `title`, `layers`, `wmc`, `kml`, `q` et `c` sont **persistants** : ils sont mémorisés quand vous partagez la carte via le bouton « Map » ou le code QR.
+**Note :** Les paramètres `x`, `y`, `z`, `title`, `layers`, `q` et `c` sont **persistants** : ils sont mémorisés quand vous partagez la carte via le bouton « Map » ou le code QR.
 
 
 Configurations personnalisées
@@ -241,7 +218,7 @@ Quand vous utilisez le mode WebComponent (intégration dans une page), les optio
     center: [-366959, 2951352],      // coordonnées EPSG:3857
     zoom: 5,                          // niveau de zoom
     title: 'Ma carte intégrée',       // titre
-    layers: 'geor:sdi',               // couches à afficher
+    layers: 'geor:sdi',               // donnée à afficher
     geOrchestraBaseUrl: 'https://geobretagne.fr/geOrchestra/'  // URL de votre serveur
   });
 </script>
@@ -255,9 +232,8 @@ Intégration avec geOrchestra
 
 Si vous utilisez une **infrastructure geOrchestra**, sViewer s'intègre nativement :
 
-* Affichage automatique du titre, résumé, légende et attribution des couches WMS
+* Affichage automatique du titre, résumé, légende et attribution des données WMS
 * Bouton « Éditer avec Mapfishapp » : envoie la carte vers l'éditeur avancé
-* Lecture de contextes cartographiques (WMC) depuis geOrchestra
 * Fonction « Envoyer vers sViewer » depuis le visualiseur avancé
 
 

@@ -6,3 +6,5 @@ etc/customConfig_*
 node_modules
 npm-debug.log
 SUMMARY.md
+RULES.md
+GOALS.md

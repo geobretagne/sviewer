@@ -75,8 +75,6 @@ $.extend(hardConfig, {
             'Permalink': 'Permalien',
             'Permalink to this map': 'Lien permanent vers cette carte',
             'Search place': 'Trouver un lieu',
-            'Search place/feature': 'Trouver un lieu ou un objet',
-            'Address and/or city': 'Adresse et/ou commune',
             'share on ' : 'partager sur ',
             'QR code': 'code QR'
         },
@@ -115,8 +113,7 @@ $.extend(hardConfig, {
             'Permalink': 'Vínculo permanente',
             'Permalink to this map': 'Vínculo permanente a este mapa',
             'Search place': 'Encontrar un lugar',
-            'Search place/feature': 'Encontrar lugar u objeto',
-            'Address and/or city': 'Dirección y/o ciudad',
+            'Find place': 'Dirección y/o ciudad',
             'share on ' : 'Compartir en ',
             'QR code': 'código QR'
         },
@@ -149,8 +146,7 @@ $.extend(hardConfig, {
             'device position error': 'Fehler bei der Geräteposition',
 
             'Search place': 'Adresse eingeben',
-            'Search place/feature': 'Ort oder Objekt suchen',
-            'Address and/or city': 'Adresse und/oder Stadt',
+            'Find place': 'Adresse und/oder Stadt',
             'Title': 'Kartentitel',
             'change title': 'Titel ändern',
             'Permalink': 'Permalink',
