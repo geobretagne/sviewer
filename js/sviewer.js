@@ -140,9 +140,11 @@ window.SViewerApp = (function() {
 
             self.options.namespace = (self.options.nslayername.indexOf(":")>0) ? self.options.nslayername.split(':',2)[0]:''; // namespace
             self.options.layername = (self.options.nslayername.indexOf(':')>0) ? self.options.nslayername.split(':',2)[1]:''; // layername
+            var ns = encodeURIComponent(self.options.namespace);
+            var ln = encodeURIComponent(self.options.layername);
             self.options.wmsurl_global = config.geOrchestraBaseUrl + '/geoserver/wms'; // global getcap
-            self.options.wmsurl_ns = config.geOrchestraBaseUrl + '/geoserver/' + self.options.namespace + '/wms'; // virtual getcap namespace
-            self.options.wmsurl_layer = config.geOrchestraBaseUrl + '/geoserver/' + self.options.namespace + '/' + self.options.layername + '/wms'; // virtual getcap layer
+            self.options.wmsurl_ns = config.geOrchestraBaseUrl + '/geoserver/' + ns + '/wms'; // virtual getcap namespace
+            self.options.wmsurl_layer = config.geOrchestraBaseUrl + '/geoserver/' + ns + '/' + ln + '/wms'; // virtual getcap layer
         }
 
         /**
@@ -176,7 +178,10 @@ window.SViewerApp = (function() {
          */
         function getMetadata(self) {
             var parser = new ol.format.WMSCapabilities();
-            var capabilitiesUrl = ajaxURL(self.options.wmsurl_layer + '?SERVICE=WMS&REQUEST=GetCapabilities');
+            var capabilitiesUrl = ajaxURL(self.options.wmsurl_layer + '?' + $.param({
+                SERVICE: 'WMS',
+                REQUEST: 'GetCapabilities'
+            }));
             console.log('Loading capabilities from:', capabilitiesUrl, 'for layer:', self.options.nslayername);
 
             $.ajax({
@@ -755,25 +760,24 @@ window.SViewerApp = (function() {
                 state.searchparams.title = searchLayer.md.title;
                 $.ajax({
                     url: ajaxURL(searchLayer.options.wmsurl_ns + '?' + $.param({
-                        'SERVICE': 'WMS',
-                        'VERSION': '1.1.1',
-                        'REQUEST': 'DescribeLayer',
-                        'LAYERS': searchLayer.options.layername
+                        SERVICE: 'WMS',
+                        VERSION: '1.1.1',
+                        REQUEST: 'DescribeLayer',
+                        LAYERS: searchLayer.options.layername
                     })),
                     type: 'GET'
                 }).then(function(r1) {
                     state.searchparams.url = $(r1).find('LayerDescription').attr('wfs');
                     state.searchparams.typename = $(r1).find('Query').attr('typeName');
+                    var wfsUrl = state.searchparams.url;
+                    var sep = wfsUrl.indexOf('?') >= 0 ? '&' : '?';
                     return $.ajax({
-                        url: ajaxURL(
-                            $(r1).find('LayerDescription').attr('wfs') +
-                            $.param({
-                                'SERVICE': 'WFS',
-                                'VERSION': '1.0.0',
-                                'REQUEST': 'DescribeFeatureType',
-                                'TYPENAME': $(r1).find('Query').attr('typeName')
-                            })
-                        ),
+                        url: ajaxURL(wfsUrl + sep + $.param({
+                            SERVICE: 'WFS',
+                            VERSION: '1.0.0',
+                            REQUEST: 'DescribeFeatureType',
+                            TYPENAME: state.searchparams.typename
+                        })),
                         type: 'GET'
                     });
                 }).then(function(r2) {
