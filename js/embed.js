@@ -109,12 +109,18 @@
             return null;
         }
 
-        // Set container styles to enable flexbox layout
-        container.style.display = 'flex';
-        container.style.flexDirection = 'column';
-        container.style.height = '100%';
-        container.style.minHeight = '0';
+        // Apply layout styles only if not already provided by host page CSS
+        // (avoids a reflow/CLS shift when index.html already has these inline)
         container.className = 'sv-scope';
+        var cs = window.getComputedStyle(container);
+        if (cs.display !== 'flex') {
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+        }
+        if (cs.height === '0px' || cs.height === 'auto') {
+            container.style.height = '100%';
+            container.style.minHeight = '0';
+        }
 
         // Add sviewer HTML structure
         container.innerHTML = `
@@ -263,6 +269,9 @@
                 </div>
             </div>
         `;
+
+        // Reveal after injection so the browser never paints an intermediate state
+        container.style.visibility = 'visible';
 
         return container;
     }
