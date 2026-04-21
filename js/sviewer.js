@@ -142,16 +142,16 @@ window.SViewerApp = (function() {
             self.options.layername = (self.options.nslayername.indexOf(':')>0) ? self.options.nslayername.split(':',2)[1]:''; // layername
             var ns = encodeURIComponent(self.options.namespace);
             var ln = encodeURIComponent(self.options.layername);
-            self.options.wmsurl_global = config.geOrchestraBaseUrl + '/geoserver/wms'; // global getcap
-            self.options.wmsurl_ns = config.geOrchestraBaseUrl + '/geoserver/' + ns + '/wms'; // virtual getcap namespace
-            self.options.wmsurl_layer = config.geOrchestraBaseUrl + '/geoserver/' + ns + '/' + ln + '/wms'; // virtual getcap layer
+            self.options.wmsurl_global = hardConfig.geOrchestraBaseUrl + '/geoserver/wms'; // global getcap
+            self.options.wmsurl_ns = hardConfig.geOrchestraBaseUrl + '/geoserver/' + ns + '/wms'; // virtual getcap namespace
+            self.options.wmsurl_layer = hardConfig.geOrchestraBaseUrl + '/geoserver/' + ns + '/' + ln + '/wms'; // virtual getcap layer
 
             console.log('LayerParam parse:', {
                 input: s,
                 nslayername: self.options.nslayername,
                 namespace: self.options.namespace,
                 layername: self.options.layername,
-                geOrchestraBaseUrl: config.geOrchestraBaseUrl,
+                geOrchestraBaseUrl: hardConfig.geOrchestraBaseUrl,
                 wmsurl_layer: self.options.wmsurl_layer
             });
 
