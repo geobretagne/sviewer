@@ -53,19 +53,18 @@
     function loadDependencies() {
         var baseUrl = config.baseUrl;
 
-        // Load CSS in parallel; reveal the container once sviewer.css is applied
-        // (sviewer.css carries flex:1 on .sv-framemap — revealing before causes CLS)
+        // Load CSS in parallel; reveal the container once all layout CSS is applied
+        // (sviewer.css: flex:1 on .sv-framemap, bootstrap-scoped: form controls)
         var container = document.querySelector(config.container);
-        var svviewerCssPromise = loadResource(baseUrl + 'css/sviewer.css', 'css')
-            .then(function() {
-                if (container) container.style.visibility = 'visible';
-            });
         var cssPromises = [
             loadResource(baseUrl + 'build/ol.css', 'css'),
             loadResource(baseUrl + 'lib/bootstrap/bootstrap-scoped.min.css', 'css'),
             loadResource(baseUrl + 'lib/bootstrap-icons/bootstrap-icons.min.css', 'css'),
-            svviewerCssPromise
+            loadResource(baseUrl + 'css/sviewer.css', 'css')
         ];
+        Promise.all(cssPromises).then(function() {
+            if (container) container.style.visibility = 'visible';
+        });
 
         // Bootstrap is only needed for modals — load in parallel, not blocking the map init chain
         var bootstrapPromise = loadResource(baseUrl + 'lib/bootstrap/bootstrap.bundle.min.js', 'js');
