@@ -245,9 +245,9 @@ window.SViewerApp = (function() {
                         // attribution
                         if (mdLayer.Attribution) {
                             html.push('<span class="sv-md-attrib">' + escHTML(tr('source')));
-                            html.push(' : <a target="_blank" href="' + escHTML(mdLayer.Attribution.OnlineResource) + '" >');
+                            html.push(' : <a target="_blank" rel="noopener noreferrer" href="' + escHTML(safeURL(mdLayer.Attribution.OnlineResource)) + '" >');
                             if (mdLayer.Attribution.LogoURL) {
-                                html.push('<img class="sv-md-logo" src="' + escHTML(mdLayer.Attribution.LogoURL.OnlineResource) + '" /><br />');
+                                html.push('<img class="sv-md-logo" src="' + escHTML(safeURL(mdLayer.Attribution.LogoURL.OnlineResource)) + '" /><br />');
                             }
                             html.push(escHTML(mdLayer.Attribution.Title));
                             html.push('</a></span>');
@@ -270,7 +270,7 @@ window.SViewerApp = (function() {
                         if (mdLayer.hasOwnProperty('MetadataURL')) {
                             $.each(mdLayer.MetadataURL, function() {
                                 if (this.Format === "text/html") {
-                                    html.push('<a target="_blank" class="sv-md-meta btn btn-sm btn-outline-secondary" href="' + escHTML(this.OnlineResource) + '">');
+                                    html.push('<a target="_blank" rel="noopener noreferrer" class="sv-md-meta btn btn-sm btn-outline-secondary" href="' + escHTML(safeURL(this.OnlineResource)) + '">');
                                     html.push('<i class="bi bi-info-circle" aria-hidden="true"></i> ');
                                     html.push(tr('documentation'));
                                     html.push('</a>');
@@ -328,6 +328,11 @@ window.SViewerApp = (function() {
     function escHTML (s) {
         return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
                 .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    // Allow only http(s) URLs — blocks javascript: and data: in href/src attributes
+    function safeURL(s) {
+        return /^https?:\/\//i.test(s) ? s : '';
     }
 
     /**
