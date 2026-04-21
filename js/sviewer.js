@@ -1004,8 +1004,12 @@ window.SViewerApp = (function() {
 
     // Back to initial extent
     function zoomInit() {
-        view.fit(config.initialExtent, {duration: 500});
-        view.setRotation(0);
+        if (config.initialView) {
+            view.animate({ center: config.initialView.center, zoom: config.initialView.zoom, rotation: 0, duration: 500 });
+        } else {
+            view.animate({ rotation: 0, duration: 200 });
+            view.fit(config.initialExtent, {duration: 500});
+        }
     }
 
     // recenter on device position
@@ -1183,7 +1187,7 @@ window.SViewerApp = (function() {
         // querystring param: xyz
         // recenters map on specified location
         if (qs.x&&qs.y&&qs.z) {
-            config.z = parseInt(qs.z);
+            config.z = parseFloat(qs.z);
             var p = [parseFloat(qs.x), parseFloat(qs.y)];
             // is this lonlat ? anyway don't use sviewer for the vendee globe
             if (Math.abs(p[0])<=180&&Math.abs(p[1])<=180&&config.z>7) {
@@ -1191,6 +1195,7 @@ window.SViewerApp = (function() {
             }
             config.x = p[0];
             config.y = p[1];
+            config.initialView = { center: [config.x, config.y], zoom: config.z };
         }
 
         // querystring param: title
