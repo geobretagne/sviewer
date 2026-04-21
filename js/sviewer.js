@@ -149,7 +149,7 @@ window.SViewerApp = (function() {
             self.options.wmsurl_ns = hardConfig.geOrchestraBaseUrl + '/geoserver/' + ns + '/wms'; // virtual getcap namespace
             self.options.wmsurl_layer = hardConfig.geOrchestraBaseUrl + '/geoserver/' + ns + '/' + ln + '/wms'; // virtual getcap layer
 
-            console.log('LayerParam parse:', {
+            log('LayerParam parse:', {
                 input: s,
                 nslayername: self.options.nslayername,
                 namespace: self.options.namespace,
@@ -198,7 +198,7 @@ window.SViewerApp = (function() {
                 SERVICE: 'WMS',
                 REQUEST: 'GetCapabilities'
             }));
-            console.log('Loading capabilities from:', capabilitiesUrl, 'for layer:', self.options.nslayername);
+            log('Loading capabilities from:', capabilitiesUrl, 'for layer:', self.options.nslayername);
 
             $.ajax({
                 url: capabilitiesUrl,
@@ -208,17 +208,17 @@ window.SViewerApp = (function() {
                     var html = [];
                     var capabilities, mdLayer, legendArgs;
                     capabilities = parser.read(response);
-                    console.log('Capabilities loaded, version:', capabilities.version);
+                    log('Capabilities loaded, version:', capabilities.version);
 
                     // searching for the layer in the capabilities
                     // Layer virtual service (/geoserver/<ns>/<layer>/wms) scopes the response to this single layer.
                     // Name may appear with or without namespace prefix depending on GeoServer config; match either form.
                     if (capabilities.Capability && capabilities.Capability.Layer && capabilities.Capability.Layer.Layer) {
                         $.each(capabilities.Capability.Layer.Layer, function() {
-                            console.log('Found layer in capabilities:', this.Name);
+                            log('Found layer in capabilities:', this.Name);
                             if (this.Name === self.options.nslayername || this.Name === self.options.layername) {
                                 mdLayer = this;
-                                console.log('Matched layer:', this.Name);
+                                log('Matched layer:', this.Name);
                             }
                         });
                     } else {
@@ -240,7 +240,7 @@ window.SViewerApp = (function() {
                         }
 
                         var legendUrl = self.options.wmsurl_ns + '?' + $.param(legendArgs);
-                        console.log('Legend URL:', legendUrl);
+                        log('Legend URL:', legendUrl);
 
                         // attribution
                         if (mdLayer.Attribution) {
@@ -285,7 +285,7 @@ window.SViewerApp = (function() {
                         html.push('</div>');
 
                         $('#legend').append(html.join(''));
-                        console.log('Legend appended to DOM');
+                        log('Legend appended to DOM');
                     } else {
                         console.warn('Layer not found in capabilities:', self.options.nslayername);
                     }
@@ -418,6 +418,9 @@ window.SViewerApp = (function() {
         return b;
     })(window.location.search.substr(1).split('&'));
 
+    // Debug mode: ?debug=true in URL enables console logs
+    var debugMode = qs.debug === 'true';
+    window.log = debugMode ? console.log : function() {};
 
     /**
      * Iterates over background layers, sets the visibility according to the lb parameter.
@@ -766,7 +769,7 @@ window.SViewerApp = (function() {
                         }
                     },
                     error: function() {
-                        console.log('error ');
+                        log('error ');
                     }
                 });
             }
