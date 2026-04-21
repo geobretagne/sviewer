@@ -145,6 +145,19 @@ window.SViewerApp = (function() {
             self.options.wmsurl_global = config.geOrchestraBaseUrl + '/geoserver/wms'; // global getcap
             self.options.wmsurl_ns = config.geOrchestraBaseUrl + '/geoserver/' + ns + '/wms'; // virtual getcap namespace
             self.options.wmsurl_layer = config.geOrchestraBaseUrl + '/geoserver/' + ns + '/' + ln + '/wms'; // virtual getcap layer
+
+            console.log('LayerParam parse:', {
+                input: s,
+                nslayername: self.options.nslayername,
+                namespace: self.options.namespace,
+                layername: self.options.layername,
+                geOrchestraBaseUrl: config.geOrchestraBaseUrl,
+                wmsurl_layer: self.options.wmsurl_layer
+            });
+
+            if (!self.options.namespace || !self.options.layername) {
+                console.warn('Layer parameter format error: expected "namespace:layername" format (with colon separator), got "' + s + '"');
+            }
         }
 
         /**
