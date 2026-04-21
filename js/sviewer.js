@@ -653,9 +653,7 @@ window.SViewerApp = (function() {
                 success: function(response) {
                     // nonempty reponse detection
                     if (response.search(config.nodata)<0) {
-                        $.each(['#panelInfo', '#panelLocate', '#panelShare'], function(i, p) {
-                            closePanel();
-                        });
+                        closePanel();
                         $(this).append(response);
                         state.gfiok = true;
                         $('#panelQuery a').attr("rel","external");
@@ -1052,19 +1050,13 @@ window.SViewerApp = (function() {
         else {
             qsconfig = configBase + "etc/customConfig.js";
         }
-        $.getScript(qsconfig)
-            .done(function() {
-                // transmits config name for persistency
-                customConfig.customConfigName = qs.c;
-                doConfiguration();
-                doMap();
-                doGUI();
-            })
-            .fail(function() {
-                doConfiguration();
-                doMap();
-                doGUI();
-            });
+        function startApp() {
+            customConfig.customConfigName = qs.c;
+            doConfiguration();
+            doMap();
+            doGUI();
+        }
+        $.getScript(qsconfig).done(startApp).fail(startApp);
     }
     
     /**
