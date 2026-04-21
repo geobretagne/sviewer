@@ -9,7 +9,6 @@
  *   then edit customConfig.js with your settings
  */
 
-// WMTS configuration for IGN Géoplateforme
 var projection = ol.proj.get('EPSG:3857');
 var projectionExtent = projection.getExtent();
 var matrixIds = [];
@@ -45,7 +44,7 @@ customConfig = {
      * maxExtent: limits of map panning
      * restrictedExtent: limits of map zooming
      */
-    initialExtent: [-600000, 6090000, -100000, 6100000],
+    initialExtent: [-582000,5977000,-104000,6268000],
     maxExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
     restrictedExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
 
@@ -69,7 +68,7 @@ customConfig = {
     layersBackground: [
         new ol.layer.Tile({
             source: new ol.source.WMTS({
-                attributions: ['© IGN-F/Geoportail'],
+                attributions: ['© IGNF BD ORTHO'],
                 url: 'https://data.geopf.fr/wmts',
                 layer: 'ORTHOIMAGERY.ORTHOPHOTOS',
                 matrixSet: 'PM',
@@ -85,8 +84,21 @@ customConfig = {
             title: 'Photos aériennes IGN'
         }),
         new ol.layer.Tile({
-            source: new ol.source.OSM(),
-            title: 'OpenStreetMap'
+            source: new ol.source.WMTS({
+                attributions: ['Contributeurs OpenStreetmap'],
+                url: 'https://tile.geobretagne.fr/osm/service?',
+                layer: 'osm:grey',
+                matrixSet: 'PM',
+                format: 'png',
+                projection: projection,
+                tileGrid: new ol.tilegrid.WMTS({
+                    origin: ol.extent.getTopLeft(projectionExtent),
+                    resolutions: resolutions,
+                    matrixIds: matrixIds
+                }),
+                style: 'normal'
+            }),
+            title: 'Carte OpenStreetmap'
         })
     ],
 

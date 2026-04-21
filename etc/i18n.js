@@ -42,7 +42,7 @@ $.extend(hardConfig, {
             'zoom -': 'zoom -',
             'background': 'fond de plan',
 
-            'Query the map': 'Interrogez la carte',
+            'Query the map': 'Interroger la carte',
             'no item found': 'aucun objet n\'a été trouvé',
             'query failed': 'l\'interrogation a échoué',
 
