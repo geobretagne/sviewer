@@ -1103,8 +1103,10 @@ window.SViewerApp = (function() {
 
         // In embed mode, merge config values back into qs so they're available downstream
         // (config has been populated from hardConfig + customConfig, which includes embed options)
+        console.log('doConfiguration - before embed merge:', {config_layers: config.layers, qs_layers: qs.layers, config: config});
         if (config.layers && !qs.layers) {
             qs.layers = config.layers;
+            console.log('Merged config.layers into qs.layers:', qs.layers);
         }
         if (config.zoom && !qs.z) {
             qs.z = config.zoom;
@@ -1128,6 +1130,7 @@ window.SViewerApp = (function() {
         if (config.qr && !qs.qr) {
             qs.qr = config.qr;
         }
+        console.log('doConfiguration - after embed merge:', {qs_layers: qs.layers});
 
         // runtime state (mutable after init)
         state = {
