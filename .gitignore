@@ -5,6 +5,9 @@ etc/customConfig_*
 *.swo
 node_modules
 npm-debug.log
+package.json
+package-lock.json
+eslint.config.mjs
 SUMMARY.md
 RULES.md
 GOALS.md
