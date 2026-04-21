@@ -169,6 +169,14 @@ Ouvre automatiquement la modale contenant le code QR du permalink. Pratique pour
 https://geobretagne.fr/sviewer/?x=-366959&y=2951352&z=5&qr=1
 ```
 
+**`debug`** — Activer les logs de debug
+
+Affiche les logs de debug dans la console du navigateur (F12). Utile pour diagnostiquer les problèmes.
+
+```
+https://geobretagne.fr/sviewer/?layers=xyz&debug=true
+```
+
 **`c`** — Utiliser une configuration personnalisée
 
 Charge une configuration alternative (voir section **Configurations personnalisées**).
@@ -240,7 +248,7 @@ Si vous utilisez une **infrastructure geOrchestra**, sViewer s'intègre nativeme
 Notes techniques
 ================
 
-* **Technologie** : OpenLayers 10, jQuery 1.12.4, Bootstrap 5
+* **Technologie** : OpenLayers 10, jQuery 4.x, Bootstrap 5
 * **Projection** : EPSG:3857 (Web Mercator)
 * **Langue** : Français par défaut, mais supporte also l'anglais, espagnol, allemand, russe
 * **Serveur** : Aucun composant côté serveur requis (excepté un proxy Ajax optionnel pour les requêtes CORS)

@@ -146,6 +146,16 @@ Ouvre automatiquement la modale affichant le code QR du permalink au démarrage.
 
 **Note:** Le QR code est disponible à tout moment via le bouton « QR code » du panneau de partage.
 
+#### `debug` (debug mode)
+
+Active les logs de debug dans la console du navigateur. Non-persistant.
+
+```
+?debug=true
+```
+
+**Utile pour :** Diagnostic des problèmes de chargement WMS, CORS, ou requêtes AJAX.
+
 #### `c` (configuration)
 
 Charge une configuration alternative au lieu de `customConfig.js`.
@@ -180,7 +190,7 @@ Les paramètres suivants sont **mémorisés** dans le permalien et le code QR :
 - `q`
 - `c`
 
-Les paramètres `lb`, `s`, `qr` ne sont **pas** persistants.
+Les paramètres `lb`, `s`, `qr`, `debug` ne sont **pas** persistants.
 
 ---
 
@@ -572,7 +582,7 @@ Par ordre de priorité :
 
 ### Dépendances
 
-- **jQuery 1.12.4** : manipulation DOM, requêtes AJAX
+- **jQuery 4.x** : manipulation DOM, requêtes AJAX
 - **Bootstrap 5** : composants UI, responsive
 - **OpenLayers 10** : rendu de carte, interactions OGC
 - **proj4.js** : projections cartographiques
@@ -586,7 +596,7 @@ Toutes les dépendances sont **self-hosted** (pas de CDN).
 embed.js
   ├── Détecte baseUrl
   ├── Charge parallèlement :
-  │   ├── jQuery 1.12.4
+  │   ├── jQuery 4.x
   │   ├── proj4.js
   │   ├── OpenLayers (CSS + JS)
   │   ├── Bootstrap (CSS + JS)
