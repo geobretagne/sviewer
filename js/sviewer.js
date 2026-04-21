@@ -309,9 +309,10 @@ window.SViewerApp = (function() {
         this.construct = function(options) {
             console.log('LayerQueryable.construct called with:', {type: typeof options, value: options});
             // layers from query string parameter
-            if (typeof options === "string") {
+            // In jQuery 4, $.each may pass String object wrappers instead of primitives
+            if (typeof options === "string" || (typeof options === "object" && options && options.constructor === String)) {
                 console.log('Calling parseLayerParam with string:', options);
-                parseLayerParam(options);
+                parseLayerParam(String(options));
             }
             else {
                 console.log('LayerQueryable received object, extending options');
