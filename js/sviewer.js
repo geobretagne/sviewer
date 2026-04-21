@@ -1101,6 +1101,34 @@ window.SViewerApp = (function() {
 
         config.projection = ol.proj.get(config.projcode);
 
+        // In embed mode, merge config values back into qs so they're available downstream
+        // (config has been populated from hardConfig + customConfig, which includes embed options)
+        if (config.layers && !qs.layers) {
+            qs.layers = config.layers;
+        }
+        if (config.zoom && !qs.z) {
+            qs.z = config.zoom;
+        }
+        if (config.center && !qs.x && !qs.y) {
+            qs.x = config.center[0];
+            qs.y = config.center[1];
+        }
+        if (config.lb && !qs.lb) {
+            qs.lb = config.lb;
+        }
+        if (config.title && !qs.title) {
+            qs.title = config.title;
+        }
+        if (config.q && !qs.q) {
+            qs.q = config.q;
+        }
+        if (config.s && !qs.s) {
+            qs.s = config.s;
+        }
+        if (config.qr && !qs.qr) {
+            qs.qr = config.qr;
+        }
+
         // runtime state (mutable after init)
         state = {
             lb: 0,
