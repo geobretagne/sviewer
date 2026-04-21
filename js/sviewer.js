@@ -198,7 +198,6 @@ window.SViewerApp = (function() {
          * Queries the layer capabilities to display its legend and metadata
          */
         function getMetadata(self) {
-            console.log("self.options.wmsurl_layer" + self.options.wmsurl_layer);
             var parser = new ol.format.WMSCapabilities();
             var capabilitiesUrl = ajaxURL(self.options.wmsurl_layer + '?' + $.param({
                 SERVICE: 'WMS',
@@ -1170,11 +1169,11 @@ window.SViewerApp = (function() {
         if (qs.qcl_filters) {
             var qcl_filters_list = [];
             qcl_filters_list = (typeof qs.qcl_filters === 'string') ? qs.qcl_filters.split(';') : qs.qcl_filters;
-    
+
             $.each(qcl_filters_list, function(index) {
                 if (index < config.layersQueryable.length) {
                     var opt = config.layersQueryable[index].options;
-                    opt.cql_filter = this;
+                    opt.cql_filter = String(this);
                     config.layersQueryable[index] = new LayerQueryable(opt);
                 }
             });
