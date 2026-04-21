@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLayers Modules Test</title>
+    <style>
+        body { font-family: monospace; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+        .section { margin: 20px 0; }
+        .module { padding: 8px; margin: 4px 0; border-radius: 4px; }
+        .pass { background: #d4edda; color: #155724; }
+        .fail { background: #f8d7da; color: #721c24; }
+        .summary { font-size: 18px; font-weight: bold; margin-top: 20px; padding: 12px; border-radius: 4px; }
+        .summary.pass { background: #d4edda; color: #155724; }
+        .summary.fail { background: #f8d7da; color: #721c24; }
+        code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>OpenLayers Modules Test</h1>
+        <p>Testing if all required OpenLayers modules are available in <code>ol-new.js</code></p>
+        <div id="results"></div>
+    </div>
+
+    <script src="ol-new.js"></script>
+    <script>
+        const tests = [
+            { name: 'ol.Map', check: () => typeof ol.Map === 'function' },
+            { name: 'ol.View', check: () => typeof ol.View === 'function' },
+            { name: 'ol.Overlay', check: () => typeof ol.Overlay === 'function' },
+            { name: 'ol.layer.Tile', check: () => typeof ol.Tile === 'function' },
+            { name: 'ol.layer.Image', check: () => typeof ol.Image === 'function' },
+            { name: 'ol.source.OSM', check: () => typeof ol.source.OSM === 'function' },
+            { name: 'ol.source.TileWMS', check: () => typeof ol.source.TileWMS === 'function' },
+            { name: 'ol.source.ImageWMS', check: () => typeof ol.source.ImageWMS === 'function' },
+            { name: 'ol.source.WMTS', check: () => typeof ol.source.WMTS === 'function' },
+            { name: 'ol.proj.transform', check: () => typeof ol.proj.transform === 'function' },
+            { name: 'ol.proj.transformExtent', check: () => typeof ol.proj.transformExtent === 'function' },
+            { name: 'ol.format.GeoJSON', check: () => typeof ol.GeoJSON === 'function' },
+            { name: 'ol.format.WMSCapabilities', check: () => typeof ol.WMSCapabilities === 'function' },
+            { name: 'ol.extent.getCenter', check: () => typeof ol.extent.getCenter === 'function' },
+            { name: 'ol.extent.getBottomLeft', check: () => typeof ol.extent.getBottomLeft === 'function' },
+            { name: 'ol.extent.getTopRight', check: () => typeof ol.extent.getTopRight === 'function' },
+            { name: 'ol.tilegrid.WMTS', check: () => typeof ol.tilegrid.WMTS === 'function' },
+            { name: 'ol.ScaleLine', check: () => typeof ol.ScaleLine === 'function' },
+            { name: 'ol.Attribution', check: () => typeof ol.Attribution === 'function' },
+            { name: 'ol.proj.proj4.register', check: () => typeof ol.proj.proj4?.register === 'function' },
+        ];
+
+        let passed = 0;
+        let failed = 0;
+        let results = '<div class="section">';
+
+        tests.forEach(test => {
+            try {
+                const isPass = test.check();
+                if (isPass) {
+                    results += `<div class="module pass">✓ ${test.name}</div>`;
+                    passed++;
+                } else {
+                    results += `<div class="module fail">✗ ${test.name} (returned falsy)</div>`;
+                    failed++;
+                }
+            } catch (e) {
+                results += `<div class="module fail">✗ ${test.name} (${e.message})</div>`;
+                failed++;
+            }
+        });
+
+        results += '</div>';
+
+        // Summary
+        const total = tests.length;
+        const allPass = failed === 0;
+        results += `<div class="summary ${allPass ? 'pass' : 'fail'}">
+            ${allPass ? '✓ ALL TESTS PASSED' : '✗ SOME TESTS FAILED'} (${passed}/${total})
+        </div>`;
+
+        document.getElementById('results').innerHTML = results;
+    </script>
+</body>
+</html>

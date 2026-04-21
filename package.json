@@ -3,15 +3,17 @@
   "version": "2.0.0",
   "description": "geOrchestra simple mobile map viewer",
   "scripts": {
+    "build:ol": "esbuild build/ol-custom-entry.js --bundle --minify --format=iife --outfile=build/ol-new.js",
     "minify": "npm run minify:js && npm run minify:css",
     "minify:js": "terser js/sviewer.js -o js/sviewer.min.js -c -m",
     "minify:css": "cssnano css/sviewer.css > css/sviewer.min.css",
-    "build": "npm run minify"
+    "build": "npm run build:ol && npm run minify"
   },
   "devDependencies": {
     "terser": "^5.31.0",
     "cssnano": "^6.1.0",
-    "cssnano-cli": "^3.1.0"
+    "esbuild": "^0.20.0",
+    "ol": "^9.1.0"
   },
   "keywords": [
     "map",
