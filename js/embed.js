@@ -61,13 +61,15 @@
             loadResource(baseUrl + 'css/sviewer.css', 'css')
         ];
 
-        // Load JS in sequence: jQuery → proj4 → OL.js → Bootstrap.js → customConfig.js
+        // Bootstrap is only needed for modals — load in parallel, not blocking the map init chain
+        var bootstrapPromise = loadResource(baseUrl + 'lib/bootstrap/bootstrap.bundle.min.js', 'js');
+
+        // Load JS in sequence: jQuery → proj4 → OL.js → customConfig.js
         return loadResource(baseUrl + 'lib/jquery/jquery-4.0.0.min.js', 'js')
             .then(function() { return loadResource(baseUrl + 'build/proj4.js', 'js'); })
             .then(function() { return loadResource(baseUrl + 'build/ol-new.js', 'js'); })
-            .then(function() { return loadResource(baseUrl + 'lib/bootstrap/bootstrap.bundle.min.js', 'js'); })
             .then(function() { return loadResource(baseUrl + 'etc/customConfig.js', 'js'); })
-            .then(function() { return Promise.all(cssPromises); });
+            .then(function() { return Promise.all([Promise.all(cssPromises), bootstrapPromise]); });
     }
 
     // Load i18n first (before sviewer.js initializes)
