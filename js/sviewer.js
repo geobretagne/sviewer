@@ -16,6 +16,9 @@ window.SViewerApp = (function() {
     // Ensure hardConfig exists (created by embed.js before i18n.js loaded)
     window.hardConfig = window.hardConfig || {};
 
+    console.log('sviewer.js init - window.customConfig:', window.customConfig);
+    console.log('sviewer.js init - window.hardConfig before extend:', window.hardConfig);
+
     // Merge default values while preserving i18n and customConfig properties
     $.extend(window.hardConfig, {
         title: 'sViewer',
@@ -33,6 +36,11 @@ window.SViewerApp = (function() {
             })
         ]
     });
+
+    // Merge customConfig (loaded from etc/customConfig.js) to override defaults
+    $.extend(window.hardConfig, window.customConfig || {});
+
+    console.log('sviewer.js init - window.hardConfig after extend:', window.hardConfig);
 
     var hardConfig = window.hardConfig;
 
