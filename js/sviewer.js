@@ -493,31 +493,6 @@ window.SViewerApp = (function() {
     }
 
 
-    /**
-     * Call external viewers
-     * @param viewerId {String} the external viewer codename
-     */
-    /*
-    function sendMapTo(viewerId) {
-        // sendto : georchestra advanced viewer
-        if (viewerId === "georchestra_viewer") {
-            var params = {
-                "services": [],
-                "layers" : []
-            };
-            $.each(config.layersQueryable, function(i, layer) {
-                params.layers.push({
-                    "layername" : layer.options.layername,
-                    "owstype" : "WMS",
-                    "owsurl" : layer.options.wmsurl_layer
-                });
-            });
-            $("#georchestraFormData").val(JSON.stringify(params));
-            //~ return true;
-            return false;
-        }
-    }
-    */
 
 
     /**
@@ -598,7 +573,6 @@ window.SViewerApp = (function() {
                     });
                     $('#searchResults').prepend(items);
                     $('#searchResults').prepend('<li class="list-group-item list-group-item-secondary">Localit&eacute;s</li>');
-                    $('#searchResults');
                 }
             } catch(err) {
                 $('#locateMsg').text(tr('Geolocation failed'));
@@ -897,7 +871,6 @@ window.SViewerApp = (function() {
                 .attr("title", tips.join('\n'))
                 .appendTo($("#searchResults"));
         });
-        $("#searchResults");
     }
 
     /**
@@ -1335,13 +1308,6 @@ window.SViewerApp = (function() {
         $('#shareSetTitle').on('keyup', onTitle);
         $('#shareSetTitle').on('blur', setPermalink);
 
-        // sendto form
-        /*
-        $('#georchestraForm').submit(function(e) {
-            sendMapTo('georchestra_viewer');
-        });
-        */
-
         // WebComponent button (can appear in side panel or modal)
         $(document).on('click', '.webcomponent-btn', function() {
             var embedCode = generateEmbedCode();
@@ -1438,7 +1404,6 @@ window.SViewerApp = (function() {
         fixContentHeight();
 
         if (state.gfiok) {
-            //~ queryMap(view.getCenter());
             setTimeout(
                 function() { queryMap(view.getCenter()); },
                 300
