@@ -61,9 +61,8 @@
             loadResource(baseUrl + 'css/sviewer.css', 'css')
         ];
 
-        // Load JS in sequence: jQuery → jQuery Migrate → proj4 → OL.js → Bootstrap.js → customConfig.js
+        // Load JS in sequence: jQuery → proj4 → OL.js → Bootstrap.js → customConfig.js
         return loadResource(baseUrl + 'lib/jquery/jquery-4.0.0.min.js', 'js')
-            .then(function() { return loadResource(baseUrl + 'lib/jquery/jquery-migrate-3.5.2.min.js', 'js'); })
             .then(function() { return loadResource(baseUrl + 'build/proj4.js', 'js'); })
             .then(function() { return loadResource(baseUrl + 'build/ol.js', 'js'); })
             .then(function() { return loadResource(baseUrl + 'lib/bootstrap/bootstrap.bundle.min.js', 'js'); })

@@ -16,9 +16,6 @@ window.SViewerApp = (function() {
     // Ensure hardConfig exists (created by embed.js before i18n.js loaded)
     window.hardConfig = window.hardConfig || {};
 
-    console.log('sviewer.js init - window.customConfig:', window.customConfig);
-    console.log('sviewer.js init - window.hardConfig before extend:', window.hardConfig);
-
     // Merge default values while preserving i18n and customConfig properties
     $.extend(window.hardConfig, {
         title: 'sViewer',
@@ -39,8 +36,6 @@ window.SViewerApp = (function() {
 
     // Merge customConfig (loaded from etc/customConfig.js) to override defaults
     $.extend(window.hardConfig, window.customConfig || {});
-
-    console.log('sviewer.js init - window.hardConfig after extend:', window.hardConfig);
 
     var hardConfig = window.hardConfig;
 
@@ -306,15 +301,12 @@ window.SViewerApp = (function() {
          * constructor
          */
         this.construct = function(options) {
-            console.log('LayerQueryable.construct called with:', {type: typeof options, value: options});
             // layers from query string parameter
             // In jQuery 4, $.each may pass String object wrappers instead of primitives
             if (typeof options === "string" || (typeof options === "object" && options && options.constructor === String)) {
-                console.log('Calling parseLayerParam with string:', options);
                 parseLayerParam(String(options));
             }
             else {
-                console.log('LayerQueryable received object, extending options');
                 $.extend(this.options, options);
             }
             createLayer();
@@ -1107,10 +1099,8 @@ window.SViewerApp = (function() {
 
         // In embed mode, merge config values back into qs so they're available downstream
         // (config has been populated from hardConfig + customConfig, which includes embed options)
-        console.log('doConfiguration - before embed merge:', {config_layers: config.layers, qs_layers: qs.layers, config: config});
         if (config.layers && !qs.layers) {
             qs.layers = config.layers;
-            console.log('Merged config.layers into qs.layers:', qs.layers);
         }
         if (config.zoom && !qs.z) {
             qs.z = config.zoom;
@@ -1134,7 +1124,6 @@ window.SViewerApp = (function() {
         if (config.qr && !qs.qr) {
             qs.qr = config.qr;
         }
-        console.log('doConfiguration - after embed merge:', {qs_layers: qs.layers});
 
         // runtime state (mutable after init)
         state = {
@@ -1158,9 +1147,7 @@ window.SViewerApp = (function() {
             var ns_layer_style_list = [];
             // parser to retrieve serialized namespace:name[*style[*cql_filter]] and store the description in config
             ns_layer_style_list = (typeof qs.layers === 'string') ? qs.layers.split(',') : qs.layers;
-            console.log('Processing qs.layers:', {qs_layers: qs.layers, qs_layers_type: typeof qs.layers, ns_layer_style_list: ns_layer_style_list});
-            $.each(ns_layer_style_list, function(index) {
-                console.log('$.each iteration:', {index: index, this: this, type: typeof this});
+            $.each(ns_layer_style_list, function() {
                 config.layersQueryable.push(new LayerQueryable(this));
             });
         }
