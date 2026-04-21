@@ -198,6 +198,7 @@ window.SViewerApp = (function() {
          * Queries the layer capabilities to display its legend and metadata
          */
         function getMetadata(self) {
+            console.log("self.options.wmsurl_layer" + self.options.wmsurl_layer);
             var parser = new ol.format.WMSCapabilities();
             var capabilitiesUrl = ajaxURL(self.options.wmsurl_layer + '?' + $.param({
                 SERVICE: 'WMS',
@@ -1157,7 +1158,9 @@ window.SViewerApp = (function() {
             var ns_layer_style_list = [];
             // parser to retrieve serialized namespace:name[*style[*cql_filter]] and store the description in config
             ns_layer_style_list = (typeof qs.layers === 'string') ? qs.layers.split(',') : qs.layers;
-            $.each(ns_layer_style_list, function() {
+            console.log('Processing qs.layers:', {qs_layers: qs.layers, qs_layers_type: typeof qs.layers, ns_layer_style_list: ns_layer_style_list});
+            $.each(ns_layer_style_list, function(index) {
+                console.log('$.each iteration:', {index: index, this: this, type: typeof this});
                 config.layersQueryable.push(new LayerQueryable(this));
             });
         }
