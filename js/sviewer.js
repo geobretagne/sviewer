@@ -187,6 +187,7 @@ window.SViewerApp = (function() {
             $.ajax({
                 url: capabilitiesUrl,
                 type: 'GET',
+                dataType: 'xml',
                 success: function(response) {
                     var html = [];
                     var capabilities, mdLayer, legendArgs;
@@ -774,7 +775,8 @@ window.SViewerApp = (function() {
                         REQUEST: 'DescribeLayer',
                         LAYERS: searchLayer.options.layername
                     })),
-                    type: 'GET'
+                    type: 'GET',
+                    dataType: 'xml'
                 }).then(function(r1) {
                     state.searchparams.url = $(r1).find('LayerDescription').attr('wfs');
                     state.searchparams.typename = $(r1).find('Query').attr('typeName');
@@ -787,7 +789,8 @@ window.SViewerApp = (function() {
                             REQUEST: 'DescribeFeatureType',
                             TYPENAME: state.searchparams.typename
                         })),
-                        type: 'GET'
+                        type: 'GET',
+                        dataType: 'xml'
                     });
                 }).then(function(r2) {
                     var fields = [];
