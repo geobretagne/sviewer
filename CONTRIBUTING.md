@@ -173,7 +173,7 @@ Les acronymes et codes standards restent **non-traduits** :
 
 ### Versions et dépendances
 - Code en **ES5** (pas d'ES6+ modern syntax) — supporté nativement sans transpilation
-- jQuery 1.12.4 est **verrouillé** — ne pas upgrader sans raison critique
+- jQuery **4.x** (4.0.0 ou supérieur) pour tous les accès DOM et AJAX
 - **Bootstrap 5** pour composants UI et grille responsive
 - **OpenLayers 10** pour la cartographie (local, self-hosted)
 

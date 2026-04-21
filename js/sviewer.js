@@ -285,7 +285,7 @@ window.SViewerApp = (function() {
          */
         this.construct = function(options) {
             // layers from query string parameter
-            if ($.type(options) === "string") {
+            if (typeof options === "string") {
                 parseLayerParam(options);
             }
             else {
@@ -308,7 +308,8 @@ window.SViewerApp = (function() {
      * @return {String} secured string
      */
     function escHTML (s) {
-        return $('<p/>').text(s).html();
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     }
 
     /**
@@ -326,7 +327,7 @@ window.SViewerApp = (function() {
      * @return {String} translated string
      */
     function tr(s) {
-        if ($.type(hardConfig.i18n[config.lang][s])==='string') {
+        if (typeof hardConfig.i18n[config.lang][s] === 'string') {
                 return hardConfig.i18n[config.lang][s];
             }
         else {
@@ -557,7 +558,7 @@ window.SViewerApp = (function() {
                             .text(label)
                             .parent()
                             .attr('title', label)
-                            .click({
+                            .on('click', {
                                 'extent': [],
                                 'coordinates': ptResult,
                                 'zoom': zoom
@@ -855,7 +856,7 @@ window.SViewerApp = (function() {
             $('<li class="list-group-item"><a href="#" style="text-decoration: none; color: inherit;"></a></li>')
                 .find("a")
                 .text(title.join(", "))
-                .click({
+                .on('click', {
                         'extent': geom.getExtent(),
                         'coordinates': (geom.getType()==='Point') ? geom.getCoordinates() : ol.extent.getCenter(geom.getExtent())
                     }, onSearchItemClick)
@@ -1241,17 +1242,17 @@ window.SViewerApp = (function() {
             queryMap(e.coordinate);
         });
         map.on('moveend', setPermalink);
-        $('#marker').click(clearQuery);
+        $('#marker').on('click', clearQuery);
 
 
         // map buttons
-        $('#ziBt').click(zoomIn);
-        $('#zoBt').click(zoomOut);
-        $('#zeBt').click(zoomInit);
-        $('#bgBt').click(switchBackground);
+        $('#ziBt').on('click', zoomIn);
+        $('#zoBt').on('click', zoomOut);
+        $('#zeBt').on('click', zoomInit);
+        $('#bgBt').on('click', switchBackground);
 
         // geolocation form
-        $('#zpBt').click(locateMe);
+        $('#zpBt').on('click', locateMe);
 
         // search with autocomplete - trigger on keyup after 3 characters
         $('#searchInput').on('keyup', function() {
@@ -1264,8 +1265,8 @@ window.SViewerApp = (function() {
         });
 
         // set title dialog (both panel and modal)
-        $('#shareSetTitle').keyup(onTitle);
-        $('#shareSetTitle').blur(setPermalink);
+        $('#shareSetTitle').on('keyup', onTitle);
+        $('#shareSetTitle').on('blur', setPermalink);
 
         // sendto form
         /*
@@ -1332,7 +1333,7 @@ window.SViewerApp = (function() {
         });
 
         // dynamic resize
-        $(window).bind('orientationchange resize pageshow updatelayout', panelLayout);
+        $(window).on('orientationchange resize pageshow updatelayout', panelLayout);
 
         // Side panel toggles
         $('#panelcontrols button').on('click', panelButton);
@@ -1366,7 +1367,7 @@ window.SViewerApp = (function() {
         
 
         // resize map
-        $(window).bind("orientationchange resize pageshow", fixContentHeight);
+        $(window).on("orientationchange resize pageshow", fixContentHeight);
         fixContentHeight();
 
         if (state.gfiok) {
