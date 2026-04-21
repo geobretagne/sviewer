@@ -306,11 +306,14 @@ window.SViewerApp = (function() {
          * constructor
          */
         this.construct = function(options) {
+            console.log('LayerQueryable.construct called with:', {type: typeof options, value: options});
             // layers from query string parameter
             if (typeof options === "string") {
+                console.log('Calling parseLayerParam with string:', options);
                 parseLayerParam(options);
             }
             else {
+                console.log('LayerQueryable received object, extending options');
                 $.extend(this.options, options);
             }
             createLayer();
