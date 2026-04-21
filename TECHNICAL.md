@@ -209,60 +209,55 @@ Les paramètres `lb`, `s`, `qr`, `debug` ne sont **pas** persistants.
 
 ### Options d'initialisation
 
-Tableau de toutes les options (équivalent aux paramètres KVP en mode simple) :
+Les options passées à `SViewer.init()` utilisent **exactement les mêmes noms** que les paramètres KVP du mode simple. `customConfig.js` est chargé en premier, puis les options embed s'appliquent par-dessus.
 
-| Option | Type | Défaut | Description |
-|--------|------|--------|-------------|
-| `center` | `[x, y]` | `[-366959, 2951352]` | Coordonnées initiales (EPSG:3857) |
-| `zoom` | `number` | `5` | Niveau de zoom (0-18) |
-| `title` | `string` | `'Map'` | Titre de la carte |
-| `lb` | `number` | `0` | Index de la couche de fond |
-| `layers` | `string` | `''` | Couches à afficher (séparées par virgules) |
-| `q` | `boolean` | `false` | Activer requête GetFeatureInfo au démarrage |
-| `s` | `boolean` | `false` | Afficher la barre de recherche |
-| `qr` | `boolean` | `false` | Ouvrir la modale code QR au démarrage |
-| `lang` | `string` | `'fr'` | Langue (fr, en, es, de, ru) |
-| `geOrchestraBaseUrl` | `string` | `'https://geobretagne.fr/'` | URL de base geOrchestra |
-| `maxFeatures` | `number` | `10` | Nombre max de résultats GetFeatureInfo |
-| `openLSGeocodeUrl` | `string` | IGN Géoplateforme | URL du service de géocodage |
-| `layersBackground` | `array` | OpenStreetMap | Couches de fond (ol.layer.Tile) |
+| Option | Type | Équivalent KVP | Description |
+|--------|------|----------------|-------------|
+| `x` | `number` | `?x=` | Longitude initiale (EPSG:3857) |
+| `y` | `number` | `?y=` | Latitude initiale (EPSG:3857) |
+| `z` | `number` | `?z=` | Niveau de zoom (0-18) |
+| `title` | `string` | `?title=` | Titre de la carte |
+| `lb` | `number` | `?lb=` | Index de la couche de fond |
+| `layers` | `string` | `?layers=` | Couches à afficher (séparées par virgules) |
+| `q` | `string` | `?q=` | Activer requête GetFeatureInfo au démarrage |
+| `s` | `string` | `?s=` | Afficher la barre de recherche |
+| `qr` | `string` | `?qr=` | Ouvrir la modale code QR au démarrage |
+| `c` | `string` | `?c=` | Nom du profil de configuration alternatif |
+
+Le bouton **HTML** du panneau de partage génère automatiquement un fragment `SViewer.init()` pour la vue courante.
 
 ### Exemples complets
 
 **Exemple minimal :**
 ```javascript
 SViewer.init('#ma-carte', {
-    center: [-366959, 2951352],
-    zoom: 5
+    x: -366959,
+    y: 2951352,
+    z: 5
 });
 ```
 
 **Exemple avec couches :**
 ```javascript
 SViewer.init('#ma-carte', {
-    center: [0, 2000000],
-    zoom: 6,
+    x: 0,
+    y: 2000000,
+    z: 6,
     title: 'Ressources nationales',
     layers: 'geor:commune,geor:departement'
 });
 ```
 
-**Exemple avec configuration personnalisée :**
+**Exemple complet :**
 ```javascript
-var mapElement = document.getElementById('mon-widget');
-mapElement.style.width = '800px';
-mapElement.style.height = '600px';
-
-SViewer.init('#mon-widget', {
-    center: [265000, 6250000],
-    zoom: 8,
-    lang: 'en',
-    geOrchestraBaseUrl: 'https://mon-serveur.org/',
-    layersBackground: [
-        new ol.layer.Tile({
-            source: new ol.source.OSM()
-        })
-    ]
+SViewer.init('#ma-carte', {
+    x: -390192,
+    y: 6122108,
+    z: 10,
+    lb: 1,
+    layers: 'dreal_b:ae_casparcas',
+    title: 'Evaluation Environnementale',
+    q: '1'
 });
 ```
 
@@ -594,26 +589,24 @@ Toutes les dépendances sont **self-hosted** (pas de CDN).
 
 ```
 embed.js
-  ├── Détecte baseUrl
-  ├── Charge parallèlement :
-  │   ├── jQuery 4.x
-  │   ├── proj4.js
-  │   ├── OpenLayers (CSS + JS)
-  │   ├── Bootstrap (CSS + JS)
-  │   └── sViewer CSS
+  ├── Détecte baseUrl depuis l'URL du script (window.SViewerBaseUrl)
+  ├── Stocke les options dans window._svEmbedOptions
   ├── Crée le DOM (.sv-scope container)
-  ├── Charge i18n.js (avant sviewer.js!)
+  ├── Charge en parallèle : jQuery → proj4 → OpenLayers → customConfig.js
+  │   et en parallèle : Bootstrap JS + CSS sViewer (révèle le container)
+  ├── Charge i18n.js
   └── Charge sviewer.js
-      └── Initialise la carte, appelle init()
+        ├── Merge _svEmbedOptions dans qs (priorité sur la page hôte)
+        ├── Charge customConfig.js via SViewerBaseUrl (chemin absolu)
+        └── doConfiguration() → doMap() → doGUI()
 ```
 
 ### Objet config (global)
 
-Fusionné à partir de :
+Fusionné à partir de, dans cet ordre de priorité :
 1. `hardConfig` (défauts sViewer)
-2. `customConfig` (configuration locale)
-3. Paramètres KVP ou options JS
-4. Paramètres geOrchestra
+2. `customConfig` (configuration locale, `etc/customConfig.js`)
+3. Options embed `_svEmbedOptions` (passées à `SViewer.init()`, écrasent `customConfig`)
 
 ```javascript
 config = {
@@ -727,8 +720,8 @@ CSS produit :
 // Mode simple : ajouter &q=0 pour désactiver
 ?layers=geor:commune&q=0
 
-// Mode WebComponent
-SViewer.init('#map', { layers: 'geor:commune', q: false });
+// Mode WebComponent : omettre q pour ne pas déclencher GetFeatureInfo
+SViewer.init('#map', { layers: 'geor:commune' });
 ```
 
 ### Recherche de lieux ne fonctionne pas

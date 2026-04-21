@@ -75,8 +75,9 @@ Incluez sViewer dans n'importe quelle page web existante en ajoutant trois ligne
 <script src="https://geobretagne.fr/sviewer/js/embed.js"></script>
 <script>
   SViewer.init('#ma-carte', {
-    center: [-366959, 2951352],
-    zoom: 5,
+    x: -366959,
+    y: 2951352,
+    z: 5,
     title: 'Ma carte intégrée'
   });
 </script>
@@ -214,7 +215,7 @@ Vous pouvez créer plusieurs configurations de sViewer pour différents besoins 
 Mode WebComponent : paramètres JavaScript
 ===========================================
 
-Quand vous utilisez le mode WebComponent (intégration dans une page), les options de configuration sont passées en JavaScript au lieu de l'URL.
+Quand vous utilisez le mode WebComponent (intégration dans une page), les options de configuration sont passées en JavaScript au lieu de l'URL. **Les noms de paramètres sont exactement les mêmes** qu'en mode simple.
 
 **Exemple complet :**
 
@@ -223,16 +224,17 @@ Quand vous utilisez le mode WebComponent (intégration dans une page), les optio
 <script src="https://geobretagne.fr/sviewer/js/embed.js"></script>
 <script>
   SViewer.init('#ma-carte', {
-    center: [-366959, 2951352],      // coordonnées EPSG:3857
-    zoom: 5,                          // niveau de zoom
+    x: -366959,                       // coordonnées EPSG:3857
+    y: 2951352,
+    z: 5,                             // niveau de zoom
     title: 'Ma carte intégrée',       // titre
     layers: 'geor:sdi',               // donnée à afficher
-    geOrchestraBaseUrl: 'https://geobretagne.fr/geOrchestra/'  // URL de votre serveur
+    lb: 1                             // fond de carte
   });
 </script>
 ```
 
-Toutes les options du mode Web (sauf `c` pour configuration) peuvent être passées en JavaScript.
+Tous les paramètres du mode simple peuvent être passés en JavaScript. Le bouton **HTML** du panneau de partage génère automatiquement ce fragment pour la vue courante.
 
 
 Intégration avec geOrchestra

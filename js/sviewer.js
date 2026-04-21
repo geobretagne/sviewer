@@ -88,7 +88,7 @@ window.SViewerApp = (function() {
         }
         return new Promise(function(resolve) {
             var script = document.createElement('script');
-            script.src = 'lib/qrcode/qrcode.min.js';
+            script.src = (window.SViewerBaseUrl || '') + 'lib/qrcode/qrcode.min.js';
             script.onload = function() {
                 qrcodeLoaded = true;
                 resolve();
@@ -418,6 +418,13 @@ window.SViewerApp = (function() {
         return b;
     })(window.location.search.substr(1).split('&'));
 
+    // In embed mode, merge SViewer.init() options on top of qs.
+    // customConfig.js is not yet loaded at this point — it runs later in init().
+    // _svEmbedOptions has priority over qs (which may contain unrelated host-page params).
+    if (window._svEmbedOptions) {
+        $.extend(qs, window._svEmbedOptions);
+    }
+
     // Debug mode: ?debug=true in URL enables console logs
     var debugMode = qs.debug === 'true';
     window.log = debugMode ? console.log : function() {};
@@ -474,10 +481,14 @@ window.SViewerApp = (function() {
             if (config.customConfigName) { linkParams.c = config.customConfigName; }
             if (state.search) { linkParams.s = '1'; }
             if (config.layersQueryString) { linkParams.layers = config.layersQueryString; }
-            permalinkHash = window.location.origin + window.location.pathname + "#" + $.param(linkParams);
-            permalinkQuery = window.location.origin + window.location.pathname + "?" + $.param(linkParams);
+            // In embed mode, permalink must point to the standalone sViewer, not the host page
+            var standaloneBase = window.SViewerBaseUrl
+                ? window.SViewerBaseUrl + 'index.html'
+                : window.location.origin + window.location.pathname;
+            permalinkHash = standaloneBase + "#" + $.param(linkParams);
+            permalinkQuery = standaloneBase + "?" + $.param(linkParams);
 
-            $('#permalink').prop('href',permalinkQuery);
+            $('#permalink').prop('href', permalinkQuery).attr('target', '_blank').attr('rel', 'noopener');
         }
     }
 
@@ -515,11 +526,10 @@ window.SViewerApp = (function() {
      */
     function generateEmbedCode() {
         var c = view.getCenter();
-        var embedParams = {
-            geOrchestraBaseUrl: config.geOrchestraBaseUrl,
-            center: [Math.round(c[0]), Math.round(c[1])],
-            zoom: view.getZoom()
-        };
+        var embedParams = {};
+        embedParams.x = Math.round(c[0]);
+        embedParams.y = Math.round(c[1]);
+        embedParams.z = view.getZoom();
         if (state.lb !== null && state.lb !== undefined) {
             embedParams.lb = state.lb;
         }
@@ -1057,12 +1067,13 @@ window.SViewerApp = (function() {
      * configname MUST MATCH ^[A-Za-z0-9_-]+$
      */
     function init() {
+        var configBase = window.SViewerBaseUrl || '';
         var qsconfig;
         if (qs.c && qs.c.match(/^[A-Za-z0-9_-]+$/)) {
-            qsconfig = "etc/customConfig_"+qs.c+".js";
+            qsconfig = configBase + "etc/customConfig_"+qs.c+".js";
         }
         else {
-            qsconfig = "etc/customConfig.js";
+            qsconfig = configBase + "etc/customConfig.js";
         }
         $.getScript(qsconfig)
             .done(function() {

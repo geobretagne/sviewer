@@ -289,17 +289,8 @@
             // Create container structure
             createContainer(containerSelector);
 
-            // Apply custom config BEFORE loading scripts
-            window.customConfig = window.customConfig || {};
-            if (options.geOrchestraBaseUrl) {
-                window.customConfig.geOrchestraBaseUrl = options.geOrchestraBaseUrl;
-            }
-            // Merge any other options into customConfig
-            Object.keys(options).forEach(function(key) {
-                if (key !== 'geOrchestraBaseUrl') {
-                    window.customConfig[key] = options[key];
-                }
-            });
+            // Store embed options for sviewer.js — applied on top of qs after customConfig.js loads
+            window._svEmbedOptions = options;
 
             // Load all resources
             return loadDependencies()
