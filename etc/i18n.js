@@ -27,10 +27,19 @@ $.extend(hardConfig, {
             'device position error': 'Device position error',
 
             'Edit title': 'Edit title',
+            'Dark theme': 'Dark theme',
             'Link to this map': 'Link to this map',
             'Search place': 'Find a place',
             'ex: 10 rue Maurice Fabre, Rennes': 'ex: 10 Downing Street, London',
-            'QR code': 'QR code'
+            'QR code': 'QR code',
+            'Choose appearance': 'Choose appearance',
+            'Reuse this map': 'Reuse this map',
+            'Configuration': 'Configuration',
+            'Documentation': 'Documentation',
+            'Query results': 'Query results',
+            'Location': 'Location',
+            'Share this map': 'Share this map',
+            'Embed in a page': 'Embed in a page'
         },
         fr: {
             'Query': 'Interroger',
@@ -59,10 +68,19 @@ $.extend(hardConfig, {
             'device position error': 'la localisation de l\'appareil a échoué',
 
             'Edit title': 'Editer le titre',
+            'Dark theme': 'Thème sombre',
             'Link to this map': 'Lien vers cette carte',
             'Search place': 'Trouver un lieu',
             'ex: 10 rue Maurice Fabre, Rennes': 'ex: 10 rue Maurice Fabre, Rennes',
-            'QR code': 'code QR'
+            'QR code': 'code QR',
+            'Choose appearance': 'Choisir l\'apparence',
+            'Reuse this map': 'Réutiliser cette carte',
+            'Configuration': 'Configuration',
+            'Documentation': 'Documentation',
+            'Query results': 'Interrogation',
+            'Location': 'Localisation',
+            'Share this map': 'Partager la carte',
+            'Embed in a page': 'Intégrer dans une page'
         },
         es: {
             'Query': 'Consultar',
@@ -91,10 +109,19 @@ $.extend(hardConfig, {
             'device position error': 'Error de posición del dispositivo',
 
             'Edit title': 'Cambiar título',
+            'Dark theme': 'Tema oscuro',
             'Link to this map': 'Vínculo permanente a este mapa',
             'Search place': 'Encontrar un lugar',
             'ex: 10 rue Maurice Fabre, Rennes': 'ej: Calle Gran Vía 1, Madrid',
-            'QR code': 'código QR'
+            'QR code': 'código QR',
+            'Choose appearance': 'Elegir apariencia',
+            'Reuse this map': 'Reutilizar este mapa',
+            'Configuration': 'Configuración',
+            'Documentation': 'Documentación',
+            'Query results': 'Resultados de consulta',
+            'Location': 'Localización',
+            'Share this map': 'Compartir el mapa',
+            'Embed in a page': 'Insertar en una página'
         },
         de: {
             'Query': 'abfragen',
@@ -123,10 +150,19 @@ $.extend(hardConfig, {
             'device position error': 'Fehler bei der Geräteposition',
 
             'Edit title': 'Titel ändern',
+            'Dark theme': 'Dunkles Design',
             'Link to this map': 'Permanenter link zur Karte',
             'Search place': 'Adresse eingeben',
             'ex: 10 rue Maurice Fabre, Rennes': 'z.B. Unter den Linden 1, Berlin',
-            'QR code': 'QR-Code'
+            'QR code': 'QR-Code',
+            'Choose appearance': 'Erscheinungsbild wählen',
+            'Reuse this map': 'Diese Karte wiederverwenden',
+            'Configuration': 'Konfiguration',
+            'Documentation': 'Dokumentation',
+            'Query results': 'Abfrageergebnisse',
+            'Location': 'Standort',
+            'Share this map': 'Karte teilen',
+            'Embed in a page': 'In eine Seite einbetten'
         }
     }
 });

@@ -12,6 +12,7 @@ Qu'offre sViewer ?
 * **Recherche de lieux** basée sur la géoplateforme française
 * **Requêtes cartographiques** sur les services Web Map Service (WMS)
 * **Partage de cartes** avec permaliens, codes QR et intégration à geOrchestra
+* **Thème clair et sombre** : bascule via l'interface ou le paramètre `theme`
 * **Langues multiples** : français, anglais, espagnol, allemand
 * **Facilement intégrable** dans vos propres pages web
 * **Entièrement autonome** : aucune dépendance externe (CDN)
@@ -187,7 +188,20 @@ https://geobretagne.fr/sviewer/?c=ma_config
 ```
 
 
-**Note :** Les paramètres `x`, `y`, `z`, `title`, `layers`, `q` et `c` sont **persistants** : ils sont mémorisés quand vous partagez la carte via le bouton « Map » ou le code QR.
+**`theme`** — Choisir le thème d'affichage
+
+Bascule entre le thème clair (défaut) et le thème sombre.
+
+```
+https://geobretagne.fr/sviewer/?theme=dark
+```
+
+Le choix du thème peut aussi se faire interactivement via le panneau **Configuration** (bouton en haut à droite). Le thème sombre est mémorisé dans le permalink si sélectionné.
+
+Valeurs acceptées : `light` (défaut), `dark`.
+
+
+**Note :** Les paramètres `x`, `y`, `z`, `title`, `layers`, `q`, `theme` et `c` sont **persistants** : ils sont mémorisés quand vous partagez la carte via le bouton « Configuration » ou le code QR.
 
 
 Configurations personnalisées
@@ -229,7 +243,8 @@ Quand vous utilisez le mode WebComponent (intégration dans une page), les optio
     z: 5,                             // niveau de zoom
     title: 'Ma carte intégrée',       // titre
     layers: 'geor:sdi',               // donnée à afficher
-    lb: 1                             // fond de carte
+    lb: 1,                            // fond de carte
+    theme: 'dark'                     // thème : 'light' (défaut) ou 'dark'
   });
 </script>
 ```
@@ -252,7 +267,8 @@ Notes techniques
 
 * **Technologie** : OpenLayers 10, jQuery 4.x, Bootstrap 5
 * **Projection** : EPSG:3857 (Web Mercator)
-* **Langue** : Français par défaut, mais supporte also l'anglais, espagnol, allemand, russe
+* **Langue** : Français par défaut, mais supporte aussi l'anglais, l'espagnol et l'allemand
+* **Thèmes** : clair (défaut) et sombre, activables via `?theme=dark` ou l'option `{ theme: 'dark' }` en mode WebComponent
 * **Serveur** : Aucun composant côté serveur requis (excepté un proxy Ajax optionnel pour les requêtes CORS)
 * **Compatibilité** : Tous les navigateurs modernes (desktop, tablet, mobile)
 
