@@ -10,10 +10,15 @@
     "build": "npm run build:ol && npm run minify"
   },
   "devDependencies": {
-    "terser": "^5.31.0",
+    "@eslint/eslintrc": "^3.3.5",
+    "@eslint/js": "^10.0.1",
     "cssnano": "^6.1.0",
     "esbuild": "^0.20.0",
-    "ol": "^9.1.0"
+    "eslint": "^10.2.1",
+    "eslint-plugin-security": "^4.0.0",
+    "globals": "^17.5.0",
+    "ol": "^9.1.0",
+    "terser": "^5.31.0"
   },
   "keywords": [
     "map",
