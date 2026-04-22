@@ -31,8 +31,8 @@ cp etc/customConfig.DIST.js etc/customConfig.js
 
 Éditez `etc/customConfig.js` pour personnaliser :
 - L'adresse de votre serveur geOrchestra (ou votre GeoServer)
-- Les fonds de carte fond par défaut
-- Les couleurs et l'apparence générale
+- Les fonds de carte
+- Le thème
 
 ### 2. Télécharger le code sur votre serveur
 
@@ -57,13 +57,6 @@ https://geobretagne.fr/sviewer/?x=-366959&y=2951352&z=5&title=Ma%20carte
 
 Cela ouvre sViewer centré sur les coordonnées indiquées et avec un titre personnalisé.
 
-**Avantages :**
-- Très simple à utiliser
-- Partage facile par lien web
-- Code QR accessible via le panneau de partage
-- Les paramètres sont mémorisés dans le permalink
-
-
 ### Option 2 : Mode WebComponent — Intégration dans vos pages
 
 Incluez sViewer dans n'importe quelle page web existante en ajoutant trois lignes de code.
@@ -84,17 +77,10 @@ Incluez sViewer dans n'importe quelle page web existante en ajoutant trois ligne
 </script>
 ```
 
-**Avantages :**
-- Intégration discrète dans votre site
-- Configuration entièrement en JavaScript
-- Pas de popup nouvelle fenêtre
-- Personnalisation fine et programmable
-
-
 Mode Web : paramètres KVP
 ==========================
 
-Vous pouvez configurer la carte en ajoutant des paramètres à l'URL. Voici les principaux :
+Vous pouvez configurer la carte en ajoutant des paramètres à l'URL.
 
 
 #### Paramètres de positionnement
@@ -131,7 +117,7 @@ https://geobretagne.fr/sviewer/?lb=1
 Liste séparée par des virgules. Les données doivent être publiées sur votre serveur geOrchestra ou GeoServer.
 
 ```
-https://geobretagne.fr/sviewer/?layers=geor:sdi
+https://geobretagne.fr/sviewer/?layers=dreal_b:ae_casparcas
 ```
 
 **Avec un style personnalisé :**
@@ -139,41 +125,22 @@ https://geobretagne.fr/sviewer/?layers=geor:sdi
 Ajoutez `*nomstyle` au nom de la donnée :
 
 ```
-https://geobretagne.fr/sviewer/?layers=geor:sdi*mon_style
+https://geobretagne.fr/sviewer/?layers=dreal_b:ae_casparcas*default
 ```
 
 #### Paramètres de recherche et requête
 
 **`q`** — Interroger la carte au démarrage
 
-Affiche les informations d'une donnée WMS à une position donnée. Utile pour mettre en évidence une entité spécifique.
+Au chargemnet, affiche les informations au centre de la carte.
 
 ```
 https://geobretagne.fr/sviewer/?layers=geor:sdi&q=1
 ```
 
-**`s`** — Activer la recherche par texte
-
-Active la recherche dans les attributs texte de la première donnée affichée.
-
-```
-https://geobretagne.fr/sviewer/?layers=geor:sdi&s=1
-```
-
-
-#### Paramètres d'affichage et partage
-
-**`qr`** — Ouvrir la fenêtre code QR au démarrage
-
-Ouvre automatiquement la modale contenant le code QR du permalink. Pratique pour un utilisateur sur mobile qui souhaite scanner rapidement.
-
-```
-https://geobretagne.fr/sviewer/?x=-366959&y=2951352&z=5&qr=1
-```
-
 **`debug`** — Activer les logs de debug
 
-Affiche les logs de debug dans la console du navigateur (F12). Utile pour diagnostiquer les problèmes.
+Affiche les logs de debug dans la console du navigateur (F12).
 
 ```
 https://geobretagne.fr/sviewer/?layers=xyz&debug=true
@@ -201,7 +168,7 @@ Le choix du thème peut aussi se faire interactivement via le panneau **Configur
 Valeurs acceptées : `light` (défaut), `dark`.
 
 
-**Note :** Les paramètres `x`, `y`, `z`, `title`, `layers`, `q`, `theme` et `c` sont **persistants** : ils sont mémorisés quand vous partagez la carte via le bouton « Configuration » ou le code QR.
+**Note :** Les paramètres `x`, `y`, `z`, `title`, `layers`, `q`, `theme` et `c` sont **persistants** : ils sont mémorisés quand vous partagez la carte via lien, QR ou code javascript.
 
 
 Configurations personnalisées
@@ -231,7 +198,7 @@ Mode WebComponent : paramètres JavaScript
 
 Quand vous utilisez le mode WebComponent (intégration dans une page), les options de configuration sont passées en JavaScript au lieu de l'URL. **Les noms de paramètres sont exactement les mêmes** qu'en mode simple.
 
-**Exemple complet :**
+**Exemple :**
 
 ```html
 <div id="ma-carte"></div>
@@ -258,16 +225,8 @@ Notes techniques
 * **Projection** : EPSG:3857 (Web Mercator)
 * **Langue** : Français par défaut, mais supporte aussi l'anglais, l'espagnol et l'allemand
 * **Thèmes** : clair (défaut) et sombre, activables via `?theme=dark` ou l'option `{ theme: 'dark' }` en mode WebComponent
-* **Serveur** : Aucun composant côté serveur requis (excepté un proxy Ajax optionnel pour les requêtes CORS)
+* **Serveur** : Aucun composant côté serveur requis
 * **Compatibilité** : Tous les navigateurs modernes (desktop, tablet, mobile)
 
-
-Support et ressources
-=====================
-
-* **Codes sources** : Les fichiers principaux sont `js/sviewer.js` (logique métier), `js/embed.js` (intégration), `css/sviewer.css` (style) et `index.html` (page web)
-* **Gestion de configuration** : Éditez `etc/customConfig.js`
-* **Problème de chargement ?** Vérifiez que votre serveur web (Apache, nginx) sert correctement les fichiers CSS et JS
-* **Pour contribuer** : Consultez les fichiers de configuration et personnalisez selon vos besoins
 
 
