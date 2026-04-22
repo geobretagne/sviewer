@@ -272,42 +272,31 @@ window.SViewerApp = (function() {
         }
 
         function buildLayerPanel(mdLayer, legendUrl) {
-            var el = $('<div class="sv-md">');
-
+            var attribution = null;
             if (mdLayer.Attribution) {
-                var attrib = $('<span class="sv-md-attrib">').text(tr('msg.source') + ' : ');
-                var attribLink = $('<a target="_blank" rel="noopener noreferrer">')
-                    .attr('href', safeURL(mdLayer.Attribution.OnlineResource))
-                    .attr('aria-label', mdLayer.Attribution.Title + ' (' + tr('msg.new_tab') + ')');
-                if (mdLayer.Attribution.LogoURL) {
-                    attribLink.append($('<img class="sv-md-logo">').attr('src', safeURL(mdLayer.Attribution.LogoURL.OnlineResource)).attr('alt', ''));
-                    attribLink.append('<br>');
-                }
-                attribLink.append(document.createTextNode(mdLayer.Attribution.Title));
-                el.append(attrib.append(attribLink));
+                attribution = {
+                    source: tr('msg.source'),
+                    url:    safeURL(mdLayer.Attribution.OnlineResource),
+                    title:  mdLayer.Attribution.Title,
+                    newTab: tr('msg.new_tab'),
+                    logo:   mdLayer.Attribution.LogoURL
+                        ? { url: safeURL(mdLayer.Attribution.LogoURL.OnlineResource) }
+                        : null
+                };
             }
-
-            el.append($('<p>').append($('<h4 class="sv-md-title">').text(mdLayer.Title)));
-            el.append($('<p class="sv-md-abstract">').text(mdLayer.Abstract));
-
-            el.append($('<img class="sv-md-legend" role="img">').attr('src', legendUrl).attr('alt', tr('msg.legend_of') + ' ' + mdLayer.Title));
-
-            var doclinks = $('<div class="sv-md-doclink">');
-            if (mdLayer.hasOwnProperty('MetadataURL')) {
-                $.each(mdLayer.MetadataURL, function() {
-                    if (this.Format === "text/html") {
-                        doclinks.append(
-                            $('<a target="_blank" rel="noopener noreferrer" class="sv-md-meta btn btn-sm btn-outline-secondary">')
-                                .attr('href', safeURL(this.OnlineResource))
-                                .attr('aria-label', tr('msg.full_record') + ' (' + tr('msg.new_tab') + ')')
-                                .append('<i class="bi bi-info-circle" aria-hidden="true"></i> ')
-                                .append(document.createTextNode(tr('msg.full_record')))
-                        );
-                    }
+            var metadataLinks = (mdLayer.MetadataURL || [])
+                .filter(function(m) { return m.Format === 'text/html'; })
+                .map(function(m) {
+                    return { url: safeURL(m.OnlineResource), label: tr('msg.full_record'), newTab: tr('msg.new_tab') };
                 });
-            }
-            el.append(doclinks);
-            return el;
+            return $(Mustache.render(window.svTemplates['layer-panel'], {
+                title:         mdLayer.Title,
+                abstract:      mdLayer.Abstract,
+                legendUrl:     legendUrl,
+                legendAlt:     tr('msg.legend_of') + ' ' + mdLayer.Title,
+                attribution:   attribution,
+                metadataLinks: metadataLinks
+            }));
         }
 
         function fetchISOMetadata(url, panel) {
@@ -390,27 +379,17 @@ window.SViewerApp = (function() {
         }
 
         function buildISOTable(meta) {
-            var tbody = $('<tbody>');
-            if (meta.date) {
-                tbody.append($('<tr>').append($('<th>').text(tr('msg.meta_date'))).append($('<td>').text(meta.date)));
-            }
-            if (meta.producer) {
-                tbody.append($('<tr>').append($('<th>').text(tr('msg.meta_producer'))).append($('<td>').text(meta.producer)));
-            }
-            if (meta.email) {
-                tbody.append($('<tr>').append($('<th>').text(tr('msg.meta_contact')))
-                    .append($('<td>').append($('<a>').attr('href', 'mailto:' + meta.email).text(meta.email))));
-            }
-            if (meta.licenceText) {
-                var cell = $('<td>');
-                if (meta.licenceUrl) {
-                    cell.append($('<a target="_blank" rel="noopener noreferrer">').attr('href', safeURL(meta.licenceUrl)).text(meta.licenceText));
-                } else {
-                    cell.text(meta.licenceText);
-                }
-                tbody.append($('<tr>').append($('<th>').text(tr('msg.meta_licence'))).append(cell));
-            }
-            return $('<table class="sv-md-iso">').append(tbody);
+            return $(Mustache.render(window.svTemplates['iso-table'], {
+                dateLabel:     tr('msg.meta_date'),
+                producerLabel: tr('msg.meta_producer'),
+                contactLabel:  tr('msg.meta_contact'),
+                licenceLabel:  tr('msg.meta_licence'),
+                date:          meta.date,
+                producer:      meta.producer,
+                email:         meta.email,
+                licenceText:   meta.licenceText,
+                licenceUrl:    meta.licenceUrl ? safeURL(meta.licenceUrl) : null
+            }));
         }
 
         /**
@@ -670,20 +649,18 @@ window.SViewerApp = (function() {
                             case 'housenumber':   zoom = 18; break;
                         }
                         var label = props.label || props.name || coords.join(', ');
-                        var item = $('<li class="list-group-item"><a href="#" style="text-decoration: none; color: inherit;"></a></li>')
+                        var item = $(Mustache.render(window.svTemplates['search-item'], { label: label, tooltip: label }))
                             .find('a')
-                            .text(label)
-                            .parent()
-                            .attr('title', label)
                             .on('click', {
                                 'extent': [],
                                 'coordinates': ptResult,
                                 'zoom': zoom
-                            }, onSearchItemClick);
+                            }, onSearchItemClick)
+                            .parent();
                         items.push(item);
                     });
                     $('#searchResults').prepend(items);
-                    $('#searchResults').prepend('<li class="list-group-item list-group-item-secondary">Localit&eacute;s</li>');
+                    $('#searchResults').prepend(Mustache.render(window.svTemplates['search-header'], { label: 'Localités' }));
                 }
             } catch(err) {
                 $('#locateMsg').text(tr('msg.geolocation_failed'));
@@ -752,7 +729,7 @@ window.SViewerApp = (function() {
             );
 
             // response order = layer order
-            var domResponse =  $($('<div>').append($('<span class="sv-md-title">').text(this.md.title)));
+            var domResponse = $(Mustache.render(window.svTemplates['query-header'], { title: this.md.title }));
             $('#queryContent').append(domResponse);
             // ajax request
             svSpinner.show();
@@ -952,7 +929,7 @@ window.SViewerApp = (function() {
      */
     function featuresToList (features) {
         var lib = state.searchparams.title || tr('msg.top_layer');
-        $("#searchResults").append($('<li class="list-group-item list-group-item-secondary">').text(lib));
+        $("#searchResults").append(Mustache.render(window.svTemplates['search-header'], { label: lib }));
 
         $.each(features, function(i, feature) {
             var geom = feature.getGeometry(),
@@ -969,15 +946,16 @@ window.SViewerApp = (function() {
                 }
             });
 
-            $('<li class="list-group-item"><a href="#" style="text-decoration: none; color: inherit;"></a></li>')
-                .find("a")
-                .text(title.join(", "))
+            $(Mustache.render(window.svTemplates['search-item'], {
+                    label:   title.join(', '),
+                    tooltip: tips.join('\n')
+                }))
+                .find('a')
                 .on('click', {
                         'extent': geom.getExtent(),
                         'coordinates': (geom.getType()==='Point') ? geom.getCoordinates() : ol.extent.getCenter(geom.getExtent())
                     }, onSearchItemClick)
                 .parent()
-                .attr("title", tips.join('\n'))
                 .appendTo($("#searchResults"));
         });
     }
