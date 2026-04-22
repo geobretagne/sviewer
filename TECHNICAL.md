@@ -9,7 +9,7 @@ Guide technique complet pour développeurs et intégrateurs. Pour une introducti
 1. [Mode Simple : Paramètres KVP](#mode-simple--paramètres-kvp)
 2. [Mode WebComponent : API JavaScript](#mode-webcomponent--api-javascript)
 3. [Configuration Avancée](#configuration-avancée)
-4. [Services OGC et Couches](#services-ogc-et-couches)
+4. [Services OGC et Données](#services-ogc-et-données)
 5. [Projections et Repères](#projections-et-repères)
 6. [Requêtes Cartographiques](#requêtes-cartographiques)
 7. [Intégration geOrchestra](#intégration-georchestra)
@@ -66,15 +66,15 @@ Sélectionne la couche de fond (background layer) par index.
 ?lb=1      # Deuxième couche
 ```
 
-**Configuration :** Les couches disponibles sont définies dans `etc/customConfig.js` → `layersBackground[]`. L'index par défaut est 0.
+**Configuration :** Les données disponibles sont définies dans `etc/customConfig.js` → `layersBackground[]`. L'index par défaut est 0.
 
 ---
 
-### Paramètres de couches cartographiques
+### Paramètres de données cartographiques
 
 #### `layers`
 
-Ajoute une ou plusieurs couches WMS à la carte. Format : liste séparée par des virgules.
+Ajoute une ou plusieurs données WMS à la carte. Format : liste séparée par des virgules.
 
 **Syntaxe basique :**
 ```
@@ -99,7 +99,7 @@ Ajoute une ou plusieurs couches WMS à la carte. Format : liste séparée par de
 ```
 
 **Cas d'usage:**
-- Les couches doivent être publiées sur un serveur OGC (geOrchestra, GeoServer, etc.)
+- Les données doivent être publiées sur un serveur OGC (geOrchestra, GeoServer, etc.)
 - Si `geOrchestraBaseUrl` est configuré, sViewer construit automatiquement les URLs WMS
 - Les styles doivent exister sur le serveur pour être appliqués
 - Les filtres CQL utilisent la syntaxe OGC standard
@@ -108,7 +108,7 @@ Ajoute une ou plusieurs couches WMS à la carte. Format : liste séparée par de
 
 #### `q` (query)
 
-Active une requête GetFeatureInfo au démarrage sur les couches visibles.
+Active une requête GetFeatureInfo au démarrage sur les données visibles.
 
 ```
 ?layers=geor:commune&q=1
@@ -134,18 +134,6 @@ Active la barre de recherche de lieux au démarrage.
 
 ### Paramètres d'affichage et partage
 
-#### `qr` (QR code)
-
-Ouvre automatiquement la modale affichant le code QR du permalink au démarrage.
-
-```
-?qr=1
-```
-
-**Cas d'usage:** Utilisateur sur mobile veut partager instantanément la vue.
-
-**Note:** Le QR code est disponible à tout moment via le bouton « QR code » du panneau de partage.
-
 #### `debug` (debug mode)
 
 Active les logs de debug dans la console du navigateur. Non-persistant.
@@ -169,16 +157,6 @@ Charge une configuration alternative au lieu de `customConfig.js`.
 - Écrase les paramètres par défaut avec les valeurs de cette configuration
 - Restrictions de nom : `[a-zA-Z0-9_-]+` uniquement
 
-**Exemple de fichier :**
-```javascript
-// etc/customConfig_bretagne.js
-$.extend(customConfig, {
-    title: 'Carte Bretagne',
-    initialExtent: [-600000, 6090000, -100000, 6100000],
-    layersBackground: [ /* ... */ ]
-});
-```
-
 ---
 
 ### Paramètres persistants
@@ -189,8 +167,9 @@ Les paramètres suivants sont **mémorisés** dans le permalien et le code QR :
 - `layers`
 - `q`
 - `c`
+- `lb`  
 
-Les paramètres `lb`, `s`, `qr`, `debug` ne sont **pas** persistants.
+Le paramètre `debug` n'est **pas** persistants.
 
 ---
 
@@ -218,10 +197,7 @@ Les options passées à `SViewer.init()` utilisent **exactement les mêmes noms*
 | `z` | `number` | `?z=` | Niveau de zoom (0-18) |
 | `title` | `string` | `?title=` | Titre de la carte |
 | `lb` | `number` | `?lb=` | Index de la couche de fond |
-| `layers` | `string` | `?layers=` | Couches à afficher (séparées par virgules) |
-| `q` | `string` | `?q=` | Activer requête GetFeatureInfo au démarrage |
-| `s` | `string` | `?s=` | Afficher la barre de recherche |
-| `qr` | `string` | `?qr=` | Ouvrir la modale code QR au démarrage |
+| `layers` | `string` | `?layers=` | Données à afficher (séparées par virgules) |
 | `c` | `string` | `?c=` | Nom du profil de configuration alternatif |
 
 Le bouton **HTML** du panneau de partage génère automatiquement un fragment `SViewer.init()` pour la vue courante.
@@ -237,7 +213,7 @@ SViewer.init('#ma-carte', {
 });
 ```
 
-**Exemple avec couches :**
+**Exemple avec données :**
 ```javascript
 SViewer.init('#ma-carte', {
     x: 0,
@@ -256,8 +232,7 @@ SViewer.init('#ma-carte', {
     z: 10,
     lb: 1,
     layers: 'dreal_b:ae_casparcas',
-    title: 'Evaluation Environnementale',
-    q: '1'
+    title: 'Evaluation Environnementale'
 });
 ```
 
@@ -267,7 +242,7 @@ SViewer.init('#ma-carte', {
 
 ### Fichier customConfig.js
 
-La configuration centralisée d'une instance sViewer se fait dans `etc/customConfig.js`.
+La configuration centralisée d'une instance sViewer se fait dans `etc/customConfig.js`. Vous devez être familier avec `OpenLayers` pour la modifier.
 
 **Structure :**
 ```javascript
@@ -296,16 +271,16 @@ Trois étendues contrôlent le comportement de la carte :
 
 Format : `[minX, minY, maxX, maxY]` en EPSG:3857.
 
-**Exemple : Brûler la région française**
+**Exemple :**
 ```javascript
 initialExtent: [-600000, 6090000, -100000, 6100000],
 maxExtent: [-20037508, -20037508, 20037508, 20037508],
 restrictedExtent: [-20037508, -20037508, 20037508, 20037508]
 ```
 
-### Couches de fond
+### Fonds de carte
 
-Configuration des couches de base disponibles dans le sélecteur :
+Configuration des fonds ce carte disponibles dans le sélecteur :
 
 ```javascript
 layersBackground: [
@@ -329,23 +304,8 @@ layersBackground: [
 ```
 
 **Notes :**
-- Chaque couche doit avoir un attribut `title`
-- Toutes les couches doivent être en EPSG:3857
-- Les couches OSM/WMTS sont recommandées (performance, fiabilité)
-
-### Partage social
-
-Configuration des liens de partage social (mode simple uniquement) :
-
-```javascript
-socialMedia: {
-    'Twitter': 'https://twitter.com/intent/tweet?text=',
-    'LinkedIn': 'https://www.linkedin.com/sharing/share-offsite/?url=',
-    'Facebook': 'https://www.facebook.com/sharer/sharer.php?u='
-}
-```
-
-Le permalink est ajouté automatiquement à chaque URL de partage.
+- Chaque donnée doit avoir un attribut `title`
+- Toutes les données doivent être en EPSG:3857
 
 ### Service de géocodage
 
@@ -362,7 +322,7 @@ Le service doit :
 
 ---
 
-## Services OGC et Couches
+## Services OGC et Données
 
 ### Web Map Service (WMS)
 
@@ -371,13 +331,13 @@ sViewer supporte **WMS 1.3.0** uniquement.
 #### GetCapabilities
 
 sViewer lit automatiquement les capacités WMS pour :
-- Obtenir les couches disponibles
+- Obtenir les données disponibles
 - Lire les métadonnées (titre, résumé)
 - Déterminer si une couche est queryable
 
 #### GetFeatureInfo
 
-Requête pour interroger une couche à une position donnée.
+Requête pour interroger une données à une position donnée.
 
 **URL générée :**
 ```
@@ -400,7 +360,7 @@ https://serveur/geoserver/namespace/layername/wms
 - `maxFeatures` : nombre de résultats (défaut 10)
 - `FORMAT` : toujours `image/png` avec `TRANSPARENT=true`
 
-#### Propriétés requises pour les couches
+#### Propriétés requises pour les données
 
 Chaque couche WMS doit :
 - Supporter **EPSG:3857** (Web Mercator)
@@ -416,26 +376,7 @@ Chaque couche WMS doit :
 
 **EPSG:3857 (Web Mercator) est l'unique projection supportée.**
 
-Toutes les couches WMS doivent être dans cette projection ou seront reprojetées automatiquement.
-
-### EPSG:3857 (Web Mercator)
-
-- **Nom complet :** Web Mercator Auxiliary Sphere
-- **Unité :** mètre
-- **Étendue mondiale :** `[-20037508.34, -20037508.34, 20037508.34, 20037508.34]`
-- **Distorsion :** Pôles non représentés (latitude max ≈ ±85.06°)
-
-### EPSG:4326 (WGS84)
-
-Utilisé en entrée (résultats de géocodage).
-
-**Conversion approximative :**
-```
-Web Mercator X = longitude * 20037508.34 / 180
-Web Mercator Y = latitude  * 20037508.34 / 180  (simplifié)
-```
-
-La conversion exacte utilise proj4.js (inclus).
+Toutes les données WMS doivent être dans cette projection ou seront reprojetées automatiquement par le serveur OGC.
 
 ---
 
@@ -456,7 +397,7 @@ Cliquer sur la carte déclenche une requête WMS GetFeatureInfo si une couche qu
 
 ### Recherche de lieux
 
-Saisie libre d'adresse/lieu → requête OpenLS Geocoding.
+Saisie libre d'adresse/lieu → requête vers le service géoplateforme.
 
 **Résultats :**
 - Liste avec score de pertinence
@@ -464,31 +405,16 @@ Saisie libre d'adresse/lieu → requête OpenLS Geocoding.
 - Marqueur temporaire
 
 **Limitations :**
-- Service externe (IGN Géoplateforme)
 - Couverture variable selon région
-- CORS obligatoire
 
 ---
-
-## Intégration geOrchestra
-
-Si `geOrchestraBaseUrl` est configuré, sViewer active des fonctionnalités avancées :
-
-### Édition avec Mapfishapp
-
-Bouton **« Éditer avec geOrchestra »** → exporte la carte vers l'éditeur avancé Mapfishapp.
-
-**Lien généré :**
-```
-https://geobretagne.fr/mapfishapp/?layers=...
-```
 
 ### Légendes et métadonnées
 
 Pour chaque couche publiée depuis geOrchestra :
 - Légende graphique (si disponible)
 - Titre et résumé
-- Lien vers métadonnées GeoNetwork
+- Lien vers métadonnées
 
 ---
 
@@ -502,7 +428,7 @@ Pour chaque couche publiée depuis geOrchestra :
 | Anglais | `en` | Complet |
 | Espagnol | `es` | Complet |
 | Allemand | `de` | Complet |
-| Russe | `ru` | Optionnel |
+
 
 ### Fichier i18n.js
 
@@ -569,7 +495,7 @@ Par ordre de priorité :
 | Fichier | Responsabilité |
 |---------|---|
 | `js/embed.js` | Chargement des dépendances + création du DOM + API SViewer.init() |
-| `js/sviewer.js` | Logique métier : carte, couches, requêtes, état |
+| `js/sviewer.js` | Logique métier : carte, données, requêtes, état |
 | `css/sviewer.css` | Styles sViewer + overrides Bootstrap/OpenLayers |
 | `etc/customConfig.js` | Configuration (obligatoire) |
 | `etc/i18n.js` | Traductions UI |
@@ -629,7 +555,7 @@ state = {
     gfiok: true,                  // GetFeatureInfo actif
     mapCenter: [x, y],            // Centre actuel
     mapZoom: 12,
-    layersVisible: [],            // Couches visibles
+    layersVisible: [],            // Données visibles
     // ... etc
 }
 ```
@@ -690,11 +616,10 @@ CSS produit :
 
 **Causes courantes :**
 1. **customConfig.js manquant** → Copier `customConfig.DIST.js` en `customConfig.js`
-2. **CDN bloqué** → Utiliser auto-hébergement ou proxy
 3. **CORS erreur** → Services OGC doivent supporter CORS
 4. **Syntaxe JSON invalide** → Vérifier `customConfig.js`
 
-### Les couches WMS ne s'affichent pas
+### Les données WMS ne s'affichent pas
 
 **Diagnostic :**
 - Vérifier que `layers=namespace:layername` est correct
@@ -722,22 +647,7 @@ CSS produit :
 
 // Mode WebComponent : omettre q pour ne pas déclencher GetFeatureInfo
 SViewer.init('#map', { layers: 'geor:commune' });
-```
-
-### Recherche de lieux ne fonctionne pas
-
-**Causes :**
-1. **Service géocodage inaccessible**
-2. **CORS** → Service doit supporter CORS
-3. **Configuration URL** → `openLSGeocodeUrl` invalide
-
-**Workaround :** Utiliser un proxy CORS externe ou serveur proxy local.
-
-### Code QR vide
-
-**Cause :** qrcode.js ne charge pas (réseau lent).
-
-**Solution :** Augmenter le délai avant d'afficher le code QR.
+``
 
 ### Traductions manquantes
 
