@@ -194,14 +194,17 @@
     box-shadow: var(--sv-btn-focus-ring);
 }
 
-.sv-panel-toggle.active {
+.sv-scope .sv-panel-toggle.active {
+    --bs-btn-bg:           var(--sv-fg);
+    --bs-btn-border-color: var(--sv-fg);
+    --bs-btn-color:        var(--sv-bg);
     background-color: var(--sv-fg);
     border-color: var(--sv-fg);
     color: var(--sv-bg);
 }
 
-.sv-panel-toggle.active svg,
-.sv-panel-toggle.active i {
+.sv-scope .sv-panel-toggle.active svg,
+.sv-scope .sv-panel-toggle.active i {
     color: var(--sv-bg);
     fill: var(--sv-bg);
     stroke: var(--sv-bg);
