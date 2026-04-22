@@ -1,0 +1,23 @@
+<div class="sv-md">
+  {{#attribution}}
+  <span class="sv-md-attrib">{{source}} :
+    <a href="{{url}}" target="_blank" rel="noopener noreferrer"
+       aria-label="{{title}} ({{newTab}})">
+      {{#logo}}<img class="sv-md-logo" src="{{url}}" alt=""><br>{{/logo}}
+      {{title}}
+    </a>
+  </span>
+  {{/attribution}}
+  <p><h4 class="sv-md-title">{{title}}</h4></p>
+  <p class="sv-md-abstract">{{abstract}}</p>
+  <img class="sv-md-legend" role="img" src="{{legendUrl}}" alt="{{legendAlt}}">
+  <div class="sv-md-doclink">
+    {{#metadataLinks}}
+    <a href="{{url}}" target="_blank" rel="noopener noreferrer"
+       class="sv-md-meta btn btn-sm btn-outline-secondary"
+       aria-label="{{label}} ({{newTab}})">
+      <i class="bi bi-info-circle" aria-hidden="true"></i> {{label}}
+    </a>
+    {{/metadataLinks}}
+  </div>
+</div>

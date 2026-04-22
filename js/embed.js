@@ -69,12 +69,24 @@
         // Bootstrap is only needed for modals — load in parallel, not blocking the map init chain
         var bootstrapPromise = loadResource(baseUrl + 'lib/bootstrap/bootstrap.bundle.min.js', 'js');
 
-        // Load JS in sequence: jQuery → proj4 → OL.js → customConfig.js
+        // Load JS in sequence: jQuery → proj4 → OL.js → customConfig.js → Mustache
         return loadResource(baseUrl + 'lib/jquery/jquery-4.0.0.min.js', 'js')
             .then(function() { return loadResource(baseUrl + 'build/proj4.js', 'js'); })
             .then(function() { return loadResource(baseUrl + 'build/ol-new.js', 'js'); })
             .then(function() { return loadResource(baseUrl + 'etc/customConfig.js', 'js'); })
-            .then(function() { return Promise.all([Promise.all(cssPromises), bootstrapPromise]); });
+            .then(function() { return loadResource(baseUrl + 'lib/mustache/mustache.min.js', 'js'); })
+            .then(function() { return Promise.all([Promise.all(cssPromises), bootstrapPromise, loadTemplates(baseUrl)]); });
+    }
+
+    // Fetch all Mustache templates and store them in window.svTemplates
+    function loadTemplates(baseUrl) {
+        var names = ['layer-panel', 'iso-table', 'query-header', 'search-item', 'search-header'];
+        window.svTemplates = {};
+        return Promise.all(names.map(function(name) {
+            return fetch(baseUrl + 'templates/' + name + '.html')
+                .then(function(r) { return r.text(); })
+                .then(function(t) { window.svTemplates[name] = t; });
+        }));
     }
 
     // Load i18n first (before sviewer.js initializes)
