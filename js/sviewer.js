@@ -244,7 +244,7 @@ window.SViewerApp = (function() {
 
                         // attribution
                         if (mdLayer.Attribution) {
-                            html.push('<span class="sv-md-attrib">' + escHTML(tr('source')));
+                            html.push('<span class="sv-md-attrib">' + escHTML(tr('msg.source')));
                             html.push(' : <a target="_blank" rel="noopener noreferrer" href="' + escHTML(safeURL(mdLayer.Attribution.OnlineResource)) + '" >');
                             if (mdLayer.Attribution.LogoURL) {
                                 html.push('<img class="sv-md-logo" src="' + escHTML(safeURL(mdLayer.Attribution.LogoURL.OnlineResource)) + '" /><br />');
@@ -272,7 +272,7 @@ window.SViewerApp = (function() {
                                 if (this.Format === "text/html") {
                                     html.push('<a target="_blank" rel="noopener noreferrer" class="sv-md-meta btn btn-sm btn-outline-secondary" href="' + escHTML(safeURL(this.OnlineResource)) + '">');
                                     html.push('<i class="bi bi-info-circle" aria-hidden="true"></i> ');
-                                    html.push(tr('documentation'));
+                                    html.push(tr('msg.documentation'));
                                     html.push('</a>');
                                 }
                             });
@@ -363,22 +363,15 @@ window.SViewerApp = (function() {
      * @param selector {String} jQuery selector
      * @param propnames {Array} array of property names
      */
-    function translateDOM(selector, propnames) {
-        $.each($(selector), function(i,e) {
+    function translateDOM(selector) {
+        $.each($(selector), function(i, e) {
             var $e = $(e);
-            // text translation - skip elements that contain SVG or other important children
-            if ($e.find('svg').length === 0 && $e.find('span').length === 0 && $e.find('i').length === 0) {
-                $e.text(tr($e.text()));
-            }
-            // properties translation
-            $.each(propnames, function(j, p) {
-                if (p !== "value") {
-                    $(e).prop(p, tr($(e).prop(p)));
-                }
-                else {
-                    $(e).val(tr($(e).prop(p)));
-                }
-            });
+            var textKey        = $e.attr('data-i18n');
+            var titleKey       = $e.attr('data-i18n-title');
+            var placeholderKey = $e.attr('data-i18n-placeholder');
+            if (textKey)        $e.text(tr(textKey));
+            if (titleKey)       $e.prop('title', tr(titleKey));
+            if (placeholderKey) $e.prop('placeholder', tr(placeholderKey));
         });
     }
 
@@ -584,13 +577,13 @@ window.SViewerApp = (function() {
                     $('#searchResults').prepend('<li class="list-group-item list-group-item-secondary">Localit&eacute;s</li>');
                 }
             } catch(err) {
-                $('#locateMsg').text(tr('Geolocation failed'));
+                $('#locateMsg').text(tr('msg.geolocation_failed'));
             }
         }
 
         function onGeocodeFailure(xhr) {
             if (xhr.statusText === 'abort') { return; }
-            $('#locateMsg').text(tr('Geolocation failed'));
+            $('#locateMsg').text(tr('msg.geolocation_failed'));
             svSpinner.hide();
         }
 
@@ -618,7 +611,7 @@ window.SViewerApp = (function() {
                 svSpinner.show();
             }
         } catch(err) {
-            messagePopup(tr('Geolocation failed'));
+            messagePopup(tr('msg.geolocation_failed'));
             svSpinner.hide();
         }
     }
@@ -671,14 +664,14 @@ window.SViewerApp = (function() {
                     else {
                         // disable jquery ajax for links
                         togglePanel('query');
-                        $(this).append($('<p class="sv-noitem">').text(tr('no item found')));
+                        $(this).append($('<p class="sv-noitem">').text(tr('msg.no_item_found')));
                         state.gfiok = false;
                     }
                     svSpinner.hide();
                 },
                 error: function() {
                     svSpinner.hide();
-                    $(this).append($('<p class="sv-noitem">').text(tr('query failed')));
+                    $(this).append($('<p class="sv-noitem">').text(tr('msg.query_failed')));
                 }
             });
         });
@@ -690,7 +683,7 @@ window.SViewerApp = (function() {
     function clearQuery() {
         $('#marker').hide('fast');
         closePanel();
-        $('#queryContent').text(tr('Query the map'));
+        $('#queryContent').text(tr('lbl.query_the_map'));
         state.gficoord = null;
         state.gfiz = null;
         state.gfiok = false;
@@ -816,7 +809,7 @@ window.SViewerApp = (function() {
                         .attr('targetNamespace');
                     state.searchparams.name = state.searchparams.typename.split(':')[1];
                 }).fail(function() {
-                    messagePopup(tr('query failed'));
+                    messagePopup(tr('msg.query_failed'));
                 });
             }
         }
@@ -849,7 +842,7 @@ window.SViewerApp = (function() {
      * @param {ol.features} features
      */
     function featuresToList (features) {
-        var lib = state.searchparams.title || tr('Top layer');
+        var lib = state.searchparams.title || tr('msg.top_layer');
         $("#searchResults").append($('<li class="list-group-item list-group-item-secondary">').text(lib));
 
         $.each(features, function(i, feature) {
@@ -893,7 +886,7 @@ window.SViewerApp = (function() {
             }
         }
         catch(err) {
-            messagePopup(tr('Geolocation failed'));
+            messagePopup(tr('msg.geolocation_failed'));
             svSpinner.hide();
         }
         return false;
@@ -1006,16 +999,16 @@ window.SViewerApp = (function() {
     // get device position
     function locateMe() {
         if (navigator.geolocation) {
-            messagePopup(tr("estimating device position ..."));
+            messagePopup(tr('msg.estimating_position'));
             navigator.geolocation.getCurrentPosition(
                 showPosition, 
                 function(e) {
-                    messagePopup(tr("device position error"));
+                    messagePopup(tr('msg.position_error'));
                 },
                 {maximumAge: 60000, enableHighAccuracy: true, timeout: 30000}
             );
         } else {
-            messagePopup(tr("device position not available on this device"));
+            messagePopup(tr('msg.position_unavailable'));
         }
         return false;
     }
@@ -1423,7 +1416,7 @@ window.SViewerApp = (function() {
 
         // i18n
         if (config.lang !== 'en') {
-            translateDOM('.i18n', ['title', 'placeholder', 'value']);
+            translateDOM('.i18n');
         }
         
 
