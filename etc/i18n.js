@@ -38,7 +38,14 @@ $.extend(hardConfig, {
 
             // Runtime messages
             'msg.source':               'Source',
-            'msg.documentation':        'Documentation',
+
+            'msg.full_record':          'Full record',
+            'msg.new_tab':              'opens in a new tab',
+            'msg.legend_of':            'Legend for',
+            'msg.meta_date':            'Updated',
+            'msg.meta_producer':        'Producer',
+            'msg.meta_contact':         'Contact',
+            'msg.meta_licence':         'Licence',
             'msg.no_item_found':        'No item found',
             'msg.query_failed':         'Query failed',
             'msg.geolocation_failed':   'Geolocation failed',
@@ -80,7 +87,14 @@ $.extend(hardConfig, {
             'inp.search_placeholder': 'ex: 10 rue Maurice Fabre, Rennes',
 
             'msg.source':               'source',
-            'msg.documentation':        'Documentation',
+
+            'msg.full_record':          'Fiche complète',
+            'msg.new_tab':              'ouvre dans un nouvel onglet',
+            'msg.legend_of':            'Légende de',
+            'msg.meta_date':            'Mise à jour',
+            'msg.meta_producer':        'Producteur',
+            'msg.meta_contact':         'Contact',
+            'msg.meta_licence':         'Licence',
             'msg.no_item_found':        "aucun objet n'a été trouvé",
             'msg.query_failed':         "l'interrogation a échoué",
             'msg.geolocation_failed':   'Localisation impossible',
@@ -122,7 +136,14 @@ $.extend(hardConfig, {
             'inp.search_placeholder': 'ej: Calle Gran Vía 1, Madrid',
 
             'msg.source':               'fuente',
-            'msg.documentation':        'Documentación',
+
+            'msg.full_record':          'Ficha completa',
+            'msg.new_tab':              'se abre en una nueva pestaña',
+            'msg.legend_of':            'Leyenda de',
+            'msg.meta_date':            'Actualización',
+            'msg.meta_producer':        'Productor',
+            'msg.meta_contact':         'Contacto',
+            'msg.meta_licence':         'Licencia',
             'msg.no_item_found':        'No se encontraron elementos',
             'msg.query_failed':         'La consulta falló',
             'msg.geolocation_failed':   'La geolocalización ha fracasado',
@@ -164,7 +185,14 @@ $.extend(hardConfig, {
             'inp.search_placeholder': 'z.B. Unter den Linden 1, Berlin',
 
             'msg.source':               'Quelle',
-            'msg.documentation':        'Dokumentation',
+
+            'msg.full_record':          'Vollständiger Datensatz',
+            'msg.new_tab':              'öffnet in einem neuen Tab',
+            'msg.legend_of':            'Legende für',
+            'msg.meta_date':            'Aktualisiert',
+            'msg.meta_producer':        'Herausgeber',
+            'msg.meta_contact':         'Kontakt',
+            'msg.meta_licence':         'Lizenz',
             'msg.no_item_found':        'kein Treffer',
             'msg.query_failed':         'Abfrage nicht erfolgt',
             'msg.geolocation_failed':   'Geolokalisierung fehlgeschlagen',
