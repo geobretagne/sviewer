@@ -1,55 +1,69 @@
 :root {
-    /* neutral scale (zinc-like) */
-    --sv-surface: #ffffff;
-    --sv-surface-muted: #f4f4f5;
-    --sv-surface-glass: rgba(255, 255, 255, 0.78);
-    --sv-border: #e4e4e7;
-    --sv-fg: #18181b;
-    --sv-fg-muted: #52525b;
+    /* 4 primitives — light theme is the default */
+    --sv-bg:           #f4f4f5;
+    --sv-fg:           #18181b;
+    --sv-border-color: #e4e4e7;
+    --sv-accent:       #2563eb;
 
-    /* dark panel surface — used for side panels (share, legend, locate) and modals */
-    --sv-panel-surface-dark: rgba(24, 24, 27, 0.82);
-    --sv-panel-fg-dark: #fafafa;
-    --sv-panel-fg-muted-dark: #a1a1aa;
-    --sv-panel-border-dark: rgba(255, 255, 255, 0.14);
-    --sv-panel-input-bg-dark: rgba(255, 255, 255, 0.08);
-    --sv-panel-input-bg-dark-hover: rgba(255, 255, 255, 0.12);
-    --sv-panel-btn-bg-dark: rgba(255, 255, 255, 0.06);
-    --sv-panel-btn-bg-dark-hover: rgba(255, 255, 255, 0.12);
-    --sv-panel-btn-border-dark-hover: rgba(255, 255, 255, 0.28);
-    --sv-panel-section-header-bg: rgba(255, 255, 255, 0.04);
+    /* derived surfaces */
+    --sv-surface:       #ffffff;
+    --sv-surface-muted: #ececed;
+    --sv-surface-glass: rgba(255, 255, 255, 0.92);
+    --sv-border:        #e4e4e7;
+    --sv-fg-muted:      #52525b;
+
+    /* panels — neutral names, light values by default */
+    --sv-panel-bg:               rgba(255, 255, 255, 0.92);
+    --sv-panel-fg:               #18181b;
+    --sv-panel-fg-muted:         #52525b;
+    --sv-panel-border:           #e4e4e7;
+    --sv-panel-input-bg:         rgba(0, 0, 0, 0.04);
+    --sv-panel-input-bg-hover:   rgba(0, 0, 0, 0.08);
+    --sv-panel-btn-bg:           rgba(0, 0, 0, 0.04);
+    --sv-panel-btn-bg-hover:     rgba(0, 0, 0, 0.08);
+    --sv-panel-btn-border-hover: rgba(0, 0, 0, 0.18);
+    --sv-panel-section-header-bg: rgba(0, 0, 0, 0.03);
     --sv-backdrop: blur(14px) saturate(140%);
 
-    /* dark interactive (floating controls over the map) */
-    --sv-btn-bg: #18181b;
-    --sv-btn-bg-hover: #27272a;
-    --sv-btn-bg-glass: rgba(24, 24, 27, 0.85);
-    --sv-btn-bg-glass-hover: rgba(39, 39, 42, 0.92);
-    --sv-btn-fg: #fafafa;
+    /* map buttons (floating over the map) */
+    --sv-btn-bg:               #f4f4f5;
+    --sv-btn-bg-hover:         #e4e4e7;
+    --sv-btn-bg-glass:         rgba(244, 244, 245, 0.85);
+    --sv-btn-bg-glass-hover:   rgba(228, 228, 231, 0.92);
+    --sv-btn-fg:               #18181b;
+    --sv-btn-border:           rgba(0, 0, 0, 0.12);
+    --sv-btn-box-shadow:       inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.10);
+    --sv-btn-box-shadow-hover: inset 0 0 0 1px rgba(0, 0, 0, 0.10), 0 2px 6px rgba(0, 0, 0, 0.12);
+    --sv-btn-focus-ring:       0 0 0 2px rgba(0, 0, 0, 0.15), 0 0 0 4px var(--sv-accent);
+    --sv-btn-active-bg:        rgba(0, 0, 0, 0.08);
 
     /* accent */
-    --sv-accent: #2563eb;
-    --sv-accent-ring: rgba(37, 99, 235, 0.35);
+    --sv-accent-ring:  rgba(37, 99, 235, 0.35);
+    --sv-accent-hover: #1d4ed8;
+
+    /* misc */
+    --sv-overlay-bg: rgba(0, 0, 0, 0.2);
+    --sv-legend-bg:  #ffffff;
 
     /* radii */
     --sv-radius-sm: 6px;
-    --sv-radius: 8px;
+    --sv-radius:    8px;
     --sv-radius-lg: 12px;
 
-    /* shadows — single-layer, subtle */
+    /* shadows */
     --sv-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-    --sv-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --sv-shadow:    0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
     --sv-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
 
     /* motion */
     --sv-duration: 150ms;
-    --sv-ease: cubic-bezier(0.2, 0, 0, 1);
+    --sv-ease:     cubic-bezier(0.2, 0, 0, 1);
     --sv-transition: background-color var(--sv-duration) var(--sv-ease),
                      border-color var(--sv-duration) var(--sv-ease),
                      color var(--sv-duration) var(--sv-ease),
                      box-shadow var(--sv-duration) var(--sv-ease);
 
-    /* legacy aliases — keep existing rules working without a rename pass */
+    /* legacy aliases */
     --btn-bg: var(--sv-btn-bg);
     --btn-bg-hover: var(--sv-btn-bg-hover);
     --btn-border: transparent;
@@ -58,7 +72,6 @@
     --btn-shadow: var(--sv-shadow-sm);
     --btn-shadow-hover: var(--sv-shadow);
     --transition: var(--sv-transition);
-
 }
 
 
@@ -95,7 +108,7 @@
 
 /* Overrides openlayers styles */
 .ol-control button {
-    color: #fff;
+    color: var(--sv-btn-fg);
     background-color: var(--sv-btn-bg-glass);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
@@ -146,6 +159,20 @@ p.center {
     z-index: 8000;
 }
 
+/* Bootstrap's .sv-scope .btn-dark sets --bs-btn-bg:#212529 at specificity (0,2,0),
+   overriding .sv-map-btn (0,1,0). This rule matches at the same specificity and
+   wins because sviewer.css loads after bootstrap-scoped — redirecting all bs-btn
+   variables to our own so theme changes propagate correctly. */
+.sv-scope .sv-map-btn {
+    --bs-btn-bg:                 var(--sv-btn-bg-glass);
+    --bs-btn-hover-bg:           var(--sv-btn-bg-glass-hover);
+    --bs-btn-active-bg:          var(--sv-btn-bg-glass-hover);
+    --bs-btn-color:              var(--sv-btn-fg);
+    --bs-btn-hover-color:        var(--sv-btn-fg);
+    --bs-btn-border-color:       var(--sv-btn-border);
+    --bs-btn-hover-border-color: var(--sv-btn-border);
+}
+
 .sv-map-btn {
     width: 44px;
     height: 44px;
@@ -154,41 +181,39 @@ p.center {
     align-items: center;
     justify-content: center;
     border-radius: var(--sv-radius);
-    border: 1px solid rgba(255, 255, 255, 0.22);
+    border: 1px solid var(--sv-btn-border);
     font-size: 1rem;
-    color: #fff;
+    color: var(--sv-btn-fg);
     background-color: var(--sv-btn-bg-glass);
     backdrop-filter: blur(8px) saturate(140%);
     -webkit-backdrop-filter: blur(8px) saturate(140%);
-    /* Inner dark edge anchors the silhouette over bright map tiles
+    /* Inner edge anchors the silhouette over bright map tiles
        (WCAG 1.4.11 non-text contrast), outer shadow adds lift. */
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35),
-                0 1px 2px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--sv-btn-box-shadow);
     transition: var(--sv-transition);
 }
 
 .sv-map-btn:hover {
     background-color: var(--sv-btn-bg-glass-hover);
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35),
-                0 2px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--sv-btn-box-shadow-hover);
 }
 
 .sv-map-btn:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95), 0 0 0 4px var(--sv-accent);
+    box-shadow: var(--sv-btn-focus-ring);
 }
 
 .sv-panel-toggle.active {
-    background-color: rgba(255, 255, 255, 0.96);
-    border-color: rgba(255, 255, 255, 0.96);
-    color: var(--sv-btn-bg);
+    background-color: var(--sv-fg);
+    border-color: var(--sv-fg);
+    color: var(--sv-bg);
 }
 
 .sv-panel-toggle.active svg,
 .sv-panel-toggle.active i {
-    color: var(--sv-btn-bg);
-    fill: var(--sv-btn-bg);
-    stroke: var(--sv-btn-bg);
+    color: var(--sv-bg);
+    fill: var(--sv-bg);
+    stroke: var(--sv-bg);
 }
 
 .sv-map-btn:focus,
@@ -203,13 +228,13 @@ p.center {
     display: inline;
     flex-shrink: 0;
     margin-right: 4px;
-    fill: #fff;
-    stroke: #fff;
+    fill: var(--sv-btn-fg);
+    stroke: var(--sv-btn-fg);
     transition: var(--transition);
 }
 
 .sv-map-btn i {
-    color: white;
+    color: var(--sv-btn-fg);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -310,7 +335,7 @@ p.center {
         z-index: 4999;
     }
     .sv-framemap.panel-open::after {
-        background-color: rgba(0, 0, 0, 0.3);
+        background-color: var(--sv-overlay-bg);
         pointer-events: auto;
     }
 }
@@ -342,11 +367,11 @@ p.center {
     width: 0;
     height: auto;
     max-height: calc(100% - 60px);
-    background-color: var(--sv-panel-surface-dark);
-    color: var(--sv-panel-fg-dark);
+    background-color: var(--sv-panel-bg);
+    color: var(--sv-panel-fg);
     backdrop-filter: var(--sv-backdrop);
     -webkit-backdrop-filter: var(--sv-backdrop);
-    border-left: 1px solid var(--sv-panel-border-dark);
+    border-left: 1px solid var(--sv-panel-border);
     box-shadow: -6px 0 18px rgba(0, 0, 0, 0.25);
     overflow: hidden;
     transition: width var(--sv-duration) var(--sv-ease),
@@ -363,46 +388,51 @@ p.center {
     box-shadow: -10px 0 32px rgba(0, 0, 0, 0.35);
 }
 
-/* Safari < 14 / Firefox without backdrop-filter: fall back to opaque dark surface */
+/* Safari < 14 / Firefox without backdrop-filter: fall back to opaque surface */
 @supports not (backdrop-filter: blur(1px)) {
     .sv-sidepanel {
-        background-color: #18181b;
+        background-color: var(--sv-bg);
     }
 }
 
+.sv-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--sv-border);
+    flex-shrink: 0;
+}
+
 .sv-sidepanel-close {
-    display: none;
-    align-self: flex-end;
+    display: flex;
     flex-shrink: 0;
     background: none;
     border: none;
-    font-size: 24px;
+    font-size: 18px;
     cursor: pointer;
-    color: var(--sv-panel-fg-muted-dark);
+    color: var(--sv-panel-fg-muted);
     border-radius: var(--sv-radius-sm);
     transition: var(--sv-transition);
-    padding: 4px 10px;
+    padding: 2px 6px;
     line-height: 1;
-    min-width: 44px;
-    min-height: 36px;
+    min-width: 32px;
+    min-height: 32px;
     align-items: center;
     justify-content: center;
 }
 
 .sv-sidepanel-close:hover,
 .sv-sidepanel-close:focus {
-    color: var(--sv-panel-fg-dark);
-    background-color: var(--sv-panel-input-bg-dark-hover);
+    color: var(--sv-panel-fg);
+    background-color: var(--sv-panel-input-bg-hover);
 }
 
 .sv-sidepanel-close:focus-visible {
     outline: none;
     box-shadow: 0 0 0 2px var(--sv-accent-ring);
     border-radius: var(--sv-radius-sm);
-}
-
-.sv-sidepanel.active .sv-sidepanel-close {
-    display: flex;
 }
 
 .sv-panel-section {
@@ -414,13 +444,12 @@ p.center {
 }
 
 .sv-panel-title {
-    margin: 0 0 20px 0;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--sv-border);
-    font-size: 1.125rem;
+    margin: 0;
+    font-size: 0.8125rem;
     font-weight: 600;
-    color: var(--sv-fg);
-    letter-spacing: -0.01em;
+    color: var(--sv-panel-fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
 .sv-panel-content {
@@ -470,9 +499,9 @@ p.center {
 .sv-sidepanel .form-control,
 .sv-scope .modal .form-control,
 .sv-scope textarea.form-control {
-    background-color: var(--sv-panel-input-bg-dark);
-    color: var(--sv-panel-fg-dark);
-    border: 1px solid var(--sv-panel-border-dark);
+    background-color: var(--sv-panel-input-bg);
+    color: var(--sv-panel-fg);
+    border: 1px solid var(--sv-panel-border);
     border-radius: var(--sv-radius);
     font-size: 14px;
     padding: 8px 12px;
@@ -481,7 +510,7 @@ p.center {
 
 .sv-sidepanel .form-control::placeholder,
 .sv-scope .modal .form-control::placeholder {
-    color: var(--sv-panel-fg-muted-dark);
+    color: var(--sv-panel-fg-muted);
     opacity: 0.7;
 }
 
@@ -489,20 +518,20 @@ p.center {
 .sv-scope .modal .form-label {
     margin-bottom: 6px;
     font-weight: 500;
-    color: var(--sv-panel-fg-dark);
+    color: var(--sv-panel-fg);
     font-size: 0.875rem;
 }
 
 /* Sidepanel input interaction states */
 .sv-sidepanel .form-control:hover {
-    background-color: var(--sv-panel-input-bg-dark-hover);
+    background-color: var(--sv-panel-input-bg-hover);
 }
 
 .sv-sidepanel .form-control:focus,
 .sv-sidepanel .form-control:focus-visible {
-    background-color: var(--sv-panel-input-bg-dark-hover);
+    background-color: var(--sv-panel-input-bg-hover);
     border-color: var(--sv-accent);
-    color: var(--sv-panel-fg-dark);
+    color: var(--sv-panel-fg);
     box-shadow: 0 0 0 3px var(--sv-accent-ring);
 }
 
@@ -535,8 +564,8 @@ p.center {
 .sv-scope .modal .btn-primary:hover,
 .sv-panel-content .btn-primary:focus,
 .sv-scope .modal .btn-primary:focus {
-    background-color: #1d4ed8;
-    border-color: #1d4ed8;
+    background-color: var(--sv-accent-hover);
+    border-color: var(--sv-accent-hover);
     color: #fff;
 }
 
@@ -562,24 +591,31 @@ p.center {
 .sv-sidepanel .btn-info,
 .sv-sidepanel .webcomponent-btn,
 .sv-scope .modal .btn-secondary {
-    background-color: var(--sv-panel-btn-bg-dark);
-    border-color: var(--sv-panel-border-dark);
-    color: var(--sv-panel-fg-dark);
+    background-color: var(--sv-panel-btn-bg);
+    border-color: var(--sv-panel-border);
+    color: var(--sv-panel-fg);
 }
 
 .sv-sidepanel .btn-secondary:hover,
 .sv-sidepanel .btn-info:hover,
 .sv-sidepanel .webcomponent-btn:hover,
 .sv-scope .modal .btn-secondary:hover {
-    background-color: var(--sv-panel-btn-bg-dark-hover);
-    border-color: var(--sv-panel-btn-border-dark-hover);
-    color: var(--sv-panel-fg-dark);
+    background-color: var(--sv-panel-btn-bg-hover);
+    border-color: var(--sv-panel-btn-border-hover);
+    color: var(--sv-panel-fg);
 }
 
 /* Pressed state — subtle inset */
 .sv-panel-content .btn:active,
 .sv-scope .modal .btn:active {
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Embed modal hint text */
+.sv-embed-hint {
+    font-size: 0.9em;
+    color: var(--sv-panel-fg-muted);
+    margin-bottom: 0.5rem;
 }
 
 /* Share panel layout — compact so an arbitrary number of share buttons fits */
@@ -749,21 +785,21 @@ p.center {
    images often render dark strokes on a transparent background. */
 .sv-sidepanel .sv-md {
     background-color: var(--sv-panel-section-header-bg);
-    border-color: var(--sv-panel-border-dark);
-    color: var(--sv-panel-fg-dark);
+    border-color: var(--sv-panel-border);
+    color: var(--sv-panel-fg);
 }
 
 .sv-sidepanel .sv-md a,
 .sv-sidepanel .sv-md .sv-md-meta {
-    color: var(--sv-panel-fg-dark);
+    color: var(--sv-panel-fg);
 }
 
 .sv-sidepanel .sv-md-attrib {
-    color: var(--sv-panel-fg-muted-dark);
+    color: var(--sv-panel-fg-muted);
 }
 
 .sv-sidepanel .sv-md-legend {
-    background-color: #ffffff;
+    background-color: var(--sv-legend-bg);
     border-radius: var(--sv-radius-sm);
 }
 
@@ -778,11 +814,11 @@ p.center {
 
 .sv-noitem {
     font-style: italic;
-    color: #666;
+    color: var(--sv-fg-muted);
 }
 
 .sv-key {
-    color: #999;
+    color: var(--sv-panel-fg-muted);
     font-size: small;
 }
 
@@ -842,13 +878,15 @@ button, [role="button"], input[type="submit"], input[type="button"] {
 /* High contrast mode support */
 @media (prefers-contrast: more) {
     :root {
-        --sv-btn-bg: #000000;
-        --sv-btn-bg-hover: #2a2a2a;
-        --sv-btn-bg-glass: #000000;
+        --sv-btn-bg:             #000000;
+        --sv-btn-bg-hover:       #2a2a2a;
+        --sv-btn-bg-glass:       #000000;
         --sv-btn-bg-glass-hover: #2a2a2a;
-        --sv-border: #000000;
-        --sv-fg-muted: #000000;
-        --sv-surface-glass: #ffffff;
+        --sv-btn-border:         #ffffff;
+        --sv-border:             #000000;
+        --sv-fg-muted:           #000000;
+        --sv-surface-glass:      #ffffff;
+        --sv-panel-fg-muted:     #ffffff;
     }
 }
 
@@ -883,18 +921,18 @@ button, [role="button"], input[type="submit"], input[type="button"] {
 
 /* Dark sidepanel — search results list adapts to dark surface */
 .sv-sidepanel .list-group {
-    border: 1px solid var(--sv-panel-border-dark);
+    border: 1px solid var(--sv-panel-border);
 }
 
 .sv-sidepanel .list-group-item {
-    background-color: var(--sv-panel-input-bg-dark);
-    color: var(--sv-panel-fg-dark);
-    border-bottom: 1px solid var(--sv-panel-border-dark);
+    background-color: var(--sv-panel-input-bg);
+    color: var(--sv-panel-fg);
+    border-bottom: 1px solid var(--sv-panel-border);
 }
 
 .sv-sidepanel .list-group-item-secondary {
     background-color: var(--sv-panel-section-header-bg);
-    color: var(--sv-panel-fg-muted-dark);
+    color: var(--sv-panel-fg-muted);
     font-size: 0.8em;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -903,13 +941,13 @@ button, [role="button"], input[type="submit"], input[type="button"] {
 }
 
 .sv-sidepanel .list-group-item:hover {
-    background-color: var(--sv-panel-input-bg-dark-hover);
-    color: var(--sv-panel-fg-dark);
+    background-color: var(--sv-panel-input-bg-hover);
+    color: var(--sv-panel-fg);
 }
 
 .sv-sidepanel .list-group-item:focus-visible {
     box-shadow: inset 0 0 0 2px var(--sv-accent);
-    background-color: var(--sv-panel-input-bg-dark-hover);
+    background-color: var(--sv-panel-input-bg-hover);
 }
 
 /* Error and status message styling */
@@ -944,9 +982,9 @@ button, [role="button"], input[type="submit"], input[type="button"] {
 }
 
 .sv-scope .modal-content {
-    background-color: var(--sv-panel-surface-dark) !important;
-    color: var(--sv-panel-fg-dark) !important;
-    border: 1px solid var(--sv-panel-border-dark) !important;
+    background-color: var(--sv-panel-bg) !important;
+    color: var(--sv-panel-fg) !important;
+    border: 1px solid var(--sv-panel-border) !important;
     border-radius: var(--sv-radius-lg) !important;
     box-shadow: var(--sv-shadow-lg) !important;
     backdrop-filter: var(--sv-backdrop);
@@ -955,31 +993,31 @@ button, [role="button"], input[type="submit"], input[type="button"] {
 
 .sv-scope .modal-header {
     background-color: transparent !important;
-    border-bottom: 1px solid var(--sv-panel-border-dark) !important;
-    color: var(--sv-panel-fg-dark) !important;
+    border-bottom: 1px solid var(--sv-panel-border) !important;
+    color: var(--sv-panel-fg) !important;
 }
 
 .sv-scope .modal-body {
     background-color: transparent !important;
-    color: var(--sv-panel-fg-dark) !important;
+    color: var(--sv-panel-fg) !important;
 }
 
 .sv-scope .modal-body p {
-    color: var(--sv-panel-fg-muted-dark) !important;
+    color: var(--sv-panel-fg-muted) !important;
 }
 
-/* Modal close (Bootstrap btn-close) — inverted for dark background */
+/* Modal close (Bootstrap btn-close) */
 .sv-scope .btn-close {
     padding: 8px;
     border-radius: var(--sv-radius-sm);
     opacity: 0.6;
     transition: var(--sv-transition);
-    filter: invert(1);
+    filter: none;
     box-shadow: none;
 }
 
 .sv-scope .btn-close:hover {
-    background-color: var(--sv-panel-input-bg-dark-hover);
+    background-color: var(--sv-panel-input-bg-hover);
     opacity: 1;
 }
 
@@ -988,4 +1026,82 @@ button, [role="button"], input[type="submit"], input[type="button"] {
     outline: none;
     box-shadow: 0 0 0 3px var(--sv-accent-ring);
     opacity: 1;
+}
+
+
+/* Theme switch in the dark sidepanel */
+.sv-sidepanel .form-check-label {
+    color: var(--sv-panel-fg);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.sv-sidepanel .form-check-input {
+    background-color: var(--sv-panel-input-bg);
+    border-color: var(--sv-panel-border);
+}
+
+.sv-sidepanel .form-check-input:checked {
+    background-color: var(--sv-accent);
+    border-color: var(--sv-accent);
+}
+
+.sv-sidepanel .form-check-input:focus {
+    box-shadow: 0 0 0 3px var(--sv-accent-ring);
+}
+
+
+/* === Dark theme === */
+.sv-scope[data-theme="dark"],
+:root[data-theme="dark"] {
+    /* 4 primitives */
+    --sv-bg:           #18181b;
+    --sv-fg:           #fafafa;
+    --sv-border-color: rgba(255, 255, 255, 0.14);
+    /* --sv-accent unchanged */
+
+    /* derived surfaces */
+    --sv-surface:       #ffffff;
+    --sv-surface-muted: #f4f4f5;
+    --sv-surface-glass: rgba(255, 255, 255, 0.78);
+    --sv-border:        #e4e4e7;
+    --sv-fg-muted:      #52525b;
+
+    /* panels */
+    --sv-panel-bg:               rgba(24, 24, 27, 0.82);
+    --sv-panel-fg:               #fafafa;
+    --sv-panel-fg-muted:         #a1a1aa;
+    --sv-panel-border:           rgba(255, 255, 255, 0.14);
+    --sv-panel-input-bg:         rgba(255, 255, 255, 0.08);
+    --sv-panel-input-bg-hover:   rgba(255, 255, 255, 0.12);
+    --sv-panel-btn-bg:           rgba(255, 255, 255, 0.06);
+    --sv-panel-btn-bg-hover:     rgba(255, 255, 255, 0.12);
+    --sv-panel-btn-border-hover: rgba(255, 255, 255, 0.28);
+    --sv-panel-section-header-bg: rgba(255, 255, 255, 0.04);
+
+    /* map buttons (dark glass) */
+    --sv-btn-bg:               #18181b;
+    --sv-btn-bg-hover:         #27272a;
+    --sv-btn-bg-glass:         rgba(24, 24, 27, 0.85);
+    --sv-btn-bg-glass-hover:   rgba(39, 39, 42, 0.92);
+    --sv-btn-fg:               #fafafa;
+    --sv-btn-border:           rgba(255, 255, 255, 0.22);
+    --sv-btn-box-shadow:       inset 0 0 0 1px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
+    --sv-btn-box-shadow-hover: inset 0 0 0 1px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3);
+    --sv-btn-focus-ring:       0 0 0 2px rgba(255, 255, 255, 0.95), 0 0 0 4px var(--sv-accent);
+    --sv-btn-active-bg:        rgba(255, 255, 255, 0.96);
+
+    /* misc */
+    --sv-overlay-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* btn-close: invert to white X on dark panel */
+.sv-scope[data-theme="dark"] .btn-close,
+:root[data-theme="dark"] .sv-scope .btn-close {
+    filter: invert(1);
+}
+
+/* page background in standalone mode */
+:root[data-theme="dark"] body {
+    background-color: var(--sv-bg);
 }

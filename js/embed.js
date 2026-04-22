@@ -161,7 +161,7 @@
                 <div id="panelcontrols" class="sv-map-panels" role="group" aria-label="Side panels">
                     <button type="button" accesskey="m" id="panelShareBtn" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-panel="share" title="Map" aria-label="Map panel" aria-pressed="false">
                         <span id="panelShareBtnTitle">Map</span><span class="d-none">&nbsp;</span>
-                        <i class="bi bi-share-fill" aria-hidden="true"></i>
+                        <i class="bi bi-gear" aria-hidden="true"></i>
                     </button>
                     <button type="button" accesskey="i" id="panelInfoBtn" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-panel="legend" title="Legend" aria-label="Legend panel" aria-pressed="false">
                         <i class="bi bi-list" aria-hidden="true"></i>
@@ -175,13 +175,26 @@
                 </div>
 
                 <div id="sidepanel" class="sv-sidepanel" role="complementary" aria-label="Information panel">
-                    <button type="button" class="sv-sidepanel-close" aria-label="Close panel">&times;</button>
                     <div id="sharePanel" class="sv-panel-section" data-section="share" aria-label="Map sharing panel" style="display: none;">
+                        <div class="sv-panel-header">
+                            <h3 class="sv-panel-title i18n">Configuration</h3>
+                            <button type="button" class="sv-sidepanel-close" aria-label="Close panel">
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
+                            </button>
+                        </div>
                         <div class="sv-panel-content">
                             <div class="mb-3">
                                 <label for="shareSetTitle" class="form-label i18n">Edit title</label>
                                 <input type="text" name="setTitle" id="shareSetTitle" class="form-control" value="" placeholder="Edit title">
                             </div>
+                            <div class="mb-3">
+                                <label class="form-label i18n">Choose appearance</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="themeSwitch" role="switch" aria-checked="false">
+                                    <label class="form-check-label i18n" for="themeSwitch">Dark theme</label>
+                                </div>
+                            </div>
+                            <label class="form-label i18n">Reuse this map</label>
                             <div class="sv-share-grid">
                                 <a id="permalink" class="i18n btn btn-secondary" data-ajax="false" href="#" title="Link to this map">
                                     <i class="bi bi-link" aria-hidden="true"></i>
@@ -200,11 +213,22 @@
                     </div>
 
                     <div id="legendPanel" class="sv-panel-section" data-section="legend" aria-label="Map legend" style="display: none;">
-                        <label class="form-label i18n">Legend</label>
+                        <div class="sv-panel-header">
+                            <h3 class="sv-panel-title i18n">Documentation</h3>
+                            <button type="button" class="sv-sidepanel-close" aria-label="Close panel">
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
+                            </button>
+                        </div>
                         <div id="legend" class="sv-legend sv-panel-content"></div>
                     </div>
 
                     <div id="queryPanel" class="sv-panel-section" data-section="query" aria-label="Map query results" style="display: none;">
+                        <div class="sv-panel-header">
+                            <h3 class="sv-panel-title i18n">Query results</h3>
+                            <button type="button" class="sv-sidepanel-close" aria-label="Close panel">
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
+                            </button>
+                        </div>
                         <div class="sv-panel-content">
                             <label class="form-label i18n">Query the map</label>
                             <div id="queryContent" class="sv-panel-content" role="status" aria-live="polite"></div>
@@ -212,6 +236,12 @@
                     </div>
 
                     <div id="locatePanel" class="sv-panel-section" data-section="locate" aria-label="Location search panel" style="display: none;">
+                        <div class="sv-panel-header">
+                            <h3 class="sv-panel-title i18n">Location</h3>
+                            <button type="button" class="sv-sidepanel-close" aria-label="Close panel">
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
+                            </button>
+                        </div>
                         <div class="sv-panel-content">
                             <form id="addressForm" method="post" action="#">
                                 <div class="mb-3">
@@ -246,6 +276,7 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
+                            <h3 class="modal-title i18n" id="qrcodeModalTitle">Share this map</h3>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body text-center">
@@ -259,13 +290,14 @@
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
+                            <h3 class="modal-title i18n" id="webcomponentModalTitle">Embed in a page</h3>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <p style="font-size: 0.9em; color: #666;">Copy and paste this code into your HTML page to embed this map:</p>
-                            <div style="position: relative;">
-                                <textarea id="embedCodeTextarea" class="form-control" rows="8" readonly style="font-family: monospace; font-size: 0.85em;"></textarea>
-                                <button type="button" id="embedCodeCopyBtn" class="btn btn-sm btn-primary" style="position: absolute; top: 5px; right: 5px;">
+                            <p class="sv-embed-hint">Copy and paste this code into your HTML page to embed this map:</p>
+                            <textarea id="embedCodeTextarea" class="form-control" rows="8" readonly style="font-family: monospace; font-size: 0.85em;"></textarea>
+                            <div class="d-flex justify-content-end mt-2">
+                                <button type="button" id="embedCodeCopyBtn" class="btn btn-secondary btn-sm">
                                     <i class="bi bi-clipboard" aria-hidden="true"></i> Copy
                                 </button>
                             </div>

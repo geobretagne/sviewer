@@ -486,6 +486,7 @@ window.SViewerApp = (function() {
             if (config.customConfigName) { linkParams.c = config.customConfigName; }
             if (state.search) { linkParams.s = '1'; }
             if (config.layersQueryString) { linkParams.layers = config.layersQueryString; }
+            if (state.theme && state.theme !== 'light') { linkParams.theme = state.theme; }
             // In embed mode, permalink must point to the standalone sViewer, not the host page
             var standaloneBase = window.SViewerBaseUrl
                 ? window.SViewerBaseUrl + 'index.html'
@@ -521,6 +522,9 @@ window.SViewerApp = (function() {
         }
         if (config.customConfigName) {
             embedParams.c = config.customConfigName;
+        }
+        if (state.theme && state.theme !== 'light') {
+            embedParams.theme = state.theme;
         }
 
         var baseUrl = window.SViewerBaseUrl || config.baseUrl || window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
@@ -1112,10 +1116,14 @@ window.SViewerApp = (function() {
         if (config.qr && !qs.qr) {
             qs.qr = config.qr;
         }
+        if (config.theme && !qs.theme) {
+            qs.theme = config.theme;
+        }
 
         // runtime state (mutable after init)
         state = {
             lb: 0,
+            theme: 'light',
             gficoord: null,
             gfiok: false,
             gfiz: null,
@@ -1123,6 +1131,11 @@ window.SViewerApp = (function() {
             searchindex: null,
             searchparams: {}
         };
+
+        // querystring param: theme (light | dark)
+        if (qs.theme === 'light' || qs.theme === 'dark') {
+            state.theme = qs.theme;
+        }
 
         // querystring param: lb (selected background)
         if (qs.lb) {
@@ -1267,7 +1280,17 @@ window.SViewerApp = (function() {
     /**
      * initiates GUI
      */
+    function applyTheme(theme) {
+        var scope = document.querySelector('.sv-scope');
+        if (scope) {
+            scope.setAttribute('data-theme', theme);
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+    }
+
     function doGUI() {
+        applyTheme(state.theme);
+
         // opens permalink tab if required
         if (qs.qr) {
             setPermalink();
@@ -1304,6 +1327,14 @@ window.SViewerApp = (function() {
         // set title dialog (both panel and modal)
         $('#shareSetTitle').on('keyup', onTitle);
         $('#shareSetTitle').on('blur', setPermalink);
+
+        // theme switch
+        $('#themeSwitch').prop('checked', state.theme === 'dark');
+        $('#themeSwitch').on('change', function() {
+            state.theme = this.checked ? 'dark' : 'light';
+            applyTheme(state.theme);
+            setPermalink();
+        });
 
         // WebComponent button (can appear in side panel or modal)
         $(document).on('click', '.webcomponent-btn', function() {
