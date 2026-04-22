@@ -488,6 +488,7 @@ window.SViewerApp = (function() {
             permalinkQuery = standaloneBase + "?" + $.param(linkParams);
 
             $('#permalink').prop('href', permalinkQuery).attr('target', '_blank').attr('rel', 'noopener');
+            $('#permalinkUrl').prop('href', permalinkQuery).text(permalinkQuery);
         }
     }
 
@@ -1336,6 +1337,33 @@ window.SViewerApp = (function() {
             closePanel();
             svModal.open('#webcomponent');
         });
+
+        // Permalink button — close share panel and show link in modal
+        $(document).on('click', '#permalinkBtn', function() {
+            var href = $('#permalink').prop('href');
+            $('#permalinkUrl').prop('href', href).text(href);
+            closePanel();
+            svModal.open('#permalink');
+        });
+
+        // Copy permalink button
+        $(document).on('click', '#permalinkCopyBtn', function() {
+            var url = $('#permalinkUrl').prop('href');
+            var btn = $(this);
+            var originalHtml = btn.html();
+            function onCopied() {
+                btn.html('<i class="bi bi-check" aria-hidden="true"></i> ' + tr('btn.copied'));
+                setTimeout(function() { btn.html(originalHtml); }, 2000);
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(onCopied).catch(function() {
+                    window.prompt('', url);
+                });
+            } else {
+                window.prompt('', url);
+            }
+        });
+
 
         // QR code button — close share panel and show QR in modal
         $(document).on('click', '#qrcodeBtn', function() {

@@ -13,6 +13,8 @@ $.extend(hardConfig, {
             'btn.panel_locate':  'Locate',
             'btn.permalink':     'Link to this map',
             'btn.qrcode':        'QR code',
+            'btn.copy':          'Copy',
+            'btn.copied':        'Copied!',
 
             // Panel and modal titles
             'panel.config.title':       'Configuration',
@@ -21,6 +23,7 @@ $.extend(hardConfig, {
             'panel.locate.title':       'Location',
             'panel.share_modal.title':  'Share this map',
             'panel.embed_modal.title':  'Embed in a page',
+            'panel.link_modal.title':   'Link to this map',
 
             // Labels
             'lbl.edit_title':       'Edit title',
@@ -56,6 +59,8 @@ $.extend(hardConfig, {
             'btn.panel_locate':  'Rechercher',
             'btn.permalink':     'Lien vers cette carte',
             'btn.qrcode':        'code QR',
+            'btn.copy':          'Copier',
+            'btn.copied':        'Copié !',
 
             'panel.config.title':       'Configuration',
             'panel.legend.title':       'Documentation',
@@ -63,6 +68,7 @@ $.extend(hardConfig, {
             'panel.locate.title':       'Localisation',
             'panel.share_modal.title':  'Partager la carte',
             'panel.embed_modal.title':  'Intégrer dans une page',
+            'panel.link_modal.title':   'Lien vers cette carte',
 
             'lbl.edit_title':        'Editer le titre',
             'lbl.choose_appearance': "Choisir l'apparence",
@@ -95,6 +101,8 @@ $.extend(hardConfig, {
             'btn.panel_locate':  'Encontrar',
             'btn.permalink':     'Vínculo permanente a este mapa',
             'btn.qrcode':        'código QR',
+            'btn.copy':          'Copiar',
+            'btn.copied':        '¡Copiado!',
 
             'panel.config.title':       'Configuración',
             'panel.legend.title':       'Documentación',
@@ -102,6 +110,7 @@ $.extend(hardConfig, {
             'panel.locate.title':       'Localización',
             'panel.share_modal.title':  'Compartir el mapa',
             'panel.embed_modal.title':  'Insertar en una página',
+            'panel.link_modal.title':   'Vínculo a este mapa',
 
             'lbl.edit_title':        'Cambiar título',
             'lbl.choose_appearance': 'Elegir apariencia',
@@ -134,6 +143,8 @@ $.extend(hardConfig, {
             'btn.panel_locate':  'Finden',
             'btn.permalink':     'Permanenter link zur Karte',
             'btn.qrcode':        'QR-Code',
+            'btn.copy':          'Kopieren',
+            'btn.copied':        'Kopiert!',
 
             'panel.config.title':       'Konfiguration',
             'panel.legend.title':       'Dokumentation',
@@ -141,6 +152,7 @@ $.extend(hardConfig, {
             'panel.locate.title':       'Standort',
             'panel.share_modal.title':  'Karte teilen',
             'panel.embed_modal.title':  'In eine Seite einbetten',
+            'panel.link_modal.title':   'Link zur Karte',
 
             'lbl.edit_title':        'Titel ändern',
             'lbl.choose_appearance': 'Erscheinungsbild wählen',

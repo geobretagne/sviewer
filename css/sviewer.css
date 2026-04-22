@@ -46,7 +46,7 @@
     --sv-legend-bg:  #ffffff;
 
     /* radii */
-    --sv-radius-sm: 6px;
+    --sv-radius-sm: 4px;
     --sv-radius:    8px;
     --sv-radius-lg: 12px;
 
@@ -81,7 +81,7 @@
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+    font-family: Roboto, system-ui, sans-serif;
 }
 
 
@@ -131,9 +131,6 @@ label {
     font-weight: 500;
 }
 
-h3 {
-    font-weight: 500;
-}
 
 p.center {
 	text-align: center;
@@ -171,6 +168,9 @@ p.center {
     --bs-btn-hover-color:        var(--sv-btn-fg);
     --bs-btn-border-color:       var(--sv-btn-border);
     --bs-btn-hover-border-color: var(--sv-btn-border);
+    --bs-btn-border-radius:      var(--sv-radius);
+    --bs-btn-box-shadow:         var(--sv-btn-box-shadow);
+    --bs-btn-focus-box-shadow:   var(--sv-btn-focus-ring);
 }
 
 .sv-map-btn {
@@ -362,8 +362,8 @@ p.center {
 /* side panel — dark glass surface on top of the map */
 .sv-sidepanel {
     position: absolute;
-    right: 0;
-    top: 60px;
+    right: 5px;
+    top: 55px;
     width: 0;
     height: auto;
     max-height: calc(100% - 60px);
@@ -381,6 +381,8 @@ p.center {
     flex-direction: column;
     border-top-left-radius: var(--sv-radius-lg);
     border-bottom-left-radius: var(--sv-radius-lg);
+    border-top-right-radius: var(--sv-radius-lg);
+    border-bottom-right-radius: var(--sv-radius-lg);
 }
 
 .sv-sidepanel.active {
@@ -401,7 +403,6 @@ p.center {
     justify-content: space-between;
     padding-bottom: 10px;
     margin-bottom: 16px;
-    border-bottom: 1px solid var(--sv-border);
     flex-shrink: 0;
 }
 
@@ -443,13 +444,12 @@ p.center {
     flex-direction: column;
 }
 
-.sv-panel-title {
+.sv-scope .sv-panel-title,
+.sv-scope .modal-title {
     margin: 0;
-    font-size: 0.8125rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--sv-panel-fg-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
 }
 
 .sv-panel-content {
@@ -611,6 +611,15 @@ p.center {
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
+/* Permalink modal link */
+.sv-permalink-link {
+    word-break: break-all;
+    font-size: 0.85em;
+    padding: 0.5rem 0.75rem;
+    background: var(--sv-panel-input-bg);
+    border-radius: var(--sv-radius-sm);
+}
+
 /* Embed modal hint text */
 .sv-embed-hint {
     font-size: 0.9em;
@@ -679,7 +688,7 @@ p.center {
 #marker {
     width: 30px;
     height: 38px;
-    background: transparent url('images/pin-red.png') no-repeat;
+    background: transparent url('../img/pin-red.png') no-repeat;
 }
 
 .sv-map .ol-zoom a {

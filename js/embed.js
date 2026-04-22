@@ -199,10 +199,10 @@
                             </div>
                             <label class="form-label i18n" data-i18n="lbl.reuse_map">Reuse this map</label>
                             <div class="sv-share-grid">
-                                <a id="permalink" class="i18n btn btn-secondary" data-ajax="false" href="#" title="Link to this map" data-i18n-title="btn.permalink">
+                                <button type="button" id="permalinkBtn" class="i18n btn btn-secondary" title="Link to this map" data-i18n-title="btn.permalink">
                                     <i class="bi bi-link" aria-hidden="true"></i>
                                     Link
-                                </a>
+                                </button>
                                 <button type="button" id="qrcodeBtn" class="i18n btn btn-secondary" title="QR code" data-i18n-title="btn.qrcode">
                                     <i class="bi bi-qr-code" aria-hidden="true"></i>
                                     QR
@@ -270,7 +270,29 @@
                 </div>
             </div>
 
-            <!-- 
+            <!--
+            modal : Permalink
+            -->
+            <div id="permalinkModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="permalinkModalTitle" inert>
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title i18n" id="permalinkModalTitle" data-i18n="panel.link_modal.title">Link to this map</h3>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <a id="permalinkUrl" href="#" target="_blank" rel="noopener" class="sv-permalink-link d-block text-break mb-3"></a>
+                            <div class="d-flex justify-content-end">
+                                <button type="button" id="permalinkCopyBtn" class="btn btn-secondary btn-sm i18n" data-i18n="btn.copy">
+                                    <i class="bi bi-clipboard" aria-hidden="true"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--
             modal : QR code
             -->
             <div id="qrcodeModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="qrcodeModalTitle" inert>
