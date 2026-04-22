@@ -205,7 +205,6 @@ window.SViewerApp = (function() {
                 type: 'GET',
                 dataType: 'xml',
                 success: function(response) {
-                    var html = [];
                     var capabilities, mdLayer, legendArgs;
                     capabilities = parser.read(response);
                     log('Capabilities loaded, version:', capabilities.version);
@@ -226,7 +225,6 @@ window.SViewerApp = (function() {
                     }
 
                     if (mdLayer) {
-                        html.push('<div class="sv-md">');
                         legendArgs = {
                             'SERVICE' : 'WMS',
                             'VERSION' : capabilities.version,
@@ -238,54 +236,30 @@ window.SViewerApp = (function() {
                         if (self.options.sldurl) {
                             legendArgs.SLD = self.options.sldurl;
                         }
-
                         var legendUrl = self.options.wmsurl_ns + '?' + $.param(legendArgs);
                         log('Legend URL:', legendUrl);
 
-                        // attribution
-                        if (mdLayer.Attribution) {
-                            html.push('<span class="sv-md-attrib">' + escHTML(tr('msg.source')));
-                            html.push(' : <a target="_blank" rel="noopener noreferrer" href="' + escHTML(safeURL(mdLayer.Attribution.OnlineResource)) + '" >');
-                            if (mdLayer.Attribution.LogoURL) {
-                                html.push('<img class="sv-md-logo" src="' + escHTML(safeURL(mdLayer.Attribution.LogoURL.OnlineResource)) + '" /><br />');
-                            }
-                            html.push(escHTML(mdLayer.Attribution.Title));
-                            html.push('</a></span>');
-                        }
-
-                        // title
-                        html.push('<p><h4 class="sv-md-title">' + escHTML(mdLayer.Title) + '</h4>');
                         self.md.title = mdLayer.Title;
                         if (state.search) {
                             state.searchparams.title = self.md.title;
                         }
-
-                        // abstract
-                        html.push("<p class='sv-md-abstract'>" + escHTML(mdLayer.Abstract));
                         self.md.Abstract = mdLayer.Abstract;
 
-                        html.push("</p>");
+                        var panel = buildLayerPanel(mdLayer, legendUrl);
+                        $('#legend').append(panel);
+                        log('Legend appended to DOM');
 
-                        // metadata
+                        var xmlMetaUrl = null;
                         if (mdLayer.hasOwnProperty('MetadataURL')) {
                             $.each(mdLayer.MetadataURL, function() {
-                                if (this.Format === "text/html") {
-                                    html.push('<a target="_blank" rel="noopener noreferrer" class="sv-md-meta btn btn-sm btn-outline-secondary" href="' + escHTML(safeURL(this.OnlineResource)) + '">');
-                                    html.push('<i class="bi bi-info-circle" aria-hidden="true"></i> ');
-                                    html.push(tr('msg.documentation'));
-                                    html.push('</a>');
+                                if (this.Format === "text/xml" && !xmlMetaUrl) {
+                                    xmlMetaUrl = this.OnlineResource;
                                 }
                             });
                         }
-
-                        // legend
-                        html.push('<img class="sv-md-legend" src="');
-                        html.push(legendUrl);
-                        html.push('" />');
-                        html.push('</div>');
-
-                        $('#legend').append(html.join(''));
-                        log('Legend appended to DOM');
+                        if (xmlMetaUrl) {
+                            fetchISOMetadata(xmlMetaUrl, panel);
+                        }
                     } else {
                         console.warn('Layer not found in capabilities:', self.options.nslayername);
                     }
@@ -295,6 +269,148 @@ window.SViewerApp = (function() {
                     console.error('URL was:', capabilitiesUrl);
                 }
             });
+        }
+
+        function buildLayerPanel(mdLayer, legendUrl) {
+            var el = $('<div class="sv-md">');
+
+            if (mdLayer.Attribution) {
+                var attrib = $('<span class="sv-md-attrib">').text(tr('msg.source') + ' : ');
+                var attribLink = $('<a target="_blank" rel="noopener noreferrer">')
+                    .attr('href', safeURL(mdLayer.Attribution.OnlineResource))
+                    .attr('aria-label', mdLayer.Attribution.Title + ' (' + tr('msg.new_tab') + ')');
+                if (mdLayer.Attribution.LogoURL) {
+                    attribLink.append($('<img class="sv-md-logo">').attr('src', safeURL(mdLayer.Attribution.LogoURL.OnlineResource)).attr('alt', ''));
+                    attribLink.append('<br>');
+                }
+                attribLink.append(document.createTextNode(mdLayer.Attribution.Title));
+                el.append(attrib.append(attribLink));
+            }
+
+            el.append($('<p>').append($('<h4 class="sv-md-title">').text(mdLayer.Title)));
+            el.append($('<p class="sv-md-abstract">').text(mdLayer.Abstract));
+
+            el.append($('<img class="sv-md-legend" role="img">').attr('src', legendUrl).attr('alt', tr('msg.legend_of') + ' ' + mdLayer.Title));
+
+            var doclinks = $('<div class="sv-md-doclink">');
+            if (mdLayer.hasOwnProperty('MetadataURL')) {
+                $.each(mdLayer.MetadataURL, function() {
+                    if (this.Format === "text/html") {
+                        doclinks.append(
+                            $('<a target="_blank" rel="noopener noreferrer" class="sv-md-meta btn btn-sm btn-outline-secondary">')
+                                .attr('href', safeURL(this.OnlineResource))
+                                .attr('aria-label', tr('msg.full_record') + ' (' + tr('msg.new_tab') + ')')
+                                .append('<i class="bi bi-info-circle" aria-hidden="true"></i> ')
+                                .append(document.createTextNode(tr('msg.full_record')))
+                        );
+                    }
+                });
+            }
+            el.append(doclinks);
+            return el;
+        }
+
+        function fetchISOMetadata(url, panel) {
+            $.ajax({
+                url: ajaxURL(url),
+                type: 'GET',
+                dataType: 'xml',
+                success: function(xmlDoc) {
+                    var meta = parseISOMetadata(xmlDoc);
+                    if (meta) {
+                        panel.find('.sv-md-doclink').before(buildISOTable(meta));
+                    }
+                },
+                error: function() {
+                    log('ISO metadata fetch failed for:', url);
+                }
+            });
+        }
+
+        function parseISOMetadata(xmlDoc) {
+            var ns = {
+                gmd: 'http://www.isotc211.org/2005/gmd',
+                gco: 'http://www.isotc211.org/2005/gco',
+                gmx: 'http://www.isotc211.org/2005/gmx',
+                xlink: 'http://www.w3.org/1999/xlink'
+            };
+            var xr = function(node, xpath) {
+                var result = xmlDoc.evaluate(xpath, node, function(prefix) {
+                    return ns[prefix] || null;
+                }, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                return result.singleNodeValue;
+            };
+            var xt = function(node, xpath) {
+                var n = xr(node, xpath);
+                return n ? n.textContent.trim() : null;
+            };
+
+            var root = xmlDoc.documentElement;
+
+            // date de mise à jour : dateStamp peut contenir DateTime ou Date
+            var dateRaw = xt(root, '//gmd:dateStamp/gco:DateTime') ||
+                          xt(root, '//gmd:dateStamp/gco:Date');
+            var dateFormatted = null;
+            if (dateRaw) {
+                var d = new Date(dateRaw);
+                dateFormatted = isNaN(d.getTime()) ? dateRaw : d.toLocaleDateString(config.lang);
+            }
+
+            // producteur et email : premier pointOfContact dans identificationInfo
+            var idInfo = xr(root, '//gmd:identificationInfo');
+            var producer = idInfo ? xt(idInfo, './/gmd:pointOfContact//gmd:organisationName/gco:CharacterString') : null;
+            var email = idInfo ? xt(idInfo, './/gmd:pointOfContact//gmd:electronicMailAddress/gco:CharacterString') : null;
+
+            // licence : préférer un gmx:Anchor avec href, sinon premier useLimitation
+            var licenceText = null;
+            var licenceUrl = null;
+            var anchorNode = xr(root, '//gmd:resourceConstraints//gmd:otherConstraints/gmx:Anchor');
+            if (anchorNode) {
+                licenceUrl = anchorNode.getAttributeNS(ns.xlink, 'href') || null;
+                licenceText = anchorNode.textContent.trim() || licenceUrl;
+            }
+            if (!licenceText) {
+                var limits = xmlDoc.evaluate(
+                    '//gmd:resourceConstraints//gmd:useLimitation/gco:CharacterString',
+                    root,
+                    function(p) { return ns[p] || null; },
+                    XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null
+                );
+                for (var i = 0; i < limits.snapshotLength; i++) {
+                    var t = limits.snapshotItem(i).textContent.trim();
+                    if (t) { licenceText = t; break; }
+                }
+            }
+
+            if (!dateFormatted && !producer && !email && !licenceText) {
+                return null;
+            }
+            return { date: dateFormatted, producer: producer, email: email,
+                     licenceText: licenceText, licenceUrl: licenceUrl };
+        }
+
+        function buildISOTable(meta) {
+            var tbody = $('<tbody>');
+            if (meta.date) {
+                tbody.append($('<tr>').append($('<th>').text(tr('msg.meta_date'))).append($('<td>').text(meta.date)));
+            }
+            if (meta.producer) {
+                tbody.append($('<tr>').append($('<th>').text(tr('msg.meta_producer'))).append($('<td>').text(meta.producer)));
+            }
+            if (meta.email) {
+                tbody.append($('<tr>').append($('<th>').text(tr('msg.meta_contact')))
+                    .append($('<td>').append($('<a>').attr('href', 'mailto:' + meta.email).text(meta.email))));
+            }
+            if (meta.licenceText) {
+                var cell = $('<td>');
+                if (meta.licenceUrl) {
+                    cell.append($('<a target="_blank" rel="noopener noreferrer">').attr('href', safeURL(meta.licenceUrl)).text(meta.licenceText));
+                } else {
+                    cell.text(meta.licenceText);
+                }
+                tbody.append($('<tr>').append($('<th>').text(tr('msg.meta_licence'))).append(cell));
+            }
+            return $('<table class="sv-md-iso">').append(tbody);
         }
 
         /**
@@ -320,15 +436,7 @@ window.SViewerApp = (function() {
 
     // ----- methods ------------------------------------------------------------------------------------
 
-    /**
-     * Sanitize strings
-     * @param {String} s input string
-     * @return {String} secured string
-     */
-    function escHTML (s) {
-        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-                .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    }
+
 
     // Allow only http(s) URLs — blocks javascript: and data: in href/src attributes
     function safeURL(s) {

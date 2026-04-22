@@ -441,7 +441,7 @@
 .sv-scope .sv-panel-title,
 .sv-scope .modal-title {
     margin: 0;
-    font-size: 1rem;
+    font-size: 1.2rem;
     font-weight: 600;
     color: var(--sv-panel-fg-muted);
 }
@@ -779,8 +779,19 @@
     display: block;
     margin: 0 auto;
 }
+.sv-md-doclink {
+    text-align: center;
+    padding: 4px 0;
+}
 .sv-md-meta {
     text-decoration: none;
+    --bs-btn-bg:                 var(--sv-panel-btn-bg);
+    --bs-btn-hover-bg:           var(--sv-panel-btn-bg-hover);
+    --bs-btn-active-bg:          var(--sv-panel-btn-bg-hover);
+    --bs-btn-color:              var(--sv-panel-fg);
+    --bs-btn-hover-color:        var(--sv-panel-fg);
+    --bs-btn-border-color:       var(--sv-panel-border);
+    --bs-btn-hover-border-color: var(--sv-panel-btn-border-hover);
 }
 
 /* Legend cards on the dark sidepanel — blend with the panel surface.
@@ -792,8 +803,7 @@
     color: var(--sv-panel-fg);
 }
 
-.sv-sidepanel .sv-md a,
-.sv-sidepanel .sv-md .sv-md-meta {
+.sv-sidepanel .sv-md a {
     color: var(--sv-panel-fg);
 }
 
@@ -804,6 +814,40 @@
 .sv-sidepanel .sv-md-legend {
     background-color: var(--sv-legend-bg);
     border-radius: var(--sv-radius-sm);
+}
+
+/* ISO 19115 metadata table */
+
+.sv-md-iso {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: x-small;
+    margin-top: 6px;
+}
+.sv-md-iso th,
+.sv-md-iso td {
+    padding: 3px 6px;
+    vertical-align: top;
+    border-top: 1px solid var(--sv-border);
+}
+.sv-md-iso th {
+    white-space: nowrap;
+    color: var(--sv-fg-muted);
+    font-weight: normal;
+    width: 30%;
+}
+.sv-md-iso td a {
+    word-break: break-all;
+}
+.sv-sidepanel .sv-md-iso th {
+    color: var(--sv-panel-fg-muted);
+}
+.sv-sidepanel .sv-md-iso {
+    border-top: 1px solid var(--sv-panel-border);
+}
+.sv-sidepanel .sv-md-iso th,
+.sv-sidepanel .sv-md-iso td {
+    border-top-color: var(--sv-panel-border);
 }
 
 /* share layout */
