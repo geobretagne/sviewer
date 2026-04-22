@@ -11,7 +11,7 @@ Qu'offre sViewer ?
 * **Contrôles tactiles** compatibles avec tous les appareils mobiles
 * **Recherche de lieux** basée sur la géoplateforme française
 * **Requêtes cartographiques** sur les services Web Map Service (WMS)
-* **Partage de cartes** avec permaliens, codes QR et intégration à geOrchestra
+* **Partage de cartes** avec permaliens, codes QR
 * **Thème clair et sombre** : bascule via l'interface ou le paramètre `theme`
 * **Langues multiples** : français, anglais, espagnol, allemand
 * **Facilement intégrable** dans vos propres pages web
@@ -251,17 +251,6 @@ Quand vous utilisez le mode WebComponent (intégration dans une page), les optio
 
 Tous les paramètres du mode simple peuvent être passés en JavaScript. Le bouton **HTML** du panneau de partage génère automatiquement ce fragment pour la vue courante.
 
-
-Intégration avec geOrchestra
-=============================
-
-Si vous utilisez une **infrastructure geOrchestra**, sViewer s'intègre nativement :
-
-* Affichage automatique du titre, résumé, légende et attribution des données WMS
-* Bouton « Éditer avec Mapfishapp » : envoie la carte vers l'éditeur avancé
-* Fonction « Envoyer vers sViewer » depuis le visualiseur avancé
-
-
 Notes techniques
 ================
 
@@ -282,9 +271,3 @@ Support et ressources
 * **Pour contribuer** : Consultez les fichiers de configuration et personnalisez selon vos besoins
 
 
-Licence
-=======
-
-Ce projet est sous licence geOrchestra. Consultez le fichier LICENSE pour plus de détails.
-
-© geOrchestra — https://www.georchestra.org/
