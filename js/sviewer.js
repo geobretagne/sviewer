@@ -1279,7 +1279,10 @@ window.SViewerApp = (function() {
         if (scope) {
             scope.setAttribute('data-theme', theme);
         }
-        document.documentElement.setAttribute('data-theme', theme);
+        // In embed mode SViewerBaseUrl is set by embed.js — don't touch the host page's root
+        if (!window.SViewerBaseUrl) {
+            document.documentElement.setAttribute('data-theme', theme);
+        }
     }
 
     function doGUI() {
