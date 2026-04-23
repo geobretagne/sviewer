@@ -84,14 +84,21 @@ window.SViewerApp = (function() {
     var qrcodeLoaded = false;
     function loadQRCodeLibrary() {
         if (qrcodeLoaded || typeof QRCode !== 'undefined') {
+            qrcodeLoaded = true;
             return Promise.resolve();
         }
-        return new Promise(function(resolve) {
+        return new Promise(function(resolve, reject) {
             var script = document.createElement('script');
             script.src = (window.SViewerBaseUrl || '') + 'lib/qrcode/qrcode.min.js';
+            script.async = true;
             script.onload = function() {
                 qrcodeLoaded = true;
+                log('QR code library loaded successfully');
                 resolve();
+            };
+            script.onerror = function() {
+                console.error('Failed to load QR code library from:', script.src);
+                reject(new Error('Failed to load QR code library'));
             };
             document.head.appendChild(script);
         });
@@ -137,29 +144,50 @@ window.SViewerApp = (function() {
          * @param {String} s the querystring describing the layer
          */
         function parseLayerParam (s) {
-            self.options.nslayername = s.split('*')[0]; // namespace:layername
-            self.options.stylename = (s.indexOf("*")>0) ? s.split('*',2)[1]:''; // stylename
-            self.options.cql_filter = (s.indexOf("*")>1) ? s.split('*',3)[2]:''; // qcl_filter
+            var customWmsUrl = '';
+            var layerPart = s;
+
+            // Extract custom WMS endpoint if present (format: layer@wms-url)
+            // Use lastIndexOf to handle '@' in URLs (e.g., https://user@host/wms)
+            var atIndex = s.lastIndexOf('@');
+            if (atIndex > 0) {
+                layerPart = s.substring(0, atIndex);
+                customWmsUrl = s.substring(atIndex + 1);
+                log('Custom WMS URL detected:', customWmsUrl);
+            }
+
+            self.options.nslayername = layerPart.split('*')[0]; // namespace:layername
+            self.options.stylename = (layerPart.indexOf("*")>0) ? layerPart.split('*',2)[1]:''; // stylename
+            self.options.cql_filter = (layerPart.indexOf("*")>1) ? layerPart.split('*',3)[2]:''; // qcl_filter
 
             self.options.namespace = (self.options.nslayername.indexOf(":")>0) ? self.options.nslayername.split(':',2)[0]:''; // namespace
             self.options.layername = (self.options.nslayername.indexOf(':')>0) ? self.options.nslayername.split(':',2)[1]:''; // layername
-            var ns = encodeURIComponent(self.options.namespace);
-            var ln = encodeURIComponent(self.options.layername);
-            self.options.wmsurl_global = hardConfig.geOrchestraBaseUrl + '/geoserver/wms'; // global getcap
-            self.options.wmsurl_ns = hardConfig.geOrchestraBaseUrl + '/geoserver/' + ns + '/wms'; // virtual getcap namespace
-            self.options.wmsurl_layer = hardConfig.geOrchestraBaseUrl + '/geoserver/' + ns + '/' + ln + '/wms'; // virtual getcap layer
+
+            if (customWmsUrl) {
+                // Use custom WMS endpoint
+                self.options.wmsurl_global = customWmsUrl;
+                self.options.wmsurl_ns = customWmsUrl;
+                self.options.wmsurl_layer = customWmsUrl;
+            } else {
+                // Use default geOrchestra endpoints
+                var ns = encodeURIComponent(self.options.namespace);
+                var ln = encodeURIComponent(self.options.layername);
+                self.options.wmsurl_global = hardConfig.geOrchestraBaseUrl + '/geoserver/wms'; // global getcap
+                self.options.wmsurl_ns = hardConfig.geOrchestraBaseUrl + '/geoserver/' + ns + '/wms'; // virtual getcap namespace
+                self.options.wmsurl_layer = hardConfig.geOrchestraBaseUrl + '/geoserver/' + ns + '/' + ln + '/wms'; // virtual getcap layer
+            }
 
             log('LayerParam parse:', {
                 input: s,
                 nslayername: self.options.nslayername,
                 namespace: self.options.namespace,
                 layername: self.options.layername,
-                geOrchestraBaseUrl: hardConfig.geOrchestraBaseUrl,
+                customWmsUrl: customWmsUrl,
                 wmsurl_layer: self.options.wmsurl_layer
             });
 
             if (!self.options.namespace || !self.options.layername) {
-                console.warn('Layer parameter format error: expected "namespace:layername" format (with colon separator), got "' + s + '"');
+                console.warn('Layer parameter format error: expected "namespace:layername[*style][*cql_filter][@wms-endpoint]" format, got "' + s + '"');
             }
         }
 
@@ -574,8 +602,11 @@ window.SViewerApp = (function() {
             permalinkHash = standaloneBase + "#" + $.param(linkParams);
             permalinkQuery = standaloneBase + "?" + $.param(linkParams);
 
-            $('#permalink').prop('href', permalinkQuery).attr('target', '_blank').attr('rel', 'noopener');
-            $('#permalinkUrl').prop('href', permalinkQuery).text(permalinkQuery);
+            $('#permalinkUrl')
+                .prop('href', permalinkQuery)
+                .prop('target', '_blank')
+                .prop('rel', 'noopener')
+                .text(permalinkQuery);
         }
     }
 
@@ -1374,10 +1405,10 @@ window.SViewerApp = (function() {
     function doGUI() {
         applyTheme(state.theme);
 
-        // opens permalink tab if required
+        // opens permalink tab with QR code if required
         if (qs.qr) {
             setPermalink();
-            $('#qrcodeBtn').trigger('click');
+            $('#permalinkBtn').trigger('click');
         }
 
         // map events
@@ -1429,10 +1460,46 @@ window.SViewerApp = (function() {
 
         // Permalink button — close share panel and show link in modal
         $(document).on('click', '#permalinkBtn', function() {
-            var href = $('#permalink').prop('href');
+            var href = $('#permalinkUrl').prop('href');
             $('#permalinkUrl').prop('href', href).text(href);
             closePanel();
             svModal.open('#permalink');
+
+            // Generate QR code for the permalink
+            if (!href) {
+                console.warn('No permalink available for QR code');
+                $('#qrcodeDisplay').html('<div class="alert alert-warning" role="alert">No link available</div>');
+                return;
+            }
+
+            var qrcodeDisplayEl = document.getElementById('qrcodeDisplay');
+            if (!qrcodeDisplayEl) {
+                console.error('QR code display element not found in DOM');
+                return;
+            }
+
+            qrcodeDisplayEl.innerHTML = '<div class="text-center"><span class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></span></div>';
+
+            log('Starting QR code generation for:', href);
+            loadQRCodeLibrary().then(function() {
+                log('QR code library ready, generating QR code');
+                if (typeof QRCode === 'undefined') {
+                    throw new Error('QRCode is still not defined after loading');
+                }
+                return QRCode.toDataURL(href, {
+                    errorCorrectionLevel: 'L',
+                    type: 'image/png',
+                    margin: 1,
+                    width: 240,
+                    color: { dark: '#000000', light: '#ffffff' }
+                });
+            }).then(function(dataUrl) {
+                log('QR code generated successfully');
+                qrcodeDisplayEl.innerHTML = '<img src="' + dataUrl + '" alt="QR Code" style="max-width: 100%; height: auto;">';
+            }).catch(function(error) {
+                console.error('QR code generation failed:', error);
+                qrcodeDisplayEl.innerHTML = '<div class="alert alert-warning" role="alert">Failed to generate QR code: ' + error.message + '</div>';
+            });
         });
 
         // Copy permalink button
@@ -1453,26 +1520,6 @@ window.SViewerApp = (function() {
             }
         });
 
-
-        // QR code button — close share panel and show QR in modal
-        $(document).on('click', '#qrcodeBtn', function() {
-            var href = $('#permalink').prop('href');
-            $('#qrcodeDisplay').empty();
-            loadQRCodeLibrary().then(function() {
-                QRCode.toDataURL(href, {
-                    errorCorrectionLevel: 'L',
-                    type: 'image/webp',
-                    quality: 0.95,
-                    margin: 1,
-                    width: 240,
-                    color: { dark: '#000000', light: '#ffffff' }
-                }).then(function(dataUrl) {
-                    $('#qrcodeDisplay').html('<img src="' + dataUrl + '" alt="QR Code" style="max-width: 100%; height: auto;">');
-                });
-            });
-            closePanel();
-            svModal.open('#qrcode');
-        });
 
         // Copy embed code button
         $('#embedCodeCopyBtn').on('click', function() {
