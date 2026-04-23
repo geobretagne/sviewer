@@ -602,8 +602,11 @@ window.SViewerApp = (function() {
             permalinkHash = standaloneBase + "#" + $.param(linkParams);
             permalinkQuery = standaloneBase + "?" + $.param(linkParams);
 
-            $('#permalink').prop('href', permalinkQuery).attr('target', '_blank').attr('rel', 'noopener');
-            $('#permalinkUrl').prop('href', permalinkQuery).text(permalinkQuery);
+            $('#permalinkUrl')
+                .prop('href', permalinkQuery)
+                .prop('target', '_blank')
+                .prop('rel', 'noopener')
+                .text(permalinkQuery);
         }
     }
 
@@ -1457,7 +1460,7 @@ window.SViewerApp = (function() {
 
         // Permalink button — close share panel and show link in modal
         $(document).on('click', '#permalinkBtn', function() {
-            var href = $('#permalink').prop('href');
+            var href = $('#permalinkUrl').prop('href');
             $('#permalinkUrl').prop('href', href).text(href);
             closePanel();
             svModal.open('#permalink');
