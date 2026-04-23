@@ -83,10 +83,6 @@
                                 <i class="bi bi-link" aria-hidden="true"></i>
                                 Link
                             </button>
-                            <button type="button" id="qrcodeBtn" class="i18n btn btn-secondary" title="QR code" data-i18n-title="btn.qrcode">
-                                <i class="bi bi-qr-code" aria-hidden="true"></i>
-                                QR
-                            </button>
                             <button type="button" class="webcomponent-btn btn btn-info" title="Get embed code">
                                 <i class="bi bi-code" aria-hidden="true"></i>
                                 HTML
@@ -149,26 +145,15 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
+                        <div class="mb-3 text-center">
+                            <div id="qrcodeDisplay"></div>
+                        </div>
                         <a id="permalinkUrl" href="#" target="_blank" rel="noopener" class="sv-permalink-link d-block text-break mb-3"></a>
                         <div class="d-flex justify-content-end">
                             <button type="button" id="permalinkCopyBtn" class="btn btn-secondary btn-sm i18n" data-i18n="btn.copy">
                                 <i class="bi bi-clipboard" aria-hidden="true"></i> Copy
                             </button>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="qrcodeModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="qrcodeModalTitle" inert>
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 class="modal-title i18n" id="qrcodeModalTitle" data-i18n="panel.share_modal.title">Share this map</h3>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body text-center">
-                        <div id="qrcodeDisplay"></div>
                     </div>
                 </div>
             </div>

@@ -1395,10 +1395,10 @@ window.SViewerApp = (function() {
     function doGUI() {
         applyTheme(state.theme);
 
-        // opens permalink tab if required
+        // opens permalink tab with QR code if required
         if (qs.qr) {
             setPermalink();
-            $('#qrcodeBtn').trigger('click');
+            $('#permalinkBtn').trigger('click');
         }
 
         // map events
@@ -1454,6 +1454,31 @@ window.SViewerApp = (function() {
             $('#permalinkUrl').prop('href', href).text(href);
             closePanel();
             svModal.open('#permalink');
+
+            // Generate QR code for the permalink
+            if (!href) {
+                console.warn('No permalink available for QR code');
+                return;
+            }
+            $('#qrcodeDisplay').html('<div class="text-center"><span class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></span></div>');
+
+            loadQRCodeLibrary().then(function() {
+                QRCode.toDataURL(href, {
+                    errorCorrectionLevel: 'L',
+                    type: 'image/png',
+                    margin: 1,
+                    width: 240,
+                    color: { dark: '#000000', light: '#ffffff' }
+                }).then(function(dataUrl) {
+                    $('#qrcodeDisplay').html('<img src="' + dataUrl + '" alt="QR Code" style="max-width: 100%; height: auto;">');
+                }).catch(function(error) {
+                    console.error('QR code generation failed:', error);
+                    $('#qrcodeDisplay').html('<div class="alert alert-warning" role="alert">Failed to generate QR code</div>');
+                });
+            }).catch(function(error) {
+                console.error('Failed to load QR code library:', error);
+                $('#qrcodeDisplay').html('<div class="alert alert-warning" role="alert">Failed to load QR code library</div>');
+            });
         });
 
         // Copy permalink button
@@ -1474,36 +1499,6 @@ window.SViewerApp = (function() {
             }
         });
 
-
-        // QR code button — close share panel and show QR in modal
-        $(document).on('click', '#qrcodeBtn', function() {
-            var href = $('#permalink').prop('href');
-            if (!href) {
-                console.warn('No permalink available for QR code');
-                return;
-            }
-            $('#qrcodeDisplay').html('<div class="text-center"><span class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></span></div>');
-            closePanel();
-            svModal.open('#qrcode');
-
-            loadQRCodeLibrary().then(function() {
-                QRCode.toDataURL(href, {
-                    errorCorrectionLevel: 'L',
-                    type: 'image/png',
-                    margin: 1,
-                    width: 240,
-                    color: { dark: '#000000', light: '#ffffff' }
-                }).then(function(dataUrl) {
-                    $('#qrcodeDisplay').html('<img src="' + dataUrl + '" alt="QR Code" style="max-width: 100%; height: auto;">');
-                }).catch(function(error) {
-                    console.error('QR code generation failed:', error);
-                    $('#qrcodeDisplay').html('<div class="alert alert-warning" role="alert">Failed to generate QR code</div>');
-                });
-            }).catch(function(error) {
-                console.error('Failed to load QR code library:', error);
-                $('#qrcodeDisplay').html('<div class="alert alert-warning" role="alert">Failed to load QR code library</div>');
-            });
-        });
 
         // Copy embed code button
         $('#embedCodeCopyBtn').on('click', function() {
