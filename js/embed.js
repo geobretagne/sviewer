@@ -209,7 +209,7 @@
         var cssPromises = [
             loadResource(baseUrl + 'build/ol.css', 'css'),
             loadResource(baseUrl + 'lib/bootstrap/bootstrap-scoped.min.css', 'css'),
-            loadResource(baseUrl + 'lib/bootstrap-icons/bootstrap-icons.min.css', 'css'),
+            loadResource(baseUrl + 'build/bootstrap-icons.subset.css', 'css'),
             loadResource(baseUrl + 'css/sviewer.css', 'css')
         ];
         Promise.all(cssPromises).then(function() {
