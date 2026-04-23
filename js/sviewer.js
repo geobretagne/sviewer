@@ -141,10 +141,11 @@ window.SViewerApp = (function() {
             var layerPart = s;
 
             // Extract custom WMS endpoint if present (format: layer@wms-url)
-            if (s.indexOf('@') > 0) {
-                var parts = s.split('@');
-                layerPart = parts[0];
-                customWmsUrl = parts[1];
+            // Use lastIndexOf to handle '@' in URLs (e.g., https://user@host/wms)
+            var atIndex = s.lastIndexOf('@');
+            if (atIndex > 0) {
+                layerPart = s.substring(0, atIndex);
+                customWmsUrl = s.substring(atIndex + 1);
                 log('Custom WMS URL detected:', customWmsUrl);
             }
 
