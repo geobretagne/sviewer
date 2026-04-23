@@ -137,29 +137,49 @@ window.SViewerApp = (function() {
          * @param {String} s the querystring describing the layer
          */
         function parseLayerParam (s) {
-            self.options.nslayername = s.split('*')[0]; // namespace:layername
-            self.options.stylename = (s.indexOf("*")>0) ? s.split('*',2)[1]:''; // stylename
-            self.options.cql_filter = (s.indexOf("*")>1) ? s.split('*',3)[2]:''; // qcl_filter
+            var customWmsUrl = '';
+            var layerPart = s;
+
+            // Extract custom WMS endpoint if present (format: layer@wms-url)
+            if (s.indexOf('@') > 0) {
+                var parts = s.split('@');
+                layerPart = parts[0];
+                customWmsUrl = parts[1];
+                log('Custom WMS URL detected:', customWmsUrl);
+            }
+
+            self.options.nslayername = layerPart.split('*')[0]; // namespace:layername
+            self.options.stylename = (layerPart.indexOf("*")>0) ? layerPart.split('*',2)[1]:''; // stylename
+            self.options.cql_filter = (layerPart.indexOf("*")>1) ? layerPart.split('*',3)[2]:''; // qcl_filter
 
             self.options.namespace = (self.options.nslayername.indexOf(":")>0) ? self.options.nslayername.split(':',2)[0]:''; // namespace
             self.options.layername = (self.options.nslayername.indexOf(':')>0) ? self.options.nslayername.split(':',2)[1]:''; // layername
-            var ns = encodeURIComponent(self.options.namespace);
-            var ln = encodeURIComponent(self.options.layername);
-            self.options.wmsurl_global = hardConfig.geOrchestraBaseUrl + '/geoserver/wms'; // global getcap
-            self.options.wmsurl_ns = hardConfig.geOrchestraBaseUrl + '/geoserver/' + ns + '/wms'; // virtual getcap namespace
-            self.options.wmsurl_layer = hardConfig.geOrchestraBaseUrl + '/geoserver/' + ns + '/' + ln + '/wms'; // virtual getcap layer
+
+            if (customWmsUrl) {
+                // Use custom WMS endpoint
+                self.options.wmsurl_global = customWmsUrl;
+                self.options.wmsurl_ns = customWmsUrl;
+                self.options.wmsurl_layer = customWmsUrl;
+            } else {
+                // Use default geOrchestra endpoints
+                var ns = encodeURIComponent(self.options.namespace);
+                var ln = encodeURIComponent(self.options.layername);
+                self.options.wmsurl_global = hardConfig.geOrchestraBaseUrl + '/geoserver/wms'; // global getcap
+                self.options.wmsurl_ns = hardConfig.geOrchestraBaseUrl + '/geoserver/' + ns + '/wms'; // virtual getcap namespace
+                self.options.wmsurl_layer = hardConfig.geOrchestraBaseUrl + '/geoserver/' + ns + '/' + ln + '/wms'; // virtual getcap layer
+            }
 
             log('LayerParam parse:', {
                 input: s,
                 nslayername: self.options.nslayername,
                 namespace: self.options.namespace,
                 layername: self.options.layername,
-                geOrchestraBaseUrl: hardConfig.geOrchestraBaseUrl,
+                customWmsUrl: customWmsUrl,
                 wmsurl_layer: self.options.wmsurl_layer
             });
 
             if (!self.options.namespace || !self.options.layername) {
-                console.warn('Layer parameter format error: expected "namespace:layername" format (with colon separator), got "' + s + '"');
+                console.warn('Layer parameter format error: expected "namespace:layername[*style][*cql_filter][@wms-endpoint]" format, got "' + s + '"');
             }
         }
 
