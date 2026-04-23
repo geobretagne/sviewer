@@ -128,6 +128,25 @@ Ajoutez `*nomstyle` au nom de la donnée :
 https://geobretagne.fr/sviewer/?layers=dreal_b:ae_casparcas*default
 ```
 
+**Avec un serveur WMS externe :**
+
+Spécifiez un serveur WMS personnalisé en ajoutant `@url-du-wms` au paramètre layer. Cela permet d'afficher des données publiées sur n'importe quel serveur WMS compatible, pas seulement sur votre geOrchestra local.
+
+```
+https://geobretagne.fr/sviewer/?layers=workspace:layername@https://wms.example.com/geoserver/wms
+```
+
+Format complet : `namespace:layername[*style][*cql_filter]@wms-endpoint-url`
+
+Exemples :
+```
+https://geobretagne.fr/sviewer/?layers=workspace:data@https://external-wms.example.com/service
+https://geobretagne.fr/sviewer/?layers=ns:layer*custom_style@https://wms.example.com/geoserver/wms
+https://geobretagne.fr/sviewer/?layers=ns:layer*style*population>50000@https://wms.example.com/service
+```
+
+**Note :** L'URL WMS externe est stockée dans les permaliens et le code d'embedding généré.
+
 #### Paramètres de recherche et requête
 
 **`q`** — Interroger la carte au démarrage
@@ -212,6 +231,23 @@ Quand vous utilisez le mode WebComponent (intégration dans une page), les optio
     layers: 'geor:sdi',               // donnée à afficher
     lb: 1,                            // fond de carte
     theme: 'dark'                     // thème : 'light' (défaut) ou 'dark'
+  });
+</script>
+```
+
+**Exemple avec un serveur WMS externe :**
+
+```html
+<div id="ma-carte"></div>
+<script src="https://geobretagne.fr/sviewer/js/embed.js"></script>
+<script>
+  SViewer.init('#ma-carte', {
+    x: -366959,
+    y: 2951352,
+    z: 5,
+    title: 'Carte avec WMS externe',
+    layers: 'workspace:data@https://wms.example.com/geoserver/wms',
+    theme: 'light'
   });
 </script>
 ```
