@@ -1,0 +1,21 @@
+<div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="permalinkModalTitle" inert>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title i18n" id="permalinkModalTitle" data-i18n="panel.link_modal.title">Link to this map</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3 text-center">
+          <div id="qrcodeDisplay"></div>
+        </div>
+        <a id="permalinkUrl" href="#" target="_blank" rel="noopener" class="sv-permalink-link d-block text-break mb-3"></a>
+        <div class="d-flex justify-content-end">
+          <button type="button" id="permalinkCopyBtn" class="btn btn-secondary btn-sm i18n" data-i18n="btn.copy">
+            <i class="bi bi-clipboard" aria-hidden="true"></i> Copy
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -137,27 +137,7 @@
             </div>
         </div>
 
-        <div id="permalinkModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="permalinkModalTitle" inert>
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 class="modal-title i18n" id="permalinkModalTitle" data-i18n="panel.link_modal.title">Link to this map</h3>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3 text-center">
-                            <div id="qrcodeDisplay"></div>
-                        </div>
-                        <a id="permalinkUrl" href="#" target="_blank" rel="noopener" class="sv-permalink-link d-block text-break mb-3"></a>
-                        <div class="d-flex justify-content-end">
-                            <button type="button" id="permalinkCopyBtn" class="btn btn-secondary btn-sm i18n" data-i18n="btn.copy">
-                                <i class="bi bi-clipboard" aria-hidden="true"></i> Copy
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- share-modal will be inserted here by JavaScript -->
 
         <div id="webcomponentModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="webcomponentModalTitle" inert>
             <div class="modal-dialog modal-lg">
@@ -250,13 +230,33 @@
 
     // Fetch all Mustache templates and store them in window.svTemplates
     function loadTemplates(baseUrl) {
-        var names = ['layer-panel', 'iso-table', 'query-header', 'search-item', 'search-header'];
+        var names = ['layer-panel', 'iso-table', 'query-header', 'search-item', 'search-header', 'share-modal'];
         window.svTemplates = {};
         return Promise.all(names.map(function(name) {
             return fetch(baseUrl + 'templates/' + name + '.html')
                 .then(function(r) { return r.text(); })
                 .then(function(t) { window.svTemplates[name] = t; });
         }));
+    }
+
+    // Insert share modal from template into the DOM
+    function insertShareModal() {
+        return new Promise(function(resolve) {
+            // Wait for templates to be loaded
+            if (window.svTemplates && window.svTemplates['share-modal']) {
+                var container = document.querySelector('.sv-framemap');
+                if (container) {
+                    var modal = document.createElement('div');
+                    modal.id = 'permalinkModal';
+                    modal.innerHTML = window.svTemplates['share-modal'];
+                    container.parentElement.appendChild(modal);
+                }
+                resolve();
+            } else {
+                // Retry after a short delay
+                setTimeout(insertShareModal, 50);
+            }
+        });
     }
 
     // Load i18n first (before sviewer.js initializes)
@@ -331,6 +331,7 @@
 
             // Load all resources
             return loadDependencies()
+                .then(insertShareModal)
                 .then(loadI18nScript)
                 .then(loadSViewerScript)
                 .then(function() {
