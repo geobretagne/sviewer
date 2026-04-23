@@ -244,12 +244,13 @@
         return new Promise(function(resolve) {
             // Wait for templates to be loaded
             if (window.svTemplates && window.svTemplates['share-modal']) {
-                var container = document.querySelector('.sv-framemap');
-                if (container) {
-                    var modal = document.createElement('div');
+                var scope = document.querySelector('.sv-scope');
+                if (scope) {
+                    var tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = window.svTemplates['share-modal'];
+                    var modal = tempDiv.firstElementChild;
                     modal.id = 'permalinkModal';
-                    modal.innerHTML = window.svTemplates['share-modal'];
-                    container.parentElement.appendChild(modal);
+                    scope.appendChild(modal);
                 }
                 resolve();
             } else {
