@@ -84,14 +84,21 @@ window.SViewerApp = (function() {
     var qrcodeLoaded = false;
     function loadQRCodeLibrary() {
         if (qrcodeLoaded || typeof QRCode !== 'undefined') {
+            qrcodeLoaded = true;
             return Promise.resolve();
         }
-        return new Promise(function(resolve) {
+        return new Promise(function(resolve, reject) {
             var script = document.createElement('script');
             script.src = (window.SViewerBaseUrl || '') + 'lib/qrcode/qrcode.min.js';
+            script.async = true;
             script.onload = function() {
                 qrcodeLoaded = true;
+                log('QR code library loaded successfully');
                 resolve();
+            };
+            script.onerror = function() {
+                console.error('Failed to load QR code library from:', script.src);
+                reject(new Error('Failed to load QR code library'));
             };
             document.head.appendChild(script);
         });
@@ -1458,26 +1465,37 @@ window.SViewerApp = (function() {
             // Generate QR code for the permalink
             if (!href) {
                 console.warn('No permalink available for QR code');
+                $('#qrcodeDisplay').html('<div class="alert alert-warning" role="alert">No link available</div>');
                 return;
             }
-            $('#qrcodeDisplay').html('<div class="text-center"><span class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></span></div>');
 
+            var qrcodeDisplayEl = document.getElementById('qrcodeDisplay');
+            if (!qrcodeDisplayEl) {
+                console.error('QR code display element not found in DOM');
+                return;
+            }
+
+            qrcodeDisplayEl.innerHTML = '<div class="text-center"><span class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></span></div>';
+
+            log('Starting QR code generation for:', href);
             loadQRCodeLibrary().then(function() {
-                QRCode.toDataURL(href, {
+                log('QR code library ready, generating QR code');
+                if (typeof QRCode === 'undefined') {
+                    throw new Error('QRCode is still not defined after loading');
+                }
+                return QRCode.toDataURL(href, {
                     errorCorrectionLevel: 'L',
                     type: 'image/png',
                     margin: 1,
                     width: 240,
                     color: { dark: '#000000', light: '#ffffff' }
-                }).then(function(dataUrl) {
-                    $('#qrcodeDisplay').html('<img src="' + dataUrl + '" alt="QR Code" style="max-width: 100%; height: auto;">');
-                }).catch(function(error) {
-                    console.error('QR code generation failed:', error);
-                    $('#qrcodeDisplay').html('<div class="alert alert-warning" role="alert">Failed to generate QR code</div>');
                 });
+            }).then(function(dataUrl) {
+                log('QR code generated successfully');
+                qrcodeDisplayEl.innerHTML = '<img src="' + dataUrl + '" alt="QR Code" style="max-width: 100%; height: auto;">';
             }).catch(function(error) {
-                console.error('Failed to load QR code library:', error);
-                $('#qrcodeDisplay').html('<div class="alert alert-warning" role="alert">Failed to load QR code library</div>');
+                console.error('QR code generation failed:', error);
+                qrcodeDisplayEl.innerHTML = '<div class="alert alert-warning" role="alert">Failed to generate QR code: ' + error.message + '</div>';
             });
         });
 
