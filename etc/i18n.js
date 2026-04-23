@@ -81,7 +81,7 @@ $.extend(hardConfig, {
             'lbl.choose_appearance': "Choisir l'apparence",
             'lbl.dark_theme':        'Thème sombre',
             'lbl.reuse_map':         'Réutiliser cette carte',
-            'lbl.query_the_map':     'Interroger la carte',
+            'lbl.query_the_map':     'Cliquer sur la carte',
             'lbl.search_place':      'Trouver un lieu',
 
             'inp.search_placeholder': 'ex: 10 rue Maurice Fabre, Rennes',

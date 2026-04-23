@@ -15,7 +15,7 @@ ICONS_SUBSET_CSS="build/bootstrap-icons.subset.css"
 
 # Codepoints for: check clipboard code crosshair gear geo-fill house info-circle
 #                 info-square link map search x-lg zoom-in zoom-out
-CODEPOINTS="F269,F28B,F2C6,F769,F3E2,F3E9,F422,F430,F432,F470,F47E,F52A,F659,F62C,F62D"
+CODEPOINTS="F26E,F290,F2C8,F769,F3E5,F3E9,F425,F431,F433,F471,F47F,F52A,F659,F62C,F62D"
 
 python3 - "$ICONS_SRC" "$ICONS_SUBSET_WOFF2" "$CODEPOINTS" <<'PYEOF'
 import sys
