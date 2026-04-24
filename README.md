@@ -14,6 +14,7 @@ Qu'offre sViewer ?
 * **Partage de cartes** avec permaliens, codes QR
 * **Thème clair et sombre** : bascule via l'interface ou le paramètre `theme`
 * **Langues multiples** : français, anglais, espagnol, allemand
+* **Progressive Web App (PWA)** : installable sur mobile comme une application native, fonctionne hors ligne
 * **Facilement intégrable** dans vos propres pages web
 * **Entièrement autonome** : aucune dépendance externe (CDN)
 
@@ -261,6 +262,7 @@ Notes techniques
 * **Projection** : EPSG:3857 (Web Mercator)
 * **Langue** : Français par défaut, mais supporte aussi l'anglais, l'espagnol et l'allemand
 * **Thèmes** : clair (défaut) et sombre, activables via `?theme=dark` ou l'option `{ theme: 'dark' }` en mode WebComponent
+* **Progressive Web App** : sViewer peut être installé comme application sur mobile (Android, iOS) et inclut un Service Worker pour le support hors ligne
 * **Serveur** : Aucun composant côté serveur requis
 * **Compatibilité** : Tous les navigateurs modernes (desktop, tablet, mobile)
 
