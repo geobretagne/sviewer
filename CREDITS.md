@@ -1,29 +1,27 @@
 Credits
 =======
 
-OpenLayers3
+OpenLayers 10
+=============
+https://openlayers.org/ under 2-Clause BSD
+Full-featured library for rendering geospatial data and creating interactive maps.
+
+jQuery 4.x
 ==========
-http://ol3js.org/ under 2-Clause BSD
-http://www.tldrlegal.com/license/bsd-2-clause-license-(freebsd)
-Many thanks to the OpenLayers3 team
+https://jquery.org/license/ under MIT License
+DOM manipulation and AJAX requests.
 
-JQuery
-======
-https://jquery.org/license/ under MIT Licence
-
-JQUery Mobile Icon Pack (c) Andy Matthews
-========================================
-http://andymatthews.net/code/jquery-mobile-icon-pack/
+Bootstrap 5
+===========
+https://getbootstrap.com/docs/5.0/getting-started/license/ under MIT License
+Responsive UI components and layout framework.
 
 QRCode.js (c) @davidshimjs
 ==========================
-http://davidshimjs.github.io/qrcodejs/ under MIT Licence
+http://davidshimjs.github.io/qrcodejs/ under MIT License
+QR code generation for sharing map states.
 
-proj4js
-====
-http://trac.osgeo.org/proj4js/ under MIT style Licence
-
-
-
-
-
+proj4.js
+========
+http://trac.osgeo.org/proj4js/ under MIT License
+Cartographic projections support (coordinate transformations).
