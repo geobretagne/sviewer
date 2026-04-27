@@ -13,9 +13,10 @@ Guide technique complet pour développeurs et intégrateurs. Pour une introducti
 5. [Projections et Repères](#projections-et-repères)
 6. [Requêtes Cartographiques](#requêtes-cartographiques)
 7. [Intégration geOrchestra](#intégration-georchestra)
-8. [Internationalization (i18n)](#internationalization-i18n)
-9. [Architecture et API Interne](#architecture-et-api-interne)
-10. [Dépannage](#dépannage)
+8. [Progressive Web App (PWA)](#progressive-web-app-pwa)
+9. [Internationalization (i18n)](#internationalization-i18n)
+10. [Architecture et API Interne](#architecture-et-api-interne)
+11. [Dépannage](#dépannage)
 
 ---
 
@@ -460,6 +461,42 @@ Pour chaque couche publiée depuis geOrchestra :
 - Légende graphique (si disponible)
 - Titre et résumé
 - Lien vers métadonnées
+
+---
+
+## Progressive Web App (PWA)
+
+### Installation
+
+sViewer est configuré comme Progressive Web App. Sur navigateurs compatibles (Chrome Android, Edge, Firefox Android, etc.), un bouton "Installer" ou "Ajouter à l'écran d'accueil" apparaît.
+
+**Fichiers PWA :**
+- `manifest.json` : Métadonnées (nom, icônes, thème, etc.)
+- `sw.js` : Service Worker pour offline + caching
+- `img/icon-192.png` + `img/icon-512.png` : Icônes application
+
+### Service Worker
+
+Service Worker (`sw.js`) **enregistré uniquement en mode simple** (index.html).
+
+**Comportement :**
+- Cache ressources sViewer au premier chargement
+- Support offline limité (ressources en cache)
+- Mise en cache automatique des resources
+- Scope limité à `/sviewer/`
+
+**Mode WebComponent :** embed.js n'enregistre pas le SW pour ne pas affecter la page hôte.
+
+### Manifest
+
+Configuration dans `manifest.json` :
+- `name` : Nom complet (installation)
+- `short_name` : Nom court ≤12 chars (écran d'accueil)
+- `start_url` : URL de démarrage
+- `scope` : Portée du SW
+- `display` : Mode `standalone` (app native)
+- `icons` : PNG 192x192 et 512x512
+- `theme_color` + `background_color` : Couleurs barre d'adresse/splash
 
 ---
 
