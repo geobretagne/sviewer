@@ -50,7 +50,7 @@
     <script>
         // Register Service Worker for offline support
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js', { scope: '/' }).catch(err => {
+            navigator.serviceWorker.register('sw.js').catch(err => {
                 console.debug('Service Worker registration failed:', err);
             });
         }
