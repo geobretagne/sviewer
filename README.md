@@ -151,18 +151,32 @@ https://geobretagne.fr/sviewer/?layers=ns:layer*style*population>50000@https://w
 
 **`q`** — Interroger la carte au démarrage
 
-Au chargemnet, affiche les informations au centre de la carte.
+Au chargement, affiche les informations au centre de la carte.
 
 ```
 https://geobretagne.fr/sviewer/?layers=geor:sdi&q=1
 ```
 
-**`debug`** — Activer les logs de debug
+**`s`** — Recherche d'objets dans les données WFS
 
-Affiche les logs de debug dans la console du navigateur (F12).
+Active la barre de recherche. Lorsque les données WMS ont un service WFS associé, la recherche interroge directement les attributs des objets en plus de la géoplateforme.
+
+```
+https://geobretagne.fr/sviewer/?layers=dreal_b:ae_casparcas&s=1
+```
+
+- Chaque résultat affiche les champs de l'objet (clé : valeur)
+- Cliquer sur un résultat recentre la carte et affiche la fiche d'information
+- La limite de résultats WFS est configurable via `maxWfsSearchFeatures` dans `customConfig.js` (défaut : 8)
+- Le service WFS doit supporter CORS
+
+**`debug`** — Mode debug
+
+Affiche les logs de debug dans la console du navigateur (F12). Avec `debug=1`, charge les fichiers JS/CSS non-minifiés (utile pour inspecter le code source sur le serveur de production).
 
 ```
 https://geobretagne.fr/sviewer/?layers=xyz&debug=true
+https://geobretagne.fr/sviewer/?layers=xyz&debug=1
 ```
 
 **`c`** — Utiliser une configuration personnalisée

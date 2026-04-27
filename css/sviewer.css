@@ -1010,6 +1010,35 @@
     background-color: var(--sv-panel-input-bg-hover);
 }
 
+/* WFS search result item fields */
+.sv-search-item-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+.sv-search-item-fields {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 8px;
+    row-gap: 1px;
+    margin: 0;
+    font-size: 0.8em;
+    color: var(--sv-panel-fg-muted);
+}
+.sv-search-item-fields dt {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+.sv-search-item-fields dd {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Error and status message styling */
 .sv-scope .alert {
     padding: 12px;

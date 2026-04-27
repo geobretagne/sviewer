@@ -25,6 +25,7 @@ window.SViewerApp = (function() {
         maxExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
         restrictedExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
         maxFeatures: 10,
+        maxWfsSearchFeatures: 8,
         nodata: '<!--nodatadetect-->\n<!--nodatadetect-->',
         openLSGeocodeUrl: "https://data.geopf.fr/geocodage/search",
         layersBackground: [
@@ -133,6 +134,12 @@ window.SViewerApp = (function() {
         this.md = {
             title: '',
             abstract: ''
+        };
+        this.wfs = {
+            url: null,
+            typeName: null,
+            fields: [],
+            geomField: null
         };
         this.wmslayer = null;
 
@@ -439,6 +446,61 @@ window.SViewerApp = (function() {
         this.construct(options);
     }
 
+    /**
+     * Runs WMS:DescribeLayer then WFS:DescribeFeatureType to populate this.wfs.
+     * Silent on failure (CORS, no WFS endpoint, etc.).
+     */
+    LayerQueryable.prototype.discoverWFS = function() {
+        var self = this;
+        var describeLayerUrl = ajaxURL(self.options.wmsurl_ns + '?' + $.param({
+            SERVICE: 'WMS',
+            VERSION: '1.1.1',
+            REQUEST: 'DescribeLayer',
+            LAYERS: self.options.layername
+        }));
+        $.ajax({ url: describeLayerUrl, type: 'GET', dataType: 'xml' })
+        .then(function(r1) {
+            var wfsUrl = $(r1).find('LayerDescription').attr('wfs');
+            var typeName = $(r1).find('Query').attr('typeName');
+            if (!wfsUrl) { return $.Deferred().reject('no wfs url').promise(); }
+            self.wfs.url = wfsUrl;
+            self.wfs.typeName = typeName;
+            var sep = wfsUrl.indexOf('?') >= 0 ? '&' : '?';
+            return $.ajax({
+                url: ajaxURL(wfsUrl + sep + $.param({
+                    SERVICE: 'WFS',
+                    VERSION: '1.0.0',
+                    REQUEST: 'DescribeFeatureType',
+                    TYPENAME: typeName
+                })),
+                type: 'GET',
+                dataType: 'xml'
+            });
+        })
+        .then(function(r2) {
+            var fields = [], searchFields = [];
+            $(r2.getElementsByTagNameNS('*', 'sequence')).find('[type]')
+                .each(function() {
+                    var type = $(this).attr('type');
+                    var name = $(this).attr('name');
+                    if (/^xsd:(string|date|dateTime|int|integer|long|short|decimal|double|float|boolean)$/.test(type)) {
+                        fields.push(name);
+                    }
+                    if (type === 'xsd:string') {
+                        searchFields.push(name);
+                    }
+                });
+            self.wfs.geomField = $(r2.getElementsByTagNameNS('*', 'sequence'))
+                .find('[type*="gml\\:"]').attr('name');
+            self.wfs.fields = fields;
+            self.wfs.searchFields = searchFields;
+            log('WFS discovered for', self.options.nslayername, ':', self.wfs.url, fields);
+        })
+        .fail(function() {
+            self.wfs.url = null;
+            log('discoverWFS failed for', self.options.nslayername, '(no WFS or CORS)');
+        });
+    };
 
 
     // ----- methods ------------------------------------------------------------------------------------
@@ -667,31 +729,20 @@ window.SViewerApp = (function() {
             svSpinner.hide();
             try {
                 var features = response.features;
-                var items = [];
                 if (features && features.length > 0) {
-                    $.each(features, function(_idx, feature) {
-                        var coords   = feature.geometry.coordinates; // [lon, lat]
+                    var zoomByType = { municipality: 13, street: 17, housenumber: 18 };
+                    var items = features.map(function(feature) {
                         var props    = feature.properties;
-                        var ptResult = ol.proj.transform(coords, 'EPSG:4326', config.projcode);
-                        var zoom     = 16;
-                        switch (props.type) {
-                            case 'municipality':  zoom = 13; break;
-                            case 'street':        zoom = 17; break;
-                            case 'housenumber':   zoom = 18; break;
-                        }
-                        var label = props.label || props.name || coords.join(', ');
-                        var item = $(Mustache.render(window.svTemplates['search-item'], { label: label, tooltip: label }))
-                            .find('a')
-                            .on('click', {
-                                'extent': [],
-                                'coordinates': ptResult,
-                                'zoom': zoom
-                            }, onSearchItemClick)
-                            .parent();
-                        items.push(item);
+                        var coords   = ol.proj.transform(feature.geometry.coordinates, 'EPSG:4326', config.projcode);
+                        var label    = props.label || props.name || coords.join(', ');
+                        return renderSearchItem(
+                            { label: label },
+                            { extent: [], coordinates: coords, zoom: zoomByType[props.type] || 16 }
+                        );
                     });
-                    $('#searchResults').prepend(items);
-                    $('#searchResults').prepend(Mustache.render(window.svTemplates['search-header'], { label: 'Localités' }));
+                    $('#searchResults')
+                        .prepend(items)
+                        .prepend(Mustache.render(window.svTemplates['search-header'], { label: tr('lbl.geocode_results') }));
                 }
             } catch(err) {
                 $('#locateMsg').text(tr('msg.geolocation_failed'));
@@ -808,131 +859,85 @@ window.SViewerApp = (function() {
 
 
     /**
-     * method: searchFeatures
-     * search features whose string attributes match a pattern;
-     * 'remote' mode performs a WFS getFeature query,
-     * @param {String} value search pattern
+     * method: searchAllWFSLayers
+     * for each layer with a discovered WFS endpoint and text fields,
+     * performs a WFS GetFeature with PropertyIsLike filters and appends results.
+     * @param {String} value search term
      */
-    function searchFeatures(value) {
-        if (value.length>1) {
-            state.searchparams.term = value;
-            if (state.searchparams.mode === 'remote') {
-                var ogcfilter = [],
-                    propertynames = [],
-                    getFeatureRequest;
+    function searchAllWFSLayers(value) {
+        if (value.length < 2) { return; }
+        $.each(config.layersQueryable, function() {
+            var layer = this;
+            if (!layer.wfs.url || !layer.wfs.searchFields || !layer.wfs.searchFields.length) { return; }
 
-                $.each(state.searchparams.searchfields, function(i, fieldname) {
-                    /*matchCase="false" for PropertyIsLike don't works with geoserver 2.5.0* in wfs 2.0.0 version*/
-                    ogcfilter.push(
-                    '<ogc:PropertyIsLike wildCard="*" singleChar="." escapeChar="!" matchCase="false" >' +
-                    '<ogc:PropertyName>'+fieldname+'</ogc:PropertyName>' +
-                    '<ogc:Literal>*'+value+'*</ogc:Literal></ogc:PropertyIsLike>');
-                    propertynames.push('<ogc:PropertyName>'+fieldname+'</ogc:PropertyName>');
-                });
-                propertynames.push('<ogc:PropertyName>'+state.searchparams.geom+'</ogc:PropertyName>');
-                if (state.searchparams.searchfields.length > 1) {
-                    ogcfilter.unshift('<ogc:Or>');
-                    ogcfilter.push('</ogc:Or>');
+            var ogcfilter = [], propertynames = [];
+            /*matchCase="false" for PropertyIsLike don't work with geoserver 2.5.0* in wfs 2.0.0 version*/
+            $.each(layer.wfs.searchFields, function(i, fieldname) {
+                ogcfilter.push(
+                    '<ogc:PropertyIsLike wildCard="*" singleChar="." escapeChar="!" matchCase="false">' +
+                    '<ogc:PropertyName>' + fieldname + '</ogc:PropertyName>' +
+                    '<ogc:Literal>*' + value + '*</ogc:Literal></ogc:PropertyIsLike>');
+                propertynames.push('<ogc:PropertyName>' + fieldname + '</ogc:PropertyName>');
+            });
+            $.each(layer.wfs.fields, function(i, fieldname) {
+                if (layer.wfs.searchFields.indexOf(fieldname) === -1) {
+                    propertynames.push('<ogc:PropertyName>' + fieldname + '</ogc:PropertyName>');
                 }
-                ogcfilter.unshift('<ogc:And>');
-                ogcfilter.push(['<ogc:BBOX>',
-                        '<ogc:PropertyName>'+state.searchparams.geom+'</ogc:PropertyName>',
-                        '<gml:Envelope xmlns:gml="http://www.opengis.net/gml" srsName="'+config.projection.getCode()+'">',
-                          '<gml:lowerCorner>'+ol.extent.getBottomLeft(config.initialExtent).join(" ")+'</gml:lowerCorner>',
-                          '<gml:upperCorner>'+ol.extent.getTopRight(config.initialExtent).join(" ")+'</gml:upperCorner>',
-                        '</gml:Envelope>',
-                      '</ogc:BBOX>'].join( ' ' ));
-                ogcfilter.push('</ogc:And>');
+            });
+            propertynames.push('<ogc:PropertyName>' + layer.wfs.geomField + '</ogc:PropertyName>');
+            if (layer.wfs.searchFields.length > 1) {
+                ogcfilter.unshift('<ogc:Or>');
+                ogcfilter.push('</ogc:Or>');
+            }
+            ogcfilter.unshift('<ogc:And>');
+            ogcfilter.push(['<ogc:BBOX>',
+                '<ogc:PropertyName>' + layer.wfs.geomField + '</ogc:PropertyName>',
+                '<gml:Envelope xmlns:gml="http://www.opengis.net/gml" srsName="' + config.projection.getCode() + '">',
+                  '<gml:lowerCorner>' + ol.extent.getBottomLeft(config.initialExtent).join(' ') + '</gml:lowerCorner>',
+                  '<gml:upperCorner>' + ol.extent.getTopRight(config.initialExtent).join(' ') + '</gml:upperCorner>',
+                '</gml:Envelope>',
+                '</ogc:BBOX>'].join(' '));
+            ogcfilter.push('</ogc:And>');
 
-                getFeatureRequest = ['<?xml version="1.0" encoding="UTF-8"?>',
-                    '<wfs:GetFeature',
-                        'xmlns:wfs="http://www.opengis.net/wfs" service="WFS" version="1.1.0"',
-                        'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd"',
-                        'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" maxFeatures="'+config.maxFeatures+'" outputFormat="application/json">',
-                          '<wfs:Query xmlns:ogc="http://www.opengis.net/ogc"' +
-                           ' typeName="'+state.searchparams.typename+'" srsName="'+config.projection.getCode()+'">',
-                            propertynames.join(' '),
-                            '<ogc:Filter>',
-                               ogcfilter.join(' '),
-                            '</ogc:Filter>',
-                        '</wfs:Query>',
-                    '</wfs:GetFeature>'].join (' ');
-                $.ajax({
+            var getFeatureRequest = ['<?xml version="1.0" encoding="UTF-8"?>',
+                '<wfs:GetFeature',
+                    'xmlns:wfs="http://www.opengis.net/wfs" service="WFS" version="1.1.0"',
+                    'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd"',
+                    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
+                    'maxFeatures="' + config.maxWfsSearchFeatures + '" outputFormat="application/json">',
+                      '<wfs:Query xmlns:ogc="http://www.opengis.net/ogc"',
+                       'typeName="' + layer.wfs.typeName + '" srsName="' + config.projection.getCode() + '">',
+                        propertynames.join(' '),
+                        '<ogc:Filter>',
+                           ogcfilter.join(' '),
+                        '</ogc:Filter>',
+                    '</wfs:Query>',
+                '</wfs:GetFeature>'].join(' ');
+
+            (function(lyr, term) {
+                var xhr = $.ajax({
                     type: 'POST',
-                    url: ajaxURL(state.searchparams.url),
+                    url: ajaxURL(lyr.wfs.url),
                     data: getFeatureRequest,
                     dataType: 'json',
-                    contentType: "application/xml",
+                    contentType: 'application/xml',
                     success: function(response) {
-                        var f =  new ol.format.GeoJSON().readFeatures(response);
+                        pruneSearchXhrs();
+                        var f = new ol.format.GeoJSON().readFeatures(response);
                         if (f.length > 0) {
-                            featuresToList(f);
+                            featuresToList(f, lyr.md.title || lyr.options.nslayername, term);
                         }
                     },
-                    error: function() {
-                        log('error ');
+                    error: function(jqXHR) {
+                        pruneSearchXhrs();
+                        if (jqXHR.statusText !== 'abort') {
+                            log('WFS search error for', lyr.options.nslayername);
+                        }
                     }
                 });
-            }
-        }
-    }
-    
-    /**
-     * method: activateSearchFeatures
-     * prepares for feature search;
-     * performs DescribeLayer/DescribeFeatureType if necessary
-     * @param {String} mode local|remote
-     */
-    function activateSearchFeatures(mode) {
-        state.searchparams.mode = mode;
-        if (mode === 'remote') {
-            var searchLayer = config.layersQueryable[config.layersQueryable.length - 1];
-            if (searchLayer) {
-                state.searchparams.title = searchLayer.md.title;
-                $.ajax({
-                    url: ajaxURL(searchLayer.options.wmsurl_ns + '?' + $.param({
-                        SERVICE: 'WMS',
-                        VERSION: '1.1.1',
-                        REQUEST: 'DescribeLayer',
-                        LAYERS: searchLayer.options.layername
-                    })),
-                    type: 'GET',
-                    dataType: 'xml'
-                }).then(function(r1) {
-                    state.searchparams.url = $(r1).find('LayerDescription').attr('wfs');
-                    state.searchparams.typename = $(r1).find('Query').attr('typeName');
-                    var wfsUrl = state.searchparams.url;
-                    var sep = wfsUrl.indexOf('?') >= 0 ? '&' : '?';
-                    return $.ajax({
-                        url: ajaxURL(wfsUrl + sep + $.param({
-                            SERVICE: 'WFS',
-                            VERSION: '1.0.0',
-                            REQUEST: 'DescribeFeatureType',
-                            TYPENAME: state.searchparams.typename
-                        })),
-                        type: 'GET',
-                        dataType: 'xml'
-                    });
-                }).then(function(r2) {
-                    var fields = [];
-                    $(r2.getElementsByTagNameNS('*', 'sequence')).find('[type="xsd\\:string"]')
-                        .each(function() {
-                            fields.push($(this).attr('name'));
-                        });
-                    state.searchparams.geom = $(r2.getElementsByTagNameNS('*', 'sequence'))
-                        .find('[type*="gml\\:"]').attr('name');
-                    state.searchparams.searchfields = fields;
-                    state.searchparams.ns = $(r2.getElementsByTagNameNS('*', 'schema'))
-                        .attr('targetNamespace');
-                    state.searchparams.name = state.searchparams.typename.split(':')[1];
-                }).fail(function() {
-                    messagePopup(tr('msg.query_failed'));
-                });
-            }
-        }
-        if (mode === 'local') {
-            //nothing for the moment. the local search initializes on first search.
-        }
+                searchXhrs.push(xhr);
+            }(layer, value));
+        });
     }
 
     /**
@@ -942,7 +947,7 @@ window.SViewerApp = (function() {
      */
     function onSearchItemClick (event) {
         var data = event.data;
-        marker.setPosition(event.data.coordinates);
+        marker.setPosition(data.coordinates);
         if (data.extent.length===4 && !(data.extent[0] == data.extent[2] && data.extent[1] == data.extent[3])) {
             view.fit(data.extent);
         } else {
@@ -950,45 +955,75 @@ window.SViewerApp = (function() {
             view.setZoom(data.zoom || 16);
         }
         $('#marker').show();
+        if (data.queryGFI) {
+            queryMap(data.coordinates);
+        }
     }
 
     
     /**
      * method: featuresToList
-     * renders a clickable list of features
-     * @param {ol.features} features
+     * renders one search result item and binds the click handler
+     * @param {Object} templateData  Mustache data ({ label, ariaLabel, fields })
+     * @param {Object} clickData     event.data passed to onSearchItemClick
+     * @returns {jQuery} the <li> element
      */
-    function featuresToList (features) {
-        var lib = state.searchparams.title || tr('msg.top_layer');
-        $("#searchResults").append(Mustache.render(window.svTemplates['search-header'], { label: lib }));
+    function renderSearchItem(templateData, clickData) {
+        if (!templateData.ariaLabel) {
+            templateData.ariaLabel = templateData.label || '—';
+        }
+        return $(Mustache.render(window.svTemplates['search-item'], templateData))
+            .find('.sv-search-item-link')
+            .on('click', clickData, onSearchItemClick)
+            .parent();
+    }
+
+    /**
+     * renders a section header + clickable list of WFS features
+     * @param {ol.Feature[]} features
+     * @param {String} label section header text
+     * @param {String} term search term used to highlight matching values
+     */
+    function featuresToList(features, label, term) {
+        var searchTerm = (term || '').toLowerCase();
+        var $results = $("#searchResults");
+        $results.append(Mustache.render(window.svTemplates['search-header'], {
+            label: label || tr('msg.top_layer')
+        }));
 
         $.each(features, function(i, feature) {
-            var geom = feature.getGeometry(),
-                attributes = feature.getProperties(),
-                tips = [],
-                title = [];
+            var geom       = feature.getGeometry(),
+                fieldItems = [],
+                title      = [];
 
-            $.map(attributes, function(val, i) {
-                if (typeof(val)=== 'string') {
-                    tips.push(i + ' : ' + val);
-                    if (val.toLowerCase().search(state.searchparams.term.toLowerCase())!= -1) {
-                        title.push(val);
-                    }
+            $.map(feature.getProperties(), function(val, key) {
+                if (val === null || val === undefined) { return; }
+                if (typeof val === 'object' && typeof val.getType === 'function') { return; }
+                var str = (val instanceof Date) ? val.toISOString().substring(0, 10) : String(val);
+                fieldItems.push({ key: key, val: str });
+                if (typeof val === 'string' && searchTerm && val.toLowerCase().indexOf(searchTerm) !== -1) {
+                    title.push(val);
                 }
             });
 
-            $(Mustache.render(window.svTemplates['search-item'], {
-                    label:   title.join(', '),
-                    tooltip: tips.join('\n')
-                }))
-                .find('a')
-                .on('click', {
-                        'extent': geom.getExtent(),
-                        'coordinates': (geom.getType()==='Point') ? geom.getCoordinates() : ol.extent.getCenter(geom.getExtent())
-                    }, onSearchItemClick)
-                .parent()
-                .appendTo($("#searchResults"));
+            var center = geom.getType() === 'Point' ? geom.getCoordinates() : ol.extent.getCenter(geom.getExtent());
+            var ariaLabel = title.length ? title.join(', ') : fieldItems.map(function(f) { return f.val; }).join(', ');
+            renderSearchItem(
+                { label: title.join(', '), ariaLabel: ariaLabel, fields: fieldItems.length ? [{ items: fieldItems }] : [] },
+                { extent: geom.getExtent(), coordinates: center, queryGFI: true }
+            ).appendTo($results);
         });
+    }
+
+    var searchXhrs = [];
+
+    function abortSearchXhrs() {
+        $.each(searchXhrs, function() { this.abort(); });
+        searchXhrs = [];
+    }
+
+    function pruneSearchXhrs() {
+        searchXhrs = searchXhrs.filter(function(xhr) { return xhr.readyState !== 4; });
     }
 
     /**
@@ -996,11 +1031,12 @@ window.SViewerApp = (function() {
      * search for matching places (OpenLS) and features
      */
     function searchPlace() {
+        abortSearchXhrs();
         $("#searchResults").html("");
         try {
             openLsRequest($("#searchInput").val());
             if (state.search) {
-                searchFeatures($("#searchInput").val());
+                searchAllWFSLayers($("#searchInput").val());
             }
         }
         catch(err) {
@@ -1043,9 +1079,11 @@ window.SViewerApp = (function() {
         sidepanel.addClass('active');
         $('#frameMap').addClass('panel-open');
 
-        // Update permalink when share panel is opened
         if (panelName === 'share') {
             setPermalink();
+        }
+        if (panelName === 'locate') {
+            setTimeout(function() { $('#searchInput').focus(); }, 50);
         }
     }
 
@@ -1306,11 +1344,10 @@ window.SViewerApp = (function() {
             state.gfiok = true;
         }
 
-        // querystring param: activate search based on layer text attributes
+        // querystring param: activate WFS feature search alongside geocoding
         if (qs.s) {
             state.search = true;
-            state.searchparams = {};
-            $("#addressForm label").text('Features or ' + $("#addressForm label").text());
+            $.each(config.layersQueryable, function() { this.discoverWFS(); });
         }
     }
 
@@ -1362,11 +1399,6 @@ window.SViewerApp = (function() {
         $.each(config.layersQueryable, function() {
             map.addLayer(this.wmslayer);
         });
-
-        //activate search for WMS layer (origin : ?layers=...)
-        if (state.search && config.layersQueryable.length > 0) {
-            activateSearchFeatures('remote');
-        }
 
         // map recentering
         if (config.x&&config.y&&config.z) {
@@ -1428,12 +1460,15 @@ window.SViewerApp = (function() {
         // geolocation form
         $('#zpBt').on('click', locateMe);
 
-        // search with autocomplete - trigger on keyup after 3 characters
+        // search with autocomplete - trigger on keyup after 3 characters, debounced
+        var searchDebounceTimer = null;
         $('#searchInput').on('keyup', function() {
             var query = $(this).val();
+            clearTimeout(searchDebounceTimer);
             if (query.length >= 3) {
-                searchPlace();
+                searchDebounceTimer = setTimeout(searchPlace, 350);
             } else {
+                abortSearchXhrs();
                 $("#searchResults").html("");
             }
         });

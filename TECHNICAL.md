@@ -121,14 +121,17 @@ Active une requête GetFeatureInfo au démarrage sur les données visibles.
 
 #### `s` (search)
 
-Active la barre de recherche de lieux au démarrage.
+Active la barre de recherche au démarrage.
 
 ```
 ?s=1
 ```
 
-**Service utilisé :** IGN Géoplateforme (ou service configuré dans `customConfig.openLSGeocodeUrl`).
-**CORS :** Le service de géocodage doit supporter CORS.
+**Services interrogés :**
+- IGN Géoplateforme (ou `customConfig.openLSGeocodeUrl`)
+- WFS de chaque couche queryable (si disponible et CORS OK)
+
+**CORS :** Géoplateforme et services WFS doivent supporter CORS.
 
 ---
 
@@ -136,13 +139,12 @@ Active la barre de recherche de lieux au démarrage.
 
 #### `debug` (debug mode)
 
-Active les logs de debug dans la console du navigateur. Non-persistant.
+| Valeur | Effet |
+|--------|-------|
+| `debug=true` | Logs dans la console (diagnostic WMS, CORS, AJAX) |
+| `debug=1` | Charge `sviewer.js` et `sviewer.css` non-minifiés |
 
-```
-?debug=true
-```
-
-**Utile pour :** Diagnostic des problèmes de chargement WMS, CORS, ou requêtes AJAX.
+Non-persistant (absent du permalien).
 
 #### `c` (configuration)
 
@@ -407,6 +409,49 @@ Saisie libre d'adresse/lieu → requête vers le service géoplateforme.
 **Limitations :**
 - Couverture variable selon région
 
+### Recherche WFS (paramètre `s=1`)
+
+Activé par `?s=1`. Interroge les couches WFS associées aux couches WMS queryables, en parallèle de la géoplateforme.
+
+#### Découverte automatique WFS
+
+Au démarrage (`doConfiguration`), pour chaque couche queryable :
+
+```
+WMS DescribeLayer  →  découvre l'URL WFS + typeName
+WFS DescribeFeatureType  →  découvre les champs et leurs types
+```
+
+Résultat stocké dans `layer.wfs` :
+- `url` : endpoint WFS
+- `typeName` : nom du type de feature
+- `fields` : tous les champs scalaires (string, int, date, etc.) — pour l'affichage
+- `searchFields` : champs `xsd:string` uniquement — pour le filtre `PropertyIsLike`
+- `geomField` : nom du champ géométrie (exclu de l'affichage)
+
+Si DescribeLayer ou DescribeFeatureType échoue, `layer.wfs.url` reste `null` et la couche est silencieusement ignorée.
+
+#### Flux de recherche
+
+```
+keyup (debounce 350ms)
+  → abortSearchXhrs()          annule les XHR WFS en cours
+  → openLsRequest()            géoplateforme IGN (parallèle)
+  → searchAllWFSLayers()       pour chaque couche avec wfs.url valide :
+      WFS GetFeature
+        FILTER: OR(PropertyIsLike) sur searchFields
+        BBOX: étendue courante de la carte
+        maxFeatures: config.maxWfsSearchFeatures (défaut 8)
+        propertyName: tous les fields
+      → featuresToList()        rendu Mustache + ajout dans #searchResults
+```
+
+#### Clic sur un résultat WFS
+
+`onSearchItemClick` avec `data.queryGFI = true` :
+1. Recentre la carte sur les coordonnées du feature
+2. Appelle `queryMap(coordinates)` → déclenche WMS GetFeatureInfo comme un clic sur la carte
+
 ---
 
 ### Légendes et métadonnées
@@ -582,6 +627,24 @@ var map = app.getMap();
 var center = map.getView().getCenter();
 console.log('Centre :', center);
 ```
+
+### Minification
+
+Les fichiers minifiés sont générés via npm :
+
+```bash
+npm run minify        # sviewer.js → sviewer.min.js, sviewer.css → sviewer.min.css
+npm run build         # build OL custom bundle + minify
+```
+
+`embed.js` charge les fichiers minifiés par défaut. Avec `?debug=1`, charge les sources non-minifiées.
+
+| Source | Minifié | Outil |
+|--------|---------|-------|
+| `js/sviewer.js` | `js/sviewer.min.js` | terser |
+| `css/sviewer.css` | `css/sviewer.min.css` | postcss + cssnano |
+
+La configuration cssnano est dans `postcss.config.js` (preset `default`).
 
 ### Scoping CSS
 
