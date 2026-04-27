@@ -11,6 +11,8 @@
 
 (function() {
 
+    var debug = /[?&]debug=1/.test(window.location.search);
+
     var SV_SHELL_HTML = `
         <div id="svSpinner" class="sv-spinner">
             <div class="spinner-border text-light" role="status">
@@ -210,7 +212,7 @@
             loadResource(baseUrl + 'build/ol.css', 'css'),
             loadResource(baseUrl + 'lib/bootstrap/bootstrap-scoped.min.css', 'css'),
             loadResource(baseUrl + 'build/bootstrap-icons.subset.css', 'css'),
-            loadResource(baseUrl + 'css/sviewer.css', 'css')
+            loadResource(baseUrl + (debug ? 'css/sviewer.css' : 'css/sviewer.min.css'), 'css')
         ];
         Promise.all(cssPromises).then(function() {
             if (container) container.style.visibility = 'visible';
@@ -279,7 +281,7 @@
     function loadSViewerScript() {
         return new Promise(function(resolve, reject) {
             var script = document.createElement('script');
-            script.src = config.baseUrl + 'js/sviewer.js';
+            script.src = config.baseUrl + (debug ? 'js/sviewer.js' : 'js/sviewer.min.js');
             script.onload = function() {
                 // Wait a tick to ensure DOM is ready and init completes
                 setTimeout(resolve, 100);

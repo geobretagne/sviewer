@@ -31,7 +31,8 @@ $.extend(hardConfig, {
             'lbl.dark_theme':       'Dark theme',
             'lbl.reuse_map':        'Reuse this map',
             'lbl.query_the_map':    'Query the map',
-            'lbl.search_place':     'Find a place',
+            'lbl.search_place':     'Search',
+            'lbl.geocode_results':  'Places',
 
             // Input placeholder
             'inp.search_placeholder': 'ex: 10 Downing Street, London',
@@ -82,7 +83,8 @@ $.extend(hardConfig, {
             'lbl.dark_theme':        'Thème sombre',
             'lbl.reuse_map':         'Réutiliser cette carte',
             'lbl.query_the_map':     'Cliquer sur la carte',
-            'lbl.search_place':      'Trouver un lieu',
+            'lbl.search_place':      'Rechercher',
+            'lbl.geocode_results':   'Lieux',
 
             'inp.search_placeholder': 'ex: 10 rue Maurice Fabre, Rennes',
 
@@ -132,6 +134,7 @@ $.extend(hardConfig, {
             'lbl.reuse_map':         'Reutilizar este mapa',
             'lbl.query_the_map':     'Consultar el mapa',
             'lbl.search_place':      'Encontrar un lugar',
+            'lbl.geocode_results':   'Lugares',
 
             'inp.search_placeholder': 'ej: Calle Gran Vía 1, Madrid',
 
@@ -181,6 +184,7 @@ $.extend(hardConfig, {
             'lbl.reuse_map':         'Diese Karte wiederverwenden',
             'lbl.query_the_map':     'Karte abfragen',
             'lbl.search_place':      'Adresse eingeben',
+            'lbl.geocode_results':   'Orte',
 
             'inp.search_placeholder': 'z.B. Unter den Linden 1, Berlin',
 

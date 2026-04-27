@@ -55,6 +55,11 @@ customConfig = {
     nodata: '<!--nodatadetect-->\n<!--nodatadetect-->',
 
     /**
+     * Maximum results returned per layer by WFS feature search (?s=1)
+     */
+    maxWfsSearchFeatures: 8,
+
+    /**
      * Geocoding service URL (address search)
      * Default: IGN Géoplateforme (French geoportal)
      * Requires CORS support from the service
@@ -100,15 +105,6 @@ customConfig = {
             }),
             title: 'Carte OpenStreetmap'
         })
-    ],
+    ]
 
-    /**
-     * Social media sharing links (URL prefixes)
-     * Used by the share panel
-     */
-    socialMedia: {
-        'Twitter': 'https://twitter.com/intent/tweet?text=',
-        'LinkedIn': 'https://www.linkedin.com/sharing/share-offsite/?url=',
-        'Facebook': 'https://www.facebook.com/sharer/sharer.php?u='
-    }
 };

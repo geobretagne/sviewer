@@ -1,3 +1,12 @@
-<li class="list-group-item" title="{{tooltip}}">
-  <a href="#" style="text-decoration: none; color: inherit;">{{label}}</a>
+<li class="list-group-item sv-search-item" role="option">
+  <a href="#" class="sv-search-item-link" aria-label="{{ariaLabel}}">
+    {{#fields}}
+    <dl class="sv-search-item-fields" aria-hidden="true">
+      {{#items}}
+      <dt>{{key}}</dt><dd>{{val}}</dd>
+      {{/items}}
+    </dl>
+    {{/fields}}
+    {{^fields}}{{label}}{{/fields}}
+  </a>
 </li>
