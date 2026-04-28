@@ -1105,7 +1105,7 @@ window.SViewerApp = (function() {
         var sidepanel = $('#sidepanel');
         sidepanel.find('.sv-panel-section').hide();
         sidepanel.removeClass('active');
-        $('#panelcontrols .sv-panel-toggle').removeClass('active');
+        $('#panelcontrols .sv-panel-toggle').removeClass('active').attr('aria-pressed', 'false');
         $('#frameMap').removeClass('panel-open');
     }
 
@@ -1119,7 +1119,7 @@ window.SViewerApp = (function() {
         }
         resetPanel();
         targetSection.show();
-        button.addClass('active');
+        button.addClass('active').attr('aria-pressed', 'true');
         sidepanel.addClass('active');
         $('#frameMap').addClass('panel-open');
         if (panelName === 'share') { setPermalink(); }
@@ -1263,6 +1263,7 @@ window.SViewerApp = (function() {
         $.extend(config, hardConfig);
         $.extend(config, window.customConfig || {});
 
+        document.documentElement.lang = config.lang;
         config.projection = ol.proj.get(config.projcode);
 
         // In embed mode, merge config values back into qs so they're available downstream
@@ -1540,12 +1541,15 @@ window.SViewerApp = (function() {
         $('#shareSetTitle').on('blur', setPermalink);
 
         // theme switch
-        $('#themeSwitch').prop('checked', state.theme === 'dark');
-        $('#themeSwitch').on('change', function() {
-            state.theme = this.checked ? 'dark' : 'light';
-            applyTheme(state.theme);
-            setPermalink();
-        });
+        $('#themeSwitch')
+            .prop('checked', state.theme === 'dark')
+            .attr('aria-checked', String(state.theme === 'dark'))
+            .on('change', function() {
+                state.theme = this.checked ? 'dark' : 'light';
+                $(this).attr('aria-checked', String(this.checked));
+                applyTheme(state.theme);
+                setPermalink();
+            });
 
         // WebComponent button (can appear in side panel or modal)
         $(document).on('click', '.webcomponent-btn', function() {
@@ -1592,7 +1596,7 @@ window.SViewerApp = (function() {
                 });
             }).then(function(dataUrl) {
                 log('QR code generated successfully');
-                qrcodeDisplayEl.innerHTML = '<img src="' + dataUrl + '" alt="QR Code" style="max-width: 100%; height: auto;">';
+                qrcodeDisplayEl.innerHTML = '<img src="' + dataUrl + '" alt="QR Code — ' + href + '" style="max-width: 100%; height: auto;">';
             }).catch(function(error) {
                 console.error('QR code generation failed:', error);
                 qrcodeDisplayEl.innerHTML = '<div class="alert alert-warning" role="alert">Failed to generate QR code: ' + error.message + '</div>';
@@ -1603,7 +1607,9 @@ window.SViewerApp = (function() {
             var orig = btn.html();
             var onCopied = function() {
                 btn.html('<i class="bi bi-check" aria-hidden="true"></i> ' + tr('btn.copied'));
-                setTimeout(function() { btn.html(orig); }, 2000);
+                var $live = $('<span class="visually-hidden" aria-live="polite" aria-atomic="true">').text(tr('btn.copied'));
+                btn.after($live);
+                setTimeout(function() { btn.html(orig); $live.remove(); }, 2000);
             };
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(onCopied).catch(function() {
