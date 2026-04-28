@@ -440,7 +440,9 @@ window.SViewerApp = (function() {
                 $.extend(this.options, options);
             }
             createLayer();
-            getMetadata(self);
+            if (!self.options.skipMetadataPanel) {
+                getMetadata(self);
+            }
         };
 
         this.construct(options);
@@ -519,6 +521,56 @@ window.SViewerApp = (function() {
      */
     function ajaxURL (url) {
         return url;
+    }
+
+    function fetchCSWRecord(metadataId, callback) {
+        var url = hardConfig.geOrchestraBaseUrl + '/geonetwork/srv/eng/csw?' + $.param({
+            SERVICE: 'CSW',
+            VERSION: '2.0.2',
+            REQUEST: 'GetRecordById',
+            Id: metadataId,
+            ElementSetName: 'full',
+            OutputSchema: 'http://www.isotc211.org/2005/gmd'
+        });
+        $.ajax({
+            url: ajaxURL(url),
+            type: 'GET',
+            dataType: 'xml',
+            success: function(xmlDoc) {
+                var result = parseCSWForWMS(xmlDoc);
+                if (result) {
+                    callback(result.wmsUrl, result.layername, xmlDoc);
+                } else {
+                    $('#legend').append($('<div class="alert alert-warning mt-2">').text(tr('msg.csw_no_wms')));
+                }
+            },
+            error: function(xhr, status, error) {
+                log('CSW GetRecordById failed:', status, error);
+                $('#legend').append($('<div class="alert alert-warning mt-2">').text(tr('msg.csw_error')));
+            }
+        });
+    }
+
+    function parseCSWForWMS(xmlDoc) {
+        var ns = {
+            gmd: 'http://www.isotc211.org/2005/gmd',
+            gco: 'http://www.isotc211.org/2005/gco'
+        };
+        var resolver = function(p) { return ns[p] || null; };
+        var xpath = '//gmd:distributionInfo//gmd:CI_OnlineResource';
+        var nodes = xmlDoc.evaluate(xpath, xmlDoc.documentElement, resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+        for (var i = 0; i < nodes.snapshotLength; i++) {
+            var node = nodes.snapshotItem(i);
+            var proto = xmlDoc.evaluate('gmd:protocol/gco:CharacterString', node, resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            var urlNode = xmlDoc.evaluate('gmd:linkage/gmd:URL', node, resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            var nameNode = xmlDoc.evaluate('gmd:name/gco:CharacterString', node, resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            if (proto && urlNode && nameNode && proto.textContent.trim() === 'OGC:WMS') {
+                var rawUrl = urlNode.textContent.trim();
+                var wmsUrl = rawUrl.indexOf('?') > 0 ? rawUrl.split('?')[0] : rawUrl;
+                return { wmsUrl: wmsUrl, layername: nameNode.textContent.trim() };
+            }
+        }
+        return null;
     }
 
     /**
@@ -656,6 +708,7 @@ window.SViewerApp = (function() {
             if (config.customConfigName) { linkParams.c = config.customConfigName; }
             if (state.search) { linkParams.s = '1'; }
             if (config.layersQueryString) { linkParams.layers = config.layersQueryString; }
+            if (config.metadataId && !config.layersQueryString) { linkParams.md = config.metadataId; }
             if (state.theme && state.theme !== 'light') { linkParams.theme = state.theme; }
             // In embed mode, permalink must point to the standalone sViewer, not the host page
             var standaloneBase = window.SViewerBaseUrl
@@ -690,6 +743,9 @@ window.SViewerApp = (function() {
         }
         if (config.layersQueryString) {
             embedParams.layers = config.layersQueryString;
+        }
+        if (config.metadataId && !config.layersQueryString) {
+            embedParams.md = config.metadataId;
         }
         if (config.title) {
             embedParams.title = config.title;
@@ -1302,6 +1358,70 @@ window.SViewerApp = (function() {
             });
         }
         
+        // querystring param: md (metadata identifier)
+        // fetches ISO19139 record from CSW, extracts OGC:WMS endpoint and layername
+        if (qs.md && !qs.layers) {
+            config.metadataId = qs.md;
+            fetchCSWRecord(qs.md, function(wmsUrl, layername, xmlDoc) {
+                var ns = { gmd: 'http://www.isotc211.org/2005/gmd', gco: 'http://www.isotc211.org/2005/gco' };
+                var resolver = function(p) { return ns[p] || null; };
+                var xt = function(xpath) {
+                    var n = xmlDoc.evaluate(xpath, xmlDoc.documentElement, resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return n ? n.textContent.trim() : null;
+                };
+                var title = xt('//gmd:identificationInfo//gmd:citation//gmd:title/gco:CharacterString') || layername;
+                var abstract = xt('//gmd:identificationInfo//gmd:abstract/gco:CharacterString') || '';
+                var nsPart = layername.indexOf(':') > 0 ? layername.split(':')[0] : '';
+                var lq = new LayerQueryable({
+                    nslayername: layername,
+                    layername: layername,
+                    namespace: nsPart,
+                    stylename: '',
+                    cql_filter: '',
+                    wmsurl_global: wmsUrl,
+                    wmsurl_ns: wmsUrl,
+                    wmsurl_layer: wmsUrl,
+                    sldurl: null,
+                    format: 'image/png',
+                    opacity: 1,
+                    skipMetadataPanel: true
+                });
+                config.layersQueryable.push(lq);
+                map.addLayer(lq.wmslayer);
+                lq.md.title = title;
+                setTitle(title);
+                var legendUrl = wmsUrl + '?' + $.param({
+                    SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetLegendGraphic',
+                    FORMAT: 'image/png', LAYER: layername
+                });
+                // build panel from ISO data directly (skip WMS GetCapabilities)
+                var $panel = $('<div class="sv-md p-2">');
+                $panel.append($('<div class="fw-bold mb-1">').text(title));
+                if (abstract) { $panel.append($('<div class="text-muted small mb-2">').text(abstract)); }
+                $panel.append($('<img class="img-fluid mb-2">').attr('src', legendUrl).attr('alt', tr('msg.legend_of') + ' ' + title));
+                // ISO metadata table
+                var date = xt('//gmd:identificationInfo//gmd:citation//gmd:date//gmd:date/gco:Date') || '';
+                var producer = xt('//gmd:identificationInfo//gmd:pointOfContact//gmd:organisationName/gco:CharacterString') || '';
+                var email = xt('//gmd:identificationInfo//gmd:pointOfContact//gmd:electronicMailAddress/gco:CharacterString') || '';
+                var licenceText = xt('//gmd:identificationInfo//gmd:resourceConstraints//gmd:otherConstraints/gco:CharacterString') || '';
+                var licenceUrl = safeURL(xt('//gmd:identificationInfo//gmd:resourceConstraints//gmd:otherConstraints/gmx:Anchor') || '');
+                if (date || producer || email || licenceText) {
+                    var $table = $('<table class="table table-sm small">');
+                    if (date)        { $table.append($('<tr>').append($('<th>').text(tr('msg.meta_date'))).append($('<td>').text(date))); }
+                    if (producer)    { $table.append($('<tr>').append($('<th>').text(tr('msg.meta_producer'))).append($('<td>').text(producer))); }
+                    if (email)       { $table.append($('<tr>').append($('<th>').text(tr('msg.meta_contact'))).append($('<td>').text(email))); }
+                    if (licenceText) {
+                        var $licenceTd = licenceUrl ? $('<td>').append($('<a>').attr({href: licenceUrl, target: '_blank', rel: 'noopener'}).text(licenceText)) : $('<td>').text(licenceText);
+                        $table.append($('<tr>').append($('<th>').text(tr('msg.meta_licence'))).append($licenceTd));
+                    }
+                    $panel.append($table);
+                }
+                $('#legend').append($panel);
+            });
+        } else if (qs.md && qs.layers) {
+            log('md= ignored: layers= takes precedence');
+        }
+
         // querystring param: qcl_filters
         if (qs.qcl_filters) {
             var qcl_filters_list = [];

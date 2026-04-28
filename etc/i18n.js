@@ -53,7 +53,9 @@ $.extend(hardConfig, {
             'msg.estimating_position':  'Estimating device position...',
             'msg.position_error':       'Device position error',
             'msg.position_unavailable': 'Device position not available on this device',
-            'msg.top_layer':            'Top layer'
+            'msg.top_layer':            'Top layer',
+            'msg.csw_no_wms':           'No OGC:WMS endpoint found in metadata record',
+            'msg.csw_error':            'Metadata record could not be loaded'
         },
         fr: {
             'btn.initial_view':  'vue initiale',
@@ -103,7 +105,9 @@ $.extend(hardConfig, {
             'msg.estimating_position':  'estimation de la position ...',
             'msg.position_error':       "la localisation de l'appareil a échoué",
             'msg.position_unavailable': 'localisation non disponible sur cet appareil',
-            'msg.top_layer':            'Couche du dessus'
+            'msg.top_layer':            'Couche du dessus',
+            'msg.csw_no_wms':           'Aucun endpoint OGC:WMS trouvé dans la fiche de métadonnées',
+            'msg.csw_error':            'La fiche de métadonnées n\'a pas pu être chargée'
         },
         es: {
             'btn.initial_view':  'Vista inicial',
@@ -153,7 +157,9 @@ $.extend(hardConfig, {
             'msg.estimating_position':  'Estimando la posición del dispositivo...',
             'msg.position_error':       'Error de posición del dispositivo',
             'msg.position_unavailable': 'La posición del dispositivo no está disponible',
-            'msg.top_layer':            'Capa superior'
+            'msg.top_layer':            'Capa superior',
+            'msg.csw_no_wms':           'No se encontró ningún endpoint OGC:WMS en la ficha de metadatos',
+            'msg.csw_error':            'No se pudo cargar la ficha de metadatos'
         },
         de: {
             'btn.initial_view':  'Startansicht',
@@ -203,7 +209,9 @@ $.extend(hardConfig, {
             'msg.estimating_position':  'Geräteposition wird geschätzt...',
             'msg.position_error':       'Fehler bei der Geräteposition',
             'msg.position_unavailable': 'Geräteposition auf diesem Gerät nicht verfügbar',
-            'msg.top_layer':            'Oberste Ebene'
+            'msg.top_layer':            'Oberste Ebene',
+            'msg.csw_no_wms':           'Kein OGC:WMS-Endpunkt im Metadatensatz gefunden',
+            'msg.csw_error':            'Metadatensatz konnte nicht geladen werden'
         }
     }
 });
