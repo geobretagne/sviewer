@@ -371,6 +371,55 @@ Chaque couche WMS doit :
 - Supporter **HTTPS** (pas d'URLs non chiffrées)
 - Supporter **CORS** (pas de proxy nécessaire)
 
+### Catalogue Service for the Web (CSW) — paramètre `md=`
+
+Quand `md=<identifiant>` est passé dans l'URL (sans `layers=`), sViewer interroge le CSW pour charger automatiquement une couche WMS depuis une fiche de métadonnées ISO 19139.
+
+#### Flux d'exécution
+
+```
+URL ?md=<id>
+     │
+     ▼
+fetchCSWRecord()
+  GET ${geOrchestraBaseUrl}/geonetwork/srv/eng/csw
+      ?SERVICE=CSW&VERSION=2.0.2&REQUEST=GetRecordById
+      &Id=<id>&ElementSetName=full
+      &OutputSchema=http://www.isotc211.org/2005/gmd
+     │
+     ▼ ISO 19139 XML
+parseCSWForWMS()
+  XPath: //gmd:distributionInfo//gmd:CI_OnlineResource
+  → trouve protocole OGC:WMS
+  → extrait URL WMS (sans query string) + nom de couche
+     │
+     ▼
+LayerQueryable({ skipMetadataPanel: true })
+  LAYERS = namespace:layername  (nom complet, pas virtuel)
+  url    = wmsUrl depuis CSW
+  → map.addLayer()
+     │
+     ▼
+Panneau Documentation
+  titre + résumé (XPath gmd:identificationInfo)
+  image légende (GetLegendGraphic)
+  tableau : date, producteur, contact, licence
+```
+
+#### Priorité
+
+`layers=` est toujours prioritaire sur `md=`. Si les deux sont présents, `md=` est ignoré (log console).
+
+#### Persistance
+
+`md=` est inclus dans le permalink et le code d'intégration généré, à condition que `layers=` soit absent.
+
+#### Prérequis
+
+- GeoNetwork doit exposer un endpoint CSW à `${geOrchestraBaseUrl}/geonetwork/srv/eng/csw`
+- La fiche doit contenir un `CI_OnlineResource` avec `protocol = OGC:WMS`
+- Le serveur WMS doit supporter CORS
+
 ---
 
 ## Projections et Repères

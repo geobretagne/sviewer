@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test md= param — sViewer</title>
+<style>
+  body { font-family: sans-serif; margin: 1rem; background: #f5f5f5; }
+  h1 { font-size: 1.2rem; margin-bottom: 1rem; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .case { background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 0.5rem; }
+  .case h2 { font-size: 0.9rem; margin: 0 0 0.25rem; }
+  .case p { font-size: 0.8rem; color: #555; margin: 0 0 0.5rem; }
+  .badge { display: inline-block; font-size: 0.75rem; padding: 2px 6px; border-radius: 3px; margin-bottom: 0.5rem; }
+  .badge-wait  { background: #eee; color: #555; }
+  .badge-ok    { background: #d4edda; color: #155724; }
+  .badge-error { background: #f8d7da; color: #721c24; }
+  iframe { width: 100%; height: 300px; border: 1px solid #ccc; display: block; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<h1>Test <code>md=</code> paramètre — sViewer</h1>
+<div class="grid">
+
+  <div class="case" id="case1">
+    <h2>Cas 1 — <code>layers=</code> (référence)</h2>
+    <p>Chemin WMS GetCapabilities standard, sans md=.</p>
+    <span class="badge badge-wait" id="badge1">en attente…</span>
+    <iframe id="f1" src="../?layers=dreal_b:ae_casparcas&debug=1"></iframe>
+  </div>
+
+  <div class="case" id="case2">
+    <h2>Cas 2 — <code>md=</code> (CSW)</h2>
+    <p>Charge couche via fiche ISO 19139 GeoNetwork.</p>
+    <span class="badge badge-wait" id="badge2">en attente…</span>
+    <iframe id="f2" src="../?md=fb5861f1-1b20-417f-abb6-9fc316c0307d&debug=1"></iframe>
+  </div>
+
+  <div class="case" id="case3">
+    <h2>Cas 3 — <code>md=</code> + <code>layers=</code> (layers= prioritaire)</h2>
+    <p>layers= doit s'afficher, md= ignoré (log console).</p>
+    <span class="badge badge-wait" id="badge3">en attente…</span>
+    <iframe id="f3" src="../?layers=dreal_b:ae_casparcas&md=fb5861f1-1b20-417f-abb6-9fc316c0307d&debug=1"></iframe>
+  </div>
+
+  <div class="case" id="case4">
+    <h2>Cas 4 — <code>md=</code> invalide (gestion d'erreur)</h2>
+    <p>Fiche inexistante — doit afficher message d'erreur.</p>
+    <span class="badge badge-wait" id="badge4">en attente…</span>
+    <iframe id="f4" src="../?md=invalid-uuid-does-not-exist&debug=1"></iframe>
+  </div>
+
+</div>
+
+<script>
+  function checkFrame(iframeId, badgeId, expectError) {
+    var iframe = document.getElementById(iframeId);
+    var badge  = document.getElementById(badgeId);
+    var ticks  = 0;
+    var timer  = setInterval(function() {
+      ticks++;
+      if (ticks > 60) { // 30s timeout
+        clearInterval(timer);
+        badge.className = 'badge badge-error';
+        badge.textContent = 'timeout';
+        return;
+      }
+      try {
+        var doc = iframe.contentDocument || iframe.contentWindow.document;
+        var hasPanel = doc.querySelector('.sv-md, #legend .p-2');
+        var hasError = doc.querySelector('.alert-warning');
+        if (expectError && hasError) {
+          clearInterval(timer);
+          badge.className = 'badge badge-ok';
+          badge.textContent = 'OK — erreur affichée';
+        } else if (!expectError && hasPanel) {
+          clearInterval(timer);
+          badge.className = 'badge badge-ok';
+          badge.textContent = 'OK — panneau chargé';
+        } else if (hasError && !expectError) {
+          clearInterval(timer);
+          badge.className = 'badge badge-error';
+          badge.textContent = 'ERREUR — message inattendu';
+        }
+      } catch(e) { /* cross-origin — skip */ }
+    }, 500);
+  }
+
+  document.getElementById('f1').addEventListener('load', function() { checkFrame('f1','badge1', false); });
+  document.getElementById('f2').addEventListener('load', function() { checkFrame('f2','badge2', false); });
+  document.getElementById('f3').addEventListener('load', function() { checkFrame('f3','badge3', false); });
+  document.getElementById('f4').addEventListener('load', function() { checkFrame('f4','badge4', true);  });
+</script>
+</body>
+</html>
