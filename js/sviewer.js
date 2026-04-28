@@ -64,17 +64,16 @@ window.SViewerApp = (function() {
     }
 
     var svModal = {
+        _el: function(id) { return document.getElementById(id.replace(/^#/, '') + 'Modal'); },
         open: function(id) {
-            var modalId = id.replace(/^#/, '') + 'Modal';
-            var modalEl = document.getElementById(modalId);
+            var modalEl = this._el(id);
             if (modalEl) {
                 bindModalInert(modalEl);
                 new bootstrap.Modal(modalEl).show();
             }
         },
         close: function(id) {
-            var modalId = id.replace(/^#/, '') + 'Modal';
-            var modalEl = document.getElementById(modalId);
+            var modalEl = this._el(id);
             if (modalEl) {
                 var m = bootstrap.Modal.getInstance(modalEl);
                 if (m) m.hide();
@@ -352,24 +351,11 @@ window.SViewerApp = (function() {
         }
 
         function parseISOMetadata(xmlDoc) {
-            var ns = {
-                gmd: 'http://www.isotc211.org/2005/gmd',
-                gco: 'http://www.isotc211.org/2005/gco',
-                gmx: 'http://www.isotc211.org/2005/gmx',
-                xlink: 'http://www.w3.org/1999/xlink'
-            };
-            var xr = function(node, xpath) {
-                var result = xmlDoc.evaluate(xpath, node, function(prefix) {
-                    return ns[prefix] || null;
-                }, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-                return result.singleNodeValue;
-            };
-            var xt = function(node, xpath) {
-                var n = xr(node, xpath);
-                return n ? n.textContent.trim() : null;
-            };
-
             var root = xmlDoc.documentElement;
+            var xt = function(node, xpath) { return isoXt(xmlDoc, node, xpath); };
+            var xr = function(node, xpath) {
+                return xmlDoc.evaluate(xpath, node, isoNsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            };
 
             // date de mise à jour : dateStamp peut contenir DateTime ou Date
             var dateRaw = xt(root, '//gmd:dateStamp/gco:DateTime') ||
@@ -390,15 +376,13 @@ window.SViewerApp = (function() {
             var licenceUrl = null;
             var anchorNode = xr(root, '//gmd:resourceConstraints//gmd:otherConstraints/gmx:Anchor');
             if (anchorNode) {
-                licenceUrl = anchorNode.getAttributeNS(ns.xlink, 'href') || null;
+                licenceUrl = anchorNode.getAttributeNS(ISO_NS.xlink, 'href') || null;
                 licenceText = anchorNode.textContent.trim() || licenceUrl;
             }
             if (!licenceText) {
                 var limits = xmlDoc.evaluate(
                     '//gmd:resourceConstraints//gmd:useLimitation/gco:CharacterString',
-                    root,
-                    function(p) { return ns[p] || null; },
-                    XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null
+                    root, isoNsResolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null
                 );
                 for (var i = 0; i < limits.snapshotLength; i++) {
                     var t = limits.snapshotItem(i).textContent.trim();
@@ -406,9 +390,7 @@ window.SViewerApp = (function() {
                 }
             }
 
-            if (!dateFormatted && !producer && !email && !licenceText) {
-                return null;
-            }
+            if (!dateFormatted && !producer && !email && !licenceText) { return null; }
             return { date: dateFormatted, producer: producer, email: email,
                      licenceText: licenceText, licenceUrl: licenceUrl };
         }
@@ -514,8 +496,22 @@ window.SViewerApp = (function() {
         return /^https?:\/\//i.test(s) ? s : '';
     }
 
+    // ISO 19139 XML namespaces shared by parseISOMetadata and parseCSWForWMS
+    var ISO_NS = {
+        gmd:   'http://www.isotc211.org/2005/gmd',
+        gco:   'http://www.isotc211.org/2005/gco',
+        gmx:   'http://www.isotc211.org/2005/gmx',
+        xlink: 'http://www.w3.org/1999/xlink'
+    };
+    function isoNsResolver(p) { return ISO_NS[p] || null; }
+    function isoXt(xmlDoc, node, xpath) {
+        var n = xmlDoc.evaluate(xpath, node, isoNsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        return n ? n.textContent.trim() : null;
+    }
+
     /**
      * Returns the URL as-is (CORS assumed to be enabled on all services).
+     * Replace with a proxy wrapper here if same-origin policy is a constraint.
      * @param {String} url
      * @return {String} url
      */
@@ -552,22 +548,18 @@ window.SViewerApp = (function() {
     }
 
     function parseCSWForWMS(xmlDoc) {
-        var ns = {
-            gmd: 'http://www.isotc211.org/2005/gmd',
-            gco: 'http://www.isotc211.org/2005/gco'
-        };
-        var resolver = function(p) { return ns[p] || null; };
-        var xpath = '//gmd:distributionInfo//gmd:CI_OnlineResource';
-        var nodes = xmlDoc.evaluate(xpath, xmlDoc.documentElement, resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+        var nodes = xmlDoc.evaluate(
+            '//gmd:distributionInfo//gmd:CI_OnlineResource',
+            xmlDoc.documentElement, isoNsResolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null
+        );
         for (var i = 0; i < nodes.snapshotLength; i++) {
             var node = nodes.snapshotItem(i);
-            var proto = xmlDoc.evaluate('gmd:protocol/gco:CharacterString', node, resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            var urlNode = xmlDoc.evaluate('gmd:linkage/gmd:URL', node, resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            var nameNode = xmlDoc.evaluate('gmd:name/gco:CharacterString', node, resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            if (proto && urlNode && nameNode && proto.textContent.trim() === 'OGC:WMS') {
-                var rawUrl = urlNode.textContent.trim();
+            var proto    = isoXt(xmlDoc, node, 'gmd:protocol/gco:CharacterString');
+            var rawUrl   = isoXt(xmlDoc, node, 'gmd:linkage/gmd:URL');
+            var layername = isoXt(xmlDoc, node, 'gmd:name/gco:CharacterString');
+            if (proto === 'OGC:WMS' && rawUrl && layername) {
                 var wmsUrl = rawUrl.indexOf('?') > 0 ? rawUrl.split('?')[0] : rawUrl;
-                return { wmsUrl: wmsUrl, layername: nameNode.textContent.trim() };
+                return { wmsUrl: wmsUrl, layername: layername };
             }
         }
         return null;
@@ -1109,47 +1101,32 @@ window.SViewerApp = (function() {
         panel.css('max-height', $(window).height() - 64 + 'px');
     }
 
-    // toggle side panels
-    function togglePanel(panelName) {
-        var sidepanel = $('#sidepanel');
-        var targetSection = sidepanel.find('[data-section="' + panelName + '"]');
-        var button = $('[data-panel="' + panelName + '"]');
-
-        // If clicking the same panel button, close it
-        if (button.hasClass('active') || targetSection.is(':visible')) {
-            closePanel();
-            return;
-        }
-
-        // Hide all sections
-        sidepanel.find('.sv-panel-section').hide();
-
-        // Show target section
-        targetSection.show();
-
-        // Update button states
-        $('#panelcontrols .sv-panel-toggle').removeClass('active');
-        button.addClass('active');
-
-        // Activate sidepanel
-        sidepanel.addClass('active');
-        $('#frameMap').addClass('panel-open');
-
-        if (panelName === 'share') {
-            setPermalink();
-        }
-        if (panelName === 'locate') {
-            setTimeout(function() { $('#searchInput').focus(); }, 50);
-        }
-    }
-
-    function closePanel() {
+    function resetPanel() {
         var sidepanel = $('#sidepanel');
         sidepanel.find('.sv-panel-section').hide();
         sidepanel.removeClass('active');
         $('#panelcontrols .sv-panel-toggle').removeClass('active');
         $('#frameMap').removeClass('panel-open');
     }
+
+    function togglePanel(panelName) {
+        var sidepanel = $('#sidepanel');
+        var targetSection = sidepanel.find('[data-section="' + panelName + '"]');
+        var button = $('[data-panel="' + panelName + '"]');
+        if (button.hasClass('active') || targetSection.is(':visible')) {
+            resetPanel();
+            return;
+        }
+        resetPanel();
+        targetSection.show();
+        button.addClass('active');
+        sidepanel.addClass('active');
+        $('#frameMap').addClass('panel-open');
+        if (panelName === 'share') { setPermalink(); }
+        if (panelName === 'locate') { setTimeout(function() { $('#searchInput').focus(); }, 50); }
+    }
+
+    function closePanel() { resetPanel(); }
 
     // panelButton kept for compatibility, now delegates to togglePanel
     function panelButton(e) {
@@ -1177,14 +1154,8 @@ window.SViewerApp = (function() {
         setTitle($(this).val());
     }
 
-    // Zoom +
-    function zoomIn() {
-        view.animate({zoom: view.getZoom() + 1, duration: 500});
-    }
-
-    //Zoom -
-    function zoomOut() {
-        view.animate({zoom: view.getZoom() - 1, duration: 500});
+    function adjustZoom(delta) {
+        view.animate({zoom: view.getZoom() + delta, duration: 500});
     }
 
     // Back to initial extent
@@ -1363,28 +1334,15 @@ window.SViewerApp = (function() {
         if (qs.md && !qs.layers) {
             config.metadataId = qs.md;
             fetchCSWRecord(qs.md, function(wmsUrl, layername, xmlDoc) {
-                var ns = { gmd: 'http://www.isotc211.org/2005/gmd', gco: 'http://www.isotc211.org/2005/gco' };
-                var resolver = function(p) { return ns[p] || null; };
-                var xt = function(xpath) {
-                    var n = xmlDoc.evaluate(xpath, xmlDoc.documentElement, resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return n ? n.textContent.trim() : null;
-                };
-                var title = xt('//gmd:identificationInfo//gmd:citation//gmd:title/gco:CharacterString') || layername;
-                var abstract = xt('//gmd:identificationInfo//gmd:abstract/gco:CharacterString') || '';
-                var nsPart = layername.indexOf(':') > 0 ? layername.split(':')[0] : '';
+                var root = xmlDoc.documentElement;
+                var title    = isoXt(xmlDoc, root, '//gmd:identificationInfo//gmd:citation//gmd:title/gco:CharacterString') || layername;
+                var abstract = isoXt(xmlDoc, root, '//gmd:identificationInfo//gmd:abstract/gco:CharacterString') || '';
+                var nsPart   = layername.indexOf(':') > 0 ? layername.split(':')[0] : '';
                 var lq = new LayerQueryable({
-                    nslayername: layername,
-                    layername: layername,
-                    namespace: nsPart,
-                    stylename: '',
-                    cql_filter: '',
-                    wmsurl_global: wmsUrl,
-                    wmsurl_ns: wmsUrl,
-                    wmsurl_layer: wmsUrl,
-                    sldurl: null,
-                    format: 'image/png',
-                    opacity: 1,
-                    skipMetadataPanel: true
+                    nslayername: layername, layername: layername, namespace: nsPart,
+                    stylename: '', cql_filter: '',
+                    wmsurl_global: wmsUrl, wmsurl_ns: wmsUrl, wmsurl_layer: wmsUrl,
+                    sldurl: null, format: 'image/png', opacity: 1, skipMetadataPanel: true
                 });
                 config.layersQueryable.push(lq);
                 map.addLayer(lq.wmslayer);
@@ -1394,28 +1352,12 @@ window.SViewerApp = (function() {
                     SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetLegendGraphic',
                     FORMAT: 'image/png', LAYER: layername
                 });
-                // build panel from ISO data directly (skip WMS GetCapabilities)
                 var $panel = $('<div class="sv-md p-2">');
                 $panel.append($('<div class="fw-bold mb-1">').text(title));
                 if (abstract) { $panel.append($('<div class="text-muted small mb-2">').text(abstract)); }
                 $panel.append($('<img class="img-fluid mb-2">').attr('src', legendUrl).attr('alt', tr('msg.legend_of') + ' ' + title));
-                // ISO metadata table
-                var date = xt('//gmd:identificationInfo//gmd:citation//gmd:date//gmd:date/gco:Date') || '';
-                var producer = xt('//gmd:identificationInfo//gmd:pointOfContact//gmd:organisationName/gco:CharacterString') || '';
-                var email = xt('//gmd:identificationInfo//gmd:pointOfContact//gmd:electronicMailAddress/gco:CharacterString') || '';
-                var licenceText = xt('//gmd:identificationInfo//gmd:resourceConstraints//gmd:otherConstraints/gco:CharacterString') || '';
-                var licenceUrl = safeURL(xt('//gmd:identificationInfo//gmd:resourceConstraints//gmd:otherConstraints/gmx:Anchor') || '');
-                if (date || producer || email || licenceText) {
-                    var $table = $('<table class="table table-sm small">');
-                    if (date)        { $table.append($('<tr>').append($('<th>').text(tr('msg.meta_date'))).append($('<td>').text(date))); }
-                    if (producer)    { $table.append($('<tr>').append($('<th>').text(tr('msg.meta_producer'))).append($('<td>').text(producer))); }
-                    if (email)       { $table.append($('<tr>').append($('<th>').text(tr('msg.meta_contact'))).append($('<td>').text(email))); }
-                    if (licenceText) {
-                        var $licenceTd = licenceUrl ? $('<td>').append($('<a>').attr({href: licenceUrl, target: '_blank', rel: 'noopener'}).text(licenceText)) : $('<td>').text(licenceText);
-                        $table.append($('<tr>').append($('<th>').text(tr('msg.meta_licence'))).append($licenceTd));
-                    }
-                    $panel.append($table);
-                }
+                var meta = parseISOMetadata(xmlDoc);
+                if (meta) { $panel.append(buildISOTable(meta)); }
                 $('#legend').append($panel);
             });
         } else if (qs.md && qs.layers) {
@@ -1572,8 +1514,8 @@ window.SViewerApp = (function() {
 
 
         // map buttons
-        $('#ziBt').on('click', zoomIn);
-        $('#zoBt').on('click', zoomOut);
+        $('#ziBt').on('click', function() { adjustZoom(+1); });
+        $('#zoBt').on('click', function() { adjustZoom(-1); });
         $('#zeBt').on('click', zoomInit);
         $('#bgBt').on('click', switchBackground);
 
@@ -1657,52 +1599,31 @@ window.SViewerApp = (function() {
             });
         });
 
-        // Copy permalink button
+        function copyToClipboard(text, btn, fallback) {
+            var orig = btn.html();
+            var onCopied = function() {
+                btn.html('<i class="bi bi-check" aria-hidden="true"></i> ' + tr('btn.copied'));
+                setTimeout(function() { btn.html(orig); }, 2000);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(onCopied).catch(function() {
+                    fallback(); onCopied();
+                });
+            } else {
+                fallback(); onCopied();
+            }
+        }
+
         $(document).on('click', '#permalinkCopyBtn', function() {
             var url = $('#permalinkUrl').prop('href');
-            var btn = $(this);
-            var originalHtml = btn.html();
-            function onCopied() {
-                btn.html('<i class="bi bi-check" aria-hidden="true"></i> ' + tr('btn.copied'));
-                setTimeout(function() { btn.html(originalHtml); }, 2000);
-            }
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(url).then(onCopied).catch(function() {
-                    window.prompt('', url);
-                });
-            } else {
-                window.prompt('', url);
-            }
+            copyToClipboard(url, $(this), function() { window.prompt('', url); });
         });
 
-
-        // Copy embed code button
         $('#embedCodeCopyBtn').on('click', function() {
             var textarea = document.getElementById('embedCodeTextarea');
-            var btn = $(this);
-            var originalText = btn.html();
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(textarea.value).then(function() {
-                    btn.html('<i class="bi bi-check" aria-hidden="true"></i> Copied!');
-                    setTimeout(function() {
-                        btn.html(originalText);
-                    }, 2000);
-                }).catch(function() {
-                    textarea.select();
-                    document.execCommand('copy');
-                    btn.html('<i class="bi bi-check" aria-hidden="true"></i> Copied!');
-                    setTimeout(function() {
-                        btn.html(originalText);
-                    }, 2000);
-                });
-            } else {
-                textarea.select();
-                document.execCommand('copy');
-                btn.html('<i class="bi bi-check" aria-hidden="true"></i> Copied!');
-                setTimeout(function() {
-                    btn.html(originalText);
-                }, 2000);
-            }
+            copyToClipboard(textarea.value, $(this), function() {
+                textarea.select(); document.execCommand('copy');
+            });
         });
 
         // dynamic resize
