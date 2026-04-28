@@ -148,6 +148,18 @@ https://geobretagne.fr/sviewer/?layers=ns:layer*style*population>50000@https://w
 
 **Note :** L'URL WMS externe est stockée dans les permaliens et le code d'embedding généré.
 
+**`md`** — Afficher une couche via son identifiant de métadonnée GeoNetwork
+
+Charge automatiquement la couche OGC:WMS décrite dans la fiche ISO 19139 correspondante. L'endpoint CSW utilisé est `${geOrchestraBaseUrl}/geonetwork/srv/eng/csw`.
+
+```
+https://geobretagne.fr/sviewer/?md=fb5861f1-1b20-417f-abb6-9fc316c0307d
+```
+
+sViewer interroge le CSW, extrait l'URL WMS et le nom de couche depuis `gmd:distributionInfo`, puis charge la couche et remplit le panneau de documentation avec les métadonnées (titre, résumé, producteur, licence, date). Ce paramètre est incompatible avec `layers=` : si les deux sont présents, `layers=` est prioritaire.
+
+> Le paramètre `md` est **persistant** : il est mémorisé dans le permalink et le code d'intégration.
+
 #### Paramètres de recherche et requête
 
 **`q`** — Interroger la carte au démarrage
@@ -202,7 +214,7 @@ Le choix du thème peut aussi se faire interactivement via le panneau **Configur
 Valeurs acceptées : `light` (défaut), `dark`.
 
 
-**Note :** Les paramètres `x`, `y`, `z`, `title`, `layers`, `q`, `theme` et `c` sont **persistants** : ils sont mémorisés quand vous partagez la carte via lien, QR ou code javascript.
+**Note :** Les paramètres `x`, `y`, `z`, `title`, `layers`, `md`, `q`, `theme` et `c` sont **persistants** : ils sont mémorisés quand vous partagez la carte via lien, QR ou code javascript.
 
 
 Configurations personnalisées
