@@ -38,7 +38,7 @@ cp etc/customConfig.DIST.js etc/customConfig.js
 - L'adresse de votre serveur geOrchestra (ou votre GeoServer)
 - Les fonds de carte
 - Le thème
-- Les emprises. Sviewer utilise uniquement la projection EPSG:3857.
+- Les emprises. sViewer utilise uniquement la projection EPSG:3857.
 
 
 
