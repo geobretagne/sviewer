@@ -1,6 +1,6 @@
 # Guide de Référence sViewer
 
-Guide technique complet pour développeurs et intégrateurs. Pour une introduction non-spécialisée, consultez [README.md](README.md).
+Guide technique complet pour développeurs et intégrateurs..
 
 ---
 
@@ -105,6 +105,24 @@ Ajoute une ou plusieurs données WMS à la carte. Format : liste séparée par d
 - Les styles doivent exister sur le serveur pour être appliqués
 - Les filtres CQL utilisent la syntaxe OGC standard
 
+#### `md` (metadata)
+
+Charge automatiquement une couche WMS depuis un identifiant de fiche de métadonnées CSW (ISO 19139).
+
+```
+?md=<identifiant-csw>
+```
+
+**Comportement :**
+- Interroge le CSW (`geOrchestraBaseUrl/geonetwork/srv/eng/csw`) pour résoudre l'URL WMS et le nom de couche
+- Affiche titre, résumé et légende depuis la fiche
+- Ignoré si `layers=` est aussi présent (`layers=` est prioritaire)
+- Inclus dans le permalien si `layers=` est absent
+
+→ Voir [Services OGC — CSW](#catalogue-service-for-the-web-csw--paramètre-md) pour le détail.
+
+---
+
 ### Paramètres de requête et recherche
 
 #### `q` (query)
@@ -168,11 +186,12 @@ Les paramètres suivants sont **mémorisés** dans le permalien et le code QR :
 - `x`, `y`, `z`
 - `title`
 - `layers`
+- `md` (si `layers=` absent)
 - `q`
 - `c`
-- `lb`  
+- `lb`
 
-Le paramètre `debug` n'est **pas** persistants.
+Le paramètre `debug` n'est **pas** persistant.
 
 ---
 
