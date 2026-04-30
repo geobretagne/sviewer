@@ -784,6 +784,14 @@ La configuration cssnano est dans `postcss.config.js` (preset `default`).
 
 ### Procédure de release
 
+**Checklist pré-release**
+- [ ] Toutes les fonctionnalités mergées et testées
+- [ ] `etc/i18n.js` — toutes les clefs présentes dans les 4 langues
+- [ ] Aucune erreur console en navigation (`?debug=true`)
+- [ ] `CHANGELOG.md` mis à jour pour cette version
+
+**Build**
+
 1. Mettre à jour la version dans `package.json` :
    ```bash
    # éditer manuellement "version": "X.Y.Z"
@@ -803,13 +811,19 @@ La configuration cssnano est dans `postcss.config.js` (preset `default`).
 4. Committer les artefacts générés (`embed.js` stampé, fichiers `.min.*`) :
    ```bash
    git add js/embed.js js/sviewer.min.js css/sviewer.min.css
-   git commit -m "chore: stamp v X.Y.Z + minify"
+   git commit -m "chore: stamp vX.Y.Z + minify"
    ```
 
-5. Tagger :
+5. Tagger et pousser :
    ```bash
    git tag vX.Y.Z
+   git push && git push --tags
    ```
+
+**Vérification post-release**
+- [ ] `SViewer.version` correct dans la console navigateur
+- [ ] Version visible en bas du panneau de partage
+- [ ] Section `[Unreleased]` de `CHANGELOG.md` vide
 
 La version et le hash de commit apparaissent :
 - En bas du panneau **Configuration** (discret, opacity 0.4)
