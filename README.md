@@ -298,6 +298,7 @@ Avec vérification systématique par un humain :
 * textes de commit
 * refactor de code
 * html/bootstrap
+* suppression du terme "couche" au profit de "donnée"
 
 Sans vérification systématique par un humain :
 

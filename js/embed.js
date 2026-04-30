@@ -11,6 +11,9 @@
 
 (function() {
 
+    var SVIEWER_VERSION='0.1.0';
+    var SVIEWER_COMMIT='203c528';
+
     var debug = /[?&]debug=1/.test(window.location.search);
 
     var SV_SHELL_HTML = `
@@ -89,6 +92,9 @@
                                 <i class="bi bi-code" aria-hidden="true"></i>
                                 HTML
                             </button>
+                        </div>
+                        <div class="mt-3 text-end" style="font-size:0.7em;opacity:0.4;user-select:none;" aria-hidden="true">
+                            sViewer ` + SVIEWER_VERSION + ` <span style="font-family:monospace">` + SVIEWER_COMMIT + `</span>
                         </div>
                     </div>
                 </div>
@@ -320,10 +326,13 @@
 
     // Public API
     window.SViewer = {
+        version: SVIEWER_VERSION,
+        commit: SVIEWER_COMMIT,
         init: function(containerSelector, options) {
             options = options || {};
             config.container = containerSelector;
 
+            console.info('sViewer ' + SVIEWER_VERSION + ' (' + SVIEWER_COMMIT + ')');
             console.log('SViewer: Initializing with options:', options);
 
             // Create container structure

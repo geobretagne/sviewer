@@ -1,13 +1,14 @@
 {
   "name": "sviewer",
-  "version": "2.0.0",
+  "version": "0.1.0",
   "description": "geOrchestra simple mobile map viewer",
   "scripts": {
     "build:ol": "esbuild build/ol-custom-entry.js --bundle --minify --format=iife --outfile=build/ol-new.js",
     "minify": "npm run minify:js && npm run minify:css",
     "minify:js": "terser js/sviewer.js -o js/sviewer.min.js -c -m",
     "minify:css": "postcss css/sviewer.css -o css/sviewer.min.css",
-    "build": "npm run build:ol && npm run minify"
+    "build": "npm run build:ol && npm run minify",
+    "stamp": "node -e \"const p=require('./package.json'),c=require('child_process').execSync('git rev-parse --short HEAD').toString().trim(),f=require('fs'),s=f.readFileSync('js/embed.js','utf8');f.writeFileSync('js/embed.js',s.replace(/var SVIEWER_VERSION='[^']*'/,'var SVIEWER_VERSION=\\''+p.version+'\\'').replace(/var SVIEWER_COMMIT='[^']*'/,'var SVIEWER_COMMIT=\\''+c+'\\''))\""
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
