@@ -217,8 +217,19 @@
 
 .sv-map-btn.active,
 .sv-map-btn[aria-pressed="true"] {
-    background-color: var(--sv-btn-bg-glass-hover);
-    box-shadow: inset 0 0 0 2px var(--sv-accent, #0d6efd);
+    background-color: #198754;
+    color: #fff;
+    box-shadow: none;
+}
+
+.sv-map-btn.active i,
+.sv-map-btn[aria-pressed="true"] i {
+    animation: sv-gps-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes sv-gps-pulse {
+    0%, 100% { opacity: 1;   transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(0.85); }
 }
 
 .sv-map-btn svg,
