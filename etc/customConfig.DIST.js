@@ -68,6 +68,16 @@ customConfig = {
     maxWfsSearchFeatures: 4,
 
     /**
+     * GPS tracking: interval in seconds between position updates (?position=1)
+     */
+    gpsTrackingInterval: 5,
+
+    /**
+     * GPS tracking: auto-stop after this many seconds (0 = never auto-stop)
+     */
+    gpsTrackingTimeout: 300,
+
+    /**
      * Geocoding service URL (address search)
      * Default: IGN Géoplateforme (French geoportal)
      * Requires CORS support from the service

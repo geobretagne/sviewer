@@ -704,6 +704,7 @@ window.SViewerApp = (function() {
             if (config.layersQueryString) { linkParams.layers = config.layersQueryString; }
             if (config.metadataId && !config.layersQueryString) { linkParams.md = config.metadataId; }
             if (state.theme && state.theme !== 'light') { linkParams.theme = state.theme; }
+            if (state.position) { linkParams.position = '1'; }
             // In embed mode, permalink must point to the standalone sViewer, not the host page
             var standaloneBase = window.SViewerBaseUrl
                 ? window.SViewerBaseUrl + 'index.html'
@@ -749,6 +750,9 @@ window.SViewerApp = (function() {
         }
         if (state.theme && state.theme !== 'light') {
             embedParams.theme = state.theme;
+        }
+        if (state.position) {
+            embedParams.position = 1;
         }
 
         var baseUrl = window.SViewerBaseUrl || config.baseUrl || window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
@@ -1170,30 +1174,66 @@ window.SViewerApp = (function() {
         }
     }
 
-    // recenter on device position
-    function showPosition(pos) {
+    // GPS tracking state
+    var gpsWatchId = null;
+    var gpsAutoStopTimer = null;
+
+    function gpsOnPosition(pos) {
         var p = ol.proj.transform([pos.coords.longitude, pos.coords.latitude], 'EPSG:4326', config.projcode);
         marker.setPosition(p);
-        view.animate({
-            center: p,
-            zoom: Math.max(view.getZoom(), 18),
-            duration: 1000
-        });
+        view.animate({ center: p, duration: 500 });
+        var acc = pos.coords.accuracy ? Math.round(pos.coords.accuracy) + 'm' : '';
+        $('#gpsAccuracy').text(acc).toggle(!!acc);
     }
-    
-    // get device position
-    function locateMe() {
-        if (navigator.geolocation) {
-            messagePopup(tr('msg.estimating_position'));
-            navigator.geolocation.getCurrentPosition(
-                showPosition, 
-                function(e) {
-                    messagePopup(tr('msg.position_error'));
-                },
-                {maximumAge: 60000, enableHighAccuracy: true, timeout: 30000}
-            );
-        } else {
+
+    function gpsOnError() {
+        messagePopup(tr('msg.position_error'));
+        stopTracking();
+    }
+
+    function stopTracking() {
+        if (gpsWatchId !== null) {
+            navigator.geolocation.clearWatch(gpsWatchId);
+            gpsWatchId = null;
+        }
+        if (gpsAutoStopTimer !== null) {
+            clearTimeout(gpsAutoStopTimer);
+            gpsAutoStopTimer = null;
+        }
+        $('#zpBt').attr('aria-pressed', 'false').removeClass('active');
+        $('#gpsAccuracy').hide().text('');
+        state.position = 0;
+        setPermalink();
+        messagePopup(tr('msg.gps_tracking_off'));
+    }
+
+    function startTracking() {
+        if (!navigator.geolocation) {
             messagePopup(tr('msg.position_unavailable'));
+            return;
+        }
+        messagePopup(tr('msg.estimating_position'));
+        var interval = (config.gpsTrackingInterval || 5) * 1000;
+        gpsWatchId = navigator.geolocation.watchPosition(
+            gpsOnPosition,
+            gpsOnError,
+            { maximumAge: interval, enableHighAccuracy: true, timeout: 30000 }
+        );
+        $('#zpBt').attr('aria-pressed', 'true').addClass('active');
+        state.position = 1;
+        setPermalink();
+        messagePopup(tr('msg.gps_tracking_on'));
+        var timeout = config.gpsTrackingTimeout || 0;
+        if (timeout > 0) {
+            gpsAutoStopTimer = setTimeout(stopTracking, timeout * 1000);
+        }
+    }
+
+    function toggleTracking() {
+        if (gpsWatchId !== null) {
+            stopTracking();
+        } else {
+            startTracking();
         }
         return false;
     }
@@ -1309,7 +1349,8 @@ window.SViewerApp = (function() {
             gfiz: null,
             search: false,
             searchindex: null,
-            searchparams: {}
+            searchparams: {},
+            position: 0
         };
 
         // querystring param: theme (light | dark)
@@ -1415,6 +1456,11 @@ window.SViewerApp = (function() {
             state.search = true;
             $.each(config.layersQueryable, function() { this.discoverWFS(); });
         }
+
+        // querystring param: auto-start GPS tracking
+        if (qs.position) {
+            state.position = 1;
+        }
     }
 
 
@@ -1517,8 +1563,9 @@ window.SViewerApp = (function() {
         $('#zeBt').on('click', zoomInit);
         $('#bgBt').on('click', switchBackground);
 
-        // geolocation form
-        $('#zpBt').on('click', locateMe);
+        // geolocation toggle
+        $('#zpBt').on('click', toggleTracking);
+        if (state.position) { startTracking(); }
 
         // search with autocomplete - trigger on keyup after 3 characters, debounced
         var searchDebounceTimer = null;

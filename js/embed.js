@@ -41,9 +41,10 @@
                 <button id="bgBt" type="button" accesskey="b" class="i18n btn btn-dark sv-map-btn" title="background" data-i18n-title="btn.background" aria-label="Change background layer">
                     <i class="bi bi-map" aria-hidden="true"></i>
                 </button>
-                <button id="zpBt" type="button" accesskey="g" class="i18n btn btn-dark sv-map-btn" title="Where am I ?" data-i18n-title="btn.where_am_i" aria-label="Locate my position">
+                <button id="zpBt" type="button" accesskey="g" class="i18n btn btn-dark sv-map-btn" title="Where am I ?" data-i18n-title="btn.where_am_i" aria-label="Locate my position" aria-pressed="false">
                     <i class="bi bi-crosshair" aria-hidden="true"></i>
                 </button>
+                <span id="gpsAccuracy" class="sv-gps-accuracy" aria-live="polite" style="display:none;"></span>
             </div>
 
             <div id="panelcontrols" class="sv-map-panels" role="group" aria-label="Side panels">
