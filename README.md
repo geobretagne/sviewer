@@ -320,4 +320,12 @@ Notes techniques
 * **Serveur** : Aucun composant côté serveur requis. Inconvénient : CORS obligatoire sur les services.
 
 
+Remerciements à
+===============
+
+* l'équipe [GéoBretagne](https://geobretagne.fr)
+* les contributeurs, utilisateurs et membres de la communauté [geOrchestra](https://georchestra.org)
+* les communautés inspirantes du [logiciel libre](https://fr.wikipedia.org/wiki/Logiciel_libre) et de la [donnée ouverte](https://fr.wikipedia.org/wiki/Donn%C3%A9es_ouvertes)
+* les projets copains : [georchestra](https://github/com/georchestra), [mviewer](https://github.com/mviewer/mviewer), [geonetwork-ui](https://github.com/mviewer/mviewer)
+* les librairies libres : [openlayers](https://github.com/openlayers/openlayers), [bootstrap](https://github.com/twbs/bootstrap), [jquery](https://github.com/jquery)
 
