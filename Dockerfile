@@ -1,2 +1,2 @@
-FROM nginx:1.17
-COPY . /usr/share/nginx/html
+FROM nginx:1.26-alpine
+COPY . /usr/share/nginx/html/sviewer
