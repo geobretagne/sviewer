@@ -782,6 +782,40 @@ npm run build         # build OL custom bundle + minify
 
 La configuration cssnano est dans `postcss.config.js` (preset `default`).
 
+### Procédure de release
+
+1. Mettre à jour la version dans `package.json` :
+   ```bash
+   # éditer manuellement "version": "X.Y.Z"
+   ```
+
+2. Committer les changements de code, puis appliquer le stamp (injecte version + hash du dernier commit dans `embed.js`) :
+   ```bash
+   git add -p && git commit -m "..."
+   npm run stamp
+   ```
+
+3. Minifier :
+   ```bash
+   npm run minify
+   ```
+
+4. Committer les artefacts générés (`embed.js` stampé, fichiers `.min.*`) :
+   ```bash
+   git add js/embed.js js/sviewer.min.js css/sviewer.min.css
+   git commit -m "chore: stamp v X.Y.Z + minify"
+   ```
+
+5. Tagger :
+   ```bash
+   git tag vX.Y.Z
+   ```
+
+La version et le hash de commit apparaissent :
+- En bas du panneau **Configuration** (discret, opacity 0.4)
+- Dans la console du navigateur au démarrage : `sViewer X.Y.Z (abcd123)`
+- Via l'API publique : `SViewer.version`, `SViewer.commit`
+
 ### Scoping CSS
 
 Pour éviter les collisions avec le CSS hôte, toutes les classes sViewer utilisent le préfixe `.sv-` et sont englobées dans `.sv-scope` :
