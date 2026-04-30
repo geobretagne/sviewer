@@ -25,6 +25,7 @@ window.SViewerApp = (function() {
         maxExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
         restrictedExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
         maxFeatures: 10,
+        maxGeocodeResults: 5,
         maxWfsSearchFeatures: 8,
         nodata: '<!--nodatadetect-->\n<!--nodatadetect-->',
         openLSGeocodeUrl: "https://data.geopf.fr/geocodage/search",
@@ -818,7 +819,7 @@ window.SViewerApp = (function() {
                     dataType: 'json',
                     data: {
                         q: q,
-                        limit: config.maxFeatures,
+                        limit: config.maxGeocodeResults,
                         bbox: bbox.join(',')
                     },
                     success: onGeocodeSuccess,

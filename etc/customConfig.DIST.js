@@ -9,6 +9,9 @@
  *   then edit customConfig.js with your settings
  */
 
+/**
+ * mandatory to use IGN WMTS
+ */
 var projection = ol.proj.get('EPSG:3857');
 var projectionExtent = projection.getExtent();
 var matrixIds = [];
@@ -51,13 +54,18 @@ customConfig = {
     /**
      * getFeatureInfo control (WMS GetFeatureInfo queries)
      */
-    maxFeatures: 10,
+    maxFeatures: 3,
     nodata: '<!--nodatadetect-->\n<!--nodatadetect-->',
+
+    /**
+     * Maximum address suggestions returned by geocoding (address search box)
+     */
+    maxGeocodeResults: 4,
 
     /**
      * Maximum results returned per layer by WFS feature search (?s=1)
      */
-    maxWfsSearchFeatures: 8,
+    maxWfsSearchFeatures: 4,
 
     /**
      * Geocoding service URL (address search)
