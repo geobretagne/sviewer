@@ -1250,19 +1250,23 @@ window.SViewerApp = (function() {
      */
     function doConfiguration() {
 
-        // browser language
-        var language = ((navigator.language) ? navigator.language : navigator.userLanguage).substring(0,2);
-
         // static configuration (merged from hardConfig + customConfig)
         // Check if i18n has been loaded (via i18n.js)
         var i18n = (hardConfig && hardConfig.i18n) || {};
         config = {
-            lang: ((i18n.hasOwnProperty(language)) ? language : 'en'),
+            lang: 'en',
             layersQueryable: [],
             layersQueryString: ''
         };
         $.extend(config, hardConfig);
         $.extend(config, window.customConfig || {});
+
+        // language priority: ?lang= URL param > customConfig.lang > browser > default 'en'
+        var browserLang = ((navigator.language) ? navigator.language : navigator.userLanguage).substring(0,2);
+        var resolvedLang = (qs.lang && /^[a-z]{2}$/.test(qs.lang)) ? qs.lang
+                         : (window.customConfig && window.customConfig.lang) ? window.customConfig.lang
+                         : browserLang;
+        config.lang = i18n.hasOwnProperty(resolvedLang) ? resolvedLang : 'en';
 
         document.documentElement.lang = config.lang;
         config.projection = ol.proj.get(config.projcode);
@@ -1290,9 +1294,6 @@ window.SViewerApp = (function() {
         }
         if (config.s && !qs.s) {
             qs.s = config.s;
-        }
-        if (config.qr && !qs.qr) {
-            qs.qr = config.qr;
         }
         if (config.theme && !qs.theme) {
             qs.theme = config.theme;
@@ -1500,12 +1501,6 @@ window.SViewerApp = (function() {
 
     function doGUI() {
         applyTheme(state.theme);
-
-        // opens permalink tab with QR code if required
-        if (qs.qr) {
-            setPermalink();
-            $('#permalinkBtn').trigger('click');
-        }
 
         // map events
         map.on('singleclick', function(e) {

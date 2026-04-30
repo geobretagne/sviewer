@@ -256,11 +256,14 @@ customConfig = {
     initialExtent: [-600000, 6090000, -100000, 6100000],
     maxExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
     restrictedExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
+    center: [-350000, 6150000],   // vue initiale : centre (EPSG:3857), priorité sur initialExtent
+    zoom: 10,                     // vue initiale : niveau de zoom, priorité sur initialExtent
     maxFeatures: 10,
+    maxGeocodeResults: 5,
+    maxWfsSearchFeatures: 8,
     nodata: '<!--nodatadetect-->\n<!--nodatadetect-->',
     openLSGeocodeUrl: "https://data.geopf.fr/geocodage/search",
-    layersBackground: [ /* ... */ ],
-    socialMedia: { /* ... */ }
+    layersBackground: [ /* ... */ ]
 };
 ```
 
@@ -612,10 +615,10 @@ alert(msg);
 ### Sélection de langue
 
 Par ordre de priorité :
-1. Paramètre `lang` (KVP ou option JS)
+1. Paramètre URL `?lang=fr` (code ISO 639-1 à 2 lettres)
 2. `customConfig.lang`
 3. Détection navigateur (Accept-Language)
-4. Défaut : français
+4. Défaut : `en`
 
 ---
 
