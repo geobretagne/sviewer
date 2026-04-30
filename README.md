@@ -148,9 +148,9 @@ https://geobretagne.fr/sviewer/?layers=workspace:data@https://external-wms.examp
 https://geobretagne.fr/sviewer/?layers=ns:layer*custom_style@https://wms.example.com/geoserver/wms
 ```
 
-**`md`** — Afficher une couche via son identifiant de métadonnée GeoNetwork
+**`md`** — Afficher une donnée via son identifiant de métadonnée GeoNetwork
 
-Charge automatiquement la couche OGC:WMS décrite dans la fiche ISO 19139 correspondante. L'endpoint CSW utilisé est `${geOrchestraBaseUrl}/geonetwork/srv/eng/csw`.
+Charge automatiquement la donnée OGC:WMS décrite dans la fiche ISO 19139 correspondante. L'endpoint CSW utilisé est `${geOrchestraBaseUrl}/geonetwork/srv/eng/csw`.
 
 ```
 https://geobretagne.fr/sviewer/?md=fb5861f1-1b20-417f-abb6-9fc316c0307d
@@ -185,7 +185,7 @@ https://geobretagne.fr/sviewer/?layers=dreal_b:ae_casparcas&s=1
 
 **`debug`** — Mode debug
 
-Affiche les logs de debug dans la console du navigateur (F12). Avec `debug=1`, charge les fichiers JS/CSS non-minifiés.
+`debug=true` active les logs dans la console (F12). `debug=1` charge les fichiers JS/CSS non-minifiés. Les deux valeurs sont indépendantes.
 
 ```
 https://geobretagne.fr/sviewer/?layers=xyz&debug=true
@@ -280,6 +280,33 @@ Quand vous utilisez le mode WebComponent (intégration dans une page), les optio
 ```
 
 Tous les paramètres du mode simple peuvent être passés en JavaScript. Le bouton **HTML** du panneau de partage génère automatiquement ce fragment pour la vue courante.
+
+
+Notes sur l'utilisation d'agents IA
+===================================
+
+SViewer a été initialement développé à la main sur Scite, sans aucun assistant.
+
+Les agents de codage ont permis de mettre à jour les librairies à moindre coût, et sont utilisés pour la maintenance.
+
+Avec vérification systématique par un humain :
+
+* code
+* documentation
+* tests unitaires
+* scripts de maintenance
+* textes de commit
+* refactor de code
+* html/bootstrap
+
+Sans vérification systématique par un humain :
+
+* minification du code et des librairies
+* accessibilité
+* traductions
+* style
+* jslint
+
 
 Notes techniques
 ================

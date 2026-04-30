@@ -60,11 +60,11 @@ Affiche un titre personnalisé au-dessus de la carte.
 
 #### `lb` (layer background)
 
-Sélectionne la couche de fond (background layer) par index.
+Sélectionne la fond de carte (background layer) par index.
 
 ```
-?lb=0      # Première couche
-?lb=1      # Deuxième couche
+?lb=0      # Première fond de carte
+?lb=1      # Deuxième fond de carte
 ```
 
 **Configuration :** Les données disponibles sont définies dans `etc/customConfig.js` → `layersBackground[]`. L'index par défaut est 0.
@@ -107,14 +107,14 @@ Ajoute une ou plusieurs données WMS à la carte. Format : liste séparée par d
 
 #### `md` (metadata)
 
-Charge automatiquement une couche WMS depuis un identifiant de fiche de métadonnées CSW (ISO 19139).
+Charge automatiquement une donnée WMS depuis un identifiant de fiche de métadonnées CSW (ISO 19139).
 
 ```
 ?md=<identifiant-csw>
 ```
 
 **Comportement :**
-- Interroge le CSW (`geOrchestraBaseUrl/geonetwork/srv/eng/csw`) pour résoudre l'URL WMS et le nom de couche
+- Interroge le CSW (`geOrchestraBaseUrl/geonetwork/srv/eng/csw`) pour résoudre l'URL WMS et le nom de la donnée
 - Affiche titre, résumé et légende depuis la fiche
 - Ignoré si `layers=` est aussi présent (`layers=` est prioritaire)
 - Inclus dans le permalien si `layers=` est absent
@@ -136,7 +136,7 @@ Active une requête GetFeatureInfo au démarrage sur les données visibles.
 **Comportement :**
 - Exécute une requête au centre de la vue initiale
 - Affiche les résultats dans le panneau Résultats
-- Nécessite au moins une couche queryable (attribut `queryable="1"` en WMS)
+- Nécessite au moins une donnée queryable (attribut `queryable="1"` en WMS)
 
 #### `s` (search)
 
@@ -148,19 +148,19 @@ Active la barre de recherche au démarrage.
 
 **Services interrogés :**
 - IGN Géoplateforme (ou `customConfig.openLSGeocodeUrl`)
-- WFS de chaque couche queryable (si disponible et CORS OK)
+- WFS de chaque donnée queryable (si disponible et CORS OK)
 
 **CORS :** Géoplateforme et services WFS doivent supporter CORS.
 
 #### `qcl_filters`
 
-Applique des filtres CQL aux couches déjà chargées via `layers=`, sans les réencoder dans la chaîne `layers`. Format : liste séparée par des **points-virgules**, un filtre par couche dans l'ordre de `layers=`.
+Applique des filtres CQL aux données déjà chargées via `layers=`, sans les réencoder dans la chaîne `layers`. Format : liste séparée par des **points-virgules**, un filtre par donnée dans l'ordre de `layers=`.
 
 ```
 ?layers=ns:a,ns:b&qcl_filters=population>50000;commune='Rennes'
 ```
 
-Filtre vide possible : `qcl_filters=;commune='Rennes'` (pas de filtre sur la première couche).
+Filtre vide possible : `qcl_filters=;commune='Rennes'` (pas de filtre sur la première donnée).
 
 Non-persistant (absent du permalien).
 
@@ -172,8 +172,8 @@ Non-persistant (absent du permalien).
 
 | Valeur | Effet |
 |--------|-------|
-| `debug=true` | Logs dans la console (diagnostic WMS, CORS, AJAX) |
-| `debug=1` | Charge `sviewer.js` et `sviewer.css` non-minifiés |
+| `debug=true` | Active les logs console (diagnostic WMS, CORS, AJAX) |
+| `debug=1` | Charge `sviewer.js` et `sviewer.css` non-minifiés (indépendant de `debug=true`) |
 
 Non-persistant (absent du permalien).
 
@@ -246,7 +246,7 @@ Les options passées à `SViewer.init()` utilisent **exactement les mêmes noms*
 | `y` | `number` | `?y=` | Latitude initiale (EPSG:3857) |
 | `z` | `number` | `?z=` | Niveau de zoom (0-18) |
 | `title` | `string` | `?title=` | Titre de la carte |
-| `lb` | `number` | `?lb=` | Index de la couche de fond |
+| `lb` | `number` | `?lb=` | Index du fond de carte |
 | `layers` | `string` | `?layers=` | Données à afficher (séparées par virgules) |
 | `c` | `string` | `?c=` | Nom du profil de configuration alternatif |
 
@@ -386,7 +386,7 @@ sViewer supporte **WMS 1.3.0** uniquement.
 sViewer lit automatiquement les capacités WMS pour :
 - Obtenir les données disponibles
 - Lire les métadonnées (titre, résumé)
-- Déterminer si une couche est queryable
+- Déterminer si une donnée est queryable
 
 #### GetFeatureInfo
 
@@ -415,7 +415,7 @@ https://serveur/geoserver/namespace/layername/wms
 
 #### Propriétés requises pour les données
 
-Chaque couche WMS doit :
+Chaque donnée WMS doit :
 - Supporter **EPSG:3857** (Web Mercator)
 - Avoir un attribut `queryable="1"` si on souhaite l'interroger
 - Supporter **HTTPS** (pas d'URLs non chiffrées)
@@ -423,7 +423,7 @@ Chaque couche WMS doit :
 
 ### Catalogue Service for the Web (CSW) — paramètre `md=`
 
-Quand `md=<identifiant>` est passé dans l'URL (sans `layers=`), sViewer interroge le CSW pour charger automatiquement une couche WMS depuis une fiche de métadonnées ISO 19139.
+Quand `md=<identifiant>` est passé dans l'URL (sans `layers=`), sViewer interroge le CSW pour charger automatiquement une donnée WMS depuis une fiche de métadonnées ISO 19139.
 
 #### Flux d'exécution
 
@@ -441,7 +441,7 @@ fetchCSWRecord()
 parseCSWForWMS()
   XPath: //gmd:distributionInfo//gmd:CI_OnlineResource
   → trouve protocole OGC:WMS
-  → extrait URL WMS (sans query string) + nom de couche
+  → extrait URL WMS (sans query string) + nom de donnée
      │
      ▼
 LayerQueryable({ skipMetadataPanel: true })
@@ -486,7 +486,7 @@ Toutes les données WMS doivent être dans cette projection ou seront reprojeté
 
 ### GetFeatureInfo (Interroger la carte)
 
-Cliquer sur la carte déclenche une requête WMS GetFeatureInfo si une couche queryable est visibile.
+Cliquer sur la carte déclenche une requête WMS GetFeatureInfo si une donnée queryable est visibile.
 
 **Résultats :**
 - Affichage en panneau latéral
@@ -494,7 +494,7 @@ Cliquer sur la carte déclenche une requête WMS GetFeatureInfo si une couche qu
 - Maximum `maxFeatures` résultats
 
 **Erreurs courantes :**
-- *« Aucun résultat »* : pas de couche queryable à cette position
+- *« Aucun résultat »* : pas de donnée queryable à cette position
 - *« Interrogation a échoué »* : erreur CORS, URL non accessible, ou serveur refuse la requête
 
 ### Recherche de lieux
@@ -511,11 +511,11 @@ Saisie libre d'adresse/lieu → requête vers le service géoplateforme.
 
 ### Recherche WFS (paramètre `s=1`)
 
-Activé par `?s=1`. Interroge les couches WFS associées aux couches WMS queryables, en parallèle de la géoplateforme.
+Activé par `?s=1`. Interroge les données WFS associées aux données WMS queryables, en parallèle de la géoplateforme.
 
 #### Découverte automatique WFS
 
-Au démarrage (`doConfiguration`), pour chaque couche queryable :
+Au démarrage (`doConfiguration`), pour chaque donnée queryable :
 
 ```
 WMS DescribeLayer  →  découvre l'URL WFS + typeName
@@ -529,7 +529,7 @@ Résultat stocké dans `layer.wfs` :
 - `searchFields` : champs `xsd:string` uniquement — pour le filtre `PropertyIsLike`
 - `geomField` : nom du champ géométrie (exclu de l'affichage)
 
-Si DescribeLayer ou DescribeFeatureType échoue, `layer.wfs.url` reste `null` et la couche est silencieusement ignorée.
+Si DescribeLayer ou DescribeFeatureType échoue, `layer.wfs.url` reste `null` et la donnée est silencieusement ignorée.
 
 #### Flux de recherche
 
@@ -537,7 +537,7 @@ Si DescribeLayer ou DescribeFeatureType échoue, `layer.wfs.url` reste `null` et
 keyup (debounce 350ms)
   → abortSearchXhrs()          annule les XHR WFS en cours
   → openLsRequest()            géoplateforme IGN (parallèle)
-  → searchAllWFSLayers()       pour chaque couche avec wfs.url valide :
+  → searchAllWFSLayers()       pour chaque donnée avec wfs.url valide :
       WFS GetFeature
         FILTER: OR(PropertyIsLike) sur searchFields
         BBOX: étendue courante de la carte
@@ -556,7 +556,7 @@ keyup (debounce 350ms)
 
 ### Légendes et métadonnées
 
-Pour chaque couche publiée depuis geOrchestra :
+Pour chaque donnée publiée depuis geOrchestra :
 - Légende graphique (si disponible)
 - Titre et résumé
 - Lien vers métadonnées
@@ -822,20 +822,20 @@ CSS produit :
 
 **Diagnostic :**
 - Vérifier que `layers=namespace:layername` est correct
-- Vérifier que la couche existe sur le serveur WMS
+- Vérifier que la donnée existe sur le serveur WMS
 - Ouvrir l'URL WMS directement dans le navigateur
 
 **Causes courantes :**
 1. **Erreur CORS** → Le serveur WMS doit envoyer `Access-Control-Allow-Origin: *`
 2. **URL WMS incorrecte** → Vérifier `geOrchestraBaseUrl`
-3. **Projection** → La couche doit être en EPSG:3857 ou reprojetable
+3. **Projection** → La donnée doit être en EPSG:3857 ou reprojetable
 
 ### Requête GetFeatureInfo échoue
 
 **Message :** « L'interrogation a échoué »
 
 **Causes :**
-1. **Couche non queryable** → Vérifier `queryable="1"` en GetCapabilities WMS
+1. **Donnée non queryable** → Vérifier `queryable="1"` en GetCapabilities WMS
 2. **CORS** → Erreur `No 'Access-Control-Allow-Origin' header`
 3. **Erreur serveur** → Code HTTP 500 du serveur WMS
 
