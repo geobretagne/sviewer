@@ -11,8 +11,9 @@ $.extend(hardConfig, {
             'btn.panel_legend':  'Legend',
             'btn.panel_query':   'Query',
             'btn.panel_locate':  'Locate',
-            'btn.permalink':     'Link to this map',
-            'btn.copy':          'Copy',
+            'btn.permalink':       'Link to this map',
+            'btn.permalink_label': 'Link',
+            'btn.copy':           'Copy',
             'btn.copied':        'Copied!',
 
             // Panel and modal titles
@@ -65,8 +66,9 @@ $.extend(hardConfig, {
             'btn.panel_legend':  'Légende',
             'btn.panel_query':   'Interroger',
             'btn.panel_locate':  'Rechercher',
-            'btn.permalink':     'Lien vers cette carte',
-            'btn.copy':          'Copier',
+            'btn.permalink':       'Lien vers cette carte',
+            'btn.permalink_label': 'Lien',
+            'btn.copy':           'Copier',
             'btn.copied':        'Copié !',
 
             'panel.config.title':       'Configuration',
@@ -115,8 +117,9 @@ $.extend(hardConfig, {
             'btn.panel_legend':  'Leyenda',
             'btn.panel_query':   'Consultar',
             'btn.panel_locate':  'Encontrar',
-            'btn.permalink':     'Vínculo permanente a este mapa',
-            'btn.copy':          'Copiar',
+            'btn.permalink':       'Vínculo permanente a este mapa',
+            'btn.permalink_label': 'Enlace',
+            'btn.copy':           'Copiar',
             'btn.copied':        '¡Copiado!',
 
             'panel.config.title':       'Configuración',
@@ -165,8 +168,9 @@ $.extend(hardConfig, {
             'btn.panel_legend':  'Beschriftung',
             'btn.panel_query':   'abfragen',
             'btn.panel_locate':  'Finden',
-            'btn.permalink':     'Permanenter link zur Karte',
-            'btn.copy':          'Kopieren',
+            'btn.permalink':       'Permanenter link zur Karte',
+            'btn.permalink_label': 'Link',
+            'btn.copy':           'Kopieren',
             'btn.copied':        'Kopiert!',
 
             'panel.config.title':       'Konfiguration',

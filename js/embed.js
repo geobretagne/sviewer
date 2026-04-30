@@ -86,7 +86,7 @@
                         <div class="sv-share-grid">
                             <button type="button" id="permalinkBtn" class="i18n btn btn-secondary" title="Link to this map" data-i18n-title="btn.permalink">
                                 <i class="bi bi-link" aria-hidden="true"></i>
-                                Link
+                                <span class="i18n" data-i18n="btn.permalink_label">Link</span>
                             </button>
                             <button type="button" class="webcomponent-btn btn btn-info" title="Get embed code">
                                 <i class="bi bi-code" aria-hidden="true"></i>
