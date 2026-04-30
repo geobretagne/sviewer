@@ -12,7 +12,6 @@ $.extend(hardConfig, {
             'btn.panel_query':   'Query',
             'btn.panel_locate':  'Locate',
             'btn.permalink':     'Link to this map',
-            'btn.qrcode':        'QR code',
             'btn.copy':          'Copy',
             'btn.copied':        'Copied!',
 
@@ -21,7 +20,6 @@ $.extend(hardConfig, {
             'panel.legend.title':       'Documentation',
             'panel.query.title':        'Query results',
             'panel.locate.title':       'Location',
-            'panel.share_modal.title':  'Share this map',
             'panel.embed_modal.title':  'Embed in a page',
             'panel.link_modal.title':   'Link to this map',
 
@@ -68,7 +66,6 @@ $.extend(hardConfig, {
             'btn.panel_query':   'Interroger',
             'btn.panel_locate':  'Rechercher',
             'btn.permalink':     'Lien vers cette carte',
-            'btn.qrcode':        'code QR',
             'btn.copy':          'Copier',
             'btn.copied':        'Copié !',
 
@@ -76,7 +73,6 @@ $.extend(hardConfig, {
             'panel.legend.title':       'Documentation',
             'panel.query.title':        'Interrogation',
             'panel.locate.title':       'Localisation',
-            'panel.share_modal.title':  'Partager la carte',
             'panel.embed_modal.title':  'Intégrer dans une page',
             'panel.link_modal.title':   'Lien vers cette carte',
 
@@ -105,7 +101,7 @@ $.extend(hardConfig, {
             'msg.estimating_position':  'estimation de la position ...',
             'msg.position_error':       "la localisation de l'appareil a échoué",
             'msg.position_unavailable': 'localisation non disponible sur cet appareil',
-            'msg.top_layer':            'Couche du dessus',
+            'msg.top_layer':            'Donnée du dessus',
             'msg.csw_no_wms':           'Aucun endpoint OGC:WMS trouvé dans la fiche de métadonnées',
             'msg.csw_error':            'La fiche de métadonnées n\'a pas pu être chargée'
         },
@@ -120,7 +116,6 @@ $.extend(hardConfig, {
             'btn.panel_query':   'Consultar',
             'btn.panel_locate':  'Encontrar',
             'btn.permalink':     'Vínculo permanente a este mapa',
-            'btn.qrcode':        'código QR',
             'btn.copy':          'Copiar',
             'btn.copied':        '¡Copiado!',
 
@@ -128,7 +123,6 @@ $.extend(hardConfig, {
             'panel.legend.title':       'Documentación',
             'panel.query.title':        'Resultados de consulta',
             'panel.locate.title':       'Localización',
-            'panel.share_modal.title':  'Compartir el mapa',
             'panel.embed_modal.title':  'Insertar en una página',
             'panel.link_modal.title':   'Vínculo a este mapa',
 
@@ -172,7 +166,6 @@ $.extend(hardConfig, {
             'btn.panel_query':   'abfragen',
             'btn.panel_locate':  'Finden',
             'btn.permalink':     'Permanenter link zur Karte',
-            'btn.qrcode':        'QR-Code',
             'btn.copy':          'Kopieren',
             'btn.copied':        'Kopiert!',
 
@@ -180,7 +173,6 @@ $.extend(hardConfig, {
             'panel.legend.title':       'Dokumentation',
             'panel.query.title':        'Abfrageergebnisse',
             'panel.locate.title':       'Standort',
-            'panel.share_modal.title':  'Karte teilen',
             'panel.embed_modal.title':  'In eine Seite einbetten',
             'panel.link_modal.title':   'Link zur Karte',
 
