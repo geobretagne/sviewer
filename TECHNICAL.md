@@ -152,6 +152,18 @@ Active la barre de recherche au démarrage.
 
 **CORS :** Géoplateforme et services WFS doivent supporter CORS.
 
+#### `qcl_filters`
+
+Applique des filtres CQL aux couches déjà chargées via `layers=`, sans les réencoder dans la chaîne `layers`. Format : liste séparée par des **points-virgules**, un filtre par couche dans l'ordre de `layers=`.
+
+```
+?layers=ns:a,ns:b&qcl_filters=population>50000;commune='Rennes'
+```
+
+Filtre vide possible : `qcl_filters=;commune='Rennes'` (pas de filtre sur la première couche).
+
+Non-persistant (absent du permalien).
+
 ---
 
 ### Paramètres d'affichage et partage
@@ -164,6 +176,17 @@ Active la barre de recherche au démarrage.
 | `debug=1` | Charge `sviewer.js` et `sviewer.css` non-minifiés |
 
 Non-persistant (absent du permalien).
+
+#### `lang`
+
+Force la langue de l'interface (priorité sur `customConfig.lang` et la détection navigateur).
+
+```
+?lang=fr
+?lang=en
+```
+
+Code ISO 639-1 à 2 lettres. Langues disponibles : voir `hardConfig.i18n` dans `js/i18n.js`. Non-persistant.
 
 #### `c` (configuration)
 
@@ -182,14 +205,19 @@ Charge une configuration alternative au lieu de `customConfig.js`.
 
 ### Paramètres persistants
 
-Les paramètres suivants sont **mémorisés** dans le permalien et le code QR :
+**Permalien (lien partageable) :**
 - `x`, `y`, `z`
-- `title`
 - `layers`
 - `md` (si `layers=` absent)
-- `q`
-- `c`
-- `lb`
+- `q`, `s`
+- `c`, `lb`, `theme`
+
+**Code d'intégration WebComponent :**
+- `x`, `y`, `z`
+- `layers`
+- `md` (si `layers=` absent)
+- `title`
+- `c`, `lb`, `theme`
 
 Le paramètre `debug` n'est **pas** persistant.
 

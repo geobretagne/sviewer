@@ -22,7 +22,11 @@ Qu'offre sViewer ?
 Démarrage rapide
 -----------------
 
-### 1. Configuration initiale
+### 1. Télécharger le code sur votre serveur
+
+Téléchargez l'ensemble du dossier `sviewer` sur votre serveur web (Apache, nginx, etc.).
+
+### 2. Configuration initiale
 
 Copiez le fichier de configuration d'exemple et adaptez-le à vos besoins :
 
@@ -34,10 +38,9 @@ cp etc/customConfig.DIST.js etc/customConfig.js
 - L'adresse de votre serveur geOrchestra (ou votre GeoServer)
 - Les fonds de carte
 - Le thème
+- Les emprises. Sviewer utilise uniquement la projection EPSG:3857.
 
-### 2. Télécharger le code sur votre serveur
 
-Téléchargez l'ensemble du dossier `sviewer` sur votre serveur web (Apache, nginx, etc.).
 
 
 Deux façons d'utiliser sViewer
@@ -60,7 +63,7 @@ Cela ouvre sViewer centré sur les coordonnées indiquées et avec un titre pers
 
 ### Option 2 : Mode WebComponent — Intégration dans vos pages
 
-Incluez sViewer dans n'importe quelle page web existante en ajoutant trois lignes de code.
+Incluez sViewer dans n'importe quelle page web existante en ajoutant et en configurant ce code.
 
 **Exemple :**
 
@@ -115,7 +118,7 @@ https://geobretagne.fr/sviewer/?lb=1
 
 **`layers`** — Afficher des données geOrchestra ou GeoServer
 
-Liste séparée par des virgules. Les données doivent être publiées sur votre serveur geOrchestra ou GeoServer.
+Liste séparée par des virgules. Les données doivent être publiées sur votre serveur geOrchestra ou GeoServer spécifié dans `customConfig.js`.
 
 ```
 https://geobretagne.fr/sviewer/?layers=dreal_b:ae_casparcas
@@ -131,10 +134,10 @@ https://geobretagne.fr/sviewer/?layers=dreal_b:ae_casparcas*default
 
 **Avec un serveur WMS externe :**
 
-Spécifiez un serveur WMS personnalisé en ajoutant `@url-du-wms` au paramètre layer. Cela permet d'afficher des données publiées sur n'importe quel serveur WMS compatible, pas seulement sur votre geOrchestra local.
+Spécifiez un serveur WMS personnalisé en ajoutant `@url-du-wms` au paramètre layer. Cela permet d'afficher des données publiées sur n'importe quel serveur WMS 1.3.0.
 
 ```
-https://geobretagne.fr/sviewer/?layers=workspace:layername@https://wms.example.com/geoserver/wms
+https://geobretagne.fr/sviewer/?layers=layername@https://wms.example.com/geoserver/wms
 ```
 
 Format complet : `namespace:layername[*style][*cql_filter]@wms-endpoint-url`
@@ -143,10 +146,7 @@ Exemples :
 ```
 https://geobretagne.fr/sviewer/?layers=workspace:data@https://external-wms.example.com/service
 https://geobretagne.fr/sviewer/?layers=ns:layer*custom_style@https://wms.example.com/geoserver/wms
-https://geobretagne.fr/sviewer/?layers=ns:layer*style*population>50000@https://wms.example.com/service
 ```
-
-**Note :** L'URL WMS externe est stockée dans les permaliens et le code d'embedding généré.
 
 **`md`** — Afficher une couche via son identifiant de métadonnée GeoNetwork
 
@@ -156,7 +156,7 @@ Charge automatiquement la couche OGC:WMS décrite dans la fiche ISO 19139 corres
 https://geobretagne.fr/sviewer/?md=fb5861f1-1b20-417f-abb6-9fc316c0307d
 ```
 
-sViewer interroge le CSW, extrait l'URL WMS et le nom de couche depuis `gmd:distributionInfo`, puis charge la couche et remplit le panneau de documentation avec les métadonnées (titre, résumé, producteur, licence, date). Ce paramètre est incompatible avec `layers=` : si les deux sont présents, `layers=` est prioritaire.
+sViewer interroge le CSW, extrait l'URL WMS et le nom de la donnée depuis `gmd:distributionInfo`, puis charge la donnée et remplit le panneau de documentation avec les métadonnées (titre, résumé, producteur, licence, date). Ce paramètre est incompatible avec `layers=` : si les deux sont présents, `layers=` est prioritaire.
 
 > Le paramètre `md` est **persistant** : il est mémorisé dans le permalink et le code d'intégration.
 
@@ -172,7 +172,7 @@ https://geobretagne.fr/sviewer/?layers=geor:sdi&q=1
 
 **`s`** — Recherche d'objets dans les données WFS
 
-Active la barre de recherche. Lorsque les données WMS ont un service WFS associé, la recherche interroge directement les attributs des objets en plus de la géoplateforme.
+Active la fonction de recherche sur les données. Lorsque les données WMS ont un service WFS associé, comme cela est le cas dans geOrchestra, cette fonction permet d'interroger simultanément le service de géolocalisation et le service de données. La recherche sur les données porte sur tous ses champs texte.
 
 ```
 https://geobretagne.fr/sviewer/?layers=dreal_b:ae_casparcas&s=1
@@ -185,7 +185,7 @@ https://geobretagne.fr/sviewer/?layers=dreal_b:ae_casparcas&s=1
 
 **`debug`** — Mode debug
 
-Affiche les logs de debug dans la console du navigateur (F12). Avec `debug=1`, charge les fichiers JS/CSS non-minifiés (utile pour inspecter le code source sur le serveur de production).
+Affiche les logs de debug dans la console du navigateur (F12). Avec `debug=1`, charge les fichiers JS/CSS non-minifiés.
 
 ```
 https://geobretagne.fr/sviewer/?layers=xyz&debug=true
@@ -214,7 +214,7 @@ Le choix du thème peut aussi se faire interactivement via le panneau **Configur
 Valeurs acceptées : `light` (défaut), `dark`.
 
 
-**Note :** Les paramètres `x`, `y`, `z`, `title`, `layers`, `md`, `q`, `theme` et `c` sont **persistants** : ils sont mémorisés quand vous partagez la carte via lien, QR ou code javascript.
+**Note :** Les paramètres `x`, `y`, `z`, `layers`, `md`, `q`, `s`, `theme`, `c` et `lb` sont **persistants** dans le permalien et QR code. Le paramètre `title` est inclus dans le code d'intégration WebComponent uniquement.
 
 
 Configurations personnalisées
@@ -289,8 +289,7 @@ Notes techniques
 * **Langue** : Français par défaut, mais supporte aussi l'anglais, l'espagnol et l'allemand
 * **Thèmes** : clair (défaut) et sombre, activables via `?theme=dark` ou l'option `{ theme: 'dark' }` en mode WebComponent
 * **Progressive Web App** : sViewer peut être installé comme application sur mobile (Android, iOS) et inclut un Service Worker pour le support hors ligne
-* **Serveur** : Aucun composant côté serveur requis
-* **Compatibilité** : Tous les navigateurs modernes (desktop, tablet, mobile)
+* **Serveur** : Aucun composant côté serveur requis. Inconvénient : CORS obligatoire sur les services.
 
 
 
