@@ -6,6 +6,26 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-04-30
+
+### Added
+- `CHANGELOG.md`
+- Permalink button label translated separately from tooltip (`btn.permalink_label`, 4 languages)
+- Version + commit hash visible in share panel and browser console; `SViewer.version`, `SViewer.commit` public API
+
+### Changed
+- Dockerfile: `nginx:1.17` → `nginx:1.26-alpine`
+- `.dockerignore` expanded to exclude dev files from image
+- Release checklist added to `TECHNICAL.md`
+
+### Fixed
+- sViewer casing (`Sviewer` → `sViewer`) in README
+- fr `msg.top_layer`: banned word "couche" → "donnée"
+
+### Removed
+- Unused i18n keys `btn.qrcode` and `panel.share_modal.title` (vestigial)
+- Dead files: `.gitmodules` (obsolete ol3 submodule ref), `minify.sh` (superseded by npm scripts)
+
 ## [0.1.0] - 2026-04-30
 
 ### Added
