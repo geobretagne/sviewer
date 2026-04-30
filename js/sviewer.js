@@ -1237,7 +1237,7 @@ window.SViewerApp = (function() {
             qsconfig = configBase + "etc/customConfig.js";
         }
         function startApp() {
-            customConfig.customConfigName = qs.c;
+            if (qs.c) { customConfig.customConfigName = qs.c; }
             doConfiguration();
             doMap();
             doGUI();
