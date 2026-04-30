@@ -163,9 +163,10 @@ window.SViewerApp = (function() {
                 log('Custom WMS URL detected:', customWmsUrl);
             }
 
-            self.options.nslayername = layerPart.split('*')[0]; // namespace:layername
-            self.options.stylename = (layerPart.indexOf("*")>0) ? layerPart.split('*',2)[1]:''; // stylename
-            self.options.cql_filter = (layerPart.indexOf("*")>1) ? layerPart.split('*',3)[2]:''; // qcl_filter
+            var layerParts = layerPart.split('*', 3);
+            self.options.nslayername = layerParts[0];
+            self.options.stylename   = layerParts.length > 1 ? layerParts[1] : '';
+            self.options.cql_filter  = layerParts.length > 2 ? layerParts[2] : '';
 
             self.options.namespace = (self.options.nslayername.indexOf(":")>0) ? self.options.nslayername.split(':',2)[0]:''; // namespace
             self.options.layername = (self.options.nslayername.indexOf(':')>0) ? self.options.nslayername.split(':',2)[1]:''; // layername
