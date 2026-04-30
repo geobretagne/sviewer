@@ -12,6 +12,7 @@ import Overlay from 'ol/Overlay.js';
 // Import layers
 import Tile from 'ol/layer/Tile.js';
 import Image from 'ol/layer/Image.js';
+import Vector from 'ol/layer/Vector.js';
 
 // Import sources
 import OSM from 'ol/source/OSM.js';
@@ -19,6 +20,18 @@ import TileWMS from 'ol/source/TileWMS.js';
 import ImageWMS from 'ol/source/ImageWMS.js';
 import WMTS from 'ol/source/WMTS.js';
 import XYZ from 'ol/source/XYZ.js';
+import VectorSource from 'ol/source/Vector.js';
+
+// Import geometry
+import Feature from 'ol/Feature.js';
+import CircleGeom from 'ol/geom/Circle.js';
+import Point from 'ol/geom/Point.js';
+
+// Import styles
+import Style from 'ol/style/Style.js';
+import Fill from 'ol/style/Fill.js';
+import Stroke from 'ol/style/Stroke.js';
+import CircleStyle from 'ol/style/Circle.js';
 
 // Import projections (full module + proj4 submodule)
 import * as proj from 'ol/proj.js';
@@ -55,6 +68,7 @@ window.ol = {
   layer: {
     Tile,
     Image,
+    Vector,
   },
   source: {
     OSM,
@@ -62,6 +76,18 @@ window.ol = {
     ImageWMS,
     WMTS,
     XYZ,
+    Vector: VectorSource,
+  },
+  Feature,
+  geom: {
+    Circle: CircleGeom,
+    Point,
+  },
+  style: {
+    Style,
+    Fill,
+    Stroke,
+    Circle: CircleStyle,
   },
   proj: {
     ...proj,

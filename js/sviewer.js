@@ -1177,13 +1177,33 @@ window.SViewerApp = (function() {
     // GPS tracking state
     var gpsWatchId = null;
     var gpsAutoStopTimer = null;
+    var gpsLayer = null;
+    var gpsAccuracyFeature = null;
+
+    function initGpsLayer() {
+        gpsAccuracyFeature = new ol.Feature();
+        gpsAccuracyFeature.setStyle(new ol.style.Style({
+            fill:   new ol.style.Fill({ color: 'rgba(37, 99, 235, 0.12)' }),
+            stroke: new ol.style.Stroke({ color: 'rgba(37, 99, 235, 0.6)', width: 1.5 })
+        }));
+        gpsLayer = new ol.layer.Vector({
+            source: new ol.source.Vector({ features: [gpsAccuracyFeature] }),
+            zIndex: 999
+        });
+        map.addLayer(gpsLayer);
+    }
 
     function gpsOnPosition(pos) {
         var p = ol.proj.transform([pos.coords.longitude, pos.coords.latitude], 'EPSG:4326', config.projcode);
         marker.setPosition(p);
         view.animate({ center: p, duration: 500 });
-        var acc = pos.coords.accuracy ? Math.round(pos.coords.accuracy) + 'm' : '';
-        $('#gpsAccuracy').text(acc).toggle(!!acc);
+        var acc = pos.coords.accuracy || 0;
+        if (acc > 0) {
+            gpsAccuracyFeature.setGeometry(new ol.geom.Circle(p, acc));
+        } else {
+            gpsAccuracyFeature.setGeometry(null);
+        }
+        $('#gpsAccuracy').text(acc ? Math.round(acc) + 'm' : '').toggle(!!acc);
     }
 
     function gpsOnError() {
@@ -1200,6 +1220,11 @@ window.SViewerApp = (function() {
             clearTimeout(gpsAutoStopTimer);
             gpsAutoStopTimer = null;
         }
+        if (gpsLayer !== null) {
+            map.removeLayer(gpsLayer);
+            gpsLayer = null;
+            gpsAccuracyFeature = null;
+        }
         $('#zpBt').attr('aria-pressed', 'false').removeClass('active');
         $('#gpsAccuracy').hide().text('');
         state.position = 0;
@@ -1212,6 +1237,7 @@ window.SViewerApp = (function() {
             messagePopup(tr('msg.position_unavailable'));
             return;
         }
+        initGpsLayer();
         messagePopup(tr('msg.estimating_position'));
         var interval = (config.gpsTrackingInterval || 5) * 1000;
         gpsWatchId = navigator.geolocation.watchPosition(
