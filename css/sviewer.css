@@ -773,6 +773,45 @@
 
 /* legend layout */
 
+.sv-opacity-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0 12px;
+    border-bottom: 1px solid var(--sv-border);
+    margin-bottom: 12px;
+    flex-shrink: 0;
+}
+
+.sv-opacity-label {
+    font-size: 0.8rem;
+    color: var(--sv-panel-fg-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.sv-opacity-slider {
+    flex: 1;
+    accent-color: var(--sv-accent);
+    cursor: pointer;
+    min-width: 0;
+    height: 4px;
+}
+
+.sv-opacity-slider:focus-visible {
+    outline: 2px solid var(--sv-accent-ring);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.sv-opacity-value {
+    font-size: 0.75rem;
+    color: var(--sv-panel-fg-muted);
+    min-width: 3ch;
+    text-align: right;
+    flex-shrink: 0;
+}
+
 .sv-legend {
     font-size: small;
 }

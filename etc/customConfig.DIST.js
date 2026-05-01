@@ -78,6 +78,11 @@ customConfig = {
     gpsTrackingTimeout: 300,
 
     /**
+     * Default opacity for all non-background layers when ?opacity= param is absent (0–1)
+     */
+    layerOpacity: 1,
+
+    /**
      * Geocoding service URL (address search)
      * Default: IGN Géoplateforme (French geoportal)
      * Requires CORS support from the service

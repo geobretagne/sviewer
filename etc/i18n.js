@@ -54,6 +54,7 @@ $.extend(hardConfig, {
             'msg.position_unavailable': 'Device position not available on this device',
             'msg.gps_tracking_on':      'GPS tracking on',
             'msg.gps_tracking_off':     'GPS tracking off',
+            'lbl.layer_opacity':        'Opacity',
             'msg.top_layer':            'Top layer',
             'msg.csw_no_wms':           'No OGC:WMS endpoint found in metadata record',
             'msg.csw_error':            'Metadata record could not be loaded'
@@ -107,6 +108,7 @@ $.extend(hardConfig, {
             'msg.position_unavailable': 'localisation non disponible sur cet appareil',
             'msg.gps_tracking_on':      'Suivi GPS activé',
             'msg.gps_tracking_off':     'Suivi GPS désactivé',
+            'lbl.layer_opacity':        'Opacité',
             'msg.top_layer':            'Donnée du dessus',
             'msg.csw_no_wms':           'Aucun endpoint OGC:WMS trouvé dans la fiche de métadonnées',
             'msg.csw_error':            'La fiche de métadonnées n\'a pas pu être chargée'
@@ -160,6 +162,7 @@ $.extend(hardConfig, {
             'msg.position_unavailable': 'La posición del dispositivo no está disponible',
             'msg.gps_tracking_on':      'Seguimiento GPS activado',
             'msg.gps_tracking_off':     'Seguimiento GPS desactivado',
+            'lbl.layer_opacity':        'Opacidad',
             'msg.top_layer':            'Capa superior',
             'msg.csw_no_wms':           'No se encontró ningún endpoint OGC:WMS en la ficha de metadatos',
             'msg.csw_error':            'No se pudo cargar la ficha de metadatos'
@@ -213,6 +216,7 @@ $.extend(hardConfig, {
             'msg.position_unavailable': 'Geräteposition auf diesem Gerät nicht verfügbar',
             'msg.gps_tracking_on':      'GPS-Verfolgung aktiviert',
             'msg.gps_tracking_off':     'GPS-Verfolgung deaktiviert',
+            'lbl.layer_opacity':        'Deckkraft',
             'msg.top_layer':            'Oberste Ebene',
             'msg.csw_no_wms':           'Kein OGC:WMS-Endpunkt im Metadatensatz gefunden',
             'msg.csw_error':            'Metadatensatz konnte nicht geladen werden'

@@ -211,6 +211,8 @@ Charge une configuration alternative au lieu de `customConfig.js`.
 - `md` (si `layers=` absent)
 - `q`, `s`
 - `c`, `lb`, `theme`
+- `opacity` (si ≠ 1)
+- `position` (si GPS actif)
 
 **Code d'intégration WebComponent :**
 - `x`, `y`, `z`
@@ -218,6 +220,8 @@ Charge une configuration alternative au lieu de `customConfig.js`.
 - `md` (si `layers=` absent)
 - `title`
 - `c`, `lb`, `theme`
+- `opacity` (si ≠ 1)
+- `position` (si GPS actif)
 
 Le paramètre `debug` n'est **pas** persistant.
 
@@ -249,6 +253,8 @@ Les options passées à `SViewer.init()` utilisent **exactement les mêmes noms*
 | `lb` | `number` | `?lb=` | Index du fond de carte |
 | `layers` | `string` | `?layers=` | Données à afficher (séparées par virgules) |
 | `c` | `string` | `?c=` | Nom du profil de configuration alternatif |
+| `opacity` | `number` | `?opacity=` | Opacité des couches (0–1, défaut : 1) |
+| `position` | `1` | `?position=1` | Active le suivi GPS au chargement |
 
 Le bouton **HTML** du panneau de partage génère automatiquement un fragment `SViewer.init()` pour la vue courante.
 
