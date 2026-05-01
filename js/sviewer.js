@@ -1411,9 +1411,11 @@ window.SViewerApp = (function() {
             opacity: config.layerOpacity !== undefined ? config.layerOpacity : 1
         };
 
-        // querystring param: theme (light | dark)
+        // querystring param: theme (light | dark), else OS preference
         if (qs.theme === 'light' || qs.theme === 'dark') {
             state.theme = qs.theme;
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            state.theme = 'dark';
         }
 
         // querystring param: lb (selected background)
