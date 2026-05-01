@@ -1848,6 +1848,43 @@ window.SViewerApp = (function() {
                 300
             );
         }
+
+        // Shake to share — copy permalink to clipboard + haptic feedback
+        if (window.DeviceMotionEvent) {
+            var shakeLastTime = 0, shakeLastX, shakeLastY, shakeLastZ;
+            var shakeHandler = function(e) {
+                var a = e.accelerationIncludingGravity;
+                if (!a || a.x === null) { return; }
+                var now = Date.now();
+                if (now - shakeLastTime < 1200) { return; }
+                if (shakeLastX === undefined) {
+                    shakeLastX = a.x; shakeLastY = a.y; shakeLastZ = a.z;
+                    return;
+                }
+                var delta = Math.abs(a.x - shakeLastX) + Math.abs(a.y - shakeLastY) + Math.abs(a.z - shakeLastZ);
+                shakeLastX = a.x; shakeLastY = a.y; shakeLastZ = a.z;
+                if (delta > 30) {
+                    shakeLastTime = now;
+                    var url = $('#permalinkUrl').prop('href');
+                    if (!url) { return; }
+                    copyToClipboard(url, $('<span>'), function() { window.prompt('', url); });
+                    if (navigator.vibrate) { navigator.vibrate(200); }
+                }
+            };
+            var attachShake = function() {
+                window.addEventListener('devicemotion', shakeHandler);
+            };
+            // iOS 13+ requires explicit permission on user gesture
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                $(document).one('click', function() {
+                    DeviceMotionEvent.requestPermission().then(function(state) {
+                        if (state === 'granted') { attachShake(); }
+                    }).catch(function() {});
+                });
+            } else {
+                attachShake();
+            }
+        }
     }
 
 
