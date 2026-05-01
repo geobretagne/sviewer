@@ -1707,8 +1707,15 @@ window.SViewerApp = (function() {
         });
         document.addEventListener('fullscreenchange', updateFsButton);
         document.addEventListener('webkitfullscreenchange', updateFsButton);
+        var isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
         if (!document.fullscreenEnabled && !document.webkitFullscreenEnabled) {
             $('#fsBt').hide();
+        } else if (isCoarsePointer) {
+            // Mobile browsers handle fullscreen via OS — button is redundant
+            $('#fsBt').hide();
+        }
+        if (!navigator.geolocation) {
+            $('#zpBt').hide();
         }
 
         // layer opacity slider
