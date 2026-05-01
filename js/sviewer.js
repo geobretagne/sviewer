@@ -205,6 +205,7 @@ window.SViewerApp = (function() {
         function createLayer() {
             var wms_params = {
                 'url': self.options.wmsurl_ns,
+                crossOrigin: 'anonymous',
                 params: {
                     'LAYERS': self.options.layername,
                     'FORMAT': self.options.format,
@@ -1711,14 +1712,19 @@ window.SViewerApp = (function() {
             map.once('rendercomplete', function() {
                 var canvas = map.getViewport().querySelector('canvas');
                 if (!canvas) { return; }
-                canvas.toBlob(function(blob) {
-                    var url = URL.createObjectURL(blob);
-                    var a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'sviewer-' + Date.now() + '.png';
-                    a.click();
-                    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
-                });
+                try {
+                    canvas.toBlob(function(blob) {
+                        var url = URL.createObjectURL(blob);
+                        var a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'sviewer-' + Date.now() + '.png';
+                        a.click();
+                        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+                    });
+                } catch (e) {
+                    // Canvas tainted by cross-origin tiles lacking crossOrigin on their OL source
+                    console.warn('Snapshot failed (canvas tainted by cross-origin tiles):', e);
+                }
             });
             map.renderSync();
         });
