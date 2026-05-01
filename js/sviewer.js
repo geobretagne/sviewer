@@ -782,6 +782,11 @@ window.SViewerApp = (function() {
      * Generates embed code with current map state
      * Includes all relevant URL parameters (x, y, z, layers, lb, title, etc.)
      */
+    function generateIframeCode() {
+        var href = $('#permalinkUrl').prop('href');
+        return '<iframe src="' + href + '" width="100%" height="500" frameborder="0" allowfullscreen></iframe>';
+    }
+
     function generateEmbedCode() {
         var c = view.getCenter();
         var embedParams = {};
@@ -1755,8 +1760,8 @@ window.SViewerApp = (function() {
 
         // WebComponent button (can appear in side panel or modal)
         $(document).on('click', '.webcomponent-btn', function() {
-            var embedCode = generateEmbedCode();
-            $('#embedCodeTextarea').val(embedCode);
+            $('#embedIframeTextarea').val(generateIframeCode());
+            $('#embedCodeTextarea').val(generateEmbedCode());
             closePanel();
             svModal.open('#webcomponent');
         });
@@ -1852,6 +1857,13 @@ window.SViewerApp = (function() {
 
         $('#embedCodeCopyBtn').on('click', function() {
             var textarea = document.getElementById('embedCodeTextarea');
+            copyToClipboard(textarea.value, $(this), function() {
+                textarea.select(); document.execCommand('copy');
+            });
+        });
+
+        $('#embedIframeCopyBtn').on('click', function() {
+            var textarea = document.getElementById('embedIframeTextarea');
             copyToClipboard(textarea.value, $(this), function() {
                 textarea.select(); document.execCommand('copy');
             });

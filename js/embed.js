@@ -178,12 +178,33 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="sv-embed-hint">Copy and paste this code into your HTML page to embed this map:</p>
-                        <textarea id="embedCodeTextarea" class="form-control" rows="8" readonly style="font-family: monospace; font-size: 0.85em;"></textarea>
-                        <div class="d-flex justify-content-end mt-2">
-                            <button type="button" id="embedCodeCopyBtn" class="btn btn-secondary btn-sm">
-                                <i class="bi bi-clipboard" aria-hidden="true"></i> Copy
-                            </button>
+                        <ul class="nav nav-tabs mb-3" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active i18n" id="embedTabIframe" data-bs-toggle="tab" data-bs-target="#embedPaneIframe" type="button" role="tab" aria-controls="embedPaneIframe" aria-selected="true" data-i18n="panel.embed_modal.tab_iframe">iFrame</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link i18n" id="embedTabJs" data-bs-toggle="tab" data-bs-target="#embedPaneJs" type="button" role="tab" aria-controls="embedPaneJs" aria-selected="false" data-i18n="panel.embed_modal.tab_js">JavaScript</button>
+                            </li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="embedPaneIframe" role="tabpanel" aria-labelledby="embedTabIframe">
+                                <p class="sv-embed-hint i18n" data-i18n="panel.embed_modal.hint_iframe">For CMS and blog editors (WordPress, Squarespace…)</p>
+                                <textarea id="embedIframeTextarea" class="form-control" rows="4" readonly style="font-family: monospace; font-size: 0.85em;"></textarea>
+                                <div class="d-flex justify-content-end mt-2">
+                                    <button type="button" id="embedIframeCopyBtn" class="btn btn-secondary btn-sm i18n" data-i18n="btn.copy">
+                                        <i class="bi bi-clipboard" aria-hidden="true"></i> Copy
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="embedPaneJs" role="tabpanel" aria-labelledby="embedTabJs">
+                                <p class="sv-embed-hint i18n" data-i18n="panel.embed_modal.hint_js">For developers integrating in an HTML page</p>
+                                <textarea id="embedCodeTextarea" class="form-control" rows="8" readonly style="font-family: monospace; font-size: 0.85em;"></textarea>
+                                <div class="d-flex justify-content-end mt-2">
+                                    <button type="button" id="embedCodeCopyBtn" class="btn btn-secondary btn-sm i18n" data-i18n="btn.copy">
+                                        <i class="bi bi-clipboard" aria-hidden="true"></i> Copy
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

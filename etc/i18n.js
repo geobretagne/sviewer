@@ -22,6 +22,10 @@ $.extend(hardConfig, {
             'panel.query.title':        'Query results',
             'panel.locate.title':       'Location',
             'panel.embed_modal.title':  'Embed in a page',
+            'panel.embed_modal.tab_iframe': 'iFrame',
+            'panel.embed_modal.tab_js':     'JavaScript',
+            'panel.embed_modal.hint_iframe': 'For CMS and blog editors (WordPress, Squarespace…)',
+            'panel.embed_modal.hint_js':    'For developers integrating in an HTML page',
             'panel.link_modal.title':   'Link to this map',
 
             // Labels
@@ -83,6 +87,10 @@ $.extend(hardConfig, {
             'panel.query.title':        'Interrogation',
             'panel.locate.title':       'Localisation',
             'panel.embed_modal.title':  'Intégrer dans une page',
+            'panel.embed_modal.tab_iframe': 'iFrame',
+            'panel.embed_modal.tab_js':     'JavaScript',
+            'panel.embed_modal.hint_iframe': 'Pour les éditeurs CMS et blogs (WordPress, Squarespace…)',
+            'panel.embed_modal.hint_js':    'Pour les développeurs intégrant dans une page HTML',
             'panel.link_modal.title':   'Lien vers cette carte',
 
             'lbl.edit_title':        'Editer le titre',
@@ -141,6 +149,10 @@ $.extend(hardConfig, {
             'panel.query.title':        'Resultados de consulta',
             'panel.locate.title':       'Localización',
             'panel.embed_modal.title':  'Insertar en una página',
+            'panel.embed_modal.tab_iframe': 'iFrame',
+            'panel.embed_modal.tab_js':     'JavaScript',
+            'panel.embed_modal.hint_iframe': 'Para editores CMS y blogs (WordPress, Squarespace…)',
+            'panel.embed_modal.hint_js':    'Para desarrolladores que integran en una página HTML',
             'panel.link_modal.title':   'Vínculo a este mapa',
 
             'lbl.edit_title':        'Cambiar título',
@@ -199,6 +211,10 @@ $.extend(hardConfig, {
             'panel.query.title':        'Abfrageergebnisse',
             'panel.locate.title':       'Standort',
             'panel.embed_modal.title':  'In eine Seite einbetten',
+            'panel.embed_modal.tab_iframe': 'iFrame',
+            'panel.embed_modal.tab_js':     'JavaScript',
+            'panel.embed_modal.hint_iframe': 'Für CMS- und Blog-Editoren (WordPress, Squarespace…)',
+            'panel.embed_modal.hint_js':    'Für Entwickler, die in eine HTML-Seite einbinden',
             'panel.link_modal.title':   'Link zur Karte',
 
             'lbl.edit_title':        'Titel ändern',
