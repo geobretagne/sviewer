@@ -107,6 +107,13 @@
                             <i class="bi bi-x-lg" aria-hidden="true"></i>
                         </button>
                     </div>
+                    <div class="sv-opacity-bar">
+                        <label for="opacitySlider" class="sv-opacity-label i18n" data-i18n="lbl.layer_opacity">Opacity</label>
+                        <input type="range" id="opacitySlider" class="sv-opacity-slider"
+                               min="0" max="100" step="1" value="100"
+                               aria-label="Layer opacity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                        <span id="opacityValue" class="sv-opacity-value" aria-hidden="true">100%</span>
+                    </div>
                     <div id="legend" class="sv-legend sv-panel-content"></div>
                 </div>
 

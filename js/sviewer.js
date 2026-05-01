@@ -705,6 +705,7 @@ window.SViewerApp = (function() {
             if (config.metadataId && !config.layersQueryString) { linkParams.md = config.metadataId; }
             if (state.theme && state.theme !== 'light') { linkParams.theme = state.theme; }
             if (state.position) { linkParams.position = '1'; }
+            if (state.opacity !== null && state.opacity !== 1) { linkParams.opacity = state.opacity; }
             // In embed mode, permalink must point to the standalone sViewer, not the host page
             var standaloneBase = window.SViewerBaseUrl
                 ? window.SViewerBaseUrl + 'index.html'
@@ -753,6 +754,9 @@ window.SViewerApp = (function() {
         }
         if (state.position) {
             embedParams.position = 1;
+        }
+        if (state.opacity !== null && state.opacity !== 1) {
+            embedParams.opacity = state.opacity;
         }
 
         var baseUrl = window.SViewerBaseUrl || config.baseUrl || window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
@@ -1376,7 +1380,8 @@ window.SViewerApp = (function() {
             search: false,
             searchindex: null,
             searchparams: {},
-            position: 0
+            position: 0,
+            opacity: config.layerOpacity !== undefined ? config.layerOpacity : 1
         };
 
         // querystring param: theme (light | dark)
@@ -1487,6 +1492,14 @@ window.SViewerApp = (function() {
         if (qs.position) {
             state.position = 1;
         }
+
+        // querystring param: layer opacity (0–1)
+        if (qs.opacity !== undefined) {
+            var parsedOpacity = parseFloat(qs.opacity);
+            if (!isNaN(parsedOpacity) && parsedOpacity >= 0 && parsedOpacity <= 1) {
+                state.opacity = parsedOpacity;
+            }
+        }
     }
 
 
@@ -1588,6 +1601,21 @@ window.SViewerApp = (function() {
         $('#zoBt').on('click', function() { adjustZoom(-1); });
         $('#zeBt').on('click', zoomInit);
         $('#bgBt').on('click', switchBackground);
+
+        // layer opacity slider
+        function applyLayerOpacity(val) {
+            state.opacity = val;
+            $.each(config.layersQueryable, function() {
+                this.wmslayer.setOpacity(val);
+            });
+            $('#opacityValue').text(Math.round(val * 100) + '%');
+            $('#opacitySlider').val(Math.round(val * 100)).attr('aria-valuenow', Math.round(val * 100));
+            setPermalink();
+        }
+        $('#opacitySlider').on('input', function() {
+            applyLayerOpacity(parseInt($(this).val(), 10) / 100);
+        });
+        applyLayerOpacity(state.opacity);
 
         // geolocation toggle
         $('#zpBt').on('click', toggleTracking);
