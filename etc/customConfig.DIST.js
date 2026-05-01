@@ -128,6 +128,31 @@ customConfig = {
             }),
             title: 'Carte OpenStreetmap'
         })
+    ],
+
+    /**
+     * Overlay layers displayed above all data layers (place names, cadastre outlines, etc.)
+     * Cycled by the overlay button. Not queryable. Optional — omit or set [] to hide the button.
+     */
+    layersOverlay: [
+        new ol.layer.Tile({
+            source: new ol.source.WMTS({
+                attributions: ['© IGN'],
+                url: 'https://data.geopf.fr/wmts',
+                layer: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2',
+                matrixSet: 'PM',
+                format: 'image/png',
+                projection: projection,
+                tileGrid: new ol.tilegrid.WMTS({
+                    origin: ol.extent.getTopLeft(projectionExtent),
+                    resolutions: resolutions,
+                    matrixIds: matrixIds
+                }),
+                style: 'normal',
+                opacity: 0.7
+            }),
+            title: 'Noms de lieux IGN'
+        })
     ]
 
 };

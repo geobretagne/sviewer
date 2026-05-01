@@ -213,6 +213,7 @@ Charge une configuration alternative au lieu de `customConfig.js`.
 - `c`, `lb`, `theme`
 - `opacity` (si ≠ 1)
 - `position` (si GPS actif)
+- `lo` (si couche overlay active)
 
 **Code d'intégration WebComponent :**
 - `x`, `y`, `z`
@@ -222,6 +223,7 @@ Charge une configuration alternative au lieu de `customConfig.js`.
 - `c`, `lb`, `theme`
 - `opacity` (si ≠ 1)
 - `position` (si GPS actif)
+- `lo` (si couche overlay active)
 
 Le paramètre `debug` n'est **pas** persistant.
 
@@ -255,6 +257,7 @@ Les options passées à `SViewer.init()` utilisent **exactement les mêmes noms*
 | `c` | `string` | `?c=` | Nom du profil de configuration alternatif |
 | `opacity` | `number` | `?opacity=` | Opacité des couches (0–1, défaut : 1) |
 | `position` | `1` | `?position=1` | Active le suivi GPS au chargement |
+| `lo` | `number` | `?lo=` | Index de la couche overlay active (0-based, absent = aucune) |
 
 Le bouton **HTML** du panneau de partage génère automatiquement un fragment `SViewer.init()` pour la vue courante.
 

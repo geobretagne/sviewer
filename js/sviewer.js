@@ -678,6 +678,27 @@ window.SViewerApp = (function() {
     }
 
     /**
+     * Cycles through overlay layers (none → 0 → 1 → … → none).
+     * Overlay layers sit above all data layers, are not queryable.
+     */
+    function switchOverlay() {
+        var layers = config.layersOverlay;
+        if (!layers || !layers.length) { return; }
+        var n = layers.length;
+        // hide current
+        if (state.lo >= 0 && state.lo < n) {
+            layers[state.lo].setVisible(false);
+        }
+        // advance: -1 → 0 → 1 → … → n-1 → -1
+        state.lo = (state.lo + 2) % (n + 1) - 1;
+        // show next (if not "none")
+        if (state.lo >= 0) {
+            layers[state.lo].setVisible(true);
+        }
+        setPermalink();
+    }
+
+    /**
      * Method: setPermalink
      * keeps permalinks synchronized with the map extent
      */
@@ -706,6 +727,7 @@ window.SViewerApp = (function() {
             if (state.theme && state.theme !== 'light') { linkParams.theme = state.theme; }
             if (state.position) { linkParams.position = '1'; }
             if (state.opacity !== null && state.opacity !== 1) { linkParams.opacity = state.opacity; }
+            if (state.lo >= 0) { linkParams.lo = state.lo; }
             // In embed mode, permalink must point to the standalone sViewer, not the host page
             var standaloneBase = window.SViewerBaseUrl
                 ? window.SViewerBaseUrl + 'index.html'
@@ -757,6 +779,9 @@ window.SViewerApp = (function() {
         }
         if (state.opacity !== null && state.opacity !== 1) {
             embedParams.opacity = state.opacity;
+        }
+        if (state.lo >= 0) {
+            embedParams.lo = state.lo;
         }
 
         var baseUrl = window.SViewerBaseUrl || config.baseUrl || window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
@@ -1373,6 +1398,7 @@ window.SViewerApp = (function() {
         // runtime state (mutable after init)
         state = {
             lb: 0,
+            lo: -1,
             theme: 'light',
             gficoord: null,
             gfiok: false,
@@ -1493,6 +1519,15 @@ window.SViewerApp = (function() {
             state.position = 1;
         }
 
+        // querystring param: overlay layer index
+        if (qs.lo !== undefined) {
+            var parsedLo = parseInt(qs.lo, 10);
+            var overlayLayers = config.layersOverlay;
+            if (!isNaN(parsedLo) && overlayLayers && parsedLo >= 0 && parsedLo < overlayLayers.length) {
+                state.lo = parsedLo;
+            }
+        }
+
         // querystring param: layer opacity (0–1)
         if (qs.opacity !== undefined) {
             var parsedOpacity = parseFloat(qs.opacity);
@@ -1551,6 +1586,18 @@ window.SViewerApp = (function() {
             map.addLayer(this.wmslayer);
         });
 
+        // adding overlay layers (above all data layers, not queryable)
+        if (config.layersOverlay && config.layersOverlay.length) {
+            $.each(config.layersOverlay, function() {
+                this.setVisible(false);
+                map.addLayer(this);
+            });
+            if (state.lo >= 0) {
+                config.layersOverlay[state.lo].setVisible(true);
+            }
+            $('#ovBt').show();
+        }
+
         // map recentering
         if (config.x&&config.y&&config.z) {
             view.setCenter([config.x, config.y]);
@@ -1601,6 +1648,7 @@ window.SViewerApp = (function() {
         $('#zoBt').on('click', function() { adjustZoom(-1); });
         $('#zeBt').on('click', zoomInit);
         $('#bgBt').on('click', switchBackground);
+        $('#ovBt').on('click', switchOverlay);
 
         // layer opacity slider
         function applyLayerOpacity(val) {
