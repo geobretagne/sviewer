@@ -1714,7 +1714,7 @@ window.SViewerApp = (function() {
             // Mobile browsers handle fullscreen via OS — button is redundant
             $('#fsBt').hide();
         }
-        if (!navigator.geolocation) {
+        if (!navigator.geolocation || !isCoarsePointer) {
             $('#zpBt').hide();
         }
 
