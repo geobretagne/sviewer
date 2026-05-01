@@ -6,6 +6,11 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Performance
+- `embed.js` now minified (`embed.min.js`) — loaded by `index.html` in production (−24% parse time on critical path)
+- jQuery and proj4 loaded in parallel via `Promise.all` before OpenLayers — saves ~100 ms waterfall on first load
+- Deleted `lib/bootstrap-icons/fonts/bootstrap-icons.woff2` (130 KB, unreferenced — subset at `build/` is used)
+
 ## [0.2.0] - 2026-05-01
 
 ### Added

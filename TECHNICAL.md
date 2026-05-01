@@ -742,7 +742,7 @@ embed.js
   ├── Détecte baseUrl depuis l'URL du script (window.SViewerBaseUrl)
   ├── Stocke les options dans window._svEmbedOptions
   ├── Crée le DOM (.sv-scope container)
-  ├── Charge en parallèle : jQuery → proj4 → OpenLayers → customConfig.js
+  ├── Charge en parallèle : jQuery + proj4 → OpenLayers → customConfig.js
   │   et en parallèle : Bootstrap JS + CSS sViewer (révèle le container)
   ├── Charge i18n.js
   └── Charge sviewer.js
@@ -812,14 +812,15 @@ console.log('Centre :', center);
 Les fichiers minifiés sont générés via npm :
 
 ```bash
-npm run minify        # sviewer.js → sviewer.min.js, sviewer.css → sviewer.min.css
+npm run minify        # embed.js → embed.min.js, sviewer.js → sviewer.min.js, sviewer.css → sviewer.min.css
 npm run build         # build OL custom bundle + minify
 ```
 
-`embed.js` charge les fichiers minifiés par défaut. Avec `?debug=1`, charge les sources non-minifiées.
+`index.html` charge `embed.min.js`. `embed.min.js` charge les fichiers minifiés par défaut. Avec `?debug=1`, charge les sources non-minifiées.
 
 | Source | Minifié | Outil |
 |--------|---------|-------|
+| `js/embed.js` | `js/embed.min.js` | terser |
 | `js/sviewer.js` | `js/sviewer.min.js` | terser |
 | `css/sviewer.css` | `css/sviewer.min.css` | postcss + cssnano |
 
@@ -853,7 +854,7 @@ La configuration cssnano est dans `postcss.config.js` (preset `default`).
 
 4. Committer les artefacts générés (`embed.js` stampé, fichiers `.min.*`) :
    ```bash
-   git add js/embed.js js/sviewer.min.js css/sviewer.min.css
+   git add js/embed.js js/embed.min.js js/sviewer.min.js css/sviewer.min.css
    git commit -m "chore: stamp vX.Y.Z + minify"
    ```
 
