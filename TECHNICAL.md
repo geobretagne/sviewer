@@ -213,6 +213,7 @@ Charge une configuration alternative au lieu de `customConfig.js`.
 - `c`, `lb`, `theme`
 - `opacity` (si ≠ 1)
 - `position` (si GPS actif)
+- `lo` (si couche overlay active)
 
 **Code d'intégration WebComponent :**
 - `x`, `y`, `z`
@@ -222,6 +223,7 @@ Charge une configuration alternative au lieu de `customConfig.js`.
 - `c`, `lb`, `theme`
 - `opacity` (si ≠ 1)
 - `position` (si GPS actif)
+- `lo` (si couche overlay active)
 
 Le paramètre `debug` n'est **pas** persistant.
 
@@ -253,8 +255,10 @@ Les options passées à `SViewer.init()` utilisent **exactement les mêmes noms*
 | `lb` | `number` | `?lb=` | Index du fond de carte |
 | `layers` | `string` | `?layers=` | Données à afficher (séparées par virgules) |
 | `c` | `string` | `?c=` | Nom du profil de configuration alternatif |
+| `theme` | `string` | `?theme=` | Thème d'affichage : `light` (défaut) ou `dark`. Sans paramètre : suit `prefers-color-scheme` |
 | `opacity` | `number` | `?opacity=` | Opacité des couches (0–1, défaut : 1) |
 | `position` | `1` | `?position=1` | Active le suivi GPS au chargement |
+| `lo` | `number` | `?lo=` | Index de la couche overlay active (0-based, absent = aucune) |
 
 Le bouton **HTML** du panneau de partage génère automatiquement un fragment `SViewer.init()` pour la vue courante.
 
@@ -339,32 +343,39 @@ restrictedExtent: [-20037508, -20037508, 20037508, 20037508]
 
 ### Fonds de carte
 
-Configuration des fonds ce carte disponibles dans le sélecteur :
+Configuration des fonds de carte disponibles dans le sélecteur. Utiliser `ol.source.XYZ` pour les services TMS/slippy map — pas besoin de boilerplate WMTS :
 
 ```javascript
 layersBackground: [
     new ol.layer.Tile({
-        source: new ol.source.WMTS({
-            attributions: ['© IGN'],
-            url: 'https://data.geopf.fr/wmts',
-            layer: 'ORTHOIMAGERY.ORTHOPHOTOS',
-            matrixSet: 'PM',
-            format: 'image/jpeg',
-            projection: ol.proj.get('EPSG:3857'),
-            tileGrid: new ol.tilegrid.WMTS({ /* ... */ })
+        source: new ol.source.XYZ({
+            attributions: ['© IGNF BD ORTHO'],
+            url: 'https://data.geopf.fr/tms/1.0.0/HR.ORTHOIMAGERY.ORTHOPHOTOS/{z}/{x}/{y}.jpeg',
+            minZoom: 6,
+            maxZoom: 19,
+            crossOrigin: 'anonymous'
         }),
-        title: 'Photos aériennes'
+        title: 'Photos aériennes IGN'
     }),
     new ol.layer.Tile({
-        source: new ol.source.OSM(),
-        title: 'OpenStreetMap'
+        source: new ol.source.XYZ({
+            attributions: ['Contributeurs OpenStreetmap'],
+            url: 'https://tile.geobretagne.fr/osm/tms/osm:grey/EPSG3857/{z}/{x}/{-y}.png',
+            maxResolution: 78271.51696402048,
+            crossOrigin: 'anonymous'
+        }),
+        title: 'Carte OpenStreetmap'
     })
 ]
 ```
 
 **Notes :**
-- Chaque donnée doit avoir un attribut `title`
-- Toutes les données doivent être en EPSG:3857
+- Chaque couche doit avoir un attribut `title`
+- Toutes les couches doivent être en EPSG:3857
+- `crossOrigin: 'anonymous'` requis sur toutes les sources pour que la fonction snapshot fonctionne
+- Services TMS geopf (`data.geopf.fr/tms`) : Y-axis = XYZ standard (`{y}`), malgré le profil TMS déclaré
+- Services MapProxy geobretagne (`tile.geobretagne.fr/osm/tms`) : Y-axis = TMS inversé (`{-y}`), `maxResolution` requis car la grille démarre à zoom 0 = 78271 m/px (décalage d'un niveau vs grille OL standard)
+- Pour WMTS (ex. Géoplateforme), utiliser un IIFE pour éviter les variables globales : `source: new ol.source.WMTS((function(){ /* ... */ return config; })())`
 
 ### Service de géocodage
 
@@ -602,6 +613,32 @@ Configuration dans `manifest.json` :
 - `display` : Mode `standalone` (app native)
 - `icons` : PNG 192x192 et 512x512
 - `theme_color` + `background_color` : Couleurs barre d'adresse/splash
+
+---
+
+## Fonctionnalités mobiles
+
+### Export image (snapshot)
+
+Bouton **Image** dans le panneau **Configuration** → télécharge la vue courante en PNG.
+
+**Implémentation :**
+- Écoute `map.once('rendercomplete')` puis lit `map.getViewport().querySelector('canvas')`
+- `canvas.toBlob()` → `URL.createObjectURL()` → `<a>.download` → clic programmatique
+- Entièrement côté client, zéro backend
+
+**Contrainte cross-origin :** les sources WMS sViewer ont `crossOrigin: 'anonymous'`. Les couches de fond/superposition définies dans `customConfig.js` doivent aussi avoir `crossOrigin: 'anonymous'` sur leur source OL, sinon le canvas est « tainted » et `toBlob()` lève une `SecurityError` (silencieuse, log console uniquement). Les services IGN Géoplateforme supportent CORS.
+
+### Agiter pour partager (shake to share)
+
+Secouer l'appareil copie le permalien dans le presse-papier + vibration haptic 200ms.
+
+**Implémentation :**
+- `DeviceMotionEvent` : somme des deltas `accelerationIncludingGravity` sur les 3 axes
+- Seuil : delta > 30, cooldown 1,2s
+- **iOS 13+** : `DeviceMotionEvent.requestPermission()` requis (API bloquée sans geste utilisateur). La permission est demandée silencieusement au premier clic dans l'interface, puis le listener est attaché.
+- **Android / desktop** : `attachShake()` immédiat, pas de permission
+- `navigator.vibrate(200)` : retour haptique (Android uniquement, ignoré iOS/desktop)
 
 ---
 

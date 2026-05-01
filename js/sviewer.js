@@ -45,11 +45,36 @@ window.SViewerApp = (function() {
     var svSpinner = {
         show: function() {
             $('#svSpinner').addClass('show');
+            loadingBar.start();
         },
         hide: function() {
             $('#svSpinner').removeClass('show');
+            loadingBar.end();
         }
     };
+
+    var loadingBar = (function() {
+        var count = 0;
+        var bar = null;
+        function el() {
+            if (!bar) { bar = document.getElementById('loadingBar'); }
+            return bar;
+        }
+        return {
+            start: function() {
+                count++;
+                var b = el();
+                if (b) { b.style.display = 'block'; b.removeAttribute('aria-hidden'); }
+            },
+            end: function() {
+                if (--count <= 0) {
+                    count = 0;
+                    var b = el();
+                    if (b) { b.style.display = 'none'; b.setAttribute('aria-hidden', 'true'); }
+                }
+            }
+        };
+    }());
 
     // Toggle inert on modal show/hide so focus is never trapped behind
     // an inert/aria-hidden ancestor (WCAG a11y requirement).
@@ -205,6 +230,7 @@ window.SViewerApp = (function() {
         function createLayer() {
             var wms_params = {
                 'url': self.options.wmsurl_ns,
+                crossOrigin: 'anonymous',
                 params: {
                     'LAYERS': self.options.layername,
                     'FORMAT': self.options.format,
@@ -219,9 +245,13 @@ window.SViewerApp = (function() {
             if (self.options.sldurl) {
                 wms_params.params.SLD = self.options.sldurl;
             }
+            var wmsSource = new ol.source.TileWMS(wms_params);
+            wmsSource.on('tileloadstart', function() { loadingBar.start(); });
+            wmsSource.on('tileloadend',   function() { loadingBar.end(); });
+            wmsSource.on('tileloaderror', function() { loadingBar.end(); });
             self.wmslayer = new ol.layer.Tile({
                 opacity: isNaN(self.options.opacity)?1:self.options.opacity,
-                source: new ol.source.TileWMS(wms_params)
+                source: wmsSource
             });
         }
 
@@ -530,6 +560,7 @@ window.SViewerApp = (function() {
             ElementSetName: 'full',
             OutputSchema: 'http://www.isotc211.org/2005/gmd'
         });
+        loadingBar.start();
         $.ajax({
             url: ajaxURL(url),
             type: 'GET',
@@ -545,7 +576,8 @@ window.SViewerApp = (function() {
             error: function(xhr, status, error) {
                 log('CSW GetRecordById failed:', status, error);
                 $('#legend').append($('<div class="alert alert-warning mt-2">').text(tr('msg.csw_error')));
-            }
+            },
+            complete: function() { loadingBar.end(); }
         });
     }
 
@@ -678,6 +710,27 @@ window.SViewerApp = (function() {
     }
 
     /**
+     * Cycles through overlay layers (none → 0 → 1 → … → none).
+     * Overlay layers sit above all data layers, are not queryable.
+     */
+    function switchOverlay() {
+        var layers = config.layersOverlay;
+        if (!layers || !layers.length) { return; }
+        var n = layers.length;
+        // hide current
+        if (state.lo >= 0 && state.lo < n) {
+            layers[state.lo].setVisible(false);
+        }
+        // advance: -1 → 0 → 1 → … → n-1 → -1
+        state.lo = (state.lo + 2) % (n + 1) - 1;
+        // show next (if not "none")
+        if (state.lo >= 0) {
+            layers[state.lo].setVisible(true);
+        }
+        setPermalink();
+    }
+
+    /**
      * Method: setPermalink
      * keeps permalinks synchronized with the map extent
      */
@@ -706,6 +759,7 @@ window.SViewerApp = (function() {
             if (state.theme && state.theme !== 'light') { linkParams.theme = state.theme; }
             if (state.position) { linkParams.position = '1'; }
             if (state.opacity !== null && state.opacity !== 1) { linkParams.opacity = state.opacity; }
+            if (state.lo >= 0) { linkParams.lo = state.lo; }
             // In embed mode, permalink must point to the standalone sViewer, not the host page
             var standaloneBase = window.SViewerBaseUrl
                 ? window.SViewerBaseUrl + 'index.html'
@@ -757,6 +811,9 @@ window.SViewerApp = (function() {
         }
         if (state.opacity !== null && state.opacity !== 1) {
             embedParams.opacity = state.opacity;
+        }
+        if (state.lo >= 0) {
+            embedParams.lo = state.lo;
         }
 
         var baseUrl = window.SViewerBaseUrl || config.baseUrl || window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
@@ -973,6 +1030,7 @@ window.SViewerApp = (function() {
                 '</wfs:GetFeature>'].join(' ');
 
             (function(lyr, term) {
+                loadingBar.start();
                 var xhr = $.ajax({
                     type: 'POST',
                     url: ajaxURL(lyr.wfs.url),
@@ -991,7 +1049,8 @@ window.SViewerApp = (function() {
                         if (jqXHR.statusText !== 'abort') {
                             log('WFS search error for', lyr.options.nslayername);
                         }
-                    }
+                    },
+                    complete: function() { loadingBar.end(); }
                 });
                 searchXhrs.push(xhr);
             }(layer, value));
@@ -1373,6 +1432,7 @@ window.SViewerApp = (function() {
         // runtime state (mutable after init)
         state = {
             lb: 0,
+            lo: -1,
             theme: 'light',
             gficoord: null,
             gfiok: false,
@@ -1384,9 +1444,11 @@ window.SViewerApp = (function() {
             opacity: config.layerOpacity !== undefined ? config.layerOpacity : 1
         };
 
-        // querystring param: theme (light | dark)
+        // querystring param: theme (light | dark), else OS preference
         if (qs.theme === 'light' || qs.theme === 'dark') {
             state.theme = qs.theme;
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            state.theme = 'dark';
         }
 
         // querystring param: lb (selected background)
@@ -1493,6 +1555,15 @@ window.SViewerApp = (function() {
             state.position = 1;
         }
 
+        // querystring param: overlay layer index
+        if (qs.lo !== undefined) {
+            var parsedLo = parseInt(qs.lo, 10);
+            var overlayLayers = config.layersOverlay;
+            if (!isNaN(parsedLo) && overlayLayers && parsedLo >= 0 && parsedLo < overlayLayers.length) {
+                state.lo = parsedLo;
+            }
+        }
+
         // querystring param: layer opacity (0–1)
         if (qs.opacity !== undefined) {
             var parsedOpacity = parseFloat(qs.opacity);
@@ -1551,6 +1622,18 @@ window.SViewerApp = (function() {
             map.addLayer(this.wmslayer);
         });
 
+        // adding overlay layers (above all data layers, not queryable)
+        if (config.layersOverlay && config.layersOverlay.length) {
+            $.each(config.layersOverlay, function() {
+                this.setVisible(false);
+                map.addLayer(this);
+            });
+            if (state.lo >= 0) {
+                config.layersOverlay[state.lo].setVisible(true);
+            }
+            $('#ovBt').show();
+        }
+
         // map recentering
         if (config.x&&config.y&&config.z) {
             view.setCenter([config.x, config.y]);
@@ -1601,6 +1684,27 @@ window.SViewerApp = (function() {
         $('#zoBt').on('click', function() { adjustZoom(-1); });
         $('#zeBt').on('click', zoomInit);
         $('#bgBt').on('click', switchBackground);
+        $('#ovBt').on('click', switchOverlay);
+
+        // fullscreen toggle
+        var fsContainer = document.querySelector('.sv-scope') || document.documentElement;
+        function updateFsButton() {
+            var active = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            $('#fsBt').attr('aria-pressed', String(active)).toggleClass('active', active)
+                .find('i').attr('class', active ? 'bi bi-fullscreen-exit' : 'bi bi-fullscreen');
+        }
+        $('#fsBt').on('click', function() {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+            } else {
+                (fsContainer.requestFullscreen || fsContainer.webkitRequestFullscreen).call(fsContainer);
+            }
+        });
+        document.addEventListener('fullscreenchange', updateFsButton);
+        document.addEventListener('webkitfullscreenchange', updateFsButton);
+        if (!document.fullscreenEnabled && !document.webkitFullscreenEnabled) {
+            $('#fsBt').hide();
+        }
 
         // layer opacity slider
         function applyLayerOpacity(val) {
@@ -1655,6 +1759,29 @@ window.SViewerApp = (function() {
             $('#embedCodeTextarea').val(embedCode);
             closePanel();
             svModal.open('#webcomponent');
+        });
+
+        // Snapshot button — export map canvas as PNG download
+        $(document).on('click', '#snapshotBtn', function() {
+            closePanel();
+            map.once('rendercomplete', function() {
+                var canvas = map.getViewport().querySelector('canvas');
+                if (!canvas) { return; }
+                try {
+                    canvas.toBlob(function(blob) {
+                        var url = URL.createObjectURL(blob);
+                        var a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'sviewer-' + Date.now() + '.png';
+                        a.click();
+                        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+                    });
+                } catch (e) {
+                    // Canvas tainted by cross-origin tiles lacking crossOrigin on their OL source
+                    console.warn('Snapshot failed (canvas tainted by cross-origin tiles):', e);
+                }
+            });
+            map.renderSync();
         });
 
         // Permalink button — close share panel and show link in modal
@@ -1773,6 +1900,43 @@ window.SViewerApp = (function() {
                 function() { queryMap(view.getCenter()); },
                 300
             );
+        }
+
+        // Shake to share — copy permalink to clipboard + haptic feedback
+        if (window.DeviceMotionEvent) {
+            var shakeLastTime = 0, shakeLastX, shakeLastY, shakeLastZ;
+            var shakeHandler = function(e) {
+                var a = e.accelerationIncludingGravity;
+                if (!a || a.x === null) { return; }
+                var now = Date.now();
+                if (now - shakeLastTime < 1200) { return; }
+                if (shakeLastX === undefined) {
+                    shakeLastX = a.x; shakeLastY = a.y; shakeLastZ = a.z;
+                    return;
+                }
+                var delta = Math.abs(a.x - shakeLastX) + Math.abs(a.y - shakeLastY) + Math.abs(a.z - shakeLastZ);
+                shakeLastX = a.x; shakeLastY = a.y; shakeLastZ = a.z;
+                if (delta > 30) {
+                    shakeLastTime = now;
+                    var url = $('#permalinkUrl').prop('href');
+                    if (!url) { return; }
+                    copyToClipboard(url, $('<span>'), function() { window.prompt('', url); });
+                    if (navigator.vibrate) { navigator.vibrate(200); }
+                }
+            };
+            var attachShake = function() {
+                window.addEventListener('devicemotion', shakeHandler);
+            };
+            // iOS 13+ requires explicit permission on user gesture
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                $(document).one('click', function() {
+                    DeviceMotionEvent.requestPermission().then(function(state) {
+                        if (state === 'granted') { attachShake(); }
+                    }).catch(function() {});
+                });
+            } else {
+                attachShake();
+            }
         }
     }
 

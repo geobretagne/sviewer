@@ -143,7 +143,7 @@
     left: 4px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 10px;
     z-index: 8000;
 }
 
@@ -230,6 +230,16 @@
 @keyframes sv-gps-pulse {
     0%, 100% { opacity: 1;   transform: scale(1); }
     50%       { opacity: 0.4; transform: scale(0.85); }
+}
+
+.sv-map-btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sv-map-btn-group + .sv-map-btn-group {
+    margin-top: 10px;
 }
 
 .sv-map-btn svg,
@@ -381,6 +391,37 @@
 .sv-map:active,
 .sv-map .ol-grabbing {
     cursor: grabbing;
+}
+
+.sv-map .ol-viewport {
+    background-color: #a8d5e8;
+}
+
+.sv-loading-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    z-index: 9000;
+    overflow: hidden;
+    background: transparent;
+}
+
+.sv-loading-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 40%;
+    height: 100%;
+    background: var(--sv-accent, #0d6efd);
+    animation: sv-loading-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes sv-loading-slide {
+    0%   { left: -40%; }
+    100% { left: 110%; }
 }
 
 /* Override OL's .ol-grab so our crosshair stays visible on hover */

@@ -26,25 +26,36 @@
         <div id="frameMap" class="sv-framemap">
             <div id="map" class="sv-map" tabindex="0" role="region" aria-label="Interactive map">
                 <div id="marker"></div>
+                <div id="loadingBar" class="sv-loading-bar" role="progressbar" aria-label="Loading" aria-hidden="true" style="display:none;"></div>
             </div>
 
             <div id="mapcontrols" class="sv-map-controls" role="group" aria-label="Map controls">
-                <button id="zeBt" type="button" accesskey="w" class="i18n btn btn-dark sv-map-btn" title="initial view" data-i18n-title="btn.initial_view" aria-label="Reset to initial view">
-                    <i class="bi bi-house" aria-hidden="true"></i>
-                </button>
-                <button id="ziBt" type="button" accesskey="+" class="i18n btn btn-dark sv-map-btn" title="zoom +" data-i18n-title="btn.zoom_in" aria-label="Zoom in">
-                    <i class="bi bi-zoom-in" aria-hidden="true"></i>
-                </button>
-                <button id="zoBt" type="button" accesskey="-" class="i18n btn btn-dark sv-map-btn" title="zoom -" data-i18n-title="btn.zoom_out" aria-label="Zoom out">
-                    <i class="bi bi-zoom-out" aria-hidden="true"></i>
-                </button>
-                <button id="bgBt" type="button" accesskey="b" class="i18n btn btn-dark sv-map-btn" title="background" data-i18n-title="btn.background" aria-label="Change background layer">
-                    <i class="bi bi-map" aria-hidden="true"></i>
-                </button>
-                <button id="zpBt" type="button" accesskey="g" class="i18n btn btn-dark sv-map-btn" title="Where am I ?" data-i18n-title="btn.where_am_i" aria-label="Locate my position" aria-pressed="false">
-                    <i class="bi bi-crosshair" aria-hidden="true"></i>
-                </button>
-                <span id="gpsAccuracy" class="sv-gps-accuracy" aria-live="polite" style="display:none;"></span>
+                <div class="sv-map-btn-group" role="group" aria-label="Navigation">
+                    <button id="zeBt" type="button" accesskey="w" class="i18n btn btn-dark sv-map-btn" title="initial view" data-i18n-title="btn.initial_view" aria-label="Reset to initial view">
+                        <i class="bi bi-house" aria-hidden="true"></i>
+                    </button>
+                    <button id="ziBt" type="button" accesskey="+" class="i18n btn btn-dark sv-map-btn" title="zoom +" data-i18n-title="btn.zoom_in" aria-label="Zoom in">
+                        <i class="bi bi-zoom-in" aria-hidden="true"></i>
+                    </button>
+                    <button id="zoBt" type="button" accesskey="-" class="i18n btn btn-dark sv-map-btn" title="zoom -" data-i18n-title="btn.zoom_out" aria-label="Zoom out">
+                        <i class="bi bi-zoom-out" aria-hidden="true"></i>
+                    </button>
+                    <button id="fsBt" type="button" accesskey="f" class="i18n btn btn-dark sv-map-btn" title="Full screen" data-i18n-title="btn.fullscreen" aria-label="Toggle full screen" aria-pressed="false">
+                        <i class="bi bi-fullscreen" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div class="sv-map-btn-group" role="group" aria-label="Layers">
+                    <button id="ovBt" type="button" accesskey="t" class="i18n btn btn-dark sv-map-btn" title="Overlay layer" data-i18n-title="btn.overlay" aria-label="Toggle overlay layer" style="display:none;">
+                        <i class="bi bi-layers" aria-hidden="true"></i>
+                    </button>
+                    <button id="bgBt" type="button" accesskey="b" class="i18n btn btn-dark sv-map-btn" title="background" data-i18n-title="btn.background" aria-label="Change background layer">
+                        <i class="bi bi-map" aria-hidden="true"></i>
+                    </button>
+                    <button id="zpBt" type="button" accesskey="g" class="i18n btn btn-dark sv-map-btn" title="Where am I ?" data-i18n-title="btn.where_am_i" aria-label="Locate my position" aria-pressed="false">
+                        <i class="bi bi-crosshair" aria-hidden="true"></i>
+                    </button>
+                    <span id="gpsAccuracy" class="sv-gps-accuracy" aria-live="polite" style="display:none;"></span>
+                </div>
             </div>
 
             <div id="panelcontrols" class="sv-map-panels" role="group" aria-label="Side panels">
@@ -92,6 +103,10 @@
                             <button type="button" class="webcomponent-btn btn btn-info" title="Get embed code">
                                 <i class="bi bi-code" aria-hidden="true"></i>
                                 HTML
+                            </button>
+                            <button type="button" id="snapshotBtn" class="i18n btn btn-success" title="Download map as image" data-i18n-title="btn.snapshot">
+                                <i class="bi bi-camera" aria-hidden="true"></i>
+                                <span class="i18n" data-i18n="btn.snapshot_label">Image</span>
                             </button>
                         </div>
                         <div class="mt-3 text-end" style="font-size:0.7em;opacity:0.4;user-select:none;" aria-hidden="true">

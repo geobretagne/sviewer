@@ -6,6 +6,29 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-05-01
+
+### Added
+- Overlay layer button — cycles through `layersOverlay[]` config array (`?lo=` URL param)
+- Fullscreen button in map controls (between zoom- and overlay) — webkit prefix for Safari/iOS
+- Snapshot button in share panel — exports map as PNG via `canvas.toBlob()`
+- Shake to share — `DeviceMotionEvent` copies permalink + haptic feedback; iOS 13+ permission handling
+- Auto dark mode — follows OS `prefers-color-scheme: dark` when no `?theme=` param set
+- Unified loading bar — 3 px indeterminate bar at top of map covers tiles, GFI, geocode, WFS, CSW
+
+### Changed
+- Map controls split into two semantic `role="group"` groups: navigation (home/zoom/fullscreen) and layers (overlay/background/GPS)
+- `customConfig.DIST.js`: WMTS boilerplate replaced with `ol.source.XYZ` — no global vars required
+- Background layers now use geopf TMS (`HR.ORTHOIMAGERY.ORTHOPHOTOS`) and MapProxy TMS (`osm:grey`)
+- Overlay changed from PLANIGNV2 to `GEOGRAPHICALNAMES.NAMES` (RGBA transparent labels, zoom 6–18)
+- Ocean/background color set to `#a8d5e8` via `.ol-viewport` CSS
+- All tile sources have `crossOrigin: 'anonymous'` for snapshot compatibility
+
+### Fixed
+- `scope is not defined` in `sviewer.js` fullscreen — replaced with `document.querySelector('.sv-scope')`
+- Fullscreen icon wrong unicode (U+F3DF / U+F3DE) — woff2 subset rebuilt with correct codepoints
+- Canvas taint on snapshot — `crossOrigin: 'anonymous'` on WMS `TileWMS` source
+
 ## [0.1.1] - 2026-04-30
 
 ### Added

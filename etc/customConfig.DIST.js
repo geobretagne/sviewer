@@ -9,18 +9,6 @@
  *   then edit customConfig.js with your settings
  */
 
-/**
- * mandatory to use IGN WMTS
- */
-var projection = ol.proj.get('EPSG:3857');
-var projectionExtent = projection.getExtent();
-var matrixIds = [];
-var resolutions = [];
-for (var i = 0; i <= 18; i++) {
-    matrixIds.push(i);
-    resolutions.push(156543.03392804097 / Math.pow(2, i));
-}
-
 customConfig = {
     /**
      * Map title displayed at the top
@@ -95,38 +83,41 @@ customConfig = {
      */
     layersBackground: [
         new ol.layer.Tile({
-            source: new ol.source.WMTS({
+            source: new ol.source.XYZ({
                 attributions: ['© IGNF BD ORTHO'],
-                url: 'https://data.geopf.fr/wmts',
-                layer: 'ORTHOIMAGERY.ORTHOPHOTOS',
-                matrixSet: 'PM',
-                format: 'image/jpeg',
-                projection: projection,
-                tileGrid: new ol.tilegrid.WMTS({
-                    origin: ol.extent.getTopLeft(projectionExtent),
-                    resolutions: resolutions,
-                    matrixIds: matrixIds
-                }),
-                style: 'normal'
+                url: 'https://data.geopf.fr/tms/1.0.0/HR.ORTHOIMAGERY.ORTHOPHOTOS/{z}/{x}/{y}.jpeg',
+                minZoom: 6,
+                maxZoom: 19,
+                crossOrigin: 'anonymous'
             }),
             title: 'Photos aériennes IGN'
         }),
         new ol.layer.Tile({
-            source: new ol.source.WMTS({
+            source: new ol.source.XYZ({
                 attributions: ['Contributeurs OpenStreetmap'],
-                url: 'https://tile.geobretagne.fr/osm/service?',
-                layer: 'osm:grey',
-                matrixSet: 'PM',
-                format: 'png',
-                projection: projection,
-                tileGrid: new ol.tilegrid.WMTS({
-                    origin: ol.extent.getTopLeft(projectionExtent),
-                    resolutions: resolutions,
-                    matrixIds: matrixIds
-                }),
-                style: 'normal'
+                url: 'https://tile.geobretagne.fr/osm/tms/osm:grey/EPSG3857/{z}/{x}/{-y}.png',
+                maxResolution: 78271.51696402048,
+                crossOrigin: 'anonymous'
             }),
             title: 'Carte OpenStreetmap'
+        })
+    ],
+
+    /**
+     * Overlay layers displayed above all data layers (place names, cadastre outlines, etc.)
+     * Cycled by the overlay button. Not queryable. Optional — omit or set [] to hide the button.
+     */
+    layersOverlay: [
+        new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                attributions: ['© IGN'],
+                url: 'https://data.geopf.fr/tms/1.0.0/GEOGRAPHICALNAMES.NAMES/{z}/{x}/{y}.png',
+                minZoom: 6,
+                maxZoom: 18,
+                crossOrigin: 'anonymous'
+            }),
+            opacity: 0.7,
+            title: 'Noms de lieux IGN'
         })
     ]
 

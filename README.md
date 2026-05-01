@@ -11,8 +11,11 @@ Qu'offre sViewer ?
 * **Contrôles tactiles** compatibles avec tous les appareils mobiles
 * **Recherche de lieux** basée sur la géoplateforme française
 * **Requêtes cartographiques** sur les services Web Map Service (WMS)
-* **Partage de cartes** avec permaliens, codes QR
-* **Thème clair et sombre** : bascule via l'interface ou le paramètre `theme`
+* **Partage de cartes** avec permaliens, codes QR et export image PNG
+* **Agiter pour partager** : secouer le téléphone copie le lien dans le presse-papier
+* **Thème clair et sombre** : bascule via l'interface, le paramètre `theme`, ou automatiquement selon le système
+* **Couche de superposition** : étiquettes, cadastre ou tout autre fond cyclable au-dessus des données
+* **Opacité des données** : curseur dans le panneau de documentation
 * **Langues multiples** : français, anglais, espagnol, allemand
 * **Progressive Web App (PWA)** : installable sur mobile comme une application native, fonctionne hors ligne
 * **Facilement intégrable** dans vos propres pages web
@@ -211,10 +214,32 @@ https://geobretagne.fr/sviewer/?theme=dark
 
 Le choix du thème peut aussi se faire interactivement via le panneau **Configuration** (bouton en haut à droite). Le thème sombre est mémorisé dans le permalink si sélectionné.
 
-Valeurs acceptées : `light` (défaut), `dark`.
+Valeurs acceptées : `light`, `dark`. Sans paramètre, sViewer suit automatiquement le thème du système d'exploitation (`prefers-color-scheme`).
 
 
-**Note :** Les paramètres `x`, `y`, `z`, `layers`, `md`, `q`, `s`, `theme`, `c` et `lb` sont **persistants** dans le permalien et QR code. Le paramètre `title` est inclus dans le code d'intégration WebComponent uniquement.
+**`opacity`** — Opacité des données
+
+Définit l'opacité initiale de toutes les données affichées (0 = transparent, 1 = opaque).
+
+```
+https://geobretagne.fr/sviewer/?layers=dreal_b:ae_casparcas&opacity=0.6
+```
+
+L'opacité peut aussi être ajustée via le curseur dans le panneau **Documentation**. La valeur est mémorisée dans le permalink.
+
+
+**`lo`** — Couche de superposition active
+
+Active une couche de superposition (étiquettes, cadastre, etc.) définie dans `customConfig.js`. La valeur est l'index dans le tableau `layersOverlay` (0 = première couche).
+
+```
+https://geobretagne.fr/sviewer/?lo=0
+```
+
+Le bouton de superposition (visible uniquement si `layersOverlay` est configuré) cycle entre les couches disponibles et l'état sans superposition.
+
+
+**Note :** Les paramètres `x`, `y`, `z`, `layers`, `md`, `q`, `s`, `theme`, `opacity`, `lo`, `c` et `lb` sont **persistants** dans le permalien et QR code. Le paramètre `title` est inclus dans le code d'intégration WebComponent uniquement.
 
 
 Configurations personnalisées
@@ -315,9 +340,19 @@ Notes techniques
 * **Technologie** : OpenLayers 10, jQuery 4.x, Bootstrap 5
 * **Projection** : EPSG:3857 (Web Mercator)
 * **Langue** : Français par défaut, mais supporte aussi l'anglais, l'espagnol et l'allemand
-* **Thèmes** : clair (défaut) et sombre, activables via `?theme=dark` ou l'option `{ theme: 'dark' }` en mode WebComponent
+* **Thèmes** : clair et sombre, détection automatique du thème système (`prefers-color-scheme`), surcharge via `?theme=dark` ou `{ theme: 'dark' }` en mode WebComponent
+* **Export image** : export PNG côté client via canvas OL (`canvas.toBlob`), sans serveur
+* **Agiter pour partager** : `DeviceMotionEvent` + `navigator.vibrate`. Permission explicite demandée sur iOS 13+
 * **Progressive Web App** : sViewer peut être installé comme application sur mobile (Android, iOS) et inclut un Service Worker pour le support hors ligne
 * **Serveur** : Aucun composant côté serveur requis. Inconvénient : CORS obligatoire sur les services.
+
+
+ToDo
+====
+
+* **Shake to share** : secouer le mobile pour placer un raccourci dans le presse-papier
+* **URL shortener**
+* **Voice search**
 
 
 Remerciements à
