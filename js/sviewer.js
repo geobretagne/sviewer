@@ -1654,7 +1654,7 @@ window.SViewerApp = (function() {
         $('#ovBt').on('click', switchOverlay);
 
         // fullscreen toggle
-        var fsContainer = scope || document.documentElement;
+        var fsContainer = document.querySelector('.sv-scope') || document.documentElement;
         function updateFsButton() {
             var active = !!(document.fullscreenElement || document.webkitFullscreenElement);
             $('#fsBt').attr('aria-pressed', String(active)).toggleClass('active', active)
