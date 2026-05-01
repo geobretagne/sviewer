@@ -255,6 +255,7 @@ Les options passées à `SViewer.init()` utilisent **exactement les mêmes noms*
 | `lb` | `number` | `?lb=` | Index du fond de carte |
 | `layers` | `string` | `?layers=` | Données à afficher (séparées par virgules) |
 | `c` | `string` | `?c=` | Nom du profil de configuration alternatif |
+| `theme` | `string` | `?theme=` | Thème d'affichage : `light` (défaut) ou `dark`. Sans paramètre : suit `prefers-color-scheme` |
 | `opacity` | `number` | `?opacity=` | Opacité des couches (0–1, défaut : 1) |
 | `position` | `1` | `?position=1` | Active le suivi GPS au chargement |
 | `lo` | `number` | `?lo=` | Index de la couche overlay active (0-based, absent = aucune) |
@@ -605,6 +606,32 @@ Configuration dans `manifest.json` :
 - `display` : Mode `standalone` (app native)
 - `icons` : PNG 192x192 et 512x512
 - `theme_color` + `background_color` : Couleurs barre d'adresse/splash
+
+---
+
+## Fonctionnalités mobiles
+
+### Export image (snapshot)
+
+Bouton **Image** dans le panneau **Configuration** → télécharge la vue courante en PNG.
+
+**Implémentation :**
+- Écoute `map.once('rendercomplete')` puis lit `map.getViewport().querySelector('canvas')`
+- `canvas.toBlob()` → `URL.createObjectURL()` → `<a>.download` → clic programmatique
+- Entièrement côté client, zéro backend
+
+**Contrainte cross-origin :** les sources WMS sViewer ont `crossOrigin: 'anonymous'`. Les couches de fond/superposition définies dans `customConfig.js` doivent aussi avoir `crossOrigin: 'anonymous'` sur leur source OL, sinon le canvas est « tainted » et `toBlob()` lève une `SecurityError` (silencieuse, log console uniquement). Les services IGN Géoplateforme supportent CORS.
+
+### Agiter pour partager (shake to share)
+
+Secouer l'appareil copie le permalien dans le presse-papier + vibration haptic 200ms.
+
+**Implémentation :**
+- `DeviceMotionEvent` : somme des deltas `accelerationIncludingGravity` sur les 3 axes
+- Seuil : delta > 30, cooldown 1,2s
+- **iOS 13+** : `DeviceMotionEvent.requestPermission()` requis (API bloquée sans geste utilisateur). La permission est demandée silencieusement au premier clic dans l'interface, puis le listener est attaché.
+- **Android / desktop** : `attachShake()` immédiat, pas de permission
+- `navigator.vibrate(200)` : retour haptique (Android uniquement, ignoré iOS/desktop)
 
 ---
 
