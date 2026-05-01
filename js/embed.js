@@ -38,11 +38,14 @@
                 <button id="zoBt" type="button" accesskey="-" class="i18n btn btn-dark sv-map-btn" title="zoom -" data-i18n-title="btn.zoom_out" aria-label="Zoom out">
                     <i class="bi bi-zoom-out" aria-hidden="true"></i>
                 </button>
-                <button id="bgBt" type="button" accesskey="b" class="i18n btn btn-dark sv-map-btn" title="background" data-i18n-title="btn.background" aria-label="Change background layer">
-                    <i class="bi bi-map" aria-hidden="true"></i>
+                <button id="fsBt" type="button" accesskey="f" class="i18n btn btn-dark sv-map-btn" title="Full screen" data-i18n-title="btn.fullscreen" aria-label="Toggle full screen" aria-pressed="false">
+                    <i class="bi bi-fullscreen" aria-hidden="true"></i>
                 </button>
                 <button id="ovBt" type="button" accesskey="t" class="i18n btn btn-dark sv-map-btn" title="Overlay layer" data-i18n-title="btn.overlay" aria-label="Toggle overlay layer" style="display:none;">
                     <i class="bi bi-layers" aria-hidden="true"></i>
+                </button>
+                <button id="bgBt" type="button" accesskey="b" class="i18n btn btn-dark sv-map-btn" title="background" data-i18n-title="btn.background" aria-label="Change background layer">
+                    <i class="bi bi-map" aria-hidden="true"></i>
                 </button>
                 <button id="zpBt" type="button" accesskey="g" class="i18n btn btn-dark sv-map-btn" title="Where am I ?" data-i18n-title="btn.where_am_i" aria-label="Locate my position" aria-pressed="false">
                     <i class="bi bi-crosshair" aria-hidden="true"></i>

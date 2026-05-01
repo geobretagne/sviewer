@@ -1653,6 +1653,26 @@ window.SViewerApp = (function() {
         $('#bgBt').on('click', switchBackground);
         $('#ovBt').on('click', switchOverlay);
 
+        // fullscreen toggle
+        var fsContainer = scope || document.documentElement;
+        function updateFsButton() {
+            var active = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            $('#fsBt').attr('aria-pressed', String(active)).toggleClass('active', active)
+                .find('i').attr('class', active ? 'bi bi-fullscreen-exit' : 'bi bi-fullscreen');
+        }
+        $('#fsBt').on('click', function() {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+            } else {
+                (fsContainer.requestFullscreen || fsContainer.webkitRequestFullscreen).call(fsContainer);
+            }
+        });
+        document.addEventListener('fullscreenchange', updateFsButton);
+        document.addEventListener('webkitfullscreenchange', updateFsButton);
+        if (!document.fullscreenEnabled && !document.webkitFullscreenEnabled) {
+            $('#fsBt').hide();
+        }
+
         // layer opacity slider
         function applyLayerOpacity(val) {
             state.opacity = val;
