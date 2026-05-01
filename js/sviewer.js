@@ -1912,7 +1912,12 @@ window.SViewerApp = (function() {
         if (config.lang !== 'en') {
             translateDOM('.i18n');
         }
-        
+
+        // Auto-open legend panel when a layer is loaded and screen is wide enough.
+        // Below 600px the panel covers the map entirely — too disorienting on first load.
+        if (config.layersQueryable.length > 0 && window.innerWidth > 600) {
+            togglePanel('legend');
+        }
 
         // resize map
         $(window).on("orientationchange resize pageshow", fixContentHeight);
