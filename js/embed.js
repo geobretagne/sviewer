@@ -12,7 +12,7 @@
 (function() {
 
     var SVIEWER_VERSION='0.2.0';
-    var SVIEWER_COMMIT='004cc01';
+    var SVIEWER_COMMIT='0aa9785';
 
     var debug = /[?&]debug=1/.test(window.location.search);
 
@@ -23,10 +23,12 @@
             </div>
         </div>
 
+        <a href="#map" class="sv-skip-to-content i18n" data-i18n="btn.skip_to_map">Skip to map</a>
+
         <div id="frameMap" class="sv-framemap">
             <div id="map" class="sv-map" tabindex="0" role="region" aria-label="Interactive map">
                 <div id="marker"></div>
-                <div id="loadingBar" class="sv-loading-bar" role="progressbar" aria-label="Loading" aria-hidden="true" style="display:none;"></div>
+                <div id="loadingBar" class="sv-loading-bar" aria-hidden="true" style="display:none;"></div>
             </div>
 
             <div id="mapcontrols" class="sv-map-controls" role="group" aria-label="Map controls">
@@ -45,9 +47,6 @@
                     </button>
                 </div>
                 <div class="sv-map-btn-group" role="group" aria-label="Layers">
-                    <button id="ovBt" type="button" accesskey="t" class="i18n btn btn-dark sv-map-btn" title="Overlay layer" data-i18n-title="btn.overlay" aria-label="Toggle overlay layer" style="display:none;">
-                        <i class="bi bi-layers" aria-hidden="true"></i>
-                    </button>
                     <button id="bgBt" type="button" accesskey="b" class="i18n btn btn-dark sv-map-btn" title="background" data-i18n-title="btn.background" aria-label="Change background layer">
                         <i class="bi bi-map" aria-hidden="true"></i>
                     </button>
@@ -69,13 +68,13 @@
                 <button type="button" accesskey="q" id="panelQueryBtn" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-panel="query" title="Query" data-i18n-title="btn.panel_query" aria-label="Query panel" aria-pressed="false">
                     <i class="bi bi-geo-fill" aria-hidden="true"></i>
                 </button>
-                <button type="button" accesskey="l" id="panelLocateBtn" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-panel="locate" title="Locate" data-i18n-title="btn.panel_locate" aria-label="Locate panel" aria-pressed="false">
+                <button type="button" accesskey="r" id="panelLocateBtn" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-panel="locate" title="Locate" data-i18n-title="btn.panel_locate" aria-label="Locate panel" aria-pressed="false">
                     <i class="bi bi-search" aria-hidden="true"></i>
                 </button>
             </div>
 
             <div id="sidepanel" class="sv-sidepanel" role="complementary" aria-label="Information panel">
-                <div id="sharePanel" class="sv-panel-section" data-section="share" aria-label="Map sharing panel" style="display: none;">
+                <div id="sharePanel" class="sv-panel-section" role="region" data-section="share" aria-label="Map sharing panel" style="display: none;">
                     <div class="sv-panel-header">
                         <h3 class="sv-panel-title i18n" data-i18n="panel.config.title">Configuration</h3>
                         <button type="button" class="sv-sidepanel-close" aria-label="Close panel">
@@ -84,25 +83,23 @@
                     </div>
                     <div class="sv-panel-content">
                         <div class="mb-3">
-                            <label for="shareSetTitle" class="form-label i18n" data-i18n="lbl.edit_title">Edit title</label>
-                            <input type="text" name="setTitle" id="shareSetTitle" class="form-control" value="" placeholder="Edit title">
+                            <label for="shareSetTitle" class="form-label i18n" data-i18n="lbl.edit_title">Map title</label>
+                            <input type="text" name="setTitle" id="shareSetTitle" class="form-control i18n" value="" placeholder="Map title" data-i18n-placeholder="lbl.edit_title">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label i18n" data-i18n="lbl.choose_appearance">Choose appearance</label>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="themeSwitch" role="switch" aria-checked="false">
                                 <label class="form-check-label i18n" for="themeSwitch" data-i18n="lbl.dark_theme">Dark theme</label>
                             </div>
                         </div>
-                        <label class="form-label i18n" data-i18n="lbl.reuse_map">Reuse this map</label>
                         <div class="sv-share-grid">
                             <button type="button" id="permalinkBtn" class="i18n btn btn-secondary" title="Link to this map" data-i18n-title="btn.permalink">
                                 <i class="bi bi-link" aria-hidden="true"></i>
                                 <span class="i18n" data-i18n="btn.permalink_label">Link</span>
                             </button>
-                            <button type="button" class="webcomponent-btn btn btn-info" title="Get embed code">
+                            <button type="button" class="webcomponent-btn i18n btn btn-info" title="Embed" data-i18n-title="btn.embed">
                                 <i class="bi bi-code" aria-hidden="true"></i>
-                                HTML
+                                <span class="i18n" data-i18n="btn.embed_label">Embed</span>
                             </button>
                             <button type="button" id="snapshotBtn" class="i18n btn btn-success" title="Download map as image" data-i18n-title="btn.snapshot">
                                 <i class="bi bi-camera" aria-hidden="true"></i>
@@ -122,6 +119,7 @@
                             <i class="bi bi-x-lg" aria-hidden="true"></i>
                         </button>
                     </div>
+                    <div id="legend" class="sv-legend sv-panel-content"></div>
                     <div class="sv-opacity-bar">
                         <label for="opacitySlider" class="sv-opacity-label i18n" data-i18n="lbl.layer_opacity">Opacity</label>
                         <input type="range" id="opacitySlider" class="sv-opacity-slider"
@@ -129,7 +127,6 @@
                                aria-label="Layer opacity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
                         <span id="opacityValue" class="sv-opacity-value" aria-hidden="true">100%</span>
                     </div>
-                    <div id="legend" class="sv-legend sv-panel-content"></div>
                 </div>
 
                 <div id="queryPanel" class="sv-panel-section" data-section="query" aria-label="Map query results" style="display: none;">
@@ -140,7 +137,6 @@
                         </button>
                     </div>
                     <div class="sv-panel-content">
-                        <label class="form-label i18n" data-i18n="lbl.query_the_map">Query the map</label>
                         <div id="queryContent" class="sv-panel-content" role="status" aria-live="polite"></div>
                     </div>
                 </div>
@@ -153,10 +149,9 @@
                         </button>
                     </div>
                     <div class="sv-panel-content">
-                        <form id="addressForm" method="post" action="#">
+                        <form id="addressForm" action="#">
                             <div class="mb-3">
-                                <label for="searchInput" class="form-label i18n" data-i18n="lbl.search_place">Search place</label>
-                                <input type="text" name="searchInput" id="searchInput" class="form-control i18n" value="" title="Search place" data-i18n-title="lbl.search_place" placeholder="ex: 10 rue Maurice Fabre, Rennes" data-i18n-placeholder="inp.search_placeholder" autocomplete="off">
+                                <input type="search" name="searchInput" id="searchInput" class="form-control i18n" value="" title="Search place" data-i18n-title="lbl.search_place" placeholder="ex: 10 rue Maurice Fabre, Rennes" data-i18n-placeholder="inp.search_placeholder" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list" aria-activedescendant="">
                             </div>
                         </form>
                         <div>
@@ -189,7 +184,7 @@
                         <div class="tab-content">
                             <div class="tab-pane fade show active" id="embedPaneIframe" role="tabpanel" aria-labelledby="embedTabIframe">
                                 <p class="sv-embed-hint i18n" data-i18n="panel.embed_modal.hint_iframe">For CMS and blog editors (WordPress, Squarespace…)</p>
-                                <textarea id="embedIframeTextarea" class="form-control" rows="4" readonly style="font-family: monospace; font-size: 0.85em;"></textarea>
+                                <textarea id="embedIframeTextarea" class="form-control" rows="4" readonly style="font-family: monospace; font-size: 0.85em;" aria-label="iFrame embed code"></textarea>
                                 <div class="d-flex justify-content-end mt-2">
                                     <button type="button" id="embedIframeCopyBtn" class="btn btn-secondary btn-sm i18n" data-i18n="btn.copy">
                                         <i class="bi bi-clipboard" aria-hidden="true"></i> Copy
@@ -198,7 +193,7 @@
                             </div>
                             <div class="tab-pane fade" id="embedPaneJs" role="tabpanel" aria-labelledby="embedTabJs">
                                 <p class="sv-embed-hint i18n" data-i18n="panel.embed_modal.hint_js">For developers integrating in an HTML page</p>
-                                <textarea id="embedCodeTextarea" class="form-control" rows="8" readonly style="font-family: monospace; font-size: 0.85em;"></textarea>
+                                <textarea id="embedCodeTextarea" class="form-control" rows="8" readonly style="font-family: monospace; font-size: 0.85em;" aria-label="JavaScript embed code"></textarea>
                                 <div class="d-flex justify-content-end mt-2">
                                     <button type="button" id="embedCodeCopyBtn" class="btn btn-secondary btn-sm i18n" data-i18n="btn.copy">
                                         <i class="bi bi-clipboard" aria-hidden="true"></i> Copy

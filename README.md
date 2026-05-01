@@ -12,7 +12,6 @@ Qu'offre sViewer ?
 * **Recherche de lieux** basée sur la géoplateforme française
 * **Requêtes cartographiques** sur les services Web Map Service (WMS)
 * **Partage de cartes** avec permaliens, codes QR et export image PNG
-* **Agiter pour partager** : secouer le téléphone copie le lien dans le presse-papier
 * **Thème clair et sombre** : bascule via l'interface, le paramètre `theme`, ou automatiquement selon le système
 * **Couche de superposition** : étiquettes, cadastre ou tout autre fond cyclable au-dessus des données
 * **Opacité des données** : curseur dans le panneau de documentation
@@ -342,7 +341,6 @@ Notes techniques
 * **Langue** : Français par défaut, mais supporte aussi l'anglais, l'espagnol et l'allemand
 * **Thèmes** : clair et sombre, détection automatique du thème système (`prefers-color-scheme`), surcharge via `?theme=dark` ou `{ theme: 'dark' }` en mode WebComponent
 * **Export image** : export PNG côté client via canvas OL (`canvas.toBlob`), sans serveur
-* **Agiter pour partager** : `DeviceMotionEvent` + `navigator.vibrate`. Permission explicite demandée sur iOS 13+
 * **Progressive Web App** : sViewer peut être installé comme application sur mobile (Android, iOS) et inclut un Service Worker pour le support hors ligne
 * **Serveur** : Aucun composant côté serveur requis. Inconvénient : CORS obligatoire sur les services.
 
@@ -350,7 +348,6 @@ Notes techniques
 ToDo
 ====
 
-* **Shake to share** : secouer le mobile pour placer un raccourci dans le presse-papier
 * **URL shortener**
 * **Voice search**
 

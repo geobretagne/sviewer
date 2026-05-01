@@ -1,4 +1,6 @@
-const CACHE_NAME = 'sviewer-v1';
+// CACHE_NAME is patched at build time by `npm run stamp` (commit hash suffix)
+const SVIEWER_COMMIT = '0aa9785';
+const CACHE_NAME = 'sviewer-' + SVIEWER_COMMIT;
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -44,24 +46,17 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Network-first: always try fresh, fall back to cache when offline.
+  // Avoids serving stale JS/CSS after a deploy.
   event.respondWith(
-    caches.match(request).then(response => {
-      if (response) {
-        return response;
-      }
-      return fetch(request).then(response => {
-        if (!response || response.status !== 200) {
-          return response;
-        }
+    fetch(request).then(response => {
+      if (response && response.status === 200) {
         const responseToCache = response.clone();
         caches.open(CACHE_NAME).then(cache => {
           cache.put(request, responseToCache);
         });
-        return response;
-      }).catch(() => {
-        // Return cached response or offline page
-        return caches.match(request);
-      });
-    })
+      }
+      return response;
+    }).catch(() => caches.match(request))
   );
 });

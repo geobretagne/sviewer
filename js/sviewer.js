@@ -683,49 +683,40 @@ window.SViewerApp = (function() {
     window.log = debugMode ? console.log : function() {};
 
     /**
-     * Iterates over background layers, sets the visibility according to the lb parameter.
-     * @param {Integer} lb layer index, optional
-     * @returns {ol.layer} layer the visible background layer
+     * Cycles to the next background preset (preset mode) or next background layer (legacy mode).
+     * Preset mode: config.backgroundPresets defined — each preset is {lb, lo} driving both
+     *   layersBackground[lb] and layersOverlay[lo] atomically. state.lb = preset index.
+     * Legacy mode: config.layersBackground only — cycles backgrounds independently, no overlay.
+     *   layersBackground is deprecated; prefer backgroundPresets in new configs.
+     * @param {Integer} idx optional preset/layer index to jump to directly
      */
-    function switchBackground (lb) {
-        var n = config.layersBackground.length;
-        var lv = 0;
-        // look for the visible layer and hide all layers
-        $.each(config.layersBackground, function(i, layer) {
-            if (layer.getVisible()) {
-                lv = i;
-            }
-            layer.setVisible(false);
-        });
-        // if lb specified, show this layer
-        if (typeof(lb) === 'number') {
-            config.layersBackground[state.lb].setVisible(true);
-        }
-        // otherwise, show next layer
-        else {
-            state.lb = (lv+1)%n;
-            config.layersBackground[state.lb].setVisible(true);
-        }
-        return config.layersBackground[state.lb];
-    }
+    function switchBackground(idx) {
+        if (config.backgroundPresets && config.backgroundPresets.length) {
+            // preset mode
+            var presets = config.backgroundPresets;
+            var n = presets.length;
+            state.lb = typeof idx === 'number' ? idx % n : (state.lb + 1) % n;
+            var preset = presets[state.lb];
 
-    /**
-     * Cycles through overlay layers (none → 0 → 1 → … → none).
-     * Overlay layers sit above all data layers, are not queryable.
-     */
-    function switchOverlay() {
-        var layers = config.layersOverlay;
-        if (!layers || !layers.length) { return; }
-        var n = layers.length;
-        // hide current
-        if (state.lo >= 0 && state.lo < n) {
-            layers[state.lo].setVisible(false);
-        }
-        // advance: -1 → 0 → 1 → … → n-1 → -1
-        state.lo = (state.lo + 2) % (n + 1) - 1;
-        // show next (if not "none")
-        if (state.lo >= 0) {
-            layers[state.lo].setVisible(true);
+            $.each(config.layersBackground, function(i, layer) {
+                layer.setVisible(i === preset.lb);
+            });
+            if (config.layersOverlay) {
+                $.each(config.layersOverlay, function(i, layer) {
+                    layer.setVisible(i === preset.lo);
+                });
+            }
+        } else {
+            // legacy mode: cycle layersBackground only
+            var bgLayers = config.layersBackground;
+            var nb = bgLayers.length;
+            var lv = 0;
+            $.each(bgLayers, function(i, layer) {
+                if (layer.getVisible()) { lv = i; }
+                layer.setVisible(false);
+            });
+            state.lb = typeof idx === 'number' ? idx % nb : (lv + 1) % nb;
+            bgLayers[state.lb].setVisible(true);
         }
         setPermalink();
     }
@@ -740,16 +731,11 @@ window.SViewerApp = (function() {
             var permalinkHash, permalinkQuery;
             var c = view.getCenter();
             var linkParams = {};
-            if (state.gficoord && state.gfiz && state.gfiok) {
-                linkParams.x = encodeURIComponent(Math.round(state.gficoord[0]));
-                linkParams.y = encodeURIComponent(Math.round(state.gficoord[1]));
-                linkParams.z = encodeURIComponent(state.gfiz);
+            linkParams.x = encodeURIComponent(Math.round(c[0]));
+            linkParams.y = encodeURIComponent(Math.round(c[1]));
+            linkParams.z = encodeURIComponent(view.getZoom());
+            if (state.gficoord && state.gfiok) {
                 linkParams.q = '1';
-            }
-            else {
-                linkParams.x = encodeURIComponent(Math.round(c[0]));
-                linkParams.y = encodeURIComponent(Math.round(c[1]));
-                linkParams.z = encodeURIComponent(view.getZoom());
             }
             linkParams.lb = encodeURIComponent(state.lb);
             if (config.customConfigName) { linkParams.c = config.customConfigName; }
@@ -759,7 +745,6 @@ window.SViewerApp = (function() {
             if (state.theme && state.theme !== 'light') { linkParams.theme = state.theme; }
             if (state.position) { linkParams.position = '1'; }
             if (state.opacity !== null && state.opacity !== 1) { linkParams.opacity = state.opacity; }
-            if (state.lo >= 0) { linkParams.lo = state.lo; }
             // In embed mode, permalink must point to the standalone sViewer, not the host page
             var standaloneBase = window.SViewerBaseUrl
                 ? window.SViewerBaseUrl + 'index.html'
@@ -817,10 +802,6 @@ window.SViewerApp = (function() {
         if (state.opacity !== null && state.opacity !== 1) {
             embedParams.opacity = state.opacity;
         }
-        if (state.lo >= 0) {
-            embedParams.lo = state.lo;
-        }
-
         var baseUrl = window.SViewerBaseUrl || config.baseUrl || window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
         var code = '<div id="sviewer-map" style="width: 100%; height: 500px;"></div>\n' +
                    '<script src="' + baseUrl + 'js/embed.js"><\/script>\n' +
@@ -856,7 +837,7 @@ window.SViewerApp = (function() {
                         var coords   = ol.proj.transform(feature.geometry.coordinates, 'EPSG:4326', config.projcode);
                         var label    = props.label || props.name || coords.join(', ');
                         return renderSearchItem(
-                            { label: label },
+                            { label: label, icon: 'bi-geo-alt-fill' },
                             { extent: [], coordinates: coords, zoom: zoomByType[props.type] || 16 }
                         );
                     });
@@ -950,9 +931,9 @@ window.SViewerApp = (function() {
                         togglePanel('query');
                     }
                     else {
-                        // disable jquery ajax for links
-                        togglePanel('query');
-                        $(this).append($('<p class="sv-noitem">').text(tr('msg.no_item_found')));
+                        // empty response: keep panel closed, notify via toast
+                        $(this).remove();
+                        messagePopup(tr('msg.no_item_found'));
                         state.gfiok = false;
                     }
                     svSpinner.hide();
@@ -968,10 +949,16 @@ window.SViewerApp = (function() {
     /**
      * clear getFeatureInfo
      */
+    function setQueryEmptyHint() {
+        $('#queryContent').html(
+            $('<p class="sv-noitem">').text(tr('lbl.query_the_map'))
+        );
+    }
+
     function clearQuery() {
         $('#marker').hide('fast');
         closePanel();
-        $('#queryContent').text(tr('lbl.query_the_map'));
+        setQueryEmptyHint();
         state.gficoord = null;
         state.gfiz = null;
         state.gfiok = false;
@@ -1090,10 +1077,13 @@ window.SViewerApp = (function() {
      * @param {Object} clickData     event.data passed to onSearchItemClick
      * @returns {jQuery} the <li> element
      */
+    var searchItemIdx = 0;
+
     function renderSearchItem(templateData, clickData) {
         if (!templateData.ariaLabel) {
             templateData.ariaLabel = templateData.label || '—';
         }
+        templateData.idx = searchItemIdx++;
         return $(Mustache.render(window.svTemplates['search-item'], templateData))
             .find('.sv-search-item-link')
             .on('click', clickData, onSearchItemClick)
@@ -1106,8 +1096,28 @@ window.SViewerApp = (function() {
      * @param {String} label section header text
      * @param {String} term search term used to highlight matching values
      */
-    function featuresToList(features, label, term) {
-        var searchTerm = (term || '').toLowerCase();
+    var WFS_TITLE_FIELD_HINTS = ['titre', 'title', 'nom', 'name', 'label', 'libelle', 'libellé', 'denomination', 'dénomination', 'designation', 'désignation'];
+
+    function detectTitleField(keys) {
+        var lower = keys.map(function(k) { return k.toLowerCase(); });
+        for (var i = 0; i < WFS_TITLE_FIELD_HINTS.length; i++) {
+            var idx = lower.indexOf(WFS_TITLE_FIELD_HINTS[i]);
+            if (idx >= 0) { return keys[idx]; }
+        }
+        /* fallback: first string key that isn't an id/fid/gid */
+        for (var j = 0; j < keys.length; j++) {
+            if (!/^(f?id|gid|objectid|pk)\b/i.test(keys[j])) { return keys[j]; }
+        }
+        return null;
+    }
+
+    function isNilValue(val) {
+        if (val === null || val === undefined) { return true; }
+        var s = String(val).trim().toLowerCase();
+        return s === '' || s === 'nil' || s === 'null' || s === 'undefined';
+    }
+
+    function featuresToList(features, label) {
         var $results = $("#searchResults");
         $results.append(Mustache.render(window.svTemplates['search-header'], {
             label: label || tr('msg.top_layer')
@@ -1115,23 +1125,25 @@ window.SViewerApp = (function() {
 
         $.each(features, function(i, feature) {
             var geom       = feature.getGeometry(),
+                props      = feature.getProperties(),
                 fieldItems = [],
-                title      = [];
+                titleField = detectTitleField(Object.keys(props));
 
-            $.map(feature.getProperties(), function(val, key) {
-                if (val === null || val === undefined) { return; }
-                if (typeof val === 'object' && typeof val.getType === 'function') { return; }
+            $.map(props, function(val, key) {
+                /* skip geometry objects (ol.geom.*); null check required first: typeof null === 'object' in JS */
+                if (val !== null && typeof val === 'object' && typeof val.getType === 'function') { return; }
+                if (isNilValue(val)) { return; }
+                if (key === titleField) { return; } /* rendered separately as label */
                 var str = (val instanceof Date) ? val.toISOString().substring(0, 10) : String(val);
                 fieldItems.push({ key: key, val: str });
-                if (typeof val === 'string' && searchTerm && val.toLowerCase().indexOf(searchTerm) !== -1) {
-                    title.push(val);
-                }
             });
 
+            var titleVal = titleField && !isNilValue(props[titleField]) ? String(props[titleField]) : '';
+            /* fallback ariaLabel from fields if no title found */
+            var ariaLabel = titleVal || fieldItems.map(function(f) { return f.val; }).join(', ');
             var center = geom.getType() === 'Point' ? geom.getCoordinates() : ol.extent.getCenter(geom.getExtent());
-            var ariaLabel = title.length ? title.join(', ') : fieldItems.map(function(f) { return f.val; }).join(', ');
             renderSearchItem(
-                { label: title.join(', '), ariaLabel: ariaLabel, fields: fieldItems.length ? [{ items: fieldItems }] : [] },
+                { label: titleVal, ariaLabel: ariaLabel, icon: 'bi-database', fields: fieldItems.length ? [{ items: fieldItems }] : [] },
                 { extent: geom.getExtent(), coordinates: center, queryGFI: true }
             ).appendTo($results);
         });
@@ -1154,7 +1166,10 @@ window.SViewerApp = (function() {
      */
     function searchPlace() {
         abortSearchXhrs();
+        searchItemIdx = 0;
         $("#searchResults").html("");
+        $('#locateMsg').text('');
+        $('#searchInput').attr('aria-expanded', 'true').attr('aria-activedescendant', '');
         try {
             openLsRequest($("#searchInput").val());
             if (state.search) {
@@ -1165,6 +1180,18 @@ window.SViewerApp = (function() {
             messagePopup(tr('msg.geolocation_failed'));
             svSpinner.hide();
         }
+        // after all in-flight searches settle, show "no results" if list still empty
+        var poll = setInterval(function() {
+            pruneSearchXhrs();
+            var openLsDone = !openLsXhr || openLsXhr.readyState === 4;
+            if (searchXhrs.length === 0 && openLsDone) {
+                clearInterval(poll);
+                if ($("#searchResults").is(':empty')) {
+                    $('#locateMsg').text(tr('msg.no_item_found'));
+                    $('#searchInput').attr('aria-expanded', 'false');
+                }
+            }
+        }, 200);
         return false;
     }
 
@@ -1198,6 +1225,7 @@ window.SViewerApp = (function() {
         $('#frameMap').addClass('panel-open');
         if (panelName === 'share') { setPermalink(); }
         if (panelName === 'locate') { setTimeout(function() { $('#searchInput').focus(); }, 50); }
+        if (panelName === 'query' && !$('#queryContent').text().trim()) { setQueryEmptyHint(); }
     }
 
     function closePanel() { resetPanel(); }
@@ -1437,7 +1465,6 @@ window.SViewerApp = (function() {
         // runtime state (mutable after init)
         state = {
             lb: 0,
-            lo: -1,
             theme: 'light',
             gficoord: null,
             gfiok: false,
@@ -1456,9 +1483,12 @@ window.SViewerApp = (function() {
             state.theme = 'dark';
         }
 
-        // querystring param: lb (selected background)
+        // querystring param: lb — preset index (preset mode) or background index (legacy mode)
         if (qs.lb) {
-            state.lb = parseInt(qs.lb) % config.layersBackground.length;
+            var lbPool = config.backgroundPresets && config.backgroundPresets.length
+                ? config.backgroundPresets
+                : config.layersBackground;
+            state.lb = parseInt(qs.lb, 10) % lbPool.length;
         }
 
         // querystring param: layers
@@ -1560,15 +1590,6 @@ window.SViewerApp = (function() {
             state.position = 1;
         }
 
-        // querystring param: overlay layer index
-        if (qs.lo !== undefined) {
-            var parsedLo = parseInt(qs.lo, 10);
-            var overlayLayers = config.layersOverlay;
-            if (!isNaN(parsedLo) && overlayLayers && parsedLo >= 0 && parsedLo < overlayLayers.length) {
-                state.lo = parsedLo;
-            }
-        }
-
         // querystring param: layer opacity (0–1)
         if (qs.opacity !== undefined) {
             var parsedOpacity = parseFloat(qs.opacity);
@@ -1620,7 +1641,6 @@ window.SViewerApp = (function() {
                 map.addLayer(this);
             }
         );
-        switchBackground(state.lb);
 
         // adding queryable WMS layers from querystring
         $.each(config.layersQueryable, function() {
@@ -1628,16 +1648,16 @@ window.SViewerApp = (function() {
         });
 
         // adding overlay layers (above all data layers, not queryable)
+        // in preset mode, visibility is driven by switchBackground() below
         if (config.layersOverlay && config.layersOverlay.length) {
             $.each(config.layersOverlay, function() {
                 this.setVisible(false);
                 map.addLayer(this);
             });
-            if (state.lo >= 0) {
-                config.layersOverlay[state.lo].setVisible(true);
-            }
-            $('#ovBt').show();
         }
+
+        // apply initial background (and overlay in preset mode)
+        switchBackground(state.lb);
 
         // map recentering
         if (config.x&&config.y&&config.z) {
@@ -1689,7 +1709,6 @@ window.SViewerApp = (function() {
         $('#zoBt').on('click', function() { adjustZoom(-1); });
         $('#zeBt').on('click', zoomInit);
         $('#bgBt').on('click', switchBackground);
-        $('#ovBt').on('click', switchOverlay);
 
         // fullscreen toggle
         var fsContainer = document.querySelector('.sv-scope') || document.documentElement;
@@ -1741,16 +1760,58 @@ window.SViewerApp = (function() {
         $('#zpBt').on('click', toggleTracking);
         if (state.position) { startTracking(); }
 
+        // prevent form submit (Enter key) from reloading the page
+        $('#addressForm').on('submit', function(e) {
+            e.preventDefault();
+            searchPlace();
+        });
+
         // search with autocomplete - trigger on keyup after 3 characters, debounced
         var searchDebounceTimer = null;
-        $('#searchInput').on('keyup', function() {
+        $('#searchInput').on('keyup focus', function(e) {
             var query = $(this).val();
+            // keyboard navigation within results
+            if (e.type === 'keyup') {
+                var key = e.key;
+                var $items = $('#searchResults .sv-search-item');
+                var $active = $('#searchResults .sv-search-item.sv-search-active');
+                var idx = $items.index($active);
+                if (key === 'ArrowDown') {
+                    e.preventDefault();
+                    var $next = idx < $items.length - 1 ? $items.eq(idx + 1) : $items.eq(0);
+                    $active.removeClass('sv-search-active').attr('aria-selected', 'false');
+                    $next.addClass('sv-search-active').attr('aria-selected', 'true');
+                    $('#searchInput').attr('aria-activedescendant', $next.attr('id'));
+                    return;
+                }
+                if (key === 'ArrowUp') {
+                    e.preventDefault();
+                    var $prev = idx > 0 ? $items.eq(idx - 1) : $items.last();
+                    $active.removeClass('sv-search-active').attr('aria-selected', 'false');
+                    $prev.addClass('sv-search-active').attr('aria-selected', 'true');
+                    $('#searchInput').attr('aria-activedescendant', $prev.attr('id'));
+                    return;
+                }
+                if (key === 'Enter' && $active.length) {
+                    e.preventDefault();
+                    $active.find('.sv-search-item-link').trigger('click');
+                    return;
+                }
+                if (key === 'Escape') {
+                    $("#searchResults").html("");
+                    $('#searchInput').attr('aria-expanded', 'false').attr('aria-activedescendant', '');
+                    return;
+                }
+            }
             clearTimeout(searchDebounceTimer);
             if (query.length >= 3) {
+                $('#locateMsg').text('');
                 searchDebounceTimer = setTimeout(searchPlace, 350);
             } else {
                 abortSearchXhrs();
                 $("#searchResults").html("");
+                $('#searchInput').attr('aria-expanded', 'false').attr('aria-activedescendant', '');
+                $('#locateMsg').text(tr('msg.search_hint'));
             }
         });
 
@@ -1913,6 +1974,11 @@ window.SViewerApp = (function() {
             translateDOM('.i18n');
         }
 
+        // optional: override search placeholder from customConfig
+        if (config.searchPlaceholder) {
+            $('#searchInput').prop('placeholder', config.searchPlaceholder);
+        }
+
         // Auto-open legend panel when a layer is loaded and screen is wide enough.
         // Below 600px the panel covers the map entirely — too disorienting on first load.
         if (config.layersQueryable.length > 0 && window.innerWidth > 600) {
@@ -1930,42 +1996,6 @@ window.SViewerApp = (function() {
             );
         }
 
-        // Shake to share — copy permalink to clipboard + haptic feedback
-        if (window.DeviceMotionEvent) {
-            var shakeLastTime = 0, shakeLastX, shakeLastY, shakeLastZ;
-            var shakeHandler = function(e) {
-                var a = e.accelerationIncludingGravity;
-                if (!a || a.x === null) { return; }
-                var now = Date.now();
-                if (now - shakeLastTime < 1200) { return; }
-                if (shakeLastX === undefined) {
-                    shakeLastX = a.x; shakeLastY = a.y; shakeLastZ = a.z;
-                    return;
-                }
-                var delta = Math.abs(a.x - shakeLastX) + Math.abs(a.y - shakeLastY) + Math.abs(a.z - shakeLastZ);
-                shakeLastX = a.x; shakeLastY = a.y; shakeLastZ = a.z;
-                if (delta > 30) {
-                    shakeLastTime = now;
-                    var url = $('#permalinkUrl').prop('href');
-                    if (!url) { return; }
-                    copyToClipboard(url, $('<span>'), function() { window.prompt('', url); });
-                    if (navigator.vibrate) { navigator.vibrate(200); }
-                }
-            };
-            var attachShake = function() {
-                window.addEventListener('devicemotion', shakeHandler);
-            };
-            // iOS 13+ requires explicit permission on user gesture
-            if (typeof DeviceMotionEvent.requestPermission === 'function') {
-                $(document).one('click', function() {
-                    DeviceMotionEvent.requestPermission().then(function(state) {
-                        if (state === 'granted') { attachShake(); }
-                    }).catch(function() {});
-                });
-            } else {
-                attachShake();
-            }
-        }
     }
 
 
