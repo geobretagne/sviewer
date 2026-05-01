@@ -232,6 +232,8 @@
     50%       { opacity: 0.4; transform: scale(0.85); }
 }
 
+#bgBt { margin-top: 6px; }
+
 .sv-map-btn svg,
 .sv-map-btn .icon-svg {
     width: 20px;
