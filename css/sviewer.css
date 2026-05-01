@@ -818,10 +818,11 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 0 12px;
-    border-bottom: 1px solid var(--sv-border);
-    margin-bottom: 12px;
+    padding: 10px 0 4px;
+    border-top: 1px solid var(--sv-border);
+    margin-top: 8px;
     flex-shrink: 0;
+    opacity: 0.7;
 }
 
 .sv-opacity-label {
@@ -875,14 +876,16 @@
     background-color: var(--sv-surface);
 }
 .sv-md-title {
-    font-size: x-small;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 2px 0;
+    line-height: 1.3;
 }
 .sv-md-attrib {
     display: block;
-    float: right;
-    text-align: right;
-    max-width: 80px;
-    font-size: x-small;
+    font-size: 0.75rem;
+    color: var(--sv-fg-muted);
+    margin-bottom: 8px;
 }
 .sv-md-logo {
     max-height: 64px;
@@ -893,6 +896,14 @@
     max-width: 320px;
     display: block;
     margin: 0 auto;
+}
+.sv-md-abstract {
+    font-size: 0.8rem;
+    margin: 8px 0;
+    color: var(--sv-fg-muted);
+}
+.sv-sidepanel .sv-md-abstract {
+    color: var(--sv-panel-fg-muted);
 }
 .sv-md-doclink {
     text-align: center;
@@ -924,6 +935,7 @@
 
 .sv-sidepanel .sv-md-attrib {
     color: var(--sv-panel-fg-muted);
+    font-size: 0.75rem;
 }
 
 .sv-sidepanel .sv-md-legend {
@@ -1117,11 +1129,30 @@
     background-color: var(--sv-panel-input-bg-hover);
 }
 
+.sv-search-item.sv-search-active {
+    background-color: var(--sv-accent-muted, rgba(0,100,200,0.12));
+    outline: 2px solid var(--sv-accent);
+    outline-offset: -2px;
+}
+
 /* WFS search result item fields */
 .sv-search-item-link {
-    display: block;
+    display: flex;
+    align-items: center;
+    min-height: 44px;
     text-decoration: none;
     color: inherit;
+}
+.sv-search-item-icon {
+    flex-shrink: 0;
+    width: 1.1em;
+    margin-right: 10px;
+    color: var(--sv-panel-fg-muted);
+    font-size: 1em;
+}
+.sv-search-item-body {
+    flex: 1;
+    min-width: 0;
 }
 .sv-search-item-fields {
     display: grid;
@@ -1301,4 +1332,55 @@
    in embed mode, data-theme is on .sv-scope, not :root, so this never fires */
 :root[data-theme="dark"] body {
     background-color: var(--sv-bg);
+}
+
+@media print {
+    /* Always hide interactive UI */
+    .sv-map-controls,
+    .sv-map-panels,
+    .sv-loading-bar,
+    .ol-attribution,
+    .sv-gps-accuracy,
+    .sv-sidepanel-close,
+    .sv-opacity-slider { display: none !important; }
+
+    /* Framemap becomes a flex row so map + open panel sit side by side */
+    .sv-framemap {
+        display: flex !important;
+        flex-direction: row !important;
+        width: 100% !important;
+        height: 100vh !important;
+        overflow: visible !important;
+        position: static !important;
+    }
+
+    /* Map fills remaining width */
+    .sv-map {
+        flex: 1 1 0% !important;
+        height: 100% !important;
+        min-width: 0 !important;
+    }
+
+    /* Open panel: static, fixed width, full height, scrollable content visible */
+    .sv-sidepanel.active {
+        position: static !important;
+        flex: 0 0 35% !important;
+        width: 35% !important;
+        max-width: 35% !important;
+        height: 100% !important;
+        max-height: none !important;
+        overflow: visible !important;
+        box-shadow: none !important;
+        border-left: 1px solid #ccc !important;
+        border-radius: 0 !important;
+    }
+
+    /* Closed panel: fully hidden */
+    .sv-sidepanel:not(.active) { display: none !important; }
+
+    /* Panel content must not clip */
+    .sv-panel-content {
+        overflow: visible !important;
+        max-height: none !important;
+    }
 }

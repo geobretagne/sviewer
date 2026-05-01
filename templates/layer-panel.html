@@ -1,16 +1,14 @@
 <div class="sv-md">
+  <h4 class="sv-md-title">{{title}}</h4>
   {{#attribution}}
-  <span class="sv-md-attrib">{{source}} :
+  <p class="sv-md-attrib">
+    {{#logo}}<img class="sv-md-logo" src="{{url}}" alt=""><br>{{/logo}}
     <a href="{{url}}" target="_blank" rel="noopener noreferrer"
-       aria-label="{{title}} ({{newTab}})">
-      {{#logo}}<img class="sv-md-logo" src="{{url}}" alt=""><br>{{/logo}}
-      {{title}}
-    </a>
-  </span>
+       aria-label="{{title}} ({{newTab}})">{{title}}</a>
+  </p>
   {{/attribution}}
-  <p><h4 class="sv-md-title">{{title}}</h4></p>
-  <p class="sv-md-abstract">{{abstract}}</p>
   <img class="sv-md-legend" role="img" src="{{legendUrl}}" alt="{{legendAlt}}">
+  <p class="sv-md-abstract">{{abstract}}</p>
   <div class="sv-md-doclink">
     {{#metadataLinks}}
     <a href="{{url}}" target="_blank" rel="noopener noreferrer"

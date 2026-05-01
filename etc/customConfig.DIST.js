@@ -56,6 +56,11 @@ customConfig = {
     maxWfsSearchFeatures: 4,
 
     /**
+     * Optional: override search input placeholder (otherwise uses i18n default)
+     */
+    // searchPlaceholder: 'ex: 1 rue de la Paix, Paris',
+
+    /**
      * GPS tracking: interval in seconds between position updates (?position=1)
      */
     gpsTrackingInterval: 5,
@@ -78,10 +83,16 @@ customConfig = {
     openLSGeocodeUrl: "https://data.geopf.fr/geocodage/search",
 
     /**
-     * Background layers (must be in EPSG:3857 Web Mercator)
-     * Configure the base maps available in the layer switcher
+     * Layer pools used by backgroundPresets below.
+     * layersBackground: base maps (opaque, mutually exclusive).
+     * layersOverlay: label/annotation layers shown above data (not queryable). Optional.
+     *
+     * @deprecated layersBackground alone (without backgroundPresets) still works for backward
+     *   compatibility: the background button cycles through backgrounds, no overlay support.
+     *   New configs should always define backgroundPresets.
      */
     layersBackground: [
+        // [0] Photo aérienne IGN
         new ol.layer.Tile({
             source: new ol.source.WMTS((function() {
                 var proj = ol.proj.get('EPSG:3857');
@@ -105,6 +116,7 @@ customConfig = {
             })()),
             title: 'Photos aériennes IGN'
         }),
+        // [1] Carte OpenStreetMap
         new ol.layer.Tile({
             source: new ol.source.XYZ({
                 attributions: ['Contributeurs OpenStreetmap'],
@@ -116,11 +128,8 @@ customConfig = {
         })
     ],
 
-    /**
-     * Overlay layers displayed above all data layers (place names, cadastre outlines, etc.)
-     * Cycled by the overlay button. Not queryable. Optional — omit or set [] to hide the button.
-     */
     layersOverlay: [
+        // [0] Noms de lieux IGN
         new ol.layer.Tile({
             source: new ol.source.XYZ({
                 attributions: ['© IGN'],
@@ -129,9 +138,21 @@ customConfig = {
                 maxZoom: 18,
                 crossOrigin: 'anonymous'
             }),
-            opacity: 0.7,
+            opacity: 1,
             title: 'Noms de lieux IGN'
         })
+    ],
+
+    /**
+     * Background presets — single cycle button replaces the old background + overlay buttons.
+     * Each preset sets background (lb = layersBackground index) and overlay (lo = layersOverlay
+     * index, or -1 for none) atomically. Button hidden if fewer than 2 presets.
+     * Omit or set [] to fall back to legacy behavior (background button cycles layersBackground only).
+     */
+    backgroundPresets: [
+        { lb: 0, lo: 0  },  // Photo aérienne + étiquettes
+        { lb: 0, lo: -1 },  // Photo aérienne, sans étiquettes
+        { lb: 1, lo: -1 }   // Carte
     ]
 
 };

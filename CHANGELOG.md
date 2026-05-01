@@ -6,13 +6,23 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- iFrame tab in embed modal (alongside existing JS tab) — CMS/blog editors can copy a one-liner `<iframe>` without JavaScript
+- Auto-open legend panel on load when a queryable layer is present and viewport width > 600 px — saves one click, surfaces layer info immediately
+- `@media print` — controls hidden; if a panel is open it renders beside the map (map 65%, panel 35%); closed panel hidden; map fills full width when no panel open
+
 ### Changed
 - `ORTHOIMAGERY.ORTHOPHOTOS` background layer switched from TMS/XYZ to WMTS (better render quality); IIFE pattern avoids global vars
+- Fullscreen button hidden on mobile (OS provides native fullscreen) and when `fullscreenEnabled` API absent
+- GPS/geolocation button hidden on non-touch devices (`pointer: coarse` media query) — desktop browsers expose the geolocation API but have no hardware GPS
 
 ### Performance
 - `embed.js` now minified (`embed.min.js`) — loaded by `index.html` in production (−24% parse time on critical path)
 - jQuery and proj4 loaded in parallel via `Promise.all` before OpenLayers — saves ~100 ms waterfall on first load
 - Deleted `lib/bootstrap-icons/fonts/bootstrap-icons.woff2` (130 KB, unreferenced — subset at `build/` is used)
+
+### Removed
+- Shake to share — false positives during transport, no discoverability, intrusive iOS permission prompt; permalink button in share panel covers the same use case
 
 ## [0.2.0] - 2026-05-01
 

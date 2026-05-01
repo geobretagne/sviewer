@@ -1,12 +1,15 @@
-<li class="list-group-item sv-search-item" role="option">
+<li class="list-group-item sv-search-item" role="option" id="sv-search-item-{{idx}}" aria-selected="false">
   <a href="#" class="sv-search-item-link" aria-label="{{ariaLabel}}">
-    {{#fields}}
-    <dl class="sv-search-item-fields" aria-hidden="true">
-      {{#items}}
-      <dt>{{key}}</dt><dd>{{val}}</dd>
-      {{/items}}
-    </dl>
-    {{/fields}}
-    {{^fields}}{{label}}{{/fields}}
+    {{#icon}}<i class="bi {{icon}} sv-search-item-icon" aria-hidden="true"></i>{{/icon}}
+    <span class="sv-search-item-body">
+      {{#fields}}
+      <dl class="sv-search-item-fields" aria-hidden="true">
+        {{#items}}
+        <dt>{{key}}</dt><dd>{{val}}</dd>
+        {{/items}}
+      </dl>
+      {{/fields}}
+      {{^fields}}{{label}}{{/fields}}
+    </span>
   </a>
 </li>
