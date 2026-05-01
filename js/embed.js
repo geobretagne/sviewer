@@ -250,9 +250,11 @@
         // Bootstrap is only needed for modals — load in parallel, not blocking the map init chain
         var bootstrapPromise = loadResource(baseUrl + 'lib/bootstrap/bootstrap.bundle.min.js', 'js');
 
-        // Load JS in sequence: jQuery → proj4 → OL.js → customConfig.js → Mustache
-        return loadResource(baseUrl + 'lib/jquery/jquery-4.0.0.min.js', 'js')
-            .then(function() { return loadResource(baseUrl + 'build/proj4.js', 'js'); })
+        // jQuery and proj4 are independent — load in parallel, then OL after both
+        return Promise.all([
+            loadResource(baseUrl + 'lib/jquery/jquery-4.0.0.min.js', 'js'),
+            loadResource(baseUrl + 'build/proj4.js', 'js')
+        ])
             .then(function() { return loadResource(baseUrl + 'build/ol-new.js', 'js'); })
             .then(function() { return loadResource(baseUrl + 'etc/customConfig.js', 'js'); })
             .then(function() { return loadResource(baseUrl + 'lib/mustache/mustache.min.js', 'js'); })
