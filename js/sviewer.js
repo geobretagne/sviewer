@@ -1705,6 +1705,24 @@ window.SViewerApp = (function() {
             svModal.open('#webcomponent');
         });
 
+        // Snapshot button — export map canvas as PNG download
+        $(document).on('click', '#snapshotBtn', function() {
+            closePanel();
+            map.once('rendercomplete', function() {
+                var canvas = map.getViewport().querySelector('canvas');
+                if (!canvas) { return; }
+                canvas.toBlob(function(blob) {
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'sviewer-' + Date.now() + '.png';
+                    a.click();
+                    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+                });
+            });
+            map.renderSync();
+        });
+
         // Permalink button — close share panel and show link in modal
         $(document).on('click', '#permalinkBtn', function() {
             var href = $('#permalinkUrl').prop('href');

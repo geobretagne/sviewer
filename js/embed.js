@@ -96,6 +96,10 @@
                                 <i class="bi bi-code" aria-hidden="true"></i>
                                 HTML
                             </button>
+                            <button type="button" id="snapshotBtn" class="i18n btn btn-success" title="Download map as image" data-i18n-title="btn.snapshot">
+                                <i class="bi bi-camera" aria-hidden="true"></i>
+                                <span class="i18n" data-i18n="btn.snapshot_label">Image</span>
+                            </button>
                         </div>
                         <div class="mt-3 text-end" style="font-size:0.7em;opacity:0.4;user-select:none;" aria-hidden="true">
                             sViewer ` + SVIEWER_VERSION + ` <span style="font-family:monospace">` + SVIEWER_COMMIT + `</span>

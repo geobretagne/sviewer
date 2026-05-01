@@ -58,7 +58,9 @@ $.extend(hardConfig, {
             'btn.overlay':              'Overlay layer',
             'msg.top_layer':            'Top layer',
             'msg.csw_no_wms':           'No OGC:WMS endpoint found in metadata record',
-            'msg.csw_error':            'Metadata record could not be loaded'
+            'msg.csw_error':            'Metadata record could not be loaded',
+            'btn.snapshot':             'Download map as image',
+            'btn.snapshot_label':       'Image'
         },
         fr: {
             'btn.initial_view':  'vue initiale',
@@ -113,7 +115,9 @@ $.extend(hardConfig, {
             'btn.overlay':              'Couche de superposition',
             'msg.top_layer':            'Donnée du dessus',
             'msg.csw_no_wms':           'Aucun endpoint OGC:WMS trouvé dans la fiche de métadonnées',
-            'msg.csw_error':            'La fiche de métadonnées n\'a pas pu être chargée'
+            'msg.csw_error':            'La fiche de métadonnées n\'a pas pu être chargée',
+            'btn.snapshot':             'Télécharger la carte en image',
+            'btn.snapshot_label':       'Image'
         },
         es: {
             'btn.initial_view':  'Vista inicial',
@@ -168,7 +172,9 @@ $.extend(hardConfig, {
             'btn.overlay':              'Capa de superposición',
             'msg.top_layer':            'Capa superior',
             'msg.csw_no_wms':           'No se encontró ningún endpoint OGC:WMS en la ficha de metadatos',
-            'msg.csw_error':            'No se pudo cargar la ficha de metadatos'
+            'msg.csw_error':            'No se pudo cargar la ficha de metadatos',
+            'btn.snapshot':             'Descargar el mapa como imagen',
+            'btn.snapshot_label':       'Imagen'
         },
         de: {
             'btn.initial_view':  'Startansicht',
@@ -223,7 +229,9 @@ $.extend(hardConfig, {
             'btn.overlay':              'Überlagerungsebene',
             'msg.top_layer':            'Oberste Ebene',
             'msg.csw_no_wms':           'Kein OGC:WMS-Endpunkt im Metadatensatz gefunden',
-            'msg.csw_error':            'Metadatensatz konnte nicht geladen werden'
+            'msg.csw_error':            'Metadatensatz konnte nicht geladen werden',
+            'btn.snapshot':             'Karte als Bild herunterladen',
+            'btn.snapshot_label':       'Bild'
         }
     }
 });
