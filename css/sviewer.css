@@ -393,6 +393,33 @@
     cursor: grabbing;
 }
 
+.sv-loading-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    z-index: 9000;
+    overflow: hidden;
+    background: transparent;
+}
+
+.sv-loading-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 40%;
+    height: 100%;
+    background: var(--sv-accent, #0d6efd);
+    animation: sv-loading-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes sv-loading-slide {
+    0%   { left: -40%; }
+    100% { left: 110%; }
+}
+
 /* Override OL's .ol-grab so our crosshair stays visible on hover */
 .sv-map .ol-grab {
     cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cline x1='24' y1='2' x2='24' y2='46' stroke='black' stroke-width='6' stroke-linecap='round'/%3E%3Cline x1='2' y1='24' x2='46' y2='24' stroke='black' stroke-width='6' stroke-linecap='round'/%3E%3Cline x1='24' y1='2' x2='24' y2='46' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='2' y1='24' x2='46' y2='24' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 24 24, crosshair;

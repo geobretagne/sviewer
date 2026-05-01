@@ -45,11 +45,36 @@ window.SViewerApp = (function() {
     var svSpinner = {
         show: function() {
             $('#svSpinner').addClass('show');
+            loadingBar.start();
         },
         hide: function() {
             $('#svSpinner').removeClass('show');
+            loadingBar.end();
         }
     };
+
+    var loadingBar = (function() {
+        var count = 0;
+        var bar = null;
+        function el() {
+            if (!bar) { bar = document.getElementById('loadingBar'); }
+            return bar;
+        }
+        return {
+            start: function() {
+                count++;
+                var b = el();
+                if (b) { b.style.display = 'block'; b.removeAttribute('aria-hidden'); }
+            },
+            end: function() {
+                if (--count <= 0) {
+                    count = 0;
+                    var b = el();
+                    if (b) { b.style.display = 'none'; b.setAttribute('aria-hidden', 'true'); }
+                }
+            }
+        };
+    }());
 
     // Toggle inert on modal show/hide so focus is never trapped behind
     // an inert/aria-hidden ancestor (WCAG a11y requirement).
@@ -220,9 +245,13 @@ window.SViewerApp = (function() {
             if (self.options.sldurl) {
                 wms_params.params.SLD = self.options.sldurl;
             }
+            var wmsSource = new ol.source.TileWMS(wms_params);
+            wmsSource.on('tileloadstart', function() { loadingBar.start(); });
+            wmsSource.on('tileloadend',   function() { loadingBar.end(); });
+            wmsSource.on('tileloaderror', function() { loadingBar.end(); });
             self.wmslayer = new ol.layer.Tile({
                 opacity: isNaN(self.options.opacity)?1:self.options.opacity,
-                source: new ol.source.TileWMS(wms_params)
+                source: wmsSource
             });
         }
 
@@ -531,6 +560,7 @@ window.SViewerApp = (function() {
             ElementSetName: 'full',
             OutputSchema: 'http://www.isotc211.org/2005/gmd'
         });
+        loadingBar.start();
         $.ajax({
             url: ajaxURL(url),
             type: 'GET',
@@ -546,7 +576,8 @@ window.SViewerApp = (function() {
             error: function(xhr, status, error) {
                 log('CSW GetRecordById failed:', status, error);
                 $('#legend').append($('<div class="alert alert-warning mt-2">').text(tr('msg.csw_error')));
-            }
+            },
+            complete: function() { loadingBar.end(); }
         });
     }
 
@@ -999,6 +1030,7 @@ window.SViewerApp = (function() {
                 '</wfs:GetFeature>'].join(' ');
 
             (function(lyr, term) {
+                loadingBar.start();
                 var xhr = $.ajax({
                     type: 'POST',
                     url: ajaxURL(lyr.wfs.url),
@@ -1017,7 +1049,8 @@ window.SViewerApp = (function() {
                         if (jqXHR.statusText !== 'abort') {
                             log('WFS search error for', lyr.options.nslayername);
                         }
-                    }
+                    },
+                    complete: function() { loadingBar.end(); }
                 });
                 searchXhrs.push(xhr);
             }(layer, value));

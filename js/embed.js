@@ -26,6 +26,7 @@
         <div id="frameMap" class="sv-framemap">
             <div id="map" class="sv-map" tabindex="0" role="region" aria-label="Interactive map">
                 <div id="marker"></div>
+                <div id="loadingBar" class="sv-loading-bar" role="progressbar" aria-label="Loading" aria-hidden="true" style="display:none;"></div>
             </div>
 
             <div id="mapcontrols" class="sv-map-controls" role="group" aria-label="Map controls">
