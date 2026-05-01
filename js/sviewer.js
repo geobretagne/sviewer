@@ -1707,13 +1707,17 @@ window.SViewerApp = (function() {
         });
         document.addEventListener('fullscreenchange', updateFsButton);
         document.addEventListener('webkitfullscreenchange', updateFsButton);
+        // pointer: coarse = touch/mobile device. Fine = mouse-driven desktop.
+        // navigator.geolocation exists on all modern desktop browsers (Brave, Chrome, Firefox…)
+        // so checking the API alone won't filter desktop — coarse pointer is the right signal.
         var isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
         if (!document.fullscreenEnabled && !document.webkitFullscreenEnabled) {
             $('#fsBt').hide();
         } else if (isCoarsePointer) {
-            // Mobile browsers handle fullscreen via OS — button is redundant
+            // Mobile OS provides fullscreen natively — in-map button is redundant clutter
             $('#fsBt').hide();
         }
+        // GPS useful on mobile (hardware GPS); desktop users never need it in this context
         if (!navigator.geolocation || !isCoarsePointer) {
             $('#zpBt').hide();
         }
