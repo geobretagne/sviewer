@@ -393,6 +393,10 @@
     cursor: grabbing;
 }
 
+.sv-map .ol-viewport {
+    background-color: #a8d5e8;
+}
+
 .sv-loading-bar {
     position: absolute;
     top: 0;

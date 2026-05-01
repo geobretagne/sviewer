@@ -343,32 +343,39 @@ restrictedExtent: [-20037508, -20037508, 20037508, 20037508]
 
 ### Fonds de carte
 
-Configuration des fonds ce carte disponibles dans le sélecteur :
+Configuration des fonds de carte disponibles dans le sélecteur. Utiliser `ol.source.XYZ` pour les services TMS/slippy map — pas besoin de boilerplate WMTS :
 
 ```javascript
 layersBackground: [
     new ol.layer.Tile({
-        source: new ol.source.WMTS({
-            attributions: ['© IGN'],
-            url: 'https://data.geopf.fr/wmts',
-            layer: 'ORTHOIMAGERY.ORTHOPHOTOS',
-            matrixSet: 'PM',
-            format: 'image/jpeg',
-            projection: ol.proj.get('EPSG:3857'),
-            tileGrid: new ol.tilegrid.WMTS({ /* ... */ })
+        source: new ol.source.XYZ({
+            attributions: ['© IGNF BD ORTHO'],
+            url: 'https://data.geopf.fr/tms/1.0.0/HR.ORTHOIMAGERY.ORTHOPHOTOS/{z}/{x}/{y}.jpeg',
+            minZoom: 6,
+            maxZoom: 19,
+            crossOrigin: 'anonymous'
         }),
-        title: 'Photos aériennes'
+        title: 'Photos aériennes IGN'
     }),
     new ol.layer.Tile({
-        source: new ol.source.OSM(),
-        title: 'OpenStreetMap'
+        source: new ol.source.XYZ({
+            attributions: ['Contributeurs OpenStreetmap'],
+            url: 'https://tile.geobretagne.fr/osm/tms/osm:grey/EPSG3857/{z}/{x}/{-y}.png',
+            maxResolution: 78271.51696402048,
+            crossOrigin: 'anonymous'
+        }),
+        title: 'Carte OpenStreetmap'
     })
 ]
 ```
 
 **Notes :**
-- Chaque donnée doit avoir un attribut `title`
-- Toutes les données doivent être en EPSG:3857
+- Chaque couche doit avoir un attribut `title`
+- Toutes les couches doivent être en EPSG:3857
+- `crossOrigin: 'anonymous'` requis sur toutes les sources pour que la fonction snapshot fonctionne
+- Services TMS geopf (`data.geopf.fr/tms`) : Y-axis = XYZ standard (`{y}`), malgré le profil TMS déclaré
+- Services MapProxy geobretagne (`tile.geobretagne.fr/osm/tms`) : Y-axis = TMS inversé (`{-y}`), `maxResolution` requis car la grille démarre à zoom 0 = 78271 m/px (décalage d'un niveau vs grille OL standard)
+- Pour WMTS (ex. Géoplateforme), utiliser un IIFE pour éviter les variables globales : `source: new ol.source.WMTS((function(){ /* ... */ return config; })())`
 
 ### Service de géocodage
 
