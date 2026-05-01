@@ -83,13 +83,26 @@ customConfig = {
      */
     layersBackground: [
         new ol.layer.Tile({
-            source: new ol.source.XYZ({
-                attributions: ['© IGNF BD ORTHO'],
-                url: 'https://data.geopf.fr/tms/1.0.0/HR.ORTHOIMAGERY.ORTHOPHOTOS/{z}/{x}/{y}.jpeg',
-                minZoom: 6,
-                maxZoom: 19,
-                crossOrigin: 'anonymous'
-            }),
+            source: new ol.source.WMTS((function() {
+                var proj = ol.proj.get('EPSG:3857');
+                var ext = proj.getExtent();
+                var res = [156543.03392811998,78271.51696419998,39135.758481959984,19567.879241008988,9783.939620504494,4891.969810252247,2445.9849051261233,1222.9924525765016,611.4962262882508,305.74811314412537,152.87405657206268,76.43702828603134,38.21851414301567,19.109257071507836,9.554628535753918,4.777314267876959,2.3886571339384795,1.1943285669692398,0.5971642834846199,0.29858214174231994];
+                return {
+                    attributions: ['© IGNF BD ORTHO'],
+                    url: 'https://data.geopf.fr/wmts',
+                    layer: 'ORTHOIMAGERY.ORTHOPHOTOS',
+                    matrixSet: 'PM',
+                    format: 'image/jpeg',
+                    projection: proj,
+                    tileGrid: new ol.tilegrid.WMTS({
+                        origin: ol.extent.getTopLeft(ext),
+                        resolutions: res,
+                        matrixIds: ['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19']
+                    }),
+                    style: 'normal',
+                    crossOrigin: 'anonymous'
+                };
+            })()),
             title: 'Photos aériennes IGN'
         }),
         new ol.layer.Tile({

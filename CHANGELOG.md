@@ -6,6 +6,9 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- `ORTHOIMAGERY.ORTHOPHOTOS` background layer switched from TMS/XYZ to WMTS (better render quality); IIFE pattern avoids global vars
+
 ### Performance
 - `embed.js` now minified (`embed.min.js`) — loaded by `index.html` in production (−24% parse time on critical path)
 - jQuery and proj4 loaded in parallel via `Promise.all` before OpenLayers — saves ~100 ms waterfall on first load
