@@ -168,6 +168,51 @@ Non-persistant (absent du permalien).
 
 ### Paramètres d'affichage et partage
 
+#### `theme`
+
+Thème d'affichage. Sans paramètre, suit `prefers-color-scheme` du système.
+
+| Valeur | Effet |
+|--------|-------|
+| `theme=light` | Thème clair forcé |
+| `theme=dark` | Thème sombre forcé |
+
+Persistant dans le permalien si ≠ light.
+
+#### `opacity`
+
+Opacité initiale de toutes les couches de données (hors fonds de carte). Plage : `0`–`1`. Défaut : `1` (valeur `layerOpacity` de `customConfig`).
+
+```
+?opacity=0.6
+```
+
+Persistant dans le permalien si ≠ 1.
+
+#### `position`
+
+Active le suivi GPS au chargement.
+
+```
+?position=1
+```
+
+Persistant dans le permalien si GPS actif.
+
+#### `address`
+
+Géocode silencieusement une adresse au chargement et recentre la carte.
+
+```
+?address=1+place+de+la+R%C3%A9publique%2C+Brest
+```
+
+- Score IGN ≥ 0.8 → recentrage silencieux + marqueur
+- Score < 0.8 → ouvre le panneau de recherche avec les résultats pour sélection manuelle
+- Compatible embed : `SViewer.init('#map', { address: 'Brest' })`
+
+Non-persistant (absent du permalien).
+
 #### `debug` (debug mode)
 
 | Valeur | Effet |
@@ -213,7 +258,6 @@ Charge une configuration alternative au lieu de `customConfig.js`.
 - `c`, `lb`, `theme`
 - `opacity` (si ≠ 1)
 - `position` (si GPS actif)
-- `lo` (si couche overlay active)
 
 **Code d'intégration WebComponent :**
 - `x`, `y`, `z`
@@ -223,7 +267,6 @@ Charge une configuration alternative au lieu de `customConfig.js`.
 - `c`, `lb`, `theme`
 - `opacity` (si ≠ 1)
 - `position` (si GPS actif)
-- `lo` (si couche overlay active)
 
 Le paramètre `debug` n'est **pas** persistant.
 

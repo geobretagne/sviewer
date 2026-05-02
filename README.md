@@ -1,367 +1,141 @@
-sViewer - Visualiseur de cartes simple
+sViewer — Visualiseur de cartes web
 =====================================
 
-sViewer est un visualiseur de cartes web simple et léger. Il vous permet d'afficher et d'explorer des données cartographiques WMS sur tous les appareils : téléphone, tablette et ordinateur. SViewer est prévu pour s'intégrer à l'écosystème geOrchestra.
+sViewer affiche des cartes interactives dans un navigateur, sur téléphone, tablette ou ordinateur. Aucune installation, aucun compte requis.
+
+---
+
+![sViewer — carte avec panneau d'information ouvert](examples/screenshot-desktop.png)
 
 
-Qu'offre sViewer ?
--------------------
+Que permet sViewer ?
+---------------------
 
-* **Visualisation cartographique** simple et intuitive
-* **Contrôles tactiles** compatibles avec tous les appareils mobiles
-* **Recherche de lieux** basée sur la géoplateforme française
-* **Requêtes cartographiques** sur les services Web Map Service (WMS)
-* **Partage de cartes** avec permaliens, codes QR et export image PNG
-* **Thème clair et sombre** : bascule via l'interface, le paramètre `theme`, ou automatiquement selon le système
-* **Couche de superposition** : étiquettes, cadastre ou tout autre fond cyclable au-dessus des données
-* **Opacité des données** : curseur dans le panneau de documentation
-* **Langues multiples** : français, anglais, espagnol, allemand
-* **Progressive Web App (PWA)** : installable sur mobile comme une application native, fonctionne hors ligne
-* **Facilement intégrable** dans vos propres pages web
-* **Entièrement autonome** : aucune dépendance externe (CDN)
-
-
-Démarrage rapide
------------------
-
-### 1. Télécharger le code sur votre serveur
-
-Téléchargez l'ensemble du dossier `sviewer` sur votre serveur web (Apache, nginx, etc.).
-
-### 2. Configuration initiale
-
-Copiez le fichier de configuration d'exemple et adaptez-le à vos besoins :
-
-```bash
-cp etc/customConfig.DIST.js etc/customConfig.js
-```
-
-Éditez `etc/customConfig.js` pour personnaliser :
-- L'adresse de votre serveur geOrchestra (ou votre GeoServer)
-- Les fonds de carte
-- Le thème
-- Les emprises. sViewer utilise uniquement la projection EPSG:3857.
+* **Partager une vue exacte** — zoom, position et données préservés dans l'URL
+* **Générer un QR code** — imprimez-le sur un panneau, une affiche, un document
+* **Exporter en image** — PNG depuis le panneau de partage
+* **Interroger les données** — cliquez sur la carte pour afficher la fiche d'une zone ou d'un objet
+* **Traçabilité des données** — producteur, licence, date de mise à jour affichés automatiquement depuis les métadonnées
+* **Rechercher une adresse** — barre de recherche intégrée, géolocalisation ; service de géocodage configurable (France ou mondial)
+* **Thème clair et sombre** — manuel ou automatique selon le système
+* **Tous les appareils** — téléphone, tablette, ordinateur, même URL
+* **Intégrer dans n'importe quelle page** — une ligne `<iframe>` suffit, sans compétences techniques
+* **API JavaScript** — intégrez et contrôlez la carte en quelques lignes, sans framework ni build
+* **Logiciel libre, gratuit, auto-hébergeable** — licence GPL, aucun compte, aucune inscription, aucune dépendance externe
 
 
+![sViewer sur mobile — panneau de partage ouvert](examples/screenshot-mobile.png)
 
 
-Deux façons d'utiliser sViewer
-===============================
+Mettre vos données sur une carte
+----------------------------------
 
-Vous avez deux options pour intégrer sViewer dans votre écosystème.
+sViewer affiche des données publiées via un **service WMS** (Web Map Service) — compatible avec tout serveur cartographique standard ([GeoServer](https://geoserver.org), MapServer, QGIS Server…). Les utilisateurs de [geOrchestra](https://georchestra.org) bénéficient d'une intégration native : métadonnées, catalogue, fiche [GeoNetwork](https://geonetwork-opensource.org). Trois cas de figure :
 
+### Vous utilisez [geOrchestra](https://georchestra.org) ou [GeoServer](https://geoserver.org)
 
-### Option 1 : Mode Web — Accès direct
-
-Appelez simplement `index.html` avec des paramètres dans l'adresse web (KVP : Key-Value Pairs).
-
-**Exemple basique :**
+Vos données sont déjà publiées. Copiez l'URL de partage depuis le panneau de partage de votre catalogue, ou construisez l'URL manuellement :
 
 ```
-https://geobretagne.fr/sviewer/?x=-366959&y=2951352&z=5&title=Ma%20carte
+https://geobretagne.fr/sviewer/?layers=mon_espace:ma_donnee
 ```
 
-Cela ouvre sViewer centré sur les coordonnées indiquées et avec un titre personnalisé.
+Remplacez `mon_espace:ma_donnee` par le nom de votre couche WMS.
 
-### Option 2 : Mode WebComponent — Intégration dans vos pages
+### Vous avez une fiche de métadonnées [GeoNetwork](https://geonetwork-opensource.org)
 
-Incluez sViewer dans n'importe quelle page web existante en ajoutant et en configurant ce code.
-
-**Exemple :**
-
-```html
-<div id="ma-carte" style="width: 100%; height: 600px;"></div>
-
-<script src="https://geobretagne.fr/sviewer/js/embed.js"></script>
-<script>
-  SViewer.init('#ma-carte', {
-    x: -366959,
-    y: 2951352,
-    z: 5,
-    title: 'Ma carte intégrée'
-  });
-</script>
-```
-
-Mode Web : paramètres KVP
-==========================
-
-Vous pouvez configurer la carte en ajoutant des paramètres à l'URL.
-
-
-#### Paramètres de positionnement
-
-**`x`, `y`, `z`** — Positionner la carte
-
-Centre la carte sur les coordonnées `x, y` (en unités EPSG:3857, système Web Mercator) et définit le niveau de zoom `z`.
-
-```
-https://geobretagne.fr/sviewer/?x=-366959&y=2951352&z=5
-```
-
-**`title`** — Titre personnalisé
-
-Affiche un titre en haut de la carte. Utilisez un texte court adapté à l'affichage mobile.
-
-```
-https://geobretagne.fr/sviewer/?x=-366959&y=2951352&z=5&title=Centre%20de%20Rennes
-```
-
-**`lb`** — Choisir le fond de carte
-
-Affiche le fond de carte `#lb` (le fond de carte 0 est par défaut). Consultez `etc/customConfig.js` pour voir les fonds disponibles.
-
-```
-https://geobretagne.fr/sviewer/?lb=1
-```
-
-
-#### Paramètres de données cartographiques
-
-**`layers`** — Afficher des données geOrchestra ou GeoServer
-
-Liste séparée par des virgules. Les données doivent être publiées sur votre serveur geOrchestra ou GeoServer spécifié dans `customConfig.js`.
-
-```
-https://geobretagne.fr/sviewer/?layers=dreal_b:ae_casparcas
-```
-
-**Avec un style personnalisé :**
-
-Ajoutez `*nomstyle` au nom de la donnée :
-
-```
-https://geobretagne.fr/sviewer/?layers=dreal_b:ae_casparcas*default
-```
-
-**Avec un serveur WMS externe :**
-
-Spécifiez un serveur WMS personnalisé en ajoutant `@url-du-wms` au paramètre layer. Cela permet d'afficher des données publiées sur n'importe quel serveur WMS 1.3.0.
-
-```
-https://geobretagne.fr/sviewer/?layers=layername@https://wms.example.com/geoserver/wms
-```
-
-Format complet : `namespace:layername[*style][*cql_filter]@wms-endpoint-url`
-
-Exemples :
-```
-https://geobretagne.fr/sviewer/?layers=workspace:data@https://external-wms.example.com/service
-https://geobretagne.fr/sviewer/?layers=ns:layer*custom_style@https://wms.example.com/geoserver/wms
-```
-
-**`md`** — Afficher une donnée via son identifiant de métadonnée GeoNetwork
-
-Charge automatiquement la donnée OGC:WMS décrite dans la fiche ISO 19139 correspondante. L'endpoint CSW utilisé est `${geOrchestraBaseUrl}/geonetwork/srv/eng/csw`.
+Utilisez l'identifiant de la fiche directement :
 
 ```
 https://geobretagne.fr/sviewer/?md=fb5861f1-1b20-417f-abb6-9fc316c0307d
 ```
 
-sViewer interroge le CSW, extrait l'URL WMS et le nom de la donnée depuis `gmd:distributionInfo`, puis charge la donnée et remplit le panneau de documentation avec les métadonnées (titre, résumé, producteur, licence, date). Ce paramètre est incompatible avec `layers=` : si les deux sont présents, `layers=` est prioritaire.
+sViewer récupère automatiquement l'URL WMS et les métadonnées (titre, résumé, licence, producteur).
 
-> Le paramètre `md` est **persistant** : il est mémorisé dans le permalink et le code d'intégration.
+### Vous avez un tableur ou un shapefile
 
-#### Paramètres de recherche et requête
-
-**`q`** — Interroger la carte au démarrage
-
-Au chargement, affiche les informations au centre de la carte.
-
-```
-https://geobretagne.fr/sviewer/?layers=geor:sdi&q=1
-```
-
-**`s`** — Recherche d'objets dans les données WFS
-
-Active la fonction de recherche sur les données. Lorsque les données WMS ont un service WFS associé, comme cela est le cas dans geOrchestra, cette fonction permet d'interroger simultanément le service de géolocalisation et le service de données. La recherche sur les données porte sur tous ses champs texte.
-
-```
-https://geobretagne.fr/sviewer/?layers=dreal_b:ae_casparcas&s=1
-```
-
-- Chaque résultat affiche les champs de l'objet (clé : valeur)
-- Cliquer sur un résultat recentre la carte et affiche la fiche d'information
-- La limite de résultats WFS est configurable via `maxWfsSearchFeatures` dans `customConfig.js` (défaut : 8)
-- Le service WFS doit supporter CORS
-
-**`debug`** — Mode debug
-
-`debug=true` active les logs dans la console (F12). `debug=1` charge les fichiers JS/CSS non-minifiés. Les deux valeurs sont indépendantes.
-
-```
-https://geobretagne.fr/sviewer/?layers=xyz&debug=true
-https://geobretagne.fr/sviewer/?layers=xyz&debug=1
-```
-
-**`c`** — Utiliser une configuration personnalisée
-
-Charge une configuration alternative (voir section **Configurations personnalisées**).
-
-```
-https://geobretagne.fr/sviewer/?c=ma_config
-```
+sViewer affiche des flux WMS — pas les fichiers. Si vos données sont dans un tableur ou un shapefile, parlez à votre service SIG ou utilisez un outil comme [uMap](https://umap.openstreetmap.fr/) qui accepte les imports directs.
 
 
-**`theme`** — Choisir le thème d'affichage
+Partager une carte
+-------------------
 
-Bascule entre le thème clair (défaut) et le thème sombre.
+Le panneau de partage (bouton en haut à droite) propose :
 
-```
-https://geobretagne.fr/sviewer/?theme=dark
-```
+- **Lien** — URL de la vue courante, copiable en un clic
+- **QR code** — scannable depuis un téléphone ou une affiche imprimée
+- **Image PNG** — export de la carte visible à l'écran
+- **HTML** — code `<iframe>` ou fragment JavaScript pour intégrer dans une page
 
-Le choix du thème peut aussi se faire interactivement via le panneau **Configuration** (bouton en haut à droite). Le thème sombre est mémorisé dans le permalink si sélectionné.
-
-Valeurs acceptées : `light`, `dark`. Sans paramètre, sViewer suit automatiquement le thème du système d'exploitation (`prefers-color-scheme`).
-
-
-**`opacity`** — Opacité des données
-
-Définit l'opacité initiale de toutes les données affichées (0 = transparent, 1 = opaque).
-
-```
-https://geobretagne.fr/sviewer/?layers=dreal_b:ae_casparcas&opacity=0.6
-```
-
-L'opacité peut aussi être ajustée via le curseur dans le panneau **Documentation**. La valeur est mémorisée dans le permalink.
+Le lien mémorise automatiquement le zoom, la position, les données affichées et le thème.
 
 
-**`lo`** — Couche de superposition active
+Intégrer dans une page web
+---------------------------
 
-Active une couche de superposition (étiquettes, cadastre, etc.) définie dans `customConfig.js`. La valeur est l'index dans le tableau `layersOverlay` (0 = première couche).
+### Option 1 — iFrame (sans code)
 
-```
-https://geobretagne.fr/sviewer/?lo=0
-```
-
-Le bouton de superposition (visible uniquement si `layersOverlay` est configuré) cycle entre les couches disponibles et l'état sans superposition.
-
-
-**Note :** Les paramètres `x`, `y`, `z`, `layers`, `md`, `q`, `s`, `theme`, `opacity`, `lo`, `c` et `lb` sont **persistants** dans le permalien et QR code. Le paramètre `title` est inclus dans le code d'intégration WebComponent uniquement.
-
-
-Configurations personnalisées
-=============================
-
-Vous pouvez créer plusieurs configurations de sViewer pour différents besoins (par ville, par thème, etc.).
-
-**Étapes :**
-
-1. Copiez le fichier de configuration :
-   ```bash
-   cp etc/customConfig.js etc/customConfig_ma_config.js
-   ```
-
-2. Éditez `etc/customConfig_ma_config.js` selon vos besoins.
-
-3. Accédez à sViewer avec votre configuration :
-   ```
-   https://geobretagne.fr/sviewer/?c=ma_config
-   ```
-
-**Restrictions de nom :** Le nom de configuration doit contenir uniquement des lettres, chiffres, tirets et underscores (ex : `ma_config`, `svi-bretagne-2024`).
-
-
-Mode WebComponent : paramètres JavaScript
-===========================================
-
-Quand vous utilisez le mode WebComponent (intégration dans une page), les options de configuration sont passées en JavaScript au lieu de l'URL. **Les noms de paramètres sont exactement les mêmes** qu'en mode simple.
-
-**Exemple :**
+Copiez le code depuis le panneau de partage → onglet **HTML** :
 
 ```html
-<div id="ma-carte"></div>
+<iframe src="https://geobretagne.fr/sviewer/?layers=mon_espace:ma_donnee&x=-390192&y=6122108&z=10"
+        width="100%" height="500" frameborder="0" allowfullscreen></iframe>
+```
+
+Fonctionne dans tout CMS (WordPress, Drupal, Joomla, Typo3…) sans aucune compétence JavaScript.
+
+![sViewer intégré dans une page CMS](img/screenshot-embed.png)
+
+### Option 2 — JavaScript (pour les développeurs)
+
+```html
+<div id="ma-carte" style="height:500px"></div>
 <script src="https://geobretagne.fr/sviewer/js/embed.js"></script>
 <script>
   SViewer.init('#ma-carte', {
-    x: -366959,                       // coordonnées EPSG:3857
-    y: 2951352,
-    z: 5,                             // niveau de zoom
-    title: 'Ma carte intégrée',       // titre
-    layers: 'geor:sdi',               // donnée à afficher
-    lb: 1,                            // fond de carte
-    theme: 'dark'                     // thème : 'light' (défaut) ou 'dark'
+    x: -390192, y: 6122108, z: 10,
+    layers: 'mon_espace:ma_donnee',
+    title: 'Évaluation environnementale'
   });
 </script>
 ```
 
-**Exemple avec un serveur WMS externe :**
+→ [Documentation technique complète](TECHNICAL.md)
 
-```html
-<div id="ma-carte"></div>
-<script src="https://geobretagne.fr/sviewer/js/embed.js"></script>
-<script>
-  SViewer.init('#ma-carte', {
-    x: -366959,
-    y: 2951352,
-    z: 5,
-    title: 'Carte avec WMS externe',
-    layers: 'workspace:data@https://wms.example.com/geoserver/wms',
-    theme: 'light'
-  });
-</script>
+
+Démarrage rapide (administrateur)
+-----------------------------------
+
+```bash
+# 1. Déposez le dossier sviewer/ sur votre serveur web (Apache, nginx…)
+# 2. Copiez et éditez la configuration
+cp etc/customConfig.DIST.js etc/customConfig.js
+# 3. Ouvrez dans un navigateur
+https://votre-serveur/sviewer/
 ```
 
-Tous les paramètres du mode simple peuvent être passés en JavaScript. Le bouton **HTML** du panneau de partage génère automatiquement ce fragment pour la vue courante.
+Paramètres configurables : fonds de carte, emprise initiale, URL [geOrchestra](https://georchestra.org), langue, géocodage.
 
-
-Notes sur l'utilisation d'agents IA
-===================================
-
-SViewer a été initialement développé à la main sur Scite, sans aucun assistant.
-
-Les agents de codage ont permis de mettre à jour les librairies à moindre coût, et sont utilisés pour la maintenance.
-
-Avec vérification systématique par un humain :
-
-* code
-* documentation
-* tests unitaires
-* scripts de maintenance
-* textes de commit
-* refactor de code
-* html/bootstrap
-* suppression du terme "couche" au profit de "donnée"
-
-Sans vérification systématique par un humain :
-
-* analyse pro/con d'une nouvelle fonctionnalité
-* style
-* scan sécurité
-* scan accessibilité
-* scan performance
-* subset des librairies
-* minification code et librairies
-* traductions
-* lint des codes
+→ [Référence complète des paramètres URL et de configuration](TECHNICAL.md)
 
 
 Notes techniques
-================
+-----------------
 
-* **Technologie** : OpenLayers 10, jQuery 4.x, Bootstrap 5
-* **Projection** : EPSG:3857 (Web Mercator)
-* **Langue** : Français par défaut, mais supporte aussi l'anglais, l'espagnol et l'allemand
-* **Thèmes** : clair et sombre, détection automatique du thème système (`prefers-color-scheme`), surcharge via `?theme=dark` ou `{ theme: 'dark' }` en mode WebComponent
-* **Export image** : export PNG côté client via canvas OL (`canvas.toBlob`), sans serveur
-* **Progressive Web App** : sViewer peut être installé comme application sur mobile (Android, iOS) et inclut un Service Worker pour le support hors ligne
-* **Serveur** : Aucun composant côté serveur requis. Inconvénient : CORS obligatoire sur les services.
-
-
-ToDo
-====
-
-* **URL shortener**
-* **Voice search**
+* **Technologie** : OpenLayers 10, jQuery, Bootstrap 5
+* **Projection** : EPSG:3857 (Web Mercator uniquement)
+* **Langues** : français, anglais, espagnol, allemand
+* **Aucune dépendance externe** : toutes les librairies sont auto-hébergées (pas de CDN)
+* **Géocodage** : [IGN Géoplateforme](https://geoplateforme.ign.fr) par défaut (France), remplaçable par [Nominatim](https://nominatim.openstreetmap.org) (OpenStreetMap, mondial) ou tout service compatible
+* **Licence** : GPL-3.0-or-later
 
 
-Remerciements à
-===============
+Remerciements
+==============
 
-* l'équipe [GéoBretagne](https://geobretagne.fr)
-* les contributeurs, utilisateurs et membres de la communauté [geOrchestra](https://georchestra.org)
-* les communautés inspirantes du [logiciel libre](https://fr.wikipedia.org/wiki/Logiciel_libre) et de la [donnée ouverte](https://fr.wikipedia.org/wiki/Donn%C3%A9es_ouvertes)
-* les projets copains : [georchestra](https://github/com/georchestra), [mviewer](https://github.com/mviewer/mviewer), [geonetwork-ui](https://github.com/mviewer/mviewer)
-* les librairies libres : [openlayers](https://github.com/openlayers/openlayers), [bootstrap](https://github.com/twbs/bootstrap), [jquery](https://github.com/jquery)
-
+* L'équipe [GéoBretagne](https://geobretagne.fr)
+* Les contributeurs, utilisateurs et membres de la communauté [geOrchestra](https://georchestra.org)
+* Les communautés du [logiciel libre](https://fr.wikipedia.org/wiki/Logiciel_libre) et de la [donnée ouverte](https://fr.wikipedia.org/wiki/Donn%C3%A9es_ouvertes)
+* Les projets copains : [geOrchestra](https://github.com/georchestra/georchestra), [mviewer](https://github.com/mviewer/mviewer), [geonetwork-ui](https://github.com/geonetwork/geonetwork-ui)
+* Les librairies libres : [OpenLayers](https://github.com/openlayers/openlayers), [Bootstrap](https://github.com/twbs/bootstrap), [jQuery](https://github.com/jquery/jquery)
+* [IGN Géoplateforme](https://geoplateforme.ign.fr) et [Nominatim / OpenStreetMap](https://nominatim.openstreetmap.org) — services de géocodage
