@@ -89,7 +89,6 @@
 // Column name candidates for auto-detection
 var GEOM_CANDIDATES = ['geometry', 'geom', 'geo', 'shape', 'wkb_geometry'];
 var LABEL_CANDIDATES = ['label', 'nom', 'name', 'libelle', 'titre', 'title'];
-var CONFIG_TABLE = '_sv_config';
 
 // Widget state
 var colGeom = null;
@@ -277,19 +276,6 @@ function setupMapClick() {
 }
 
 // ---------------------------------------------------------------------------
-// Load _sv_config table from Grist
-// ---------------------------------------------------------------------------
-function loadSvConfig(tableId) {
-    return grist.docApi.fetchTable(tableId).then(function(data) {
-        var keys = data.key || data.Key || [];
-        var vals = data.value || data.Value || [];
-        keys.forEach(function(k, i) { svConfig[k] = vals[i]; });
-    }).catch(function() {
-        // Table doesn't exist yet — use defaults
-    });
-}
-
-// ---------------------------------------------------------------------------
 // Init sViewer map
 // ---------------------------------------------------------------------------
 function initMap() {
@@ -398,21 +384,14 @@ grist.onOptions(function(options, interaction) {
     if (options && options.colLabel) { colLabel = options.colLabel; }
 });
 
-// Bootstrap: load config, then init map, then subscribe to records
-grist.docApi.fetchTable(CONFIG_TABLE).then(function(data) {
-    // Map key→value rows — fetchTable returns column arrays: {key:[...], value:[...]}
-    var keys = data.key || data.Key || [];
-    var vals = data.value || data.Value || [];
-    keys.forEach(function(k, i) { svConfig[k] = vals[i]; });
-}).catch(function() {
-    // _sv_config absent — use defaults
-}).then(function() {
-    // Capture doc ID for share URL
-    if (grist.docApi && typeof grist.docApi.getDocName === 'function') {
-        grist.docApi.getDocName().then(function(id) { gristDocId = id; }).catch(function() {});
-    }
-    initMap();
-}).then(function() {
+// Bootstrap: init map, then subscribe to records
+// Note: docApi.fetchTable requires 'full' access — incompatible with 'read table'.
+// Config comes via grist.onOptions (widget saved options) or defaults.
+if (grist.docApi && typeof grist.docApi.getDocName === 'function') {
+    grist.docApi.getDocName().then(function(id) { gristDocId = id; }).catch(function() {});
+}
+initMap();
+Promise.resolve().then(function() {
     // Subscribe to records
     grist.onRecords(function(records, mappings) {
         allRecords = records;

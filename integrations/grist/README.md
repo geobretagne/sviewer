@@ -15,22 +15,11 @@ The widget auto-detects latitude/longitude columns. Supported column names:
 
 If auto-detection fails, click **Columns** in the widget toolbar to choose manually.
 
-## Config table (`_sv_config`)
+## Configuration
 
-Create a table named `_sv_config` with two columns: `key` and `value`.
-
-| key | description | example |
-|-----|-------------|---------|
-| `wms_url` | WMS base URL | `https://geobretagne.fr/geoserver/wms` |
-| `wms_layers` | Layer name(s) | `geobretagne:communes` |
-| `zoom_default` | Initial zoom level | `10` |
-| `center_x` | Center X in EPSG:3857 | `-290000` |
-| `center_y` | Center Y in EPSG:3857 | `6150000` |
-| `geojson_color` | Point color (hex) | `#e74c3c` |
-| `sviewer_base_url` | sViewer base URL for share links | `https://yourserver/sviewer/` |
-| `grist_api_base` | Grist host for self-hosted instances | `https://grist.yourserver.org` |
-
-If the table is absent, default values are used.
+Widget configuration is stored as Grist widget options (saved per widget instance).
+Currently configured via the widget's **Columns** picker. WMS layers and advanced options
+will be configurable via widget settings in a future version.
 
 ## Features
 
