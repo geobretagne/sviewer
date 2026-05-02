@@ -849,16 +849,13 @@ window.SViewerApp = (function() {
         function onGeocodeSuccess(response) {
             svSpinner.hide();
             try {
-                var features = response.features;
-                if (features && features.length > 0) {
-                    var zoomByType = { municipality: 13, street: 17, housenumber: 18 };
-                    var items = features.map(function(feature) {
-                        var props    = feature.properties;
-                        var coords   = ol.proj.transform(feature.geometry.coordinates, 'EPSG:4326', config.projcode);
-                        var label    = props.label || props.name || coords.join(', ');
+                var results = config.geocodeAdapter(response);
+                if (results.length > 0) {
+                    var items = results.map(function(r) {
+                        var coords = ol.proj.transform(r.coords, 'EPSG:4326', config.projcode);
                         return renderSearchItem(
-                            { label: label, icon: 'bi-geo-alt-fill' },
-                            { extent: [], coordinates: coords, zoom: zoomByType[props.type] || 16 }
+                            { label: r.label, icon: 'bi-geo-alt-fill' },
+                            { extent: [], coordinates: coords, zoom: r.zoom }
                         );
                     });
                     $('#searchResults')
@@ -884,16 +881,11 @@ window.SViewerApp = (function() {
                     map.getView().getProjection().getCode(),
                     'EPSG:4326'
                 );
-                // Direct call — Géoplateforme supports CORS natively, no proxy needed
                 openLsXhr = $.ajax({
                     url: config.openLSGeocodeUrl,
                     type: 'GET',
                     dataType: 'json',
-                    data: {
-                        q: q,
-                        limit: config.maxGeocodeResults,
-                        bbox: bbox.join(',')
-                    },
+                    data: $.extend({ q: q, limit: config.maxGeocodeResults, bbox: bbox.join(',') }, config.geocodeParams || {}),
                     success: onGeocodeSuccess,
                     error: onGeocodeFailure
                 });
@@ -911,7 +903,6 @@ window.SViewerApp = (function() {
      * Ambiguous result: opens search panel with results listed.
      */
     function autoGeocodeAddress(text) {
-        var zoomByType = { municipality: 13, street: 17, housenumber: 18 };
         var bbox = ol.proj.transformExtent(
             config.initialExtent,
             map.getView().getProjection().getCode(),
@@ -921,18 +912,16 @@ window.SViewerApp = (function() {
             url: config.openLSGeocodeUrl,
             type: 'GET',
             dataType: 'json',
-            data: { q: text.trim(), limit: config.maxGeocodeResults, bbox: bbox.join(',') },
+            data: $.extend({ q: text.trim(), limit: config.maxGeocodeResults, bbox: bbox.join(',') }, config.geocodeParams || {}),
             success: function(response) {
-                var features = response && response.features;
-                if (!features || !features.length) { return; }
-                var best = features[0];
-                var score = best.properties && best.properties.score;
-                if (score >= 0.8) {
-                    var coords = ol.proj.transform(best.geometry.coordinates, 'EPSG:4326', config.projcode);
-                    var zoom = zoomByType[best.properties.type] || 16;
+                var results = config.geocodeAdapter(response);
+                if (!results.length) { return; }
+                var best = results[0];
+                if (best.score >= 0.8) {
+                    var coords = ol.proj.transform(best.coords, 'EPSG:4326', config.projcode);
                     marker.setPosition(coords);
                     view.setCenter(coords);
-                    view.setZoom(zoom);
+                    view.setZoom(best.zoom);
                     $('#marker').show();
                 } else {
                     // Ambiguous — fall back to interactive search panel

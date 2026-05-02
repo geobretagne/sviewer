@@ -76,11 +76,43 @@ customConfig = {
     layerOpacity: 1,
 
     /**
-     * Geocoding service URL (address search)
-     * Default: IGN Géoplateforme (French geoportal)
-     * Requires CORS support from the service
+     * Geocoding service (address search).
+     * openLSGeocodeUrl: endpoint URL.
+     * geocodeParams: extra query params appended to every request (beyond q, limit, bbox).
+     * geocodeAdapter: normalizes the response into [{label, coords:[lon,lat], score, zoom}].
+     *
+     * Default: IGN Géoplateforme (France). Switch to Nominatim block below for worldwide coverage.
+     * Requires CORS support from the service.
      */
     openLSGeocodeUrl: "https://data.geopf.fr/geocodage/search",
+    geocodeParams: {},
+    geocodeAdapter: function(response) {
+        return (response.features || []).map(function(f) {
+            var zoomByType = { municipality: 13, street: 17, housenumber: 18 };
+            return {
+                label: f.properties.label,
+                coords: f.geometry.coordinates,
+                score: f.properties.score || 0,
+                zoom: zoomByType[f.properties.type] || 16
+            };
+        });
+    },
+
+    // Nominatim (OpenStreetMap) — worldwide coverage, no API key required.
+    // Uncomment the block below and comment out the IGN block above to switch.
+    // openLSGeocodeUrl: "https://nominatim.openstreetmap.org/search",
+    // geocodeParams: { format: "json" },
+    // geocodeAdapter: function(response) {
+    //     return (response || []).map(function(r) {
+    //         var zoomByType = { city: 12, town: 13, village: 14, road: 16, house: 18 };
+    //         return {
+    //             label: r.display_name,
+    //             coords: [parseFloat(r.lon), parseFloat(r.lat)],
+    //             score: 0.5,
+    //             zoom: zoomByType[r.type] || 14
+    //         };
+    //     });
+    // },
 
     /**
      * Domain allowlist for external OGC services (WMS, WFS, CSW).
