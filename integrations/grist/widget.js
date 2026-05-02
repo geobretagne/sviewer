@@ -3,24 +3,28 @@
 var GEOM_CANDIDATES = ['geometry', 'geom', 'geo', 'shape', 'wkb_geometry'];
 var LABEL_CANDIDATES = ['label', 'nom', 'name', 'libelle', 'titre', 'title'];
 
-var colGeom = null;
-var colLabel = null;
-var svApp = null;
-var vectorLayer = null;
-var rowIdByFeature = new WeakMap();
-var featureByRowId = {};
-var allColumns = [];
-var allRecords = [];
-var svConfig = {};
-var mapReady = false;
-var gristDocId = null;
-var gristTableId = null;
+var colGeom = null;         // active geometry column name
+var colLabel = null;        // active label column name (optional)
+var svApp = null;           // SViewer app instance
+var vectorLayer = null;     // OL vector layer holding Grist features
+var rowIdByFeature = new WeakMap(); // OL Feature → Grist row id
+var featureByRowId = {};    // Grist row id → OL Feature
+var allColumns = [];        // column names from last onRecords
+var allRecords = [];        // raw records from last onRecords
+var svConfig = {};          // key/value pairs from _sv_config table
+var mapReady = false;       // true once SViewer.init() resolves
+var gristDocId = null;      // Grist document id (for share URL)
+var gristTableId = null;    // Grist table id (for share URL)
 var debounceTimer = null;
 
+// Update the status bar text
 function setStatus(msg) {
     document.getElementById('sv-status').textContent = msg;
 }
 
+// Parse a geometry value from a Grist cell.
+// Accepts a GeoJSON geometry object or a JSON string thereof.
+// Returns the geometry object, or null if unparseable.
 function parseGeom(val) {
     if (!val) { return null; }
     var g = (typeof val === 'string') ? (function() { try { return JSON.parse(val); } catch(e) { return null; } }()) : val;
@@ -28,6 +32,8 @@ function parseGeom(val) {
     return null;
 }
 
+// Auto-detect geometry and label columns from column names and first row values.
+// Checks name candidates first; falls back to scanning first-row values for parseable geometry.
 function detectColumns(columns, firstRow) {
     var names = columns.map(function(c) { return c.toLowerCase(); });
     var geom = null, lbl = null;
@@ -47,6 +53,7 @@ function detectColumns(columns, firstRow) {
     return { geom: geom, label: lbl };
 }
 
+// Populate the column picker selects with current column list.
 function populateColumnPicker(columns) {
     var selGeom = document.getElementById('sv-sel-geom');
     var selLbl = document.getElementById('sv-sel-label');
@@ -79,6 +86,8 @@ function hideColPicker() {
     document.getElementById('sv-col-picker').style.display = 'none';
 }
 
+// Return an OL style function that renders Point/MultiPoint as circles
+// and all other geometries (Line, Polygon, …) as fill+stroke.
 function makeFeatureStyle(color, fillOpacity, radius, strokeWidth) {
     var fillArr = ol.color.asArray(color).slice();
     fillArr[3] = fillOpacity;
@@ -101,6 +110,8 @@ function makeFeatureStyle(color, fillOpacity, radius, strokeWidth) {
     };
 }
 
+// Highlight selectedFeat in yellow; reset all others to base color.
+// Called on grid row selection (onRecord) and on clear.
 function applySelectionStyle(selectedFeat) {
     if (!vectorLayer) { return; }
     var baseColor = svConfig.geojson_color || '#e74c3c';
@@ -129,11 +140,15 @@ function applySelectionStyle(selectedFeat) {
     });
 }
 
+// Debounce rebuildLayer calls — onRecords can fire rapidly on edits.
 function scheduleRebuildLayer() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(rebuildLayer, 300);
 }
 
+// Rebuild the OL vector layer from allRecords.
+// Reads geometry from colGeom, reprojects EPSG:4326 → EPSG:3857.
+// On first call, fits the view to the full extent of all features.
 function rebuildLayer() {
     if (!mapReady || !colGeom) { return; }
 
@@ -182,6 +197,7 @@ function rebuildLayer() {
     var total = allRecords.length;
     setStatus(total + ' features' + (skipped ? ' (' + skipped + ' skipped)' : ''));
 
+    // Fit view once on initial load; svConfig._viewSet prevents re-fitting on subsequent onRecords
     if (features.length && !svConfig._viewSet) {
         var ext = vectorLayer.getSource().getExtent();
         if (ext && isFinite(ext[0])) {
@@ -191,6 +207,8 @@ function rebuildLayer() {
     }
 }
 
+// Wire map singleclick: hit-test vector layer, call setSelectedRows on match.
+// hitTolerance: 8px makes line features easier to click.
 function setupMapClick() {
     var map = SViewer.getMap();
     map.on('singleclick', function(e) {
@@ -201,11 +219,12 @@ function setupMapClick() {
                 grist.setSelectedRows([rowId]);
                 document.getElementById('sv-btn-clear').style.display = '';
             }
-            return true;
+            return true; // stop after first hit
         }, { layerFilter: function(l) { return l === vectorLayer; }, hitTolerance: 8 });
     });
 }
 
+// Initialize sViewer map with optional WMS layers from _sv_config.
 function initMap() {
     var opts = {
         x: svConfig.center_x ? parseFloat(svConfig.center_x) : 0,
@@ -227,6 +246,8 @@ function initMap() {
     });
 }
 
+// Build a sViewer standalone share URL pointing to the Grist public records API.
+// Requires gristDocId and gristTableId to include the ?geojson= param.
 function buildShareUrl() {
     var view = SViewer.getView();
     if (!view) { return ''; }
@@ -266,7 +287,11 @@ function hideSharePanel() {
     document.getElementById('sv-overlay').style.display = 'none';
 }
 
+// ---------------------------------------------------------------------------
 // Toolbar events
+// ---------------------------------------------------------------------------
+
+// Clear selection: reset Grist filter and remove highlight styles
 document.getElementById('sv-btn-clear').addEventListener('click', function() {
     grist.setSelectedRows(null);
     document.getElementById('sv-btn-clear').style.display = 'none';
@@ -283,7 +308,7 @@ document.getElementById('sv-btn-apply-cols').addEventListener('click', function(
     colGeom = document.getElementById('sv-sel-geom').value;
     colLabel = document.getElementById('sv-sel-label').value || null;
     hideColPicker();
-    svConfig._viewSet = false;
+    svConfig._viewSet = false; // allow re-fit after manual column change
     rebuildLayer();
 });
 document.getElementById('sv-btn-copy').addEventListener('click', function() {
@@ -300,16 +325,24 @@ document.getElementById('sv-btn-open').addEventListener('click', function() {
 document.getElementById('sv-btn-close-share').addEventListener('click', hideSharePanel);
 document.getElementById('sv-overlay').addEventListener('click', hideSharePanel);
 
-// Grist init
+// ---------------------------------------------------------------------------
+// Grist API init sequence
+// ---------------------------------------------------------------------------
+
 var CONFIG_TABLE = '_sv_config';
 
+// requiredAccess: full — needed for docApi.fetchTable on _sv_config
 grist.ready({ requiredAccess: 'full' });
 
+// Restore saved column choices from widget options
 grist.onOptions(function(options) {
     if (options && options.colGeom) { colGeom = options.colGeom; }
     if (options && options.colLabel) { colLabel = options.colLabel; }
 });
 
+// Registered immediately after ready() — Grist fires the initial onRecords
+// event right after receiving Ready; late registration (inside a Promise chain)
+// misses it.
 grist.onRecords(function(records) {
     allRecords = records;
     if (!gristTableId && grist.selectedTable) {
@@ -334,6 +367,7 @@ grist.onRecords(function(records) {
     scheduleRebuildLayer();
 });
 
+// Grid row selected → pan/zoom map to feature and highlight it
 grist.onRecord(function(record) {
     if (!mapReady || !record || !colGeom) { return; }
     var geomVal = parseGeom(record[colGeom]);
@@ -352,6 +386,8 @@ grist.onRecord(function(record) {
     applySelectionStyle(feat);
 });
 
+// Load _sv_config for WMS/center/color overrides, then init map.
+// Absent table is silently ignored — defaults apply.
 grist.docApi.fetchTable(CONFIG_TABLE).then(function(data) {
     var keys = data.key || data.Key || [];
     var vals = data.value || data.Value || [];
