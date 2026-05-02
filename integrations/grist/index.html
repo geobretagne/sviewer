@@ -377,21 +377,28 @@ document.getElementById('sv-overlay').addEventListener('click', hideSharePanel);
 // ---------------------------------------------------------------------------
 // Grist API — main init sequence
 // ---------------------------------------------------------------------------
-grist.ready({ requiredAccess: 'read table' });
+grist.ready({ requiredAccess: 'full' });
 
 grist.onOptions(function(options, interaction) {
     if (options && options.colGeom) { colGeom = options.colGeom; }
     if (options && options.colLabel) { colLabel = options.colLabel; }
 });
 
-// Bootstrap: init map, then subscribe to records
-// Note: docApi.fetchTable requires 'full' access — incompatible with 'read table'.
-// Config comes via grist.onOptions (widget saved options) or defaults.
-if (grist.docApi && typeof grist.docApi.getDocName === 'function') {
-    grist.docApi.getDocName().then(function(id) { gristDocId = id; }).catch(function() {});
-}
-initMap();
-Promise.resolve().then(function() {
+var CONFIG_TABLE = '_sv_config';
+
+// Bootstrap: load _sv_config, then init map, then subscribe to records
+grist.docApi.fetchTable(CONFIG_TABLE).then(function(data) {
+    var keys = data.key || data.Key || [];
+    var vals = data.value || data.Value || [];
+    keys.forEach(function(k, i) { svConfig[k] = vals[i]; });
+}).catch(function() {
+    // _sv_config absent — use defaults
+}).then(function() {
+    if (grist.docApi && typeof grist.docApi.getDocName === 'function') {
+        grist.docApi.getDocName().then(function(id) { gristDocId = id; }).catch(function() {});
+    }
+    initMap();
+}).then(function() {
     // Subscribe to records
     grist.onRecords(function(records, mappings) {
         allRecords = records;
