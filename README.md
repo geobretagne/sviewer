@@ -326,11 +326,15 @@ Avec vérification systématique par un humain :
 
 Sans vérification systématique par un humain :
 
-* minification du code et des librairies
-* accessibilité
-* traductions
+* analyse pro/con d'une nouvelle fonctionnalité
 * style
-* jslint
+* scan sécurité
+* scan accessibilité
+* scan performance
+* subset des librairies
+* minification code et librairies
+* traductions
+* lint des codes
 
 
 Notes techniques
