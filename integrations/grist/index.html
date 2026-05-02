@@ -275,13 +275,17 @@ function setupMapClick() {
     var map = SViewer.getMap();
     map.on('singleclick', function(e) {
         if (!vectorLayer) { return; }
+        var hit = false;
         map.forEachFeatureAtPixel(e.pixel, function(feature) {
             var rowId = feature.get('_gristRowId');
+            console.log('[grist] click hit rowId=' + rowId);
             if (rowId !== undefined) {
                 grist.setCursorPos({ rowId: rowId });
+                hit = true;
             }
             return true; // stop after first hit
-        }, { layerFilter: function(l) { return l === vectorLayer; } });
+        }, { layerFilter: function(l) { return l === vectorLayer; }, hitTolerance: 8 });
+        if (!hit) { console.log('[grist] click — no feature at pixel'); }
     });
 }
 
