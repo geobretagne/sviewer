@@ -114,6 +114,8 @@ customConfig = {
     jsonLayerAdapter: function(response) {
         // Known geometry column names — first match wins.
         var GEOM_CANDIDATES = ['geometry', 'geom', 'geo', 'shape', 'wkb_geometry'];
+        var LAT_CANDIDATES  = ['latitude', 'lat'];
+        var LON_CANDIDATES  = ['longitude', 'lon', 'lng'];
 
         // Accept geometry as a GeoJSON object or a JSON string.
         function parseGeom(val) {
@@ -138,6 +140,16 @@ customConfig = {
             return null;
         }
 
+        // Find lat + lon column pair by name. Returns { latKey, lonKey } or null.
+        function detectLatLon(row) {
+            var keys = Object.keys(row);
+            var lower = keys.map(function(k) { return k.toLowerCase(); });
+            var latKey = null, lonKey = null;
+            LAT_CANDIDATES.forEach(function(c) { if (!latKey && lower.indexOf(c) !== -1) { latKey = keys[lower.indexOf(c)]; } });
+            LON_CANDIDATES.forEach(function(c) { if (!lonKey && lower.indexOf(c) !== -1) { lonKey = keys[lower.indexOf(c)]; } });
+            return (latKey && lonKey) ? { latKey: latKey, lonKey: lonKey } : null;
+        }
+
         // Flatten Grist envelope: { records: [{id, fields:{...}}] } → array of field objects.
         var rows = (response.records || []).map(function(r) { return r.fields || r; });
         // Fallback: plain array (non-Grist APIs).
@@ -145,14 +157,25 @@ customConfig = {
         if (!rows.length) { return { type: 'FeatureCollection', features: [] }; }
 
         var geomKey = detectGeomKey(rows[0]);
-        if (!geomKey) { return { type: 'FeatureCollection', features: [] }; }
+        var latlon  = geomKey ? null : detectLatLon(rows[0]);
+        if (!geomKey && !latlon) { return { type: 'FeatureCollection', features: [] }; }
 
         var features = rows.map(function(f) {
-            var geom = parseGeom(f[geomKey]);
+            var geom;
+            if (geomKey) {
+                geom = parseGeom(f[geomKey]);
+            } else {
+                var lat = parseFloat(f[latlon.latKey]);
+                var lon = parseFloat(f[latlon.lonKey]);
+                if (isNaN(lat) || isNaN(lon)) { return null; }
+                geom = { type: 'Point', coordinates: [lon, lat] };
+            }
             if (!geom) { return null; }
             // Exclude geometry key from properties to avoid OL confusion.
             var props = {};
-            Object.keys(f).forEach(function(k) { if (k !== geomKey) { props[k] = f[k]; } });
+            Object.keys(f).forEach(function(k) {
+                if (k !== geomKey && (!latlon || (k !== latlon.latKey && k !== latlon.lonKey))) { props[k] = f[k]; }
+            });
             return { type: 'Feature', geometry: geom, properties: props };
         }).filter(Boolean);
         return { type: 'FeatureCollection', features: features };

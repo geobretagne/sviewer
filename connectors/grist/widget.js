@@ -6,52 +6,72 @@
 
 var I18N = {
     fr: {
-        'loading':       'Chargement…',
-        'clear':         '✕ Désélectionner',
-        'clear.title':   'Effacer la sélection',
-        'geom.col':      'Géométrie :',
-        'label.col':     'Étiquette :',
-        'auto.detected': 'Colonne géométrie détectée : ',
-        'choose.col':    'Choisir la colonne géométrie',
-        'features':      ' entités',
-        'skipped':       ' ignorées',
-        'no.config':     'Pas de table _sviewer_customConfig — valeurs par défaut'
+        'loading':            'Chargement…',
+        'clear':              '✕ Désélectionner',
+        'clear.title':        'Effacer la sélection',
+        'geom.col':           'Géométrie :',
+        'label.col':          'Étiquette :',
+        'lat.col':            'Latitude :',
+        'lon.col':            'Longitude :',
+        'auto.detected':      'Colonne géométrie détectée : ',
+        'auto.detected.ll':   'Colonnes lat/lon détectées : ',
+        'choose.col':         'Choisir la colonne géométrie',
+        'choose.lat':         'Choisir la colonne latitude',
+        'choose.lon':         'Choisir la colonne longitude',
+        'features':           ' entités',
+        'skipped':            ' ignorées',
+        'no.config':          'Pas de table _sviewer_customConfig — valeurs par défaut'
     },
     en: {
-        'loading':       'Loading…',
-        'clear':         '✕ Deselect',
-        'clear.title':   'Clear selection',
-        'geom.col':      'Geometry:',
-        'label.col':     'Label:',
-        'auto.detected': 'Geometry column auto-detected: ',
-        'choose.col':    'Choose geometry column',
-        'features':      ' features',
-        'skipped':       ' skipped',
-        'no.config':     'No _sviewer_customConfig table — using defaults'
+        'loading':            'Loading…',
+        'clear':              '✕ Deselect',
+        'clear.title':        'Clear selection',
+        'geom.col':           'Geometry:',
+        'label.col':          'Label:',
+        'lat.col':            'Latitude:',
+        'lon.col':            'Longitude:',
+        'auto.detected':      'Geometry column auto-detected: ',
+        'auto.detected.ll':   'Lat/lon columns auto-detected: ',
+        'choose.col':         'Choose geometry column',
+        'choose.lat':         'Choose latitude column',
+        'choose.lon':         'Choose longitude column',
+        'features':           ' features',
+        'skipped':            ' skipped',
+        'no.config':          'No _sviewer_customConfig table — using defaults'
     },
     es: {
-        'loading':       'Cargando…',
-        'clear':         '✕ Deseleccionar',
-        'clear.title':   'Borrar selección',
-        'geom.col':      'Geometría:',
-        'label.col':     'Etiqueta:',
-        'auto.detected': 'Columna de geometría detectada: ',
-        'choose.col':    'Elegir columna de geometría',
-        'features':      ' entidades',
-        'skipped':       ' omitidas',
-        'no.config':     'Sin tabla _sviewer_customConfig — valores por defecto'
+        'loading':            'Cargando…',
+        'clear':              '✕ Deseleccionar',
+        'clear.title':        'Borrar selección',
+        'geom.col':           'Geometría:',
+        'label.col':          'Etiqueta:',
+        'lat.col':            'Latitud:',
+        'lon.col':            'Longitud:',
+        'auto.detected':      'Columna de geometría detectada: ',
+        'auto.detected.ll':   'Columnas lat/lon detectadas: ',
+        'choose.col':         'Elegir columna de geometría',
+        'choose.lat':         'Elegir columna de latitud',
+        'choose.lon':         'Elegir columna de longitud',
+        'features':           ' entidades',
+        'skipped':            ' omitidas',
+        'no.config':          'Sin tabla _sviewer_customConfig — valores por defecto'
     },
     de: {
-        'loading':       'Laden…',
-        'clear':         '✕ Auswahl aufheben',
-        'clear.title':   'Auswahl löschen',
-        'geom.col':      'Geometrie:',
-        'label.col':     'Beschriftung:',
-        'auto.detected': 'Geometriespalte erkannt: ',
-        'choose.col':    'Geometriespalte wählen',
-        'features':      ' Objekte',
-        'skipped':       ' übersprungen',
-        'no.config':     'Keine _sviewer_customConfig-Tabelle — Standardwerte'
+        'loading':            'Laden…',
+        'clear':              '✕ Auswahl aufheben',
+        'clear.title':        'Auswahl löschen',
+        'geom.col':           'Geometrie:',
+        'label.col':          'Beschriftung:',
+        'lat.col':            'Breitengrad:',
+        'lon.col':            'Längengrad:',
+        'auto.detected':      'Geometriespalte erkannt: ',
+        'auto.detected.ll':   'Lat/Lon-Spalten erkannt: ',
+        'choose.col':         'Geometriespalte wählen',
+        'choose.lat':         'Breitengradpalte wählen',
+        'choose.lon':         'Längengradpalte wählen',
+        'features':           ' Objekte',
+        'skipped':            ' übersprungen',
+        'no.config':          'Keine _sviewer_customConfig-Tabelle — Standardwerte'
     }
 };
 
@@ -80,9 +100,13 @@ function applyDomTranslations() {
 
 var GEOM_CANDIDATES = ['geometry', 'geom', 'geo', 'shape', 'wkb_geometry'];
 var LABEL_CANDIDATES = ['label', 'nom', 'name', 'libelle', 'titre', 'title'];
+var LAT_CANDIDATES  = ['latitude', 'lat'];
+var LON_CANDIDATES  = ['longitude', 'lon', 'lng'];
 
 var colGeom = null;                // colonne géométrie active
 var colLabel = null;               // colonne étiquette active (optionnelle)
+var colLat = null;                 // colonne latitude (mode lat/lon)
+var colLon = null;                 // colonne longitude (mode lat/lon)
 var vectorLayer = null;            // couche OL vecteur portant les entités Grist
 var featureByRowId = {};           // id ligne Grist → OL Feature
 var allColumns = [];               // noms de colonnes du dernier onRecords
@@ -115,11 +139,12 @@ function parseGeom(val) {
     return null;
 }
 
-// Détecte les colonnes géométrie et étiquette depuis les noms de colonnes et la première ligne.
-// Retourne { geom, label } — l'un ou l'autre peut être null.
+// Détecte les colonnes géométrie, lat/lon et étiquette depuis les noms de colonnes et la première ligne.
+// Retourne { geom, lat, lon, label } — chaque champ peut être null.
+// Priorité : colonne géométrie > paire lat/lon.
 function detectColumns(columns, firstRow) {
     var names = columns.map(function(c) { return c.toLowerCase(); });
-    var geom = null, lbl = null;
+    var geom = null, lbl = null, lat = null, lon = null;
     GEOM_CANDIDATES.forEach(function(c) {
         if (!geom && names.indexOf(c) !== -1) { geom = columns[names.indexOf(c)]; }
     });
@@ -129,39 +154,63 @@ function detectColumns(columns, firstRow) {
             if (!geom && parseGeom(firstRow[c])) { geom = c; }
         });
     }
+    // Si pas de colonne géométrie, chercher une paire lat/lon
+    if (!geom) {
+        LAT_CANDIDATES.forEach(function(c) { if (!lat && names.indexOf(c) !== -1) { lat = columns[names.indexOf(c)]; } });
+        LON_CANDIDATES.forEach(function(c) { if (!lon && names.indexOf(c) !== -1) { lon = columns[names.indexOf(c)]; } });
+        if (!lat || !lon) { lat = null; lon = null; }
+    }
     LABEL_CANDIDATES.forEach(function(c) {
         if (!lbl && names.indexOf(c) !== -1) { lbl = columns[names.indexOf(c)]; }
     });
-    return { geom: geom, label: lbl };
+    return { geom: geom, lat: lat, lon: lon, label: lbl };
 }
 
-// Remplit les selects géométrie et étiquette de la barre d'outils.
+// Remplit les selects géométrie, lat, lon et étiquette de la barre d'outils.
+// Affiche le groupe géométrie OU le groupe lat/lon selon le mode actif.
 function populateColumnPicker(columns) {
     var selGeom = document.getElementById('sv-sel-geom');
-    var selLbl = document.getElementById('sv-sel-label');
+    var selLat  = document.getElementById('sv-sel-lat');
+    var selLon  = document.getElementById('sv-sel-lon');
+    var selLbl  = document.getElementById('sv-sel-label');
     var noneLbl = lang === 'fr' ? '(aucune)' : lang === 'de' ? '(keine)' : lang === 'es' ? '(ninguna)' : '(none)';
-    var chooseLbl = tr('choose.col');
-    // options.length = 0 évite innerHTML pour vider le select (pas de parsing HTML)
+
+    // Vide tous les selects
     selGeom.options.length = 0;
-    selLbl.options.length = 0;
-    // Option placeholder désactivée : visible mais non sélectionnable, guide l'utilisateur
-    var placeholder = document.createElement('option');
-    placeholder.value = ''; placeholder.textContent = chooseLbl;
-    placeholder.disabled = true;
-    selGeom.appendChild(placeholder);
+    selLat.options.length  = 0;
+    selLon.options.length  = 0;
+    selLbl.options.length  = 0;
+
+    // Placeholder désactivé pour géométrie, lat, lon
+    [['sv-sel-geom', 'choose.col'], ['sv-sel-lat', 'choose.lat'], ['sv-sel-lon', 'choose.lon']].forEach(function(pair) {
+        var sel = document.getElementById(pair[0]);
+        var ph = document.createElement('option');
+        ph.value = ''; ph.textContent = tr(pair[1]); ph.disabled = true;
+        sel.appendChild(ph);
+    });
+
     var noneOpt = document.createElement('option');
     noneOpt.value = ''; noneOpt.textContent = noneLbl;
     selLbl.appendChild(noneOpt);
+
     columns.forEach(function(col) {
-        var o1 = document.createElement('option');
-        o1.value = col; o1.textContent = col; o1.title = col; // title : nom complet au survol si tronqué
-        selGeom.appendChild(o1);
-        var o2 = document.createElement('option');
-        o2.value = col; o2.textContent = col; o2.title = col;
-        selLbl.appendChild(o2);
+        function makeOpt() { var o = document.createElement('option'); o.value = col; o.textContent = col; o.title = col; return o; }
+        selGeom.appendChild(makeOpt());
+        selLat.appendChild(makeOpt());
+        selLon.appendChild(makeOpt());
+        selLbl.appendChild(makeOpt());
     });
-    if (colGeom) { selGeom.value = colGeom; } else { selGeom.value = ''; }
-    if (colLabel) { selLbl.value = colLabel; } else { selLbl.value = ''; }
+
+    // Affiche le bon groupe selon le mode
+    var isLatLon = !colGeom && (colLat || colLon);
+    document.getElementById('sv-group-geom').style.display = isLatLon ? 'none' : '';
+    document.getElementById('sv-group-lat').style.display  = isLatLon ? '' : 'none';
+    document.getElementById('sv-group-lon').style.display  = isLatLon ? '' : 'none';
+
+    if (colGeom)  { selGeom.value = colGeom; } else { selGeom.value = ''; }
+    if (colLat)   { selLat.value  = colLat;  } else { selLat.value  = ''; }
+    if (colLon)   { selLon.value  = colLon;  } else { selLon.value  = ''; }
+    if (colLabel) { selLbl.value  = colLabel; } else { selLbl.value = ''; }
 }
 
 // Retourne un ol.style.Text pour une valeur d'étiquette (null-safe).
@@ -248,10 +297,10 @@ function scheduleRebuildLayer() {
 // Reprojette EPSG:4326 → EPSG:3857. Fit de vue au premier chargement uniquement.
 // Court-circuite le rebuild si les données n'ont pas changé (empreinte identique).
 function rebuildLayer() {
-    if (!mapReady || !colGeom) { return; }
+    if (!mapReady || (!colGeom && !(colLat && colLon))) { return; }
 
-    // colGeom et colLabel dans l'empreinte : force le rebuild si la colonne change sans que les données bougent
-    var fingerprint = JSON.stringify(allRecords) + '|' + colGeom + '|' + colLabel;
+    // colonnes actives dans l'empreinte : force le rebuild si la colonne change sans que les données bougent
+    var fingerprint = JSON.stringify(allRecords) + '|' + colGeom + '|' + colLat + '|' + colLon + '|' + colLabel;
     if (vectorLayer && fingerprint === lastRecordsFingerprint) {
         applySelectionStyle(selectedRowId !== null ? featureByRowId[selectedRowId] : null);
         return;
@@ -270,7 +319,14 @@ function rebuildLayer() {
     var color = safeColor(svConfig.feature_color, '#e74c3c');
 
     allRecords.forEach(function(row) {
-        var geomVal = parseGeom(row[colGeom]);
+        var geomVal;
+        if (colGeom) {
+            geomVal = parseGeom(row[colGeom]);
+        } else {
+            var lat = parseFloat(row[colLat]);
+            var lon = parseFloat(row[colLon]);
+            if (!isNaN(lat) && !isNaN(lon)) { geomVal = { type: 'Point', coordinates: [lon, lat] }; }
+        }
         if (!geomVal) { skipped++; return; }
 
         var olGeom;
@@ -415,7 +471,20 @@ document.getElementById('sv-btn-clear').addEventListener('click', function() {
 });
 document.getElementById('sv-sel-geom').addEventListener('change', function() {
     colGeom = this.value;
-    viewFitted = false; // force un nouveau fit de vue avec la nouvelle colonne
+    colLat = null; colLon = null;
+    viewFitted = false;
+    rebuildLayer();
+});
+document.getElementById('sv-sel-lat').addEventListener('change', function() {
+    colLat = this.value;
+    colGeom = null;
+    viewFitted = false;
+    rebuildLayer();
+});
+document.getElementById('sv-sel-lon').addEventListener('change', function() {
+    colLon = this.value;
+    colGeom = null;
+    viewFitted = false;
     rebuildLayer();
 });
 document.getElementById('sv-sel-label').addEventListener('change', function() {
@@ -443,14 +512,17 @@ grist.onRecords(function(records) {
     if (records.length) {
         allColumns = Object.keys(records[0]).filter(function(k) { return k !== 'id'; });
         populateColumnPicker(allColumns);
-        if (!colGeom) {
+        if (!colGeom && !colLat && !colLon) {
             var detected = detectColumns(allColumns, records[0]);
             if (detected.geom) {
                 colGeom = detected.geom;
                 colLabel = colLabel || detected.label;
-                document.getElementById('sv-sel-geom').value = colGeom;
-                if (colLabel) { document.getElementById('sv-sel-label').value = colLabel; }
                 setStatus(tr('auto.detected') + colGeom);
+            } else if (detected.lat && detected.lon) {
+                colLat = detected.lat;
+                colLon = detected.lon;
+                colLabel = colLabel || detected.label;
+                setStatus(tr('auto.detected.ll') + colLat + ' / ' + colLon);
             } else {
                 setStatus(tr('choose.col'));
             }
@@ -462,8 +534,15 @@ grist.onRecords(function(records) {
 
 // Ligne sélectionnée dans la grille → pan/zoom carte sur l'entité et surlignage
 grist.onRecord(function(record) {
-    if (!mapReady || !record || !colGeom) { return; }
-    var geomVal = parseGeom(record[colGeom]);
+    if (!mapReady || !record) { return; }
+    var geomVal;
+    if (colGeom) {
+        geomVal = parseGeom(record[colGeom]);
+    } else if (colLat && colLon) {
+        var lat = parseFloat(record[colLat]);
+        var lon = parseFloat(record[colLon]);
+        if (!isNaN(lat) && !isNaN(lon)) { geomVal = { type: 'Point', coordinates: [lon, lat] }; }
+    }
     if (!geomVal || !geomVal.coordinates) { return; }
 
     var rowId = record.id;

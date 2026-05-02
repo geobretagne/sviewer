@@ -36,10 +36,20 @@
 <body>
 
 <div id="sv-toolbar">
-    <div class="sv-col-group">
+    <!-- mode géométrie (default) -->
+    <div class="sv-col-group" id="sv-group-geom">
         <!-- libellé lié au select via for/id pour l'accessibilité (WCAG 4.1.2) -->
         <label for="sv-sel-geom" data-i18n="geom.col"></label>
         <select id="sv-sel-geom"></select>
+    </div>
+    <!-- mode lat/lon (hidden until auto-detected or no geometry column found) -->
+    <div class="sv-col-group" id="sv-group-lat" style="display:none">
+        <label for="sv-sel-lat" data-i18n="lat.col"></label>
+        <select id="sv-sel-lat"></select>
+    </div>
+    <div class="sv-col-group" id="sv-group-lon" style="display:none">
+        <label for="sv-sel-lon" data-i18n="lon.col"></label>
+        <select id="sv-sel-lon"></select>
     </div>
     <div class="sv-col-group">
         <label for="sv-sel-label" data-i18n="label.col"></label>
