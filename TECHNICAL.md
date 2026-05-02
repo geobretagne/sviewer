@@ -258,7 +258,6 @@ Les options passées à `SViewer.init()` utilisent **exactement les mêmes noms*
 | `theme` | `string` | `?theme=` | Thème d'affichage : `light` (défaut) ou `dark`. Sans paramètre : suit `prefers-color-scheme` |
 | `opacity` | `number` | `?opacity=` | Opacité des couches (0–1, défaut : 1) |
 | `position` | `1` | `?position=1` | Active le suivi GPS au chargement |
-| `lo` | `number` | `?lo=` | Index de la couche overlay active (0-based, absent = aucune) |
 
 Le bouton **HTML** du panneau de partage génère automatiquement un fragment `SViewer.init()` pour la vue courante.
 
@@ -806,26 +805,76 @@ state = {
 
 ### API SViewerApp
 
+`SViewer.init()` retourne une Promise résolue avec l'instance `SViewerApp` une fois sViewer prêt.
+
 **Méthodes publiques :**
 
-```javascript
-// Initialisation
-SViewerApp.init(options)
+| Méthode | Retourne | Description |
+|---------|----------|-------------|
+| `SViewer.getMap()` | `ol.Map` | Objet carte OpenLayers |
+| `SViewer.getView()` | `ol.View` | Vue OpenLayers (centre, zoom, projection) |
+| `SViewer.getApp()` | `SViewerApp` | Instance sViewer (même résultat que la Promise) |
+| `app.getMap()` | `ol.Map` | Identique à `SViewer.getMap()` |
+| `app.getView()` | `ol.View` | Identique à `SViewer.getView()` |
+| `app.getConfig()` | `object` | Configuration fusionnée (lecture seule) |
+| `app.getState()` | `object` | État interne courant (lecture seule) |
 
-// Accesseurs
-SViewerApp.getMap()        // Objet OpenLayers map
-SViewerApp.getView()       // Objet OpenLayers view
-SViewerApp.getConfig()     // Objet config
-SViewerApp.getState()      // Objet state
+**Contrôle de la vue :**
+```javascript
+SViewer.init('#ma-carte', { x: -390192, y: 6122108, z: 10 })
+    .then(function(app) {
+        var view = app.getView();
+
+        // Centrer et zoomer sans animation
+        view.setCenter([-390192, 6122108]);
+        view.setZoom(14);
+
+        // Centrer avec animation fluide
+        view.animate({
+            center: ol.proj.fromLonLat([-4.49, 48.39]),
+            zoom: 14,
+            duration: 800
+        });
+    });
 ```
 
-**Exemple :**
+**Ajouter une couche OL sur la carte :**
 ```javascript
-var app = window.SViewerApp;
-var map = app.getMap();
-var center = map.getView().getCenter();
-console.log('Centre :', center);
+SViewer.init('#ma-carte', {}).then(function(app) {
+    var map = app.getMap();
+
+    var overlay = new ol.layer.Tile({
+        source: new ol.source.TileWMS({
+            url: 'https://geobretagne.fr/geoserver/wms',
+            params: { LAYERS: 'geor:commune', VERSION: '1.3.0' },
+            crossOrigin: 'anonymous'
+        })
+    });
+    map.addLayer(overlay);
+});
 ```
+
+**Réagir aux événements OL :**
+```javascript
+SViewer.init('#ma-carte', {}).then(function(app) {
+    var map = app.getMap();
+
+    // Clic sur la carte
+    map.on('singleclick', function(e) {
+        var lonlat = ol.proj.toLonLat(e.coordinate);
+        console.log('Clic :', lonlat[0].toFixed(5), lonlat[1].toFixed(5));
+    });
+
+    // Fin de déplacement
+    map.on('moveend', function() {
+        var view = map.getView();
+        console.log('Zoom :', view.getZoom());
+        console.log('Centre :', ol.proj.toLonLat(view.getCenter()));
+    });
+});
+```
+
+> **Note :** Ces exemples utilisent l'API OpenLayers directement. Consulter la [documentation OpenLayers](https://openlayers.org/en/latest/apidoc/) pour l'ensemble des méthodes disponibles sur `ol.Map` et `ol.View`.
 
 ### Minification
 

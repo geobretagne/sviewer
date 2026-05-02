@@ -906,6 +906,45 @@ window.SViewerApp = (function() {
     }
 
     /**
+     * Silent auto-geocode for ?address= param.
+     * High-confidence result (score >= 0.8): centers map silently.
+     * Ambiguous result: opens search panel with results listed.
+     */
+    function autoGeocodeAddress(text) {
+        var zoomByType = { municipality: 13, street: 17, housenumber: 18 };
+        var bbox = ol.proj.transformExtent(
+            config.initialExtent,
+            map.getView().getProjection().getCode(),
+            'EPSG:4326'
+        );
+        $.ajax({
+            url: config.openLSGeocodeUrl,
+            type: 'GET',
+            dataType: 'json',
+            data: { q: text.trim(), limit: config.maxGeocodeResults, bbox: bbox.join(',') },
+            success: function(response) {
+                var features = response && response.features;
+                if (!features || !features.length) { return; }
+                var best = features[0];
+                var score = best.properties && best.properties.score;
+                if (score >= 0.8) {
+                    var coords = ol.proj.transform(best.geometry.coordinates, 'EPSG:4326', config.projcode);
+                    var zoom = zoomByType[best.properties.type] || 16;
+                    marker.setPosition(coords);
+                    view.setCenter(coords);
+                    view.setZoom(zoom);
+                    $('#marker').show();
+                } else {
+                    // Ambiguous — fall back to interactive search panel
+                    $('#searchInput').val(text);
+                    togglePanel('locate');
+                    openLsRequest(text);
+                }
+            }
+        });
+    }
+
+    /**
      * getFeatureInfo
      */
     function queryMap(coord) {
@@ -1499,7 +1538,8 @@ window.SViewerApp = (function() {
             searchindex: null,
             searchparams: {},
             position: 0,
-            opacity: config.layerOpacity !== undefined ? config.layerOpacity : 1
+            opacity: config.layerOpacity !== undefined ? config.layerOpacity : 1,
+            address: null
         };
 
         // querystring param: theme (light | dark), else OS preference
@@ -1603,6 +1643,11 @@ window.SViewerApp = (function() {
         // querystring param: perform getFeatureInfo on map center
         if (qs.q) {
             state.gfiok = true;
+        }
+
+        // querystring param: silent auto-geocode + recenter (?address=)
+        if (qs.address) {
+            state.address = qs.address;
         }
 
         // querystring param: activate WFS feature search alongside geocoding
@@ -1752,14 +1797,10 @@ window.SViewerApp = (function() {
         });
         document.addEventListener('fullscreenchange', updateFsButton);
         document.addEventListener('webkitfullscreenchange', updateFsButton);
-        // pointer: coarse = touch/mobile device. Fine = mouse-driven desktop.
-        // navigator.geolocation exists on all modern desktop browsers (Brave, Chrome, Firefox…)
-        // so checking the API alone won't filter desktop — coarse pointer is the right signal.
+        // pointer: coarse = touch/mobile device. navigator.geolocation exists on all modern
+        // desktop browsers so checking the API alone won't filter desktop — coarse is the right signal.
         var isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
         if (!document.fullscreenEnabled && !document.webkitFullscreenEnabled) {
-            $('#fsBt').hide();
-        } else if (isCoarsePointer) {
-            // Mobile OS provides fullscreen natively — in-map button is redundant clutter
             $('#fsBt').hide();
         }
         // GPS useful on mobile (hardware GPS); desktop users never need it in this context
@@ -2030,6 +2071,10 @@ window.SViewerApp = (function() {
                 function() { queryMap(view.getCenter()); },
                 300
             );
+        }
+
+        if (state.address) {
+            setTimeout(function() { autoGeocodeAddress(state.address); }, 300);
         }
 
     }
