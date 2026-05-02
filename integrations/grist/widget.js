@@ -7,45 +7,31 @@
 var I18N = {
     fr: {
         'loading':       'Chargement…',
-        'share':         'Partager',
-        'share.title':   'Partager la carte en lien permanent',
-        'share.title2':  'Partager cette carte',
-        'share.note':    'Lien public — les données doivent être accessibles sans authentification.',
         'cols':          'Colonnes',
         'cols.title':    'Configurer la colonne géométrie',
-        'clear':         '✕ Effacer',
+        'clear':         '✕ Désélectionner',
         'clear.title':   'Effacer la sélection',
-        'geom.col':      'Colonne géométrie :',
+        'geom.col':      'Colonne géométrie :',
         'apply':         'Appliquer',
-        'copy':          'Copier le lien',
-        'copy.done':     'Copié !',
-        'open':          'Ouvrir dans un onglet',
-        'close':         'Fermer',
-        'auto.detected': 'Colonne géométrie détectée : ',
+        'auto.detected': 'Colonne géométrie détectée : ',
         'choose.col':    'Choisir la colonne géométrie',
         'features':      ' entités',
-        'skipped':       ' ignorées'
+        'skipped':       ' ignorées',
+        'no.config':     'Pas de table _sviewer_customConfig — valeurs par défaut'
     },
     en: {
         'loading':       'Loading…',
-        'share':         'Share',
-        'share.title':   'Share map as permalink',
-        'share.title2':  'Share this map',
-        'share.note':    'Public link — data must be accessible without authentication.',
         'cols':          'Columns',
         'cols.title':    'Configure geometry column',
-        'clear':         '✕ Clear',
+        'clear':         '✕ Deselect',
         'clear.title':   'Clear selection',
         'geom.col':      'Geometry column:',
         'apply':         'Apply',
-        'copy':          'Copy link',
-        'copy.done':     'Copied!',
-        'open':          'Open in new tab',
-        'close':         'Close',
         'auto.detected': 'Geometry column auto-detected: ',
         'choose.col':    'Choose geometry column',
         'features':      ' features',
-        'skipped':       ' skipped'
+        'skipped':       ' skipped',
+        'no.config':     'No _sviewer_customConfig table — using defaults'
     }
 };
 
@@ -166,8 +152,8 @@ function makeFeatureStyle(color, fillOpacity, radius, strokeWidth) {
 // Pass null to reset all features to base style.
 function applySelectionStyle(selectedFeat) {
     if (!vectorLayer) { return; }
-    var baseColor = svConfig.geojson_color || '#e74c3c';
-    var selColor = '#ffcc00';
+    var baseColor = svConfig.feature_color || '#e74c3c';
+    var selColor = svConfig.feature_highlight_color || '#ffcc00';
     vectorLayer.getSource().getFeatures().forEach(function(f) {
         var isSel = f === selectedFeat;
         var c = isSel ? selColor : baseColor;
@@ -220,7 +206,7 @@ function rebuildLayer() {
     var features = [];
     var skipped = 0;
     var format = new ol.format.GeoJSON();
-    var color = svConfig.geojson_color || '#e74c3c';
+    var color = svConfig.feature_color || '#e74c3c';
 
     allRecords.forEach(function(row) {
         var geomVal = parseGeom(row[colGeom]);
@@ -250,7 +236,7 @@ function rebuildLayer() {
 
     setStatus(allRecords.length + tr('features') + (skipped ? ' (' + skipped + tr('skipped') + ')' : ''));
 
-    if (features.length && !viewFitted) {
+    if (features.length && !viewFitted && !svConfig.x && !svConfig.y) {
         var ext = vectorLayer.getSource().getExtent();
         if (ext && isFinite(ext[0])) {
             map.getView().fit(ext, { padding: [40, 40, 40, 40], maxZoom: 16, duration: 400 });
@@ -292,24 +278,6 @@ function setupMapClick() {
     });
 }
 
-// Initialize sViewer map. Config keys match sViewer embed param names (x, y, z, lb, layers).
-function initMap() {
-    var opts = {
-        x: svConfig.x ? parseFloat(svConfig.x) : 0,
-        y: svConfig.y ? parseFloat(svConfig.y) : 6000000,
-        z: svConfig.z ? parseInt(svConfig.z, 10) : 5,
-        title: 'sViewer — Grist'
-    };
-    if (svConfig.layers) { opts.layers = svConfig.layers; }
-    if (svConfig.lb !== undefined) { opts.lb = parseInt(svConfig.lb, 10); }
-
-    SViewer.init('#sv-map', opts).then(function() {
-        mapReady = true;
-        setupMapClick();
-        rebuildLayer();
-    });
-}
-
 // Validate a URL string is http or https. Returns the URL or null.
 function safeHttpUrl(url) {
     if (!url) { return null; }
@@ -319,42 +287,35 @@ function safeHttpUrl(url) {
     } catch(e) { return null; }
 }
 
-// Build a sViewer standalone share URL pointing to the Grist public records API.
-function buildShareUrl() {
-    var view = SViewer.getView();
-    if (!view) { return ''; }
+// Build the Grist public records API URL for the current document/table.
+// Returns null if doc or table ID is not yet known.
+function buildGristGeojsonUrl() {
+    if (!gristDocId || !gristTableId) { return null; }
+    var gristBase = (safeHttpUrl(svConfig.grist_api_base) || 'https://docs.getgrist.com').replace(/\/+$/, '');
+    return gristBase + '/api/docs/' + gristDocId + '/tables/' + gristTableId + '/records';
+}
 
-    var cx = view.getCenter();
-    var params = {
-        x: Math.round(cx[0]),
-        y: Math.round(cx[1]),
-        z: Math.round(view.getZoom())
+// Initialize sViewer map. Config keys match sViewer embed param names (x, y, z, lb, layers).
+// geojson is passed upfront so sViewer's share panel (permalink + embed code) includes the
+// Grist data URL without needing any post-init setter.
+function initMap() {
+    var opts = {
+        x: svConfig.x ? parseFloat(svConfig.x) : 0,
+        y: svConfig.y ? parseFloat(svConfig.y) : 6000000,
+        z: svConfig.z ? parseInt(svConfig.z, 10) : 5,
+        title: svConfig.title || 'sViewer — Grist'
     };
+    if (svConfig.layers) { opts.layers = svConfig.layers; }
+    if (svConfig.lb !== undefined) { opts.lb = parseInt(svConfig.lb, 10); }
 
-    if (svConfig.layers) { params.layers = svConfig.layers; }
-    if (svConfig.lb !== undefined) { params.lb = parseInt(svConfig.lb, 10); }
+    var geojsonUrl = buildGristGeojsonUrl();
+    if (geojsonUrl) { opts.geojson = geojsonUrl; }
 
-    if (gristDocId && gristTableId) {
-        var gristBase = safeHttpUrl(svConfig.grist_api_base) || 'https://docs.getgrist.com';
-        params.geojson = gristBase + '/api/docs/' + gristDocId + '/tables/' + gristTableId + '/records';
-    }
-
-    var base = svConfig.sviewer_base_url || '../../index.html';
-    return base + '?' + Object.keys(params).map(function(k) {
-        return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
-    }).join('&');
-}
-
-function showSharePanel() {
-    document.getElementById('sv-share-url').value = buildShareUrl();
-    document.getElementById('sv-share-panel').style.display = 'block';
-    document.getElementById('sv-overlay').style.display = 'block';
-    document.getElementById('sv-share-url').select();
-}
-
-function hideSharePanel() {
-    document.getElementById('sv-share-panel').style.display = 'none';
-    document.getElementById('sv-overlay').style.display = 'none';
+    SViewer.init('#sv-map', opts).then(function() {
+        mapReady = true;
+        setupMapClick();
+        rebuildLayer();
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -369,7 +330,6 @@ document.getElementById('sv-btn-clear').addEventListener('click', function() {
         vectorLayer.getSource().getFeatures().forEach(function(f) { f.setStyle(null); });
     }
 });
-document.getElementById('sv-btn-share').addEventListener('click', showSharePanel);
 document.getElementById('sv-btn-cols').addEventListener('click', function() {
     var picker = document.getElementById('sv-col-picker');
     if (picker.style.display === 'flex') { hideColPicker(); } else { showColPicker(); }
@@ -380,31 +340,6 @@ document.getElementById('sv-btn-apply-cols').addEventListener('click', function(
     viewFitted = false; // allow re-fit after manual column change
     rebuildLayer();
 });
-document.getElementById('sv-btn-copy').addEventListener('click', function() {
-    var url = document.getElementById('sv-share-url').value;
-    var btn = document.getElementById('sv-btn-copy');
-    function markCopied() {
-        btn.textContent = tr('copy.done');
-        setTimeout(function() { btn.textContent = tr('copy'); }, 2000);
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(markCopied).catch(function() {
-            document.getElementById('sv-share-url').select();
-        });
-    } else {
-        document.getElementById('sv-share-url').select();
-    }
-});
-document.getElementById('sv-btn-open').addEventListener('click', function() {
-    var url = document.getElementById('sv-share-url').value;
-    // Reject non-http(s) URLs — sviewer_base_url could be attacker-controlled via Grist doc.
-    // Relative paths (../../index.html) are also safe; safeHttpUrl returns null for them,
-    // so we allow them explicitly.
-    var isSafe = !url.match(/^[a-z][a-z0-9+\-.]*:/i) || safeHttpUrl(url);
-    if (url && isSafe) { window.open(url, '_blank', 'noopener'); }
-});
-document.getElementById('sv-btn-close-share').addEventListener('click', hideSharePanel);
-document.getElementById('sv-overlay').addEventListener('click', hideSharePanel);
 
 // ---------------------------------------------------------------------------
 // Grist API init sequence
@@ -422,9 +357,6 @@ grist.ready({ requiredAccess: 'full' });
 // misses it.
 grist.onRecords(function(records) {
     allRecords = records;
-    if (!gristTableId && grist.selectedTable) {
-        grist.selectedTable.getTableId().then(function(id) { gristTableId = id; }).catch(function() {});
-    }
 
     if (records.length) {
         allColumns = Object.keys(records[0]).filter(function(k) { return k !== 'id'; });
@@ -468,16 +400,26 @@ grist.onRecord(function(record) {
 
 applyDomTranslations();
 
+// Startup chain: load config → fetch doc/table IDs → init map with geojson URL baked in.
+// Doc and table IDs are awaited so initMap() can pass ?geojson= to SViewer.init() upfront —
+// sViewer's share panel (permalink + embed code) then includes the Grist data URL correctly.
 grist.docApi.fetchTable(CONFIG_TABLE)
     .then(function(data) {
         var keys = data.key || [];
         var vals = data.value || [];
         keys.forEach(function(k, i) { svConfig[k] = vals[i]; });
+        console.log('[sviewer] config loaded:', svConfig);
     })
-    .catch(function() {})
+    .catch(function(e) { console.warn('[sviewer] config table missing or error:', e); setStatus(tr('no.config')); })
     .then(function() {
-        if (grist.docApi && typeof grist.docApi.getDocName === 'function') {
-            grist.docApi.getDocName().then(function(id) { gristDocId = id; }).catch(function() {});
-        }
+        var docPromise = (grist.docApi && typeof grist.docApi.getDocName === 'function')
+            ? grist.docApi.getDocName().then(function(id) { gristDocId = id; }).catch(function() {})
+            : Promise.resolve();
+        var tablePromise = (grist.selectedTable)
+            ? grist.selectedTable.getTableId().then(function(id) { gristTableId = id; }).catch(function() {})
+            : Promise.resolve();
+        return Promise.all([docPromise, tablePromise]);
+    })
+    .then(function() {
         initMap();
     });

@@ -30,7 +30,9 @@ Les clés correspondent aux paramètres d'URL de sViewer (même nom, même séma
 | `z` | Niveau de zoom initial | `10` |
 | `layers` | Couche(s) WMS au format `namespace:nom` (doit figurer dans `customConfig.js`) | `dreal_b:ae_casparcas` |
 | `lb` | Index du fond de carte initial (selon `layersBackground` dans `customConfig.js`) | `1` |
-| `geojson_color` | Couleur des entités Grist (valeur CSS) | `#e74c3c` |
+| `title` | Titre affiché dans la barre sViewer | `Mon projet` |
+| `feature_color` | Couleur des entités (valeur CSS) | `#e74c3c` |
+| `feature_highlight_color` | Couleur de l'entité sélectionnée (valeur CSS) | `#ffcc00` |
 | `sviewer_base_url` | URL de base sViewer pour les liens de partage | `https://votre-serveur/sviewer/index.html` |
 | `grist_api_base` | Hôte Grist pour les instances auto-hébergées | `https://grist.votre-serveur.org` |
 

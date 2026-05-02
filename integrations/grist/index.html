@@ -33,24 +33,12 @@
 
         #sv-map { flex: 1; }
 
-        #sv-share-panel {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 20px;
-            box-shadow: 0 4px 24px rgba(0,0,0,.18); z-index: 9999; min-width: 320px; max-width: 90vw;
-        }
-        #sv-share-panel h3 { margin-bottom: 12px; font-size: 15px; }
-        #sv-share-url { width: 100%; font-size: 12px; padding: 6px; border: 1px solid #ccc; border-radius: 3px; }
-        #sv-share-panel .sv-share-actions { display: flex; gap: 8px; margin-top: 10px; }
-        #sv-share-panel button { padding: 5px 12px; font-size: 13px; cursor: pointer; border: 1px solid #bbb; border-radius: 3px; background: #f5f5f5; }
-        #sv-share-panel .sv-btn-primary { background: #1a3a5c; color: #fff; border-color: #1a3a5c; }
-        #sv-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.3); z-index: 9998; }
     </style>
 </head>
 <body>
 
 <div id="sv-toolbar">
     <strong>sViewer</strong>
-    <button id="sv-btn-share" data-i18n="share" data-i18n-title="share.title"></button>
     <button id="sv-btn-cols" data-i18n="cols" data-i18n-title="cols.title"></button>
     <button id="sv-btn-clear" data-i18n="clear" data-i18n-title="clear.title" disabled></button>
     <span id="sv-status" data-i18n="loading"></span>
@@ -63,18 +51,6 @@
 </div>
 
 <div id="sv-map"></div>
-
-<div id="sv-overlay"></div>
-<div id="sv-share-panel">
-    <h3 data-i18n="share.title2"></h3>
-    <p style="font-size:12px;color:#666;margin-bottom:8px;" data-i18n="share.note"></p>
-    <input type="text" id="sv-share-url" readonly>
-    <div class="sv-share-actions">
-        <button class="sv-btn-primary" id="sv-btn-copy" data-i18n="copy"></button>
-        <button id="sv-btn-open" data-i18n="open"></button>
-        <button id="sv-btn-close-share" data-i18n="close"></button>
-    </div>
-</div>
 
 <!-- Grist Plugin API -->
 <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
