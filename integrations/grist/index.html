@@ -433,21 +433,21 @@ grist.onRecord(function(record) {
     console.log('[grist] onRecord geomVal=', geomVal);
     if (!geomVal || !geomVal.coordinates) { return; }
 
-    var rawCoords = geomVal.coordinates;
-    var lonlat = (geomVal.type === 'Point') ? rawCoords
-        : (geomVal.type === 'LineString' || geomVal.type === 'MultiPoint') ? rawCoords[0]
-        : rawCoords[0][0]; // Polygon/MultiLineString
-    if (!lonlat) { return; }
-
-    var coords = ol.proj.transform([lonlat[0], lonlat[1]], 'EPSG:4326', 'EPSG:3857');
-    var view = SViewer.getView();
-    if (view) {
-        view.animate({ center: coords, zoom: Math.max(view.getZoom(), 14), duration: 400 });
-    }
-
     var rowId = record.id;
     var feat = featureByRowId[rowId];
     console.log('[grist] onRecord rowId=' + rowId + ' feat=' + (feat ? 'found' : 'NOT FOUND') + ' keys=' + Object.keys(featureByRowId).slice(0,5).join(','));
+
+    // Pan to feature using extent centroid (works for Point/Line/Polygon)
+    var view = SViewer.getView();
+    if (view && feat) {
+        var geom3857 = feat.getGeometry();
+        var ext = geom3857.getExtent();
+        var center = ol.extent.getCenter(ext);
+        var animOpts = { center: center, duration: 400 };
+        // Only zoom in for Point — Polygon/Line already visible at current zoom
+        if (geomVal.type === 'Point') { animOpts.zoom = Math.max(view.getZoom(), 14); }
+        view.animate(animOpts);
+    }
     if (feat && vectorLayer) {
         var baseColor = (svConfig.geojson_color || '#e74c3c');
         var selColor = '#ffcc00';
