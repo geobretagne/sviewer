@@ -2166,6 +2166,12 @@ window.SViewerApp = (function() {
     this.getView = function() { return view; };
     this.getConfig = function() { return config; };
     this.getState = function() { return state; };
+    // Update the geojson URL in state and refresh the share permalink.
+    // Does not load or render the layer — caller owns rendering.
+    this.setGeojsonUrl = function(url) {
+        state.geojson = url || null;
+        setPermalink();
+    };
     }
 
     // Create instance

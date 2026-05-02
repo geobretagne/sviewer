@@ -318,11 +318,12 @@ function initMap() {
     if (svConfig.layers) { opts.layers = svConfig.layers; }
     if (svConfig.lb !== undefined) { opts.lb = parseInt(svConfig.lb, 10); }
 
-    var geojsonUrl = buildGristGeojsonUrl();
-    if (geojsonUrl) { opts.geojson = geojsonUrl; }
-
     SViewer.init('#sv-map', opts).then(function() {
         mapReady = true;
+        // Inject geojson URL into sViewer state for share/embed permalinks.
+        // Not passed at init to prevent sViewer from rendering a duplicate layer.
+        var geojsonUrl = buildGristGeojsonUrl();
+        if (geojsonUrl) { SViewer.setGeojsonUrl(geojsonUrl); }
         maybeSetupMapClick();
         rebuildLayer();
     });

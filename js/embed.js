@@ -412,6 +412,13 @@
 
         getView: function() {
             return window.SViewerApp ? window.SViewerApp.getView() : null;
+        },
+
+        // Set the geojson URL baked into share/embed permalinks without rendering a layer.
+        setGeojsonUrl: function(url) {
+            if (window.SViewerApp && window.SViewerApp.setGeojsonUrl) {
+                window.SViewerApp.setGeojsonUrl(url);
+            }
         }
     };
 
