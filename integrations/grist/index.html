@@ -386,8 +386,8 @@ grist.onOptions(function(options, interaction) {
 });
 
 // Bootstrap: load config, then init map, then subscribe to records
-grist.getTable(CONFIG_TABLE).fetch().then(function(data) {
-    // Map key→value rows
+grist.docApi.fetchTable(CONFIG_TABLE).then(function(data) {
+    // Map key→value rows — fetchTable returns column arrays: {key:[...], value:[...]}
     var keys = data.key || data.Key || [];
     var vals = data.value || data.Value || [];
     keys.forEach(function(k, i) { svConfig[k] = vals[i]; });
@@ -403,8 +403,10 @@ grist.getTable(CONFIG_TABLE).fetch().then(function(data) {
     // Subscribe to records
     grist.onRecords(function(records, mappings) {
         allRecords = records;
-        // Capture table ID from first onRecords call
-        if (!gristTableId && mappings && mappings.tableId) { gristTableId = mappings.tableId; }
+        // Capture table ID once
+        if (!gristTableId && grist.selectedTable) {
+            grist.selectedTable.getTableId().then(function(id) { gristTableId = id; }).catch(function() {});
+        }
 
         if (records.length) {
             // Extract column names from first record (exclude internal id)
