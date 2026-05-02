@@ -444,7 +444,7 @@ grist.docApi.fetchTable(CONFIG_TABLE).then(function(data) {
 
     // Subscribe to single-row selection (Grist → map pan)
     grist.onRecord(function(record) {
-        if (!record || !colGeom) { return; }
+        if (!mapReady || !record || !colGeom) { return; }
         var geomVal = parseGeom(record[colGeom]);
         if (!geomVal || !geomVal.coordinates) { return; }
 
