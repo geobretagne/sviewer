@@ -386,7 +386,71 @@ grist.onOptions(function(options, interaction) {
 
 var CONFIG_TABLE = '_sv_config';
 
-// Bootstrap: load _sv_config, then init map, then subscribe to records
+// Register Grist subscriptions immediately after ready() —
+// Grist fires onRecords on first load; late registration misses the initial event.
+grist.onRecords(function(records, mappings) {
+    allRecords = records;
+    if (!gristTableId && grist.selectedTable) {
+        grist.selectedTable.getTableId().then(function(id) { gristTableId = id; }).catch(function() {});
+    }
+
+    if (records.length) {
+        allColumns = Object.keys(records[0]).filter(function(k) { return k !== 'id'; });
+        if (!colGeom) {
+            var detected = detectColumns(allColumns, records[0]);
+            if (detected.geom) {
+                colGeom = detected.geom;
+                colLabel = colLabel || detected.label;
+                setStatus('Geometry column auto-detected: ' + colGeom);
+            } else {
+                setStatus('Choose geometry column');
+                showColPicker();
+            }
+        }
+    }
+
+    scheduleRebuildLayer();
+});
+
+grist.onRecord(function(record) {
+    if (!mapReady || !record || !colGeom) { return; }
+    var geomVal = parseGeom(record[colGeom]);
+    if (!geomVal || !geomVal.coordinates) { return; }
+
+    var rawCoords = geomVal.coordinates;
+    var lonlat = (geomVal.type === 'Point') ? rawCoords
+        : (geomVal.type === 'LineString' || geomVal.type === 'MultiPoint') ? rawCoords[0]
+        : rawCoords[0][0]; // Polygon/MultiLineString
+    if (!lonlat) { return; }
+
+    var coords = ol.proj.transform([lonlat[0], lonlat[1]], 'EPSG:4326', 'EPSG:3857');
+    var view = SViewer.getView();
+    if (view) {
+        view.animate({ center: coords, zoom: Math.max(view.getZoom(), 14), duration: 400 });
+    }
+
+    var rowId = record.id;
+    var feat = featureByRowId[rowId];
+    if (feat && vectorLayer) {
+        var color = (svConfig.geojson_color || '#e74c3c');
+        var selArr = ol.color.asArray('#ffcc00').slice();
+        selArr[3] = 1;
+        vectorLayer.getSource().getFeatures().forEach(function(f) {
+            var fillArr = ol.color.asArray(color).slice();
+            fillArr[3] = f === feat ? 1 : 0.85;
+            var radius = f === feat ? 10 : 7;
+            f.setStyle(new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: radius,
+                    fill: new ol.style.Fill({ color: f === feat ? selArr : fillArr }),
+                    stroke: new ol.style.Stroke({ color: '#fff', width: f === feat ? 2.5 : 1.5 })
+                })
+            }));
+        });
+    }
+});
+
+// Load _sv_config then init map
 grist.docApi.fetchTable(CONFIG_TABLE).then(function(data) {
     var keys = data.key || data.Key || [];
     var vals = data.value || data.Value || [];
@@ -398,76 +462,6 @@ grist.docApi.fetchTable(CONFIG_TABLE).then(function(data) {
         grist.docApi.getDocName().then(function(id) { gristDocId = id; }).catch(function() {});
     }
     initMap();
-}).then(function() {
-    // Subscribe to records
-    grist.onRecords(function(records, mappings) {
-        allRecords = records;
-        // Capture table ID once
-        if (!gristTableId && grist.selectedTable) {
-            grist.selectedTable.getTableId().then(function(id) { gristTableId = id; }).catch(function() {});
-        }
-
-        if (records.length) {
-            // Extract column names from first record (exclude internal id)
-            allColumns = Object.keys(records[0]).filter(function(k) { return k !== 'id'; });
-
-            // Auto-detect columns if not yet set
-            if (!colGeom) {
-                var detected = detectColumns(allColumns, records[0]);
-                if (detected.geom) {
-                    colGeom = detected.geom;
-                    colLabel = colLabel || detected.label;
-                    setStatus('Geometry column auto-detected: ' + colGeom);
-                } else {
-                    setStatus('Choose geometry column');
-                    showColPicker();
-                }
-            }
-        }
-
-        scheduleRebuildLayer();
-    });
-
-    // Subscribe to single-row selection (Grist → map pan)
-    grist.onRecord(function(record) {
-        if (!mapReady || !record || !colGeom) { return; }
-        var geomVal = parseGeom(record[colGeom]);
-        if (!geomVal || !geomVal.coordinates) { return; }
-
-        // Use first coordinate for pan (works for Point, and centroid-approximation for others)
-        var rawCoords = geomVal.coordinates;
-        var lonlat = (geomVal.type === 'Point') ? rawCoords
-            : (geomVal.type === 'LineString' || geomVal.type === 'MultiPoint') ? rawCoords[0]
-            : rawCoords[0][0]; // Polygon/MultiLineString
-        if (!lonlat) { return; }
-
-        var coords = ol.proj.transform([lonlat[0], lonlat[1]], 'EPSG:4326', 'EPSG:3857');
-        var view = SViewer.getView();
-        if (view) {
-            view.animate({ center: coords, zoom: Math.max(view.getZoom(), 14), duration: 400 });
-        }
-
-        // Highlight selected feature
-        var rowId = record.id;
-        var feat = featureByRowId[rowId];
-        if (feat && vectorLayer) {
-            var color = (svConfig.geojson_color || '#e74c3c');
-            var selArr = ol.color.asArray('#ffcc00').slice();
-            selArr[3] = 1;
-            vectorLayer.getSource().getFeatures().forEach(function(f) {
-                var fillArr = ol.color.asArray(color).slice();
-                fillArr[3] = f === feat ? 1 : 0.85;
-                var radius = f === feat ? 10 : 7;
-                f.setStyle(new ol.style.Style({
-                    image: new ol.style.Circle({
-                        radius: radius,
-                        fill: new ol.style.Fill({ color: f === feat ? selArr : fillArr }),
-                        stroke: new ol.style.Stroke({ color: '#fff', width: f === feat ? 2.5 : 1.5 })
-                    })
-                }));
-            });
-        }
-    });
 });
 </script>
 </body>
