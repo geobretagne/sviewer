@@ -765,6 +765,7 @@ window.SViewerApp = (function() {
             if (state.theme && state.theme !== 'light') { linkParams.theme = state.theme; }
             if (state.position) { linkParams.position = '1'; }
             if (state.opacity !== null && state.opacity !== 1) { linkParams.opacity = state.opacity; }
+            if (state.geojson) { linkParams.geojson = state.geojson; }
             // In embed mode, permalink must point to the standalone sViewer, not the host page
             var standaloneBase = window.SViewerBaseUrl
                 ? window.SViewerBaseUrl + 'index.html'
@@ -821,6 +822,9 @@ window.SViewerApp = (function() {
         }
         if (state.opacity !== null && state.opacity !== 1) {
             embedParams.opacity = state.opacity;
+        }
+        if (state.geojson) {
+            embedParams.geojson = state.geojson;
         }
         var baseUrl = window.SViewerBaseUrl || config.baseUrl || window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
         var code = '<div id="sviewer-map" style="width: 100%; height: 500px;"></div>\n' +
@@ -929,6 +933,68 @@ window.SViewerApp = (function() {
                     togglePanel('locate');
                     openLsRequest(text);
                 }
+            }
+        });
+    }
+
+    /**
+     * Loads an external GeoJSON URL as a vector layer.
+     * Points, lines and polygons all supported. Features are clickable — properties
+     * displayed as a table in the query panel (same UX as WMS GetFeatureInfo).
+     */
+    function loadGeoJSON(url) {
+        $.ajax({
+            url: url,
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                var format = new ol.format.GeoJSON();
+                var features = format.readFeatures(data, {
+                    dataProjection: 'EPSG:4326',
+                    featureProjection: config.projcode
+                });
+                if (!features.length) { return; }
+
+                var vectorSource = new ol.source.Vector({ features: features });
+                var gs = config.geojsonStyle || {};
+                var gsColor = gs.color || '#3388ff';
+                var gsFill = ol.color.asArray(gsColor).slice();
+                gsFill[3] = gs.fillOpacity !== undefined ? gs.fillOpacity : 0.2;
+                var vectorLayer = new ol.layer.Vector({
+                    source: vectorSource,
+                    style: new ol.style.Style({
+                        fill:   new ol.style.Fill({ color: gsFill }),
+                        stroke: new ol.style.Stroke({ color: gsColor, width: gs.strokeWidth || 2 }),
+                        image:  new ol.style.Circle({
+                            radius: 6,
+                            fill:   new ol.style.Fill({ color: gsColor }),
+                            stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 })
+                        })
+                    })
+                });
+                map.addLayer(vectorLayer);
+
+                // Click handler — show feature properties in query panel
+                map.on('singleclick', function(e) {
+                    var hit = false;
+                    map.forEachFeatureAtPixel(e.pixel, function(feature) {
+                        if (hit) { return; }
+                        hit = true;
+                        var props = feature.getProperties();
+                        var $table = $('<table class="table table-sm table-bordered sv-feature-props">');
+                        $.each(props, function(key, val) {
+                            if (key === 'geometry' || typeof val === 'object') { return; }
+                            $table.append($('<tr>').append($('<th>').text(key)).append($('<td>').text(val)));
+                        });
+                        $('#queryContent').html('').append($table);
+                        marker.setPosition(e.coordinate);
+                        $('#marker').show();
+                        togglePanel('query');
+                    }, { layerFilter: function(l) { return l === vectorLayer; } });
+                });
+            },
+            error: function() {
+                messagePopup(tr('msg.query_failed'));
             }
         });
     }
@@ -1528,7 +1594,8 @@ window.SViewerApp = (function() {
             searchparams: {},
             position: 0,
             opacity: config.layerOpacity !== undefined ? config.layerOpacity : 1,
-            address: null
+            address: null,
+            geojson: null
         };
 
         // querystring param: theme (light | dark), else OS preference
@@ -1637,6 +1704,11 @@ window.SViewerApp = (function() {
         // querystring param: silent auto-geocode + recenter (?address=)
         if (qs.address) {
             state.address = qs.address;
+        }
+
+        // querystring param: load external GeoJSON layer (?geojson=URL)
+        if (qs.geojson) {
+            state.geojson = qs.geojson;
         }
 
         // querystring param: activate WFS feature search alongside geocoding
@@ -2064,6 +2136,10 @@ window.SViewerApp = (function() {
 
         if (state.address) {
             setTimeout(function() { autoGeocodeAddress(state.address); }, 300);
+        }
+
+        if (state.geojson) {
+            loadGeoJSON(state.geojson);
         }
 
     }

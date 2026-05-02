@@ -42,6 +42,7 @@ import GeoJSON from 'ol/format/GeoJSON.js';
 import WMSCapabilities from 'ol/format/WMSCapabilities.js';
 
 // Import utilities
+import * as color from 'ol/color.js';
 import * as extent from 'ol/extent.js';
 import * as events from 'ol/events.js';
 import * as eventsCondition from 'ol/events/condition.js';
@@ -97,6 +98,7 @@ window.ol = {
     GeoJSON,
     WMSCapabilities,
   },
+  color,
   extent,
   events: {
     ...events,

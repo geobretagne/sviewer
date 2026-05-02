@@ -213,6 +213,23 @@ Géocode silencieusement une adresse au chargement et recentre la carte.
 
 Non-persistant (absent du permalien).
 
+#### `geojson`
+
+Charge un fichier GeoJSON distant comme couche vectorielle interactive.
+
+```
+?geojson=https://raw.githubusercontent.com/user/repo/main/data.geojson
+?geojson=https://data.gouv.fr/.../dataset.geojson
+```
+
+- Supporte points, lignes et polygones (collections mixtes comprises)
+- Clic sur un objet → affiche ses propriétés dans le panneau d'info
+- CORS requis sur le serveur source
+- Composable avec `?layers=` : superpose les données GeoJSON à des couches WMS
+- Compatible embed : `SViewer.init('#map', { geojson: 'https://...' })`
+
+Persistant dans le permalien et le code embed.
+
 #### `debug` (debug mode)
 
 | Valeur | Effet |
@@ -258,6 +275,7 @@ Charge une configuration alternative au lieu de `customConfig.js`.
 - `c`, `lb`, `theme`
 - `opacity` (si ≠ 1)
 - `position` (si GPS actif)
+- `geojson` (si présent)
 
 **Code d'intégration WebComponent :**
 - `x`, `y`, `z`
@@ -267,6 +285,7 @@ Charge une configuration alternative au lieu de `customConfig.js`.
 - `c`, `lb`, `theme`
 - `opacity` (si ≠ 1)
 - `position` (si GPS actif)
+- `geojson` (si présent)
 
 Le paramètre `debug` n'est **pas** persistant.
 
@@ -301,6 +320,7 @@ Les options passées à `SViewer.init()` utilisent **exactement les mêmes noms*
 | `theme` | `string` | `?theme=` | Thème d'affichage : `light` (défaut) ou `dark`. Sans paramètre : suit `prefers-color-scheme` |
 | `opacity` | `number` | `?opacity=` | Opacité des couches (0–1, défaut : 1) |
 | `position` | `1` | `?position=1` | Active le suivi GPS au chargement |
+| `geojson` | `string` | `?geojson=` | URL d'un fichier GeoJSON à charger comme couche vectorielle (CORS requis) |
 
 Le bouton **HTML** du panneau de partage génère automatiquement un fragment `SViewer.init()` pour la vue courante.
 

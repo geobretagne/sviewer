@@ -1,0 +1,73 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-1.6778, 48.1173] },
+      "properties": { "nom": "Rennes", "type": "ville", "population": 222352, "description": "Capitale de la Bretagne, ville universitaire et métropole régionale." }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-4.4852, 48.3904] },
+      "properties": { "nom": "Brest", "type": "ville", "population": 139163, "description": "Ville portuaire à la pointe de la Bretagne, base navale principale de la Marine nationale." }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-2.7603, 47.6586] },
+      "properties": { "nom": "Vannes", "type": "ville", "population": 52827, "description": "Ville médiévale au bord du golfe du Morbihan, point de départ vers les îles." }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-3.3522, 47.9641] },
+      "properties": { "nom": "Lorient", "type": "ville", "population": 56985, "description": "Ville portuaire reconstruite après 1945, capitale de la pêche bretonne." }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-1.5136, 47.2184] },
+      "properties": { "nom": "Saint-Nazaire", "type": "ville", "population": 68323, "description": "Ville industrielle et portuaire à l'embouchure de la Loire, chantiers navals Airbus." }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-1.6108, 48.6367],
+          [-2.0258, 48.6506],
+          [-2.3706, 48.6017],
+          [-2.7558, 48.5933],
+          [-3.1583, 48.7283],
+          [-3.5744, 48.7539],
+          [-4.0800, 48.7025],
+          [-4.4852, 48.3904],
+          [-4.7800, 48.0500],
+          [-4.5833, 47.8667],
+          [-4.1167, 47.7167],
+          [-3.5667, 47.7500],
+          [-3.1667, 47.5167],
+          [-2.7603, 47.6586],
+          [-2.3833, 47.5000],
+          [-2.1667, 47.2833]
+        ]
+      },
+      "properties": { "nom": "Côte bretonne (schématique)", "type": "itinéraire", "description": "Tracé simplifié de la côte bretonne du Mont-Saint-Michel à la Presqu'île de Guérande." }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-3.9833, 48.4167],
+          [-3.7000, 48.4500],
+          [-3.5500, 48.3667],
+          [-3.5000, 48.2333],
+          [-3.6167, 48.1333],
+          [-3.8333, 48.1000],
+          [-4.0500, 48.1667],
+          [-4.1500, 48.3167],
+          [-3.9833, 48.4167]
+        ]]
+      },
+      "properties": { "nom": "Parc naturel régional d'Armorique", "type": "parc", "superficie_ha": 172000, "description": "Parc naturel couvrant la presqu'île de Crozon, les Monts d'Arrée et l'île d'Ouessant. Créé en 1969." }
+    }
+  ]
+}

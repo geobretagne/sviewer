@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sViewer — exemple GeoJSON</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Georgia, serif; font-size: 16px; line-height: 1.6; color: #222; background: #fff; }
+
+        header { background: #1a3a5c; color: #fff; padding: 20px 32px; }
+        header h1 { font-size: 1.3em; font-weight: normal; }
+        header p { font-size: 0.85em; opacity: 0.7; margin-top: 4px; }
+
+        .page { display: flex; gap: 0; min-height: calc(100vh - 72px); }
+
+        aside {
+            width: 260px; flex-shrink: 0; background: #f4f4f4;
+            padding: 24px 18px; border-right: 1px solid #ddd;
+        }
+        aside h2 { font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 10px; }
+        aside p { font-size: 0.85em; color: #555; margin-bottom: 14px; }
+        aside code { display: block; font-size: 0.78em; background: #e8e8e8; padding: 8px 10px; border-radius: 3px; word-break: break-all; margin-bottom: 14px; }
+        aside hr { border: none; border-top: 1px solid #ddd; margin: 16px 0; }
+        aside a { color: #1a3a5c; font-size: 0.85em; }
+
+        main { flex: 1; display: flex; flex-direction: column; }
+
+        .map-embed { flex: 1; min-height: 500px; }
+
+        .caption { padding: 12px 24px; font-size: 0.8em; color: #888; border-top: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>sViewer — couche GeoJSON externe</h1>
+    <p>Exemple : données Bretagne (points, ligne, polygone) superposées à un fond de carte</p>
+</header>
+
+<div class="page">
+    <aside>
+        <h2>Paramètre utilisé</h2>
+        <p>Le paramètre <strong>?geojson=</strong> charge un fichier GeoJSON distant et l'affiche comme couche vectorielle interactive.</p>
+        <code>?geojson=https://…/brittany-sample.geojson</code>
+
+        <p>Cliquez sur un objet de la carte pour afficher ses propriétés.</p>
+
+        <hr>
+
+        <h2>Cas d'usage</h2>
+        <p>Fichier hébergé sur GitHub, data.gouv.fr, une API REST ou tout serveur avec CORS activé.</p>
+        <p>Compatible avec WMS : superposez vos données GeoJSON à des couches institutionnelles.</p>
+
+        <hr>
+
+        <h2>Données</h2>
+        <a href="brittany-sample.geojson" target="_blank">brittany-sample.geojson</a><br>
+        <small style="color:#aaa">Villes, côte bretonne, Parc d'Armorique</small>
+    </aside>
+
+    <main>
+        <div id="map-container" class="map-embed"></div>
+        <p class="caption">Fond de carte © contributeurs OpenStreetMap — Données exemple fictives à titre illustratif</p>
+    </main>
+</div>
+
+<script src="../js/embed.js"></script>
+<script>
+    SViewer.init('#map-container', {
+        x: -290000,
+        y: 6150000,
+        z: 8,
+        title: 'Bretagne — exemple GeoJSON',
+        geojson: 'brittany-sample.geojson'
+    });
+</script>
+
+</body>
+</html>

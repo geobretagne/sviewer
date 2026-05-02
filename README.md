@@ -16,6 +16,7 @@ Que permet sViewer ?
 * **Exporter en image** — PNG depuis le panneau de partage
 * **Interroger les données** — cliquez sur la carte pour afficher la fiche d'une zone ou d'un objet
 * **Traçabilité des données** — producteur, licence, date de mise à jour affichés automatiquement depuis les métadonnées
+* **Superposer des données GeoJSON** — chargez n'importe quel fichier GeoJSON distant (GitHub, data.gouv.fr, API REST…) avec `?geojson=URL`, sans serveur cartographique
 * **Rechercher une adresse** — barre de recherche intégrée, géolocalisation ; service de géocodage configurable (France ou mondial)
 * **Thème clair et sombre** — manuel ou automatique selon le système
 * **Tous les appareils** — téléphone, tablette, ordinateur, même URL
@@ -84,7 +85,7 @@ Copiez le code depuis le panneau de partage → onglet **HTML** :
 
 Fonctionne dans tout CMS (WordPress, Drupal, Joomla, Typo3…) sans aucune compétence JavaScript.
 
-![sViewer intégré dans une page CMS](img/screenshot-embed.png)
+![sViewer intégré dans une page CMS](examples/screenshot-embed.png)
 
 ### Option 2 — JavaScript (pour les développeurs)
 
