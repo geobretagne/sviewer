@@ -76,6 +76,18 @@ customConfig = {
     layerOpacity: 1,
 
     /**
+     * Style for GeoJSON vector layers loaded via ?geojson=
+     * color: stroke color and point fill (CSS color string)
+     * fillOpacity: polygon fill opacity (0–1)
+     * strokeWidth: line and polygon stroke width in pixels
+     */
+    geojsonStyle: {
+        color: '#3388ff',
+        fillOpacity: 0.2,
+        strokeWidth: 2
+    },
+
+    /**
      * Geocoding service (address search).
      * openLSGeocodeUrl: endpoint URL.
      * geocodeParams: extra query params appended to every request (beyond q, limit, bbox).
