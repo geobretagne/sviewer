@@ -88,6 +88,41 @@ customConfig = {
     },
 
     /**
+     * Adapter for non-GeoJSON JSON sources loaded via ?geojson=
+     * Called when the fetched response is not a GeoJSON FeatureCollection.
+     * Must return a GeoJSON FeatureCollection object.
+     *
+     * Default: Grist public records API format.
+     * Replace with any function to support ArcGIS REST, custom APIs, etc.
+     * Requires CORS support from the remote service.
+     *
+     * Column name candidates for lat/lon auto-detection (first match wins):
+     *   lat: lat, latitude, y, lat_wgs84
+     *   lon: lon, lng, longitude, x, lon_wgs84
+     *
+     * Note: only the first page of paginated APIs is fetched — no pagination support.
+     */
+    jsonLayerAdapter: function(response) {
+        var LAT = ['lat', 'latitude', 'y', 'lat_wgs84'];
+        var LON = ['lon', 'lng', 'longitude', 'x', 'lon_wgs84'];
+        // Grist: { records: [{id, fields: {...}}] }
+        var rows = (response.records || []).map(function(r) { return r.fields || r; });
+        // Fallback: plain array of objects
+        if (!rows.length && Array.isArray(response)) { rows = response; }
+        var features = rows.map(function(f) {
+            var latKey = null, lonKey = null;
+            var keys = Object.keys(f).map(function(k) { return k.toLowerCase(); });
+            LAT.forEach(function(c) { if (!latKey && keys.indexOf(c) !== -1) { latKey = Object.keys(f)[keys.indexOf(c)]; } });
+            LON.forEach(function(c) { if (!lonKey && keys.indexOf(c) !== -1) { lonKey = Object.keys(f)[keys.indexOf(c)]; } });
+            if (!latKey || !lonKey) { return null; }
+            var lat = parseFloat(f[latKey]), lon = parseFloat(f[lonKey]);
+            if (isNaN(lat) || isNaN(lon)) { return null; }
+            return { type: 'Feature', geometry: { type: 'Point', coordinates: [lon, lat] }, properties: f };
+        }).filter(Boolean);
+        return { type: 'FeatureCollection', features: features };
+    },
+
+    /**
      * Geocoding service (address search).
      * openLSGeocodeUrl: endpoint URL.
      * geocodeParams: extra query params appended to every request (beyond q, limit, bbox).

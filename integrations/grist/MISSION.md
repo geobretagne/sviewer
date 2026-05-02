@@ -42,13 +42,15 @@ Widget reads `_sv_config` on init, passes values to `SViewer.init()` options.
 
 ## Share map (public data)
 
-Widget "Share" button:
-1. Reads current Grist table records (`grist.fetchSelectedTable()`)
-2. Builds GeoJSON FeatureCollection in-memory
-3. Generates `?geojson=<grist_api_public_url>&layers=…&x=…&y=…&z=…` permalink
-4. Copies URL to clipboard or opens in new tab
+Widget "Share" button generates:
+`?geojson=<grist_api_public_url>&layers=…&x=…&y=…&z=…`
 
-Requires document to be publicly accessible.
+sViewer fetches the Grist records API URL and normalizes it via `jsonLayerAdapter` in `customConfig.js`.
+No data serialization in widget — Grist serves records directly. Requires document to be publicly accessible.
+
+`_sv_config` keys for share:
+- `grist_api_base`: override Grist host (default: `https://docs.getgrist.com`) for self-hosted
+- `sviewer_base_url`: base URL of standalone sViewer for share links
 
 ## Share map (private data)
 
@@ -77,13 +79,14 @@ integrations/grist/
 ## Implementation phases
 
 **Phase 1 (current)**
-- [ ] `widget.html`: loads sViewer embed.js, renders map
-- [ ] Reads `_sv_config` table, passes to `SViewer.init()`
-- [ ] `grist.onRecords()` → VectorLayer of points
-- [ ] `grist.onRecord()` → `getView().animate()` (row → map)
-- [ ] Map click → `grist.setCursorPos({rowId})` (map → row)
-- [ ] Column mapping: auto-detect + fallback picker UI
-- [ ] Share button (public data permalink)
+- [x] `index.html` (was `widget.html`): loads sViewer embed.js, renders map
+- [x] Reads `_sv_config` table, passes to `SViewer.init()`
+- [x] `grist.onRecords()` → VectorLayer of points (debounced 300ms)
+- [x] `grist.onRecord()` → `getView().animate()` (row → map) + highlight
+- [x] Map click → `grist.setCursorPos({rowId})` (map → row)
+- [x] Column mapping: auto-detect + fallback picker UI
+- [x] Share button → `?geojson=<grist_api_url>` permalink via `jsonLayerAdapter`
+- [x] `jsonLayerAdapter` in customConfig.DIST.js — Grist format + plain array fallback
 
 **Phase 2**
 - [ ] Line/polygon support (WKT or separate geometry column)

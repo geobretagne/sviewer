@@ -28,6 +28,7 @@ Create a table named `_sv_config` with two columns: `key` and `value`.
 | `center_y` | Center Y in EPSG:3857 | `6150000` |
 | `geojson_color` | Point color (hex) | `#e74c3c` |
 | `sviewer_base_url` | sViewer base URL for share links | `https://yourserver/sviewer/` |
+| `grist_api_base` | Grist host for self-hosted instances | `https://grist.yourserver.org` |
 
 If the table is absent, default values are used.
 
@@ -35,8 +36,18 @@ If the table is absent, default values are used.
 
 - **Map → Grist**: click a point on the map to select the corresponding row in Grist
 - **Grist → map**: select a row in Grist to pan/zoom the map to that feature
-- **Share**: generate a permalink to view the map in standalone sViewer
+- **Share**: generate a permalink (`?geojson=<grist_api_url>`) — sViewer fetches and displays live Grist data via `jsonLayerAdapter`
 - **WMS layers**: configure background institutional layers via `_sv_config`
+
+## Share URL — how it works
+
+The Share button builds a sViewer standalone URL with `?geojson=` pointing to the Grist public records API.
+sViewer fetches that URL and normalizes the Grist JSON format via `jsonLayerAdapter` in `customConfig.js`.
+
+Requirements:
+- Grist document must be publicly accessible (or the viewer must have access)
+- `jsonLayerAdapter` must be configured in sViewer's `etc/customConfig.js`
+- For self-hosted Grist: set `grist_api_base` in `_sv_config`
 
 ## Private data
 

@@ -106,6 +106,8 @@ var allColumns = [];
 var allRecords = [];
 var svConfig = {};
 var mapReady = false;
+var gristDocId = null;
+var gristTableId = null;
 
 // ---------------------------------------------------------------------------
 // Status bar
@@ -304,14 +306,11 @@ function buildShareUrl() {
     var view = SViewer.getView();
     if (!view) { return ''; }
 
-    var center = ol.proj.transform(view.getCenter(), 'EPSG:3857', 'EPSG:4326');
-    var z = Math.round(view.getZoom());
-    var x = Math.round(ol.proj.transform(view.getCenter(), 'EPSG:4326', 'EPSG:3857')[0]);
     var cx = view.getCenter();
     var params = {
         x: Math.round(cx[0]),
         y: Math.round(cx[1]),
-        z: z
+        z: Math.round(view.getZoom())
     };
 
     if (svConfig.wms_url && svConfig.wms_layers) {
@@ -319,39 +318,16 @@ function buildShareUrl() {
         params.layers = svConfig.wms_layers;
     }
 
-    // Build inline GeoJSON data URL if records fit, otherwise prompt user
-    // For now: build permalink to sViewer base (assumes same origin or configured base)
-    var base = (svConfig.sviewer_base_url || '../../index.html');
-    var qs = Object.keys(params).map(function(k) {
-        return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
-    }).join('&');
-
-    // Include GeoJSON if records exist — inline as data URI (small sets only)
-    if (allRecords.length && colLat && colLon && allRecords.length <= 200) {
-        var fc = buildGeoJSON();
-        var encoded = encodeURIComponent(JSON.stringify(fc));
-        // data: URIs too long for URLs — skip and note
-        // Future: upload to Grist attachment or proxy
+    // ?geojson= points to Grist public records API — jsonLayerAdapter in customConfig normalizes it
+    if (gristDocId && gristTableId) {
+        var gristBase = svConfig.grist_api_base || 'https://docs.getgrist.com';
+        params.geojson = gristBase + '/api/docs/' + gristDocId + '/tables/' + gristTableId + '/records';
     }
 
-    return base + '?' + qs;
-}
-
-function buildGeoJSON() {
-    var features = allRecords.filter(function(row) {
-        return !isNaN(parseFloat(row[colLat])) && !isNaN(parseFloat(row[colLon]));
-    }).map(function(row) {
-        var props = {};
-        Object.keys(row).forEach(function(k) {
-            if (k !== 'id') { props[k] = row[k]; }
-        });
-        return {
-            type: 'Feature',
-            geometry: { type: 'Point', coordinates: [parseFloat(row[colLon]), parseFloat(row[colLat])] },
-            properties: props
-        };
-    });
-    return { type: 'FeatureCollection', features: features };
+    var base = (svConfig.sviewer_base_url || '../../index.html');
+    return base + '?' + Object.keys(params).map(function(k) {
+        return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    }).join('&');
 }
 
 function showSharePanel() {
@@ -418,11 +394,17 @@ grist.getTable(CONFIG_TABLE).fetch().then(function(data) {
 }).catch(function() {
     // _sv_config absent — use defaults
 }).then(function() {
+    // Capture doc ID for share URL
+    if (grist.docApi && typeof grist.docApi.getDocName === 'function') {
+        grist.docApi.getDocName().then(function(id) { gristDocId = id; }).catch(function() {});
+    }
     initMap();
 }).then(function() {
     // Subscribe to records
     grist.onRecords(function(records, mappings) {
         allRecords = records;
+        // Capture table ID from first onRecords call
+        if (!gristTableId && mappings && mappings.tableId) { gristTableId = mappings.tableId; }
 
         if (records.length) {
             // Extract column names from first record (exclude internal id)

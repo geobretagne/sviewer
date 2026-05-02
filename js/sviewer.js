@@ -948,8 +948,15 @@ window.SViewerApp = (function() {
             type: 'GET',
             dataType: 'json',
             success: function(data) {
+                // Non-GeoJSON response (e.g. Grist records, ArcGIS REST) → normalize via adapter
+                var geojson = (data && data.type === 'FeatureCollection') ? data
+                    : (typeof config.jsonLayerAdapter === 'function' ? config.jsonLayerAdapter(data) : null);
+                if (!geojson) {
+                    messagePopup(tr('msg.query_failed'));
+                    return;
+                }
                 var format = new ol.format.GeoJSON();
-                var features = format.readFeatures(data, {
+                var features = format.readFeatures(geojson, {
                     dataProjection: 'EPSG:4326',
                     featureProjection: config.projcode
                 });
