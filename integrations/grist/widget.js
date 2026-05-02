@@ -1,23 +1,92 @@
 // sViewer × Grist widget
 
+// ---------------------------------------------------------------------------
+// i18n
+// ---------------------------------------------------------------------------
+
+var I18N = {
+    fr: {
+        'loading':       'Chargement…',
+        'share':         'Partager',
+        'share.title':   'Partager la carte en lien permanent',
+        'share.title2':  'Partager cette carte',
+        'share.note':    'Lien public — les données doivent être accessibles sans authentification.',
+        'cols':          'Colonnes',
+        'cols.title':    'Configurer la colonne géométrie',
+        'clear':         '✕ Effacer',
+        'clear.title':   'Effacer la sélection',
+        'geom.col':      'Colonne géométrie :',
+        'apply':         'Appliquer',
+        'copy':          'Copier le lien',
+        'copy.done':     'Copié !',
+        'open':          'Ouvrir dans un onglet',
+        'close':         'Fermer',
+        'auto.detected': 'Colonne géométrie détectée : ',
+        'choose.col':    'Choisir la colonne géométrie',
+        'features':      ' entités',
+        'skipped':       ' ignorées'
+    },
+    en: {
+        'loading':       'Loading…',
+        'share':         'Share',
+        'share.title':   'Share map as permalink',
+        'share.title2':  'Share this map',
+        'share.note':    'Public link — data must be accessible without authentication.',
+        'cols':          'Columns',
+        'cols.title':    'Configure geometry column',
+        'clear':         '✕ Clear',
+        'clear.title':   'Clear selection',
+        'geom.col':      'Geometry column:',
+        'apply':         'Apply',
+        'copy':          'Copy link',
+        'copy.done':     'Copied!',
+        'open':          'Open in new tab',
+        'close':         'Close',
+        'auto.detected': 'Geometry column auto-detected: ',
+        'choose.col':    'Choose geometry column',
+        'features':      ' features',
+        'skipped':       ' skipped'
+    }
+};
+
+var lang = (navigator.language || 'en').slice(0, 2);
+var t = I18N[lang] || I18N['en'];
+
+function tr(key) { return t[key] || key; }
+
+function applyDomTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        if (t[key]) { el.textContent = t[key]; }
+        var titleKey = el.getAttribute('data-i18n-title');
+        if (titleKey && t[titleKey]) { el.title = t[titleKey]; }
+    });
+}
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+
 var GEOM_CANDIDATES = ['geometry', 'geom', 'geo', 'shape', 'wkb_geometry'];
-var LABEL_CANDIDATES = ['label', 'nom', 'name', 'libelle', 'titre', 'title'];
 
-var colGeom = null;         // active geometry column name
-var colLabel = null;        // active label column name (optional)
-var svApp = null;           // SViewer app instance
-var vectorLayer = null;     // OL vector layer holding Grist features
-var rowIdByFeature = new WeakMap(); // OL Feature → Grist row id
-var featureByRowId = {};    // Grist row id → OL Feature
-var allColumns = [];        // column names from last onRecords
-var allRecords = [];        // raw records from last onRecords
-var svConfig = {};          // key/value pairs from _sv_config table
-var mapReady = false;       // true once SViewer.init() resolves
-var gristDocId = null;      // Grist document id (for share URL)
-var gristTableId = null;    // Grist table id (for share URL)
+var colGeom = null;                // active geometry column name
+var vectorLayer = null;            // OL vector layer holding Grist features
+var featureByRowId = {};           // Grist row id → OL Feature
+var allColumns = [];               // column names from last onRecords
+var allRecords = [];               // raw records from last onRecords
+var svConfig = {};                 // key/value pairs from _sviewer_customConfig table
+var mapReady = false;              // true once SViewer.init() resolves
+var gristDocId = null;             // Grist document id (for share URL)
+var gristTableId = null;           // Grist table id (for share URL)
 var debounceTimer = null;
+var selectedRowId = null;          // currently selected Grist row id (for post-rebuild highlight)
+var lastRecordsFingerprint = null; // JSON fingerprint to skip rebuild when only selection changed
+var viewFitted = false;            // true once initial view fit has been done
 
-// Update the status bar text
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 function setStatus(msg) {
     document.getElementById('sv-status').textContent = msg;
 }
@@ -32,12 +101,10 @@ function parseGeom(val) {
     return null;
 }
 
-// Auto-detect geometry and label columns from column names and first row values.
-// Checks name candidates first; falls back to scanning first-row values for parseable geometry.
-function detectColumns(columns, firstRow) {
+// Auto-detect geometry column from column names, then first-row value scan.
+function detectGeomColumn(columns, firstRow) {
     var names = columns.map(function(c) { return c.toLowerCase(); });
-    var geom = null, lbl = null;
-
+    var geom = null;
     GEOM_CANDIDATES.forEach(function(c) {
         if (!geom && names.indexOf(c) !== -1) { geom = columns[names.indexOf(c)]; }
     });
@@ -46,35 +113,20 @@ function detectColumns(columns, firstRow) {
             if (!geom && parseGeom(firstRow[c])) { geom = c; }
         });
     }
-    LABEL_CANDIDATES.forEach(function(c) {
-        if (!lbl && names.indexOf(c) !== -1) { lbl = columns[names.indexOf(c)]; }
-    });
-
-    return { geom: geom, label: lbl };
+    return geom;
 }
 
-// Populate the column picker selects with current column list.
+// Populate the geometry column picker select.
 function populateColumnPicker(columns) {
     var selGeom = document.getElementById('sv-sel-geom');
-    var selLbl = document.getElementById('sv-sel-label');
-
     selGeom.innerHTML = '';
-    selLbl.innerHTML = '<option value="">(none)</option>';
-
     columns.forEach(function(col) {
         var opt = document.createElement('option');
         opt.value = col;
         opt.textContent = col;
         selGeom.appendChild(opt);
-
-        var opt2 = document.createElement('option');
-        opt2.value = col;
-        opt2.textContent = col;
-        selLbl.appendChild(opt2);
     });
-
     if (colGeom) { selGeom.value = colGeom; }
-    if (colLabel) { selLbl.value = colLabel; }
 }
 
 function showColPicker() {
@@ -111,7 +163,7 @@ function makeFeatureStyle(color, fillOpacity, radius, strokeWidth) {
 }
 
 // Highlight selectedFeat in yellow; reset all others to base color.
-// Called on grid row selection (onRecord) and on clear.
+// Pass null to reset all features to base style.
 function applySelectionStyle(selectedFeat) {
     if (!vectorLayer) { return; }
     var baseColor = svConfig.geojson_color || '#e74c3c';
@@ -140,17 +192,24 @@ function applySelectionStyle(selectedFeat) {
     });
 }
 
-// Debounce rebuildLayer calls — onRecords can fire rapidly on edits.
+// Debounce rebuildLayer calls — onRecords fires on every selection change too.
 function scheduleRebuildLayer() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(rebuildLayer, 300);
 }
 
 // Rebuild the OL vector layer from allRecords.
-// Reads geometry from colGeom, reprojects EPSG:4326 → EPSG:3857.
-// On first call, fits the view to the full extent of all features.
+// Reprojects EPSG:4326 → EPSG:3857. Fits view on first load only.
+// Skips full rebuild when records are unchanged (fingerprint match).
 function rebuildLayer() {
     if (!mapReady || !colGeom) { return; }
+
+    var fingerprint = JSON.stringify(allRecords);
+    if (vectorLayer && fingerprint === lastRecordsFingerprint) {
+        applySelectionStyle(selectedRowId !== null ? featureByRowId[selectedRowId] : null);
+        return;
+    }
+    lastRecordsFingerprint = fingerprint;
 
     var map = SViewer.getMap();
     if (!map) { return; }
@@ -176,13 +235,8 @@ function rebuildLayer() {
         } catch(e) { skipped++; return; }
 
         var feat = new ol.Feature({ geometry: olGeom });
-        Object.keys(row).forEach(function(k) {
-            if (k !== colGeom) { feat.set(k, row[k]); }
-        });
-
         var rowId = row.id;
         feat.set('_gristRowId', rowId);
-        rowIdByFeature.set(feat, rowId);
         featureByRowId[rowId] = feat;
         features.push(feat);
     });
@@ -194,16 +248,18 @@ function rebuildLayer() {
 
     map.addLayer(vectorLayer);
 
-    var total = allRecords.length;
-    setStatus(total + ' features' + (skipped ? ' (' + skipped + ' skipped)' : ''));
+    setStatus(allRecords.length + tr('features') + (skipped ? ' (' + skipped + tr('skipped') + ')' : ''));
 
-    // Fit view once on initial load; svConfig._viewSet prevents re-fitting on subsequent onRecords
-    if (features.length && !svConfig._viewSet) {
+    if (features.length && !viewFitted) {
         var ext = vectorLayer.getSource().getExtent();
         if (ext && isFinite(ext[0])) {
             map.getView().fit(ext, { padding: [40, 40, 40, 40], maxZoom: 16, duration: 400 });
         }
-        svConfig._viewSet = true;
+        viewFitted = true;
+    }
+
+    if (selectedRowId !== null && featureByRowId[selectedRowId]) {
+        applySelectionStyle(featureByRowId[selectedRowId]);
     }
 }
 
@@ -213,41 +269,57 @@ function setupMapClick() {
     var map = SViewer.getMap();
     map.on('singleclick', function(e) {
         if (!vectorLayer) { return; }
+        var hit = false;
         map.forEachFeatureAtPixel(e.pixel, function(feature) {
             var rowId = feature.get('_gristRowId');
             if (rowId !== undefined) {
+                hit = true;
+                selectedRowId = rowId;
                 grist.setSelectedRows([rowId]);
-                document.getElementById('sv-btn-clear').style.display = '';
+                document.getElementById('sv-btn-clear').disabled = false;
+                // Apply highlight immediately — onRecord round-trip not guaranteed
+                // when this widget is the selection source (map→grid direction).
+                applySelectionStyle(feature);
             }
             return true; // stop after first hit
         }, { layerFilter: function(l) { return l === vectorLayer; }, hitTolerance: 8 });
+        if (!hit) {
+            selectedRowId = null;
+            grist.setSelectedRows(null);
+            document.getElementById('sv-btn-clear').style.display = 'none';
+            vectorLayer.getSource().getFeatures().forEach(function(f) { f.setStyle(null); });
+        }
     });
 }
 
-// Initialize sViewer map with optional WMS layers from _sv_config.
+// Initialize sViewer map. Config keys match sViewer embed param names (x, y, z, lb, layers).
 function initMap() {
     var opts = {
-        x: svConfig.center_x ? parseFloat(svConfig.center_x) : 0,
-        y: svConfig.center_y ? parseFloat(svConfig.center_y) : 6000000,
-        z: svConfig.zoom_default ? parseInt(svConfig.zoom_default, 10) : 5,
+        x: svConfig.x ? parseFloat(svConfig.x) : 0,
+        y: svConfig.y ? parseFloat(svConfig.y) : 6000000,
+        z: svConfig.z ? parseInt(svConfig.z, 10) : 5,
         title: 'sViewer — Grist'
     };
+    if (svConfig.layers) { opts.layers = svConfig.layers; }
+    if (svConfig.lb !== undefined) { opts.lb = parseInt(svConfig.lb, 10); }
 
-    if (svConfig.wms_url && svConfig.wms_layers) {
-        opts.layers = svConfig.wms_layers;
-        opts.lb = svConfig.wms_url;
-    }
-
-    SViewer.init('#sv-map', opts).then(function(app) {
-        svApp = app;
+    SViewer.init('#sv-map', opts).then(function() {
         mapReady = true;
         setupMapClick();
         rebuildLayer();
     });
 }
 
+// Validate a URL string is http or https. Returns the URL or null.
+function safeHttpUrl(url) {
+    if (!url) { return null; }
+    try {
+        var u = new URL(url);
+        return (u.protocol === 'http:' || u.protocol === 'https:') ? url : null;
+    } catch(e) { return null; }
+}
+
 // Build a sViewer standalone share URL pointing to the Grist public records API.
-// Requires gristDocId and gristTableId to include the ?geojson= param.
 function buildShareUrl() {
     var view = SViewer.getView();
     if (!view) { return ''; }
@@ -259,13 +331,11 @@ function buildShareUrl() {
         z: Math.round(view.getZoom())
     };
 
-    if (svConfig.wms_url && svConfig.wms_layers) {
-        params.lb = svConfig.wms_url;
-        params.layers = svConfig.wms_layers;
-    }
+    if (svConfig.layers) { params.layers = svConfig.layers; }
+    if (svConfig.lb !== undefined) { params.lb = parseInt(svConfig.lb, 10); }
 
     if (gristDocId && gristTableId) {
-        var gristBase = svConfig.grist_api_base || 'https://docs.getgrist.com';
+        var gristBase = safeHttpUrl(svConfig.grist_api_base) || 'https://docs.getgrist.com';
         params.geojson = gristBase + '/api/docs/' + gristDocId + '/tables/' + gristTableId + '/records';
     }
 
@@ -291,8 +361,8 @@ function hideSharePanel() {
 // Toolbar events
 // ---------------------------------------------------------------------------
 
-// Clear selection: reset Grist filter and remove highlight styles
 document.getElementById('sv-btn-clear').addEventListener('click', function() {
+    selectedRowId = null;
     grist.setSelectedRows(null);
     document.getElementById('sv-btn-clear').style.display = 'none';
     if (vectorLayer) {
@@ -306,21 +376,32 @@ document.getElementById('sv-btn-cols').addEventListener('click', function() {
 });
 document.getElementById('sv-btn-apply-cols').addEventListener('click', function() {
     colGeom = document.getElementById('sv-sel-geom').value;
-    colLabel = document.getElementById('sv-sel-label').value || null;
     hideColPicker();
-    svConfig._viewSet = false; // allow re-fit after manual column change
+    viewFitted = false; // allow re-fit after manual column change
     rebuildLayer();
 });
 document.getElementById('sv-btn-copy').addEventListener('click', function() {
-    var inp = document.getElementById('sv-share-url');
-    inp.select();
-    document.execCommand('copy');
-    document.getElementById('sv-btn-copy').textContent = 'Copied!';
-    setTimeout(function() { document.getElementById('sv-btn-copy').textContent = 'Copy link'; }, 2000);
+    var url = document.getElementById('sv-share-url').value;
+    var btn = document.getElementById('sv-btn-copy');
+    function markCopied() {
+        btn.textContent = tr('copy.done');
+        setTimeout(function() { btn.textContent = tr('copy'); }, 2000);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(markCopied).catch(function() {
+            document.getElementById('sv-share-url').select();
+        });
+    } else {
+        document.getElementById('sv-share-url').select();
+    }
 });
 document.getElementById('sv-btn-open').addEventListener('click', function() {
     var url = document.getElementById('sv-share-url').value;
-    if (url) { window.open(url, '_blank'); }
+    // Reject non-http(s) URLs — sviewer_base_url could be attacker-controlled via Grist doc.
+    // Relative paths (../../index.html) are also safe; safeHttpUrl returns null for them,
+    // so we allow them explicitly.
+    var isSafe = !url.match(/^[a-z][a-z0-9+\-.]*:/i) || safeHttpUrl(url);
+    if (url && isSafe) { window.open(url, '_blank', 'noopener'); }
 });
 document.getElementById('sv-btn-close-share').addEventListener('click', hideSharePanel);
 document.getElementById('sv-overlay').addEventListener('click', hideSharePanel);
@@ -329,16 +410,12 @@ document.getElementById('sv-overlay').addEventListener('click', hideSharePanel);
 // Grist API init sequence
 // ---------------------------------------------------------------------------
 
-var CONFIG_TABLE = '_sv_config';
+// Grist table IDs follow Python class naming: leading underscores stripped,
+// first letter uppercased. '_sviewer_customConfig' (display) → 'Sviewer_customConfig' (API id).
+var CONFIG_TABLE = 'Sviewer_customConfig';
 
-// requiredAccess: full — needed for docApi.fetchTable on _sv_config
+// requiredAccess: full — needed for docApi.fetchTable on _sviewer_customConfig
 grist.ready({ requiredAccess: 'full' });
-
-// Restore saved column choices from widget options
-grist.onOptions(function(options) {
-    if (options && options.colGeom) { colGeom = options.colGeom; }
-    if (options && options.colLabel) { colLabel = options.colLabel; }
-});
 
 // Registered immediately after ready() — Grist fires the initial onRecords
 // event right after receiving Ready; late registration (inside a Promise chain)
@@ -352,13 +429,12 @@ grist.onRecords(function(records) {
     if (records.length) {
         allColumns = Object.keys(records[0]).filter(function(k) { return k !== 'id'; });
         if (!colGeom) {
-            var detected = detectColumns(allColumns, records[0]);
-            if (detected.geom) {
-                colGeom = detected.geom;
-                colLabel = colLabel || detected.label;
-                setStatus('Geometry column auto-detected: ' + colGeom);
+            var detected = detectGeomColumn(allColumns, records[0]);
+            if (detected) {
+                colGeom = detected;
+                setStatus(tr('auto.detected') + colGeom);
             } else {
-                setStatus('Choose geometry column');
+                setStatus(tr('choose.col'));
                 showColPicker();
             }
         }
@@ -374,28 +450,34 @@ grist.onRecord(function(record) {
     if (!geomVal || !geomVal.coordinates) { return; }
 
     var rowId = record.id;
+    selectedRowId = rowId;
     var feat = featureByRowId[rowId];
-    document.getElementById('sv-btn-clear').style.display = '';
 
     var view = SViewer.getView();
     if (view && feat) {
+        document.getElementById('sv-btn-clear').style.display = '';
         var ext = feat.getGeometry().getExtent();
         view.fit(ext, { padding: [60, 60, 60, 60], maxZoom: 17, duration: 400 });
+        applySelectionStyle(feat);
     }
-
-    applySelectionStyle(feat);
 });
 
-// Load _sv_config for WMS/center/color overrides, then init map.
-// Absent table is silently ignored — defaults apply.
-grist.docApi.fetchTable(CONFIG_TABLE).then(function(data) {
-    var keys = data.key || data.Key || [];
-    var vals = data.value || data.Value || [];
-    keys.forEach(function(k, i) { svConfig[k] = vals[i]; });
-}).catch(function() {
-}).then(function() {
-    if (grist.docApi && typeof grist.docApi.getDocName === 'function') {
-        grist.docApi.getDocName().then(function(id) { gristDocId = id; }).catch(function() {});
-    }
-    initMap();
-});
+// ---------------------------------------------------------------------------
+// Startup: apply i18n, load config, init map
+// ---------------------------------------------------------------------------
+
+applyDomTranslations();
+
+grist.docApi.fetchTable(CONFIG_TABLE)
+    .then(function(data) {
+        var keys = data.key || [];
+        var vals = data.value || [];
+        keys.forEach(function(k, i) { svConfig[k] = vals[i]; });
+    })
+    .catch(function() {})
+    .then(function() {
+        if (grist.docApi && typeof grist.docApi.getDocName === 'function') {
+            grist.docApi.getDocName().then(function(id) { gristDocId = id; }).catch(function() {});
+        }
+        initMap();
+    });

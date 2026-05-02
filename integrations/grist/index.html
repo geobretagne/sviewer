@@ -18,6 +18,8 @@
             border-radius: 3px; background: #fff; cursor: pointer;
         }
         #sv-toolbar button:hover { background: #e8e8e8; }
+        #sv-toolbar button:disabled { color: #bbb; cursor: default; }
+        #sv-toolbar button:disabled:hover { background: #fff; }
         #sv-status { font-size: 12px; color: #888; margin-left: auto; }
 
         #sv-col-picker {
@@ -48,31 +50,29 @@
 
 <div id="sv-toolbar">
     <strong>sViewer</strong>
-    <button id="sv-btn-share" title="Share map as permalink">Share</button>
-    <button id="sv-btn-cols" title="Configure geometry column">Columns</button>
-    <button id="sv-btn-clear" title="Clear selection" style="display:none">&#x2715; Clear</button>
-    <span id="sv-status">Loading…</span>
+    <button id="sv-btn-share" data-i18n="share" data-i18n-title="share.title"></button>
+    <button id="sv-btn-cols" data-i18n="cols" data-i18n-title="cols.title"></button>
+    <button id="sv-btn-clear" data-i18n="clear" data-i18n-title="clear.title" disabled></button>
+    <span id="sv-status" data-i18n="loading"></span>
 </div>
 
 <div id="sv-col-picker">
-    <label>Geometry column:</label>
+    <label data-i18n="geom.col"></label>
     <select id="sv-sel-geom"></select>
-    <label>Label column (optional):</label>
-    <select id="sv-sel-label"><option value="">(none)</option></select>
-    <button id="sv-btn-apply-cols">Apply</button>
+    <button id="sv-btn-apply-cols" data-i18n="apply"></button>
 </div>
 
 <div id="sv-map"></div>
 
 <div id="sv-overlay"></div>
 <div id="sv-share-panel">
-    <h3>Share this map</h3>
-    <p style="font-size:12px;color:#666;margin-bottom:8px;">Public link — data must be accessible without authentication.</p>
+    <h3 data-i18n="share.title2"></h3>
+    <p style="font-size:12px;color:#666;margin-bottom:8px;" data-i18n="share.note"></p>
     <input type="text" id="sv-share-url" readonly>
     <div class="sv-share-actions">
-        <button class="sv-btn-primary" id="sv-btn-copy">Copy link</button>
-        <button id="sv-btn-open">Open in new tab</button>
-        <button id="sv-btn-close-share">Close</button>
+        <button class="sv-btn-primary" id="sv-btn-copy" data-i18n="copy"></button>
+        <button id="sv-btn-open" data-i18n="open"></button>
+        <button id="sv-btn-close-share" data-i18n="close"></button>
     </div>
 </div>
 

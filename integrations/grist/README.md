@@ -1,64 +1,75 @@
-# sViewer — Grist widget
+# sViewer — widget Grist
 
-Interactive map widget for [Grist](https://www.getgrist.com), powered by sViewer.
+Widget cartographique interactif pour [Grist](https://www.getgrist.com), propulsé par sViewer.
 
-## Setup
+## Installation
 
-1. In your Grist document, open a page and add a **Custom Widget**.
-2. Set the widget URL to: `https://yourserver/sviewer/integrations/grist/widget.html`
-3. Grant **Read table** access when prompted.
+1. Dans votre document Grist, ouvrez une page et ajoutez un **widget personnalisé**.
+2. Saisissez l'URL du widget : `https://votre-serveur/sviewer/integrations/grist/`
+3. Accordez l'accès **Complet** lorsque demandé.
 
-The widget auto-detects latitude/longitude columns. Supported column names:
+Le widget détecte automatiquement la colonne géométrie. Noms de colonnes reconnus :
 
-- **Latitude**: `lat`, `latitude`, `y`, `lat_wgs84`
-- **Longitude**: `lon`, `lng`, `longitude`, `x`, `lon_wgs84`
+- `geometry`, `geom`, `geo`, `shape`, `wkb_geometry`
+- En cas d'échec, il scanne la première ligne à la recherche d'une valeur GeoJSON valide.
 
-If auto-detection fails, click **Columns** in the widget toolbar to choose manually.
+Si la détection échoue, cliquez sur **Colonnes** dans la barre d'outils du widget pour choisir manuellement.
 
-## Config table (`_sv_config`)
+## Table de configuration (`_sviewer_customConfig`)
 
-Create a table named `_sv_config` with two columns: `key` and `value`.
+Créez une table nommée `_sviewer_customConfig` avec deux colonnes : `key` et `value`.
 
-| key | description | example |
+> **Note :** Grist transforme les noms de tables en identifiants Python (`_sviewer_customConfig` → `Sviewer_customConfig` en interne).
+
+Les clés correspondent aux paramètres d'URL de sViewer (même nom, même sémantique).
+
+| key | description | exemple |
 |-----|-------------|---------|
-| `wms_url` | WMS base URL | `https://geobretagne.fr/geoserver/wms` |
-| `wms_layers` | Layer name(s) | `geobretagne:communes` |
-| `zoom_default` | Initial zoom level | `10` |
-| `center_x` | Center X in EPSG:3857 | `-290000` |
-| `center_y` | Center Y in EPSG:3857 | `6150000` |
-| `geojson_color` | Feature color (hex) | `#e74c3c` |
-| `sviewer_base_url` | sViewer base URL for share links | `https://yourserver/sviewer/` |
-| `grist_api_base` | Grist host for self-hosted instances | `https://grist.yourserver.org` |
+| `x` | Centre X en EPSG:3857 | `-334250` |
+| `y` | Centre Y en EPSG:3857 | `6125000` |
+| `z` | Niveau de zoom initial | `10` |
+| `layers` | Couche(s) WMS au format `namespace:nom` (doit figurer dans `customConfig.js`) | `dreal_b:ae_casparcas` |
+| `lb` | Index du fond de carte initial (selon `layersBackground` dans `customConfig.js`) | `1` |
+| `geojson_color` | Couleur des entités Grist (valeur CSS) | `#e74c3c` |
+| `sviewer_base_url` | URL de base sViewer pour les liens de partage | `https://votre-serveur/sviewer/index.html` |
+| `grist_api_base` | Hôte Grist pour les instances auto-hébergées | `https://grist.votre-serveur.org` |
 
-If the table is absent, default values are used.
+En l'absence de cette table, les valeurs par défaut s'appliquent.
 
-> Requires **Full** access level — the widget requests `full` to support editing and config table access.
+> Nécessite le niveau d'accès **Complet** — le widget le demande pour accéder à la table de configuration.
 
-## Features
+## Fonctionnalités
 
-- **Map → Grist**: click a point on the map to select the corresponding row in Grist
-- **Grist → map**: select a row in Grist to pan/zoom the map to that feature
-- **Share**: generate a permalink (`?geojson=<grist_api_url>`) — sViewer fetches and displays live Grist data via `jsonLayerAdapter`
-- **WMS layers**: configure background institutional layers via `_sv_config`
+- **Carte → Grist** : cliquez sur une entité de la carte pour sélectionner la ligne correspondante dans Grist
+- **Grist → carte** : sélectionnez une ligne dans Grist pour centrer et zoomer la carte sur l'entité
+- **Sélection bidirectionnelle** : configurez dans l'interface Grist « Sélectionner par » entre le widget carte et le tableau (voir ci-dessous)
+- **Effacer** : bouton *✕ Effacer* pour libérer le filtre de sélection
+- **Partager** : génère un lien permanent (`?geojson=<url_api_grist>`) — sViewer charge et affiche les données Grist en direct via `jsonLayerAdapter`
+- **Couches WMS** : activez des couches de fond au démarrage via `_sviewer_customConfig`
 
-## Share URL — how it works
+## Sélection bidirectionnelle — configuration Grist
 
-The Share button builds a sViewer standalone URL with `?geojson=` pointing to the Grist public records API.
-sViewer fetches that URL and normalizes the Grist JSON format via `jsonLayerAdapter` in `customConfig.js`.
+Pour activer les deux sens simultanément :
 
-Requirements:
-- Grist document must be publicly accessible (or the viewer must have access)
-- `jsonLayerAdapter` must be configured in sViewer's `etc/customConfig.js`
-- For self-hosted Grist: set `grist_api_base` in `_sv_config`
+1. Sélectionnez le **widget carte**, ouvrez le panneau latéral → onglet **Données** → **Sélectionner par** : choisissez le tableau de données.
+2. Sélectionnez le **tableau de données**, ouvrez le panneau latéral → onglet **Données** → **Sélectionner par** : choisissez le widget carte.
 
-## Private data
+Résultat :
+- Clic sur une ligne du tableau → la carte zoome et met en surbrillance l'entité.
+- Clic sur une entité de la carte → le tableau filtre sur la ligne correspondante.
 
-The Share link points to sViewer standalone. For private data, set up a proxy:
-a small server-side script that fetches Grist records using a stored API key and
-returns GeoJSON. Pass the proxy URL as `?geojson=` to sViewer.
+## Lien de partage — fonctionnement
 
-## Requirements
+Le bouton **Partager** construit une URL sViewer autonome avec `?geojson=` pointant vers l'API publique de Grist.
+sViewer récupère cette URL et normalise le format JSON Grist via `jsonLayerAdapter` dans `customConfig.js`.
 
-- Grist (cloud or self-hosted)
-- sViewer ≥ 0.4.0 (with `?geojson=` support)
-- WMS layers must support CORS and HTTPS
+Prérequis :
+- Le document Grist doit être accessible publiquement (ou le lecteur doit y avoir accès)
+- `jsonLayerAdapter` doit être configuré dans `etc/customConfig.js` de sViewer
+- Pour Grist auto-hébergé : renseignez `grist_api_base` dans `_sviewer_customConfig`
+
+## Prérequis
+
+- Grist (cloud ou auto-hébergé)
+- sViewer ≥ 0.4.0 (avec support de `?geojson=`)
+- Les couches WMS doivent supporter CORS et HTTPS
