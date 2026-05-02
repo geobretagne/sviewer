@@ -7,8 +7,8 @@
 var I18N = {
     fr: {
         'loading':       'Chargement…',
-        'cols':          'Colonnes',
-        'cols.title':    'Configurer la colonne géométrie',
+        'cols':          'Géométrie',
+        'cols.title':    'Choisir la colonne géométrie',
         'clear':         '✕ Désélectionner',
         'clear.title':   'Effacer la sélection',
         'geom.col':      'Colonne géométrie :',
@@ -21,8 +21,8 @@ var I18N = {
     },
     en: {
         'loading':       'Loading…',
-        'cols':          'Columns',
-        'cols.title':    'Configure geometry column',
+        'cols':          'Geometry',
+        'cols.title':    'Choose geometry column',
         'clear':         '✕ Deselect',
         'clear.title':   'Clear selection',
         'geom.col':      'Geometry column:',
@@ -272,7 +272,7 @@ function setupMapClick() {
         if (!hit) {
             selectedRowId = null;
             grist.setSelectedRows(null);
-            document.getElementById('sv-btn-clear').style.display = 'none';
+            document.getElementById('sv-btn-clear').disabled = true;
             vectorLayer.getSource().getFeatures().forEach(function(f) { f.setStyle(null); });
         }
     });
@@ -325,7 +325,7 @@ function initMap() {
 document.getElementById('sv-btn-clear').addEventListener('click', function() {
     selectedRowId = null;
     grist.setSelectedRows(null);
-    document.getElementById('sv-btn-clear').style.display = 'none';
+    document.getElementById('sv-btn-clear').disabled = true;
     if (vectorLayer) {
         vectorLayer.getSource().getFeatures().forEach(function(f) { f.setStyle(null); });
     }
@@ -387,7 +387,7 @@ grist.onRecord(function(record) {
 
     var view = SViewer.getView();
     if (view && feat) {
-        document.getElementById('sv-btn-clear').style.display = '';
+        document.getElementById('sv-btn-clear').disabled = false;
         var ext = feat.getGeometry().getExtent();
         view.fit(ext, { padding: [60, 60, 60, 60], maxZoom: 17, duration: 400 });
         applySelectionStyle(feat);
