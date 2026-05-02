@@ -230,16 +230,26 @@ function rebuildLayer() {
     var color = (svConfig.geojson_color || '#e74c3c');
     var fillArr = ol.color.asArray(color).slice();
     fillArr[3] = 0.85;
+    var fillColor = 'rgba(' + fillArr.join(',') + ')';
 
     vectorLayer = new ol.layer.Vector({
         source: new ol.source.Vector({ features: features }),
-        style: new ol.style.Style({
-            image: new ol.style.Circle({
-                radius: 7,
-                fill: new ol.style.Fill({ color: fillArr }),
-                stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 })
-            })
-        })
+        style: function(feature) {
+            var geomType = feature.getGeometry() ? feature.getGeometry().getType() : '';
+            if (geomType === 'Point' || geomType === 'MultiPoint') {
+                return new ol.style.Style({
+                    image: new ol.style.Circle({
+                        radius: 7,
+                        fill: new ol.style.Fill({ color: fillColor }),
+                        stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 })
+                    })
+                });
+            }
+            return new ol.style.Style({
+                fill: new ol.style.Fill({ color: fillColor }),
+                stroke: new ol.style.Stroke({ color: color, width: 2 })
+            });
+        }
     });
 
     map.addLayer(vectorLayer);
@@ -432,20 +442,29 @@ grist.onRecord(function(record) {
     var rowId = record.id;
     var feat = featureByRowId[rowId];
     if (feat && vectorLayer) {
-        var color = (svConfig.geojson_color || '#e74c3c');
-        var selArr = ol.color.asArray('#ffcc00').slice();
-        selArr[3] = 1;
+        var baseColor = (svConfig.geojson_color || '#e74c3c');
+        var selColor = '#ffcc00';
         vectorLayer.getSource().getFeatures().forEach(function(f) {
-            var fillArr = ol.color.asArray(color).slice();
-            fillArr[3] = f === feat ? 1 : 0.85;
-            var radius = f === feat ? 10 : 7;
-            f.setStyle(new ol.style.Style({
-                image: new ol.style.Circle({
-                    radius: radius,
-                    fill: new ol.style.Fill({ color: f === feat ? selArr : fillArr }),
-                    stroke: new ol.style.Stroke({ color: '#fff', width: f === feat ? 2.5 : 1.5 })
-                })
-            }));
+            var isSel = f === feat;
+            var c = isSel ? selColor : baseColor;
+            var fillArr = ol.color.asArray(c).slice();
+            fillArr[3] = isSel ? 1 : 0.85;
+            var fillColor = 'rgba(' + fillArr.join(',') + ')';
+            var geomType = f.getGeometry() ? f.getGeometry().getType() : '';
+            if (geomType === 'Point' || geomType === 'MultiPoint') {
+                f.setStyle(new ol.style.Style({
+                    image: new ol.style.Circle({
+                        radius: isSel ? 10 : 7,
+                        fill: new ol.style.Fill({ color: fillColor }),
+                        stroke: new ol.style.Stroke({ color: '#fff', width: isSel ? 2.5 : 1.5 })
+                    })
+                }));
+            } else {
+                f.setStyle(new ol.style.Style({
+                    fill: new ol.style.Fill({ color: fillColor }),
+                    stroke: new ol.style.Stroke({ color: c, width: isSel ? 3 : 2 })
+                }));
+            }
         });
     }
 });
