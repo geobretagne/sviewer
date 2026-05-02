@@ -82,9 +82,9 @@ customConfig = {
      * strokeWidth: line and polygon stroke width in pixels
      */
     geojsonStyle: {
-        color: '#3388ff',
-        fillOpacity: 0.2,
-        strokeWidth: 2
+        color: '#e74c3c',
+        fillOpacity: 0.6,
+        strokeWidth: 3
     },
 
     /**
@@ -105,9 +105,17 @@ customConfig = {
      *
      * Note: only the first page of paginated APIs is fetched — no pagination support.
      */
+    // Example adapter for the Grist public records API.
+    // Input:  { records: [ { id, fields: { geometry: '{"type":...}', col1, col2, ... } } ] }
+    // Output: GeoJSON FeatureCollection (EPSG:4326)
+    //
+    // To support a different API, replace this function.
+    // The function receives the raw parsed JSON response and must return a FeatureCollection.
     jsonLayerAdapter: function(response) {
+        // Known geometry column names — first match wins.
         var GEOM_CANDIDATES = ['geometry', 'geom', 'geo', 'shape', 'wkb_geometry'];
 
+        // Accept geometry as a GeoJSON object or a JSON string.
         function parseGeom(val) {
             if (!val) { return null; }
             var g = (typeof val === 'string') ? (function() { try { return JSON.parse(val); } catch(e) { return null; } }()) : val;
@@ -115,6 +123,7 @@ customConfig = {
             return null;
         }
 
+        // Find the geometry column by name, then by value scan.
         function detectGeomKey(row) {
             var keys = Object.keys(row);
             var lower = keys.map(function(k) { return k.toLowerCase(); });
@@ -123,16 +132,15 @@ customConfig = {
                 if (!found && lower.indexOf(c) !== -1) { found = keys[lower.indexOf(c)]; }
             });
             if (found) { return found; }
-            // Fallback: scan values for parseable geometry
             for (var i = 0; i < keys.length; i++) {
                 if (parseGeom(row[keys[i]])) { return keys[i]; }
             }
             return null;
         }
 
-        // Grist: { records: [{id, fields: {...}}] }
+        // Flatten Grist envelope: { records: [{id, fields:{...}}] } → array of field objects.
         var rows = (response.records || []).map(function(r) { return r.fields || r; });
-        // Fallback: plain array of objects
+        // Fallback: plain array (non-Grist APIs).
         if (!rows.length && Array.isArray(response)) { rows = response; }
         if (!rows.length) { return { type: 'FeatureCollection', features: [] }; }
 
@@ -142,7 +150,10 @@ customConfig = {
         var features = rows.map(function(f) {
             var geom = parseGeom(f[geomKey]);
             if (!geom) { return null; }
-            return { type: 'Feature', geometry: geom, properties: f };
+            // Exclude geometry key from properties to avoid OL confusion.
+            var props = {};
+            Object.keys(f).forEach(function(k) { if (k !== geomKey) { props[k] = f[k]; } });
+            return { type: 'Feature', geometry: geom, properties: props };
         }).filter(Boolean);
         return { type: 'FeatureCollection', features: features };
     },
