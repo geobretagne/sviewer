@@ -2166,11 +2166,12 @@ window.SViewerApp = (function() {
     this.getView = function() { return view; };
     this.getConfig = function() { return config; };
     this.getState = function() { return state; };
-    // Update the geojson URL in state and refresh the share permalink.
+    // Update the geojson URL in state for share/embed permalinks.
     // Does not load or render the layer — caller owns rendering.
+    // setPermalink() is intentionally omitted: panel may be closed, and
+    // togglePanel('share') already calls setPermalink() when panel opens.
     this.setGeojsonUrl = function(url) {
         state.geojson = url || null;
-        setPermalink();
     };
     }
 
