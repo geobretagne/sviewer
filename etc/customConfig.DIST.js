@@ -58,7 +58,7 @@ customConfig = {
     /**
      * Optional: override search input placeholder (otherwise uses i18n default)
      */
-    // searchPlaceholder: 'ex: 1 rue de la Paix, Paris',
+    searchPlaceholder: 'ex: place Guérin, Brest',
 
     /**
      * GPS tracking: interval in seconds between position updates (?position=1)
@@ -81,6 +81,14 @@ customConfig = {
      * Requires CORS support from the service
      */
     openLSGeocodeUrl: "https://data.geopf.fr/geocodage/search",
+
+    /**
+     * Domain allowlist for external OGC services (WMS, WFS, CSW).
+     * Only hostnames matching an entry (exact or subdomain) are permitted.
+     * Absent or empty array = all domains allowed (default, backward compatible).
+     * Example: ['geobretagne.fr', 'data.geopf.fr'] also allows sub.geobretagne.fr
+     */
+    // allowedDomains: [],
 
     /**
      * Layer pools used by backgroundPresets below.

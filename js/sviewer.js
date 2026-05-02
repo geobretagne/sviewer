@@ -197,6 +197,10 @@ window.SViewerApp = (function() {
             self.options.layername = (self.options.nslayername.indexOf(':')>0) ? self.options.nslayername.split(':',2)[1]:''; // layername
 
             if (customWmsUrl) {
+                if (!isDomainAllowed(customWmsUrl)) {
+                    console.warn('sViewer: blocked WMS URL not in allowedDomains:', customWmsUrl);
+                    return;
+                }
                 // Use custom WMS endpoint
                 self.options.wmsurl_global = customWmsUrl;
                 self.options.wmsurl_ns = customWmsUrl;
@@ -528,6 +532,18 @@ window.SViewerApp = (function() {
         return /^https?:\/\//i.test(s) ? s : '';
     }
 
+    /* Returns true when config.allowedDomains is absent/empty (allow-all) or the URL hostname
+       matches an entry exactly or as a subdomain. Prevents SSRF to attacker-controlled OGC servers. */
+    function isDomainAllowed(url) {
+        if (!config.allowedDomains || !config.allowedDomains.length) { return true; }
+        try {
+            var host = new URL(url).hostname;
+            return config.allowedDomains.some(function(d) {
+                return host === d || host.slice(-(d.length + 1)) === '.' + d;
+            });
+        } catch(e) { return false; }
+    }
+
     // ISO 19139 XML namespaces shared by parseISOMetadata and parseCSWForWMS
     var ISO_NS = {
         gmd:   'http://www.isotc211.org/2005/gmd',
@@ -593,6 +609,10 @@ window.SViewerApp = (function() {
             var layername = isoXt(xmlDoc, node, 'gmd:name/gco:CharacterString');
             if (proto === 'OGC:WMS' && rawUrl && layername) {
                 var wmsUrl = rawUrl.indexOf('?') > 0 ? rawUrl.split('?')[0] : rawUrl;
+                if (!isDomainAllowed(wmsUrl)) {
+                    console.warn('sViewer: blocked CSW-extracted WMS URL not in allowedDomains:', wmsUrl);
+                    return null;
+                }
                 return { wmsUrl: wmsUrl, layername: layername };
             }
         }
@@ -925,7 +945,9 @@ window.SViewerApp = (function() {
                     // nonempty reponse detection
                     if (response.search(config.nodata)<0) {
                         closePanel();
-                        $(this).append(response);
+                        /* parseHTML(html, ctx, false) parses without executing scripts — prevents XSS
+                           from attacker-controlled WMS servers returning malicious GetFeatureInfo HTML */
+                        $(this).append($.parseHTML(response, document, false));
                         state.gfiok = true;
                         $('#panelQuery a').attr("rel","external");
                         togglePanel('query');
@@ -965,6 +987,10 @@ window.SViewerApp = (function() {
     }
 
 
+    function xmlEscape(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+    }
+
     /**
      * method: searchAllWFSLayers
      * for each layer with a discovered WFS endpoint and text fields,
@@ -983,7 +1009,7 @@ window.SViewerApp = (function() {
                 ogcfilter.push(
                     '<ogc:PropertyIsLike wildCard="*" singleChar="." escapeChar="!" matchCase="false">' +
                     '<ogc:PropertyName>' + fieldname + '</ogc:PropertyName>' +
-                    '<ogc:Literal>*' + value + '*</ogc:Literal></ogc:PropertyIsLike>');
+                    '<ogc:Literal>*' + xmlEscape(value) + '*</ogc:Literal></ogc:PropertyIsLike>');
                 propertynames.push('<ogc:PropertyName>' + fieldname + '</ogc:PropertyName>');
             });
             $.each(layer.wfs.fields, function(i, fieldname) {
@@ -1898,10 +1924,20 @@ window.SViewerApp = (function() {
                 });
             }).then(function(dataUrl) {
                 log('QR code generated successfully');
-                qrcodeDisplayEl.innerHTML = '<img src="' + dataUrl + '" alt="QR Code — ' + href + '" style="max-width: 100%; height: auto;">';
+                var img = document.createElement('img');
+                img.src = dataUrl;
+                img.alt = 'QR Code — ' + href; // dataUrl is a safe data: URI; href set as text property
+                img.style.cssText = 'max-width:100%;height:auto;';
+                qrcodeDisplayEl.innerHTML = '';
+                qrcodeDisplayEl.appendChild(img);
             }).catch(function(error) {
                 console.error('QR code generation failed:', error);
-                qrcodeDisplayEl.innerHTML = '<div class="alert alert-warning" role="alert">Failed to generate QR code: ' + error.message + '</div>';
+                var div = document.createElement('div');
+                div.className = 'alert alert-warning';
+                div.setAttribute('role', 'alert');
+                div.textContent = 'Failed to generate QR code: ' + error.message;
+                qrcodeDisplayEl.innerHTML = '';
+                qrcodeDisplayEl.appendChild(div);
             });
         });
 

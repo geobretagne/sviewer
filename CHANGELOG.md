@@ -6,15 +6,26 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-02
+
 ### Added
 - iFrame tab in embed modal (alongside existing JS tab) — CMS/blog editors can copy a one-liner `<iframe>` without JavaScript
 - Auto-open legend panel on load when a queryable layer is present and viewport width > 600 px — saves one click, surfaces layer info immediately
 - `@media print` — controls hidden; if a panel is open it renders beside the map (map 65%, panel 35%); closed panel hidden; map fills full width when no panel open
+- `backgroundPresets` config key — single cycling button replaces the independent background + overlay buttons; each preset sets background and overlay atomically (`{lb, lo}` indices); `layersBackground`-only configs remain fully backward compatible
+- `allowedDomains` config key — optional hostname allowlist for external OGC services (WMS, CSW, WFS); absent or empty array = all domains allowed (backward compatible)
 
 ### Changed
 - `ORTHOIMAGERY.ORTHOPHOTOS` background layer switched from TMS/XYZ to WMTS (better render quality); IIFE pattern avoids global vars
 - Fullscreen button hidden on mobile (OS provides native fullscreen) and when `fullscreenEnabled` API absent
 - GPS/geolocation button hidden on non-touch devices (`pointer: coarse` media query) — desktop browsers expose the geolocation API but have no hardware GPS
+- `customConfig.DIST.js` updated to demonstrate `backgroundPresets` (3 presets: photo+labels, photo, map) and `layersOverlay` pool; `layersBackground` marked as legacy
+
+### Fixed
+- XSS in GetFeatureInfo panel — raw WMS HTML response now parsed with `$.parseHTML(..., false)` (script execution disabled)
+- XML injection in WFS filter — user search input now escaped via `xmlEscape()` before interpolation into OGC filter
+- XSS in QR code error path — replaced `innerHTML` with DOM node construction (`createElement` + `textContent`)
+- Skip link "Aller à la carte" rendered visibly over the map — CSS selector mismatch (`sv-skip-to-content` vs `skip-to-content`) corrected
 
 ### Performance
 - `embed.js` now minified (`embed.min.js`) — loaded by `index.html` in production (−24% parse time on critical path)
@@ -22,6 +33,7 @@ Versioning: [Semantic Versioning](https://semver.org/).
 - Deleted `lib/bootstrap-icons/fonts/bootstrap-icons.woff2` (130 KB, unreferenced — subset at `build/` is used)
 
 ### Removed
+- Overlay layer button (`#ovBt`) — replaced by `backgroundPresets` cycling button; `?lo=` URL parameter removed
 - Shake to share — false positives during transport, no discoverability, intrusive iOS permission prompt; permalink button in share panel covers the same use case
 
 ## [0.2.0] - 2026-05-01

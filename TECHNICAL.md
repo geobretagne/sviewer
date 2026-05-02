@@ -320,6 +320,7 @@ customConfig = {
     maxWfsSearchFeatures: 8,
     nodata: '<!--nodatadetect-->\n<!--nodatadetect-->',
     openLSGeocodeUrl: "https://data.geopf.fr/geocodage/search",
+    allowedDomains: [],              // optionnel — [] = tous les domaines autorisés
     layersBackground: [ /* ... */ ]
 };
 ```
@@ -406,6 +407,19 @@ Le service doit :
 - Supporter l'API OpenLS (standard OGC)
 - Accepter les requêtes GET/POST JSON
 - Supporter CORS
+
+### Sécurité — liste blanche de domaines OGC
+
+Par défaut, sViewer accepte toute URL HTTPS comme endpoint OGC (WMS, WFS, CSW). Pour restreindre les domaines autorisés :
+
+```javascript
+allowedDomains: ['geobretagne.fr', 'data.geopf.fr']
+```
+
+- Absent ou `[]` : tous les domaines autorisés (comportement par défaut, compatible avec les configs existantes)
+- La correspondance est exacte **ou par sous-domaine** : `'geobretagne.fr'` autorise aussi `tiles.geobretagne.fr`
+- S'applique aux trois points d'entrée : URL WMS personnalisée (`?layers=ns:layer@url`), URL WMS extraite d'un enregistrement CSW, URL WFS découverte via DescribeLayer
+- En cas de blocage, un avertissement est émis en console (`sViewer: blocked … not in allowedDomains`)
 
 ---
 
