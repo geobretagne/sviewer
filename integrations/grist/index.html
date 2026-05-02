@@ -281,7 +281,6 @@ function setupMapClick() {
             console.log('[grist] click hit rowId=' + rowId);
             if (rowId !== undefined) {
                 grist.setCursorPos({ rowId: rowId });
-                grist.setSelectedRows([rowId]);
                 hit = true;
             }
             return true; // stop after first hit
