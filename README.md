@@ -16,7 +16,7 @@ Que permet sViewer ?
 * **Exporter en image** — PNG depuis le panneau de partage
 * **Interroger les données** — cliquez sur la carte pour afficher la fiche d'une zone ou d'un objet
 * **Traçabilité des données** — producteur, licence, date de mise à jour affichés automatiquement depuis les métadonnées
-* **Superposer des données GeoJSON** — chargez n'importe quel fichier GeoJSON distant (GitHub, data.gouv.fr, API REST…) avec `?geojson=URL`, sans serveur cartographique
+* **Superposer des données JSON ou GeoJSON** — chargez n'importe quel fichier GeoJSON ou API JSON distant avec `?geojson=URL`, sans serveur cartographique ; connecteur [Grist](https://www.getgrist.com) intégré (GitHub, data.gouv.fr, API REST…)
 * **Rechercher une adresse** — barre de recherche intégrée, géolocalisation ; service de géocodage configurable (France ou mondial)
 * **Thème clair et sombre** — manuel ou automatique selon le système
 * **Tous les appareils** — téléphone, tablette, ordinateur, même URL
@@ -53,9 +53,12 @@ https://geobretagne.fr/sviewer/?md=fb5861f1-1b20-417f-abb6-9fc316c0307d
 
 sViewer récupère automatiquement l'URL WMS et les métadonnées (titre, résumé, licence, producteur).
 
-### Vous avez un tableur ou un shapefile
+### Vous avez un tableur ([Grist](https://www.getgrist.com), CSV…) ou un shapefile
 
-sViewer affiche des flux WMS — pas les fichiers. Si vos données sont dans un tableur ou un shapefile, parlez à votre service SIG ou utilisez un outil comme [uMap](https://umap.openstreetmap.fr/) qui accepte les imports directs.
+sViewer affiche des flux WMS — pas les fichiers directement. Deux alternatives :
+
+- **Grist** — si vos données sont dans un document Grist avec une colonne géométrie, utilisez le [widget Grist intégré](connectors/grist/) : il synchronise la sélection entre la table et la carte en temps réel. La carte générée est aussi partageable et intégrable hors de Grist — lien direct, QR code, `<iframe>` ou API JavaScript — exactement comme n'importe quelle carte sViewer.
+- **Autres formats** — parlez à votre service SIG ou utilisez un outil comme [uMap](https://umap.openstreetmap.fr/) qui accepte les imports directs.
 
 
 Partager une carte
@@ -109,11 +112,14 @@ Démarrage rapide (administrateur)
 
 ```bash
 # 1. Déposez le dossier sviewer/ sur votre serveur web (Apache, nginx…)
-# 2. Copiez et éditez la configuration
+# 2. Appliquez le snippet nginx fourni — OBLIGATOIRE (voir ci-dessous)
+# 3. Copiez et éditez la configuration
 cp etc/customConfig.DIST.js etc/customConfig.js
-# 3. Ouvrez dans un navigateur
+# 4. Ouvrez dans un navigateur
 https://votre-serveur/sviewer/
 ```
+
+> **Important — configuration nginx obligatoire.** Le dossier contient des outils de build et des fichiers de configuration non destinés au public. Sans le snippet `etc/nginx-server.conf`, ces fichiers sont accessibles à tout visiteur. Ne jamais servir le dossier à nu.
 
 Paramètres configurables : fonds de carte, emprise initiale, URL [geOrchestra](https://georchestra.org), langue, géocodage.
 

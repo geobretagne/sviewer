@@ -483,6 +483,18 @@ allowedDomains: ['geobretagne.fr', 'data.geopf.fr']
 - S'applique aux trois points d'entrée : URL WMS personnalisée (`?layers=ns:layer@url`), URL WMS extraite d'un enregistrement CSW, URL WFS découverte via DescribeLayer
 - En cas de blocage, un avertissement est émis en console (`sViewer: blocked … not in allowedDomains`)
 
+### Sécurité — déploiement serveur web
+
+> **Attention : ne jamais servir le dossier `sviewer/` sans configuration nginx (ou Apache) dédiée.**
+
+Le dossier contient des fichiers non destinés au public : outils de build (`scripts/`), sources OpenLayers (`build/ol-custom-entry.js`), manifestes npm (`package.json`, `package-lock.json`), configuration de postcss, etc. Un serveur configuré en mode "liste les fichiers du dossier" ou sans restriction de chemin expose ces fichiers à tout visiteur.
+
+**Règle : utiliser le snippet nginx fourni** (`etc/nginx-server.conf`), qui applique une liste blanche stricte — seuls les chemins explicitement autorisés sont servis, tout le reste retourne 404.
+
+Chemins bloqués par défaut : `node_modules/`, `scripts/`, `build/ol-custom-entry.js`, `package.json`, `postcss.config.js`, tous les fichiers `.md`, `.sh`, `.py`, `.bak`, `.log` et les dotfiles.
+
+Si vous utilisez Apache, reproduisez la même logique avec `Require all denied` sur les répertoires sensibles et `Require all granted` uniquement sur les chemins publics.
+
 ---
 
 ## Services OGC et Données

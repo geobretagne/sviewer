@@ -12,7 +12,7 @@
 
 ## Architecture constraints
 
-- **sViewer code untouched** — widget is a standalone file in `integrations/grist/`
+- **sViewer code untouched** — widget is a standalone file in `connectors/grist/`
 - Widget uses sViewer JS API (`getMap()`, `getView()`) only
 - No CDN — load sViewer via relative path or configurable base URL
 - No cookies, no tracking
@@ -70,7 +70,7 @@ Phase 3, not in current scope.
 ## Files
 
 ```
-integrations/grist/
+connectors/grist/
   MISSION.md          — this file
   widget.html         — standalone Grist widget (HTML + JS, self-contained)
   README.md           — user-facing setup instructions

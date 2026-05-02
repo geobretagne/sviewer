@@ -134,6 +134,7 @@ window.SViewerApp = (function() {
     var map;
     var view;
     var marker;
+    var vectorLayer;
 
     // ----- pseudoclasses ------------------------------------------------------------------------------------
 
@@ -974,7 +975,7 @@ window.SViewerApp = (function() {
                 var gsColor = gs.color || '#3388ff';
                 var gsFill = ol.color.asArray(gsColor).slice();
                 gsFill[3] = gs.fillOpacity !== undefined ? gs.fillOpacity : 0.2;
-                var vectorLayer = new ol.layer.Vector({
+                vectorLayer = new ol.layer.Vector({
                     source: vectorSource,
                     style: new ol.style.Style({
                         fill:   new ol.style.Fill({ color: gsFill }),
@@ -1844,7 +1845,12 @@ window.SViewerApp = (function() {
 
         // map events
         map.on('singleclick', function(e) {
-            queryMap(e.coordinate);
+            // Skip WMS GetFeatureInfo when user clicked any vector feature —
+            // covers both sViewer's own GeoJSON layer and external widget layers.
+            var hitVector = false;
+            map.forEachFeatureAtPixel(e.pixel, function() { hitVector = true; return true; },
+                { hitTolerance: 8 });
+if (!hitVector) { queryMap(e.coordinate); }
         });
         map.on('moveend', setPermalink);
         $('#marker').on('click', clearQuery);

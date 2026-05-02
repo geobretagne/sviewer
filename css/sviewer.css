@@ -744,6 +744,12 @@
     background-color: var(--sv-surface-glass);
 }
 
+.sv-feature-props th,
+.sv-feature-props td {
+    border-color: #ddd;
+    border-width: 1px;
+}
+
 #queryPanel .sv-noitem {
     color: var(--sv-fg-muted);
 }
