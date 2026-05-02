@@ -62,6 +62,8 @@ var allColumns = [];               // column names from last onRecords
 var allRecords = [];               // raw records from last onRecords
 var svConfig = {};                 // key/value pairs from _sviewer_customConfig table
 var mapReady = false;              // true once SViewer.init() resolves
+var recordsReady = false;          // true once first onRecords has fired
+var mapClickWired = false;         // true once setupMapClick has run
 var gristDocId = null;             // Grist document id (for share URL)
 var gristTableId = null;           // Grist table id (for share URL)
 var debounceTimer = null;
@@ -249,6 +251,14 @@ function rebuildLayer() {
     }
 }
 
+// Wire map click only after both map and first records batch are ready.
+// Prevents setSelectedRows firing before the grid has any data to select.
+function maybeSetupMapClick() {
+    if (mapClickWired || !mapReady || !recordsReady) { return; }
+    mapClickWired = true;
+    setupMapClick();
+}
+
 // Wire map singleclick: hit-test vector layer, call setSelectedRows on match.
 // hitTolerance: 8px makes line features easier to click.
 function setupMapClick() {
@@ -313,7 +323,7 @@ function initMap() {
 
     SViewer.init('#sv-map', opts).then(function() {
         mapReady = true;
-        setupMapClick();
+        maybeSetupMapClick();
         rebuildLayer();
     });
 }
@@ -357,6 +367,7 @@ grist.ready({ requiredAccess: 'full' });
 // misses it.
 grist.onRecords(function(records) {
     allRecords = records;
+    if (!recordsReady) { recordsReady = true; maybeSetupMapClick(); }
 
     if (records.length) {
         allColumns = Object.keys(records[0]).filter(function(k) { return k !== 'id'; });
