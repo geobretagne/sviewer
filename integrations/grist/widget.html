@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sViewer — Grist widget</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; font-size: 14px; background: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        #sv-toolbar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px 10px; background: #f5f5f5; border-bottom: 1px solid #ddd;
+            flex-shrink: 0;
+        }
+        #sv-toolbar button {
+            padding: 4px 10px; font-size: 13px; border: 1px solid #bbb;
+            border-radius: 3px; background: #fff; cursor: pointer;
+        }
+        #sv-toolbar button:hover { background: #e8e8e8; }
+        #sv-status { font-size: 12px; color: #888; margin-left: auto; }
+
+        #sv-col-picker {
+            display: none; flex-shrink: 0;
+            padding: 8px 12px; background: #fff8e1; border-bottom: 1px solid #ffe082;
+            font-size: 13px; gap: 12px; align-items: center; flex-wrap: wrap;
+        }
+        #sv-col-picker label { font-weight: bold; }
+        #sv-col-picker select { padding: 2px 6px; font-size: 13px; }
+        #sv-col-picker button { padding: 3px 10px; font-size: 13px; cursor: pointer; }
+
+        #sv-map { flex: 1; }
+
+        #sv-share-panel {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 20px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.18); z-index: 9999; min-width: 320px; max-width: 90vw;
+        }
+        #sv-share-panel h3 { margin-bottom: 12px; font-size: 15px; }
+        #sv-share-url { width: 100%; font-size: 12px; padding: 6px; border: 1px solid #ccc; border-radius: 3px; }
+        #sv-share-panel .sv-share-actions { display: flex; gap: 8px; margin-top: 10px; }
+        #sv-share-panel button { padding: 5px 12px; font-size: 13px; cursor: pointer; border: 1px solid #bbb; border-radius: 3px; background: #f5f5f5; }
+        #sv-share-panel .sv-btn-primary { background: #1a3a5c; color: #fff; border-color: #1a3a5c; }
+        #sv-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.3); z-index: 9998; }
+    </style>
+</head>
+<body>
+
+<div id="sv-toolbar">
+    <strong>sViewer</strong>
+    <button id="sv-btn-share" title="Share map as permalink">Share</button>
+    <button id="sv-btn-cols" title="Configure latitude/longitude columns">Columns</button>
+    <span id="sv-status">Loading…</span>
+</div>
+
+<div id="sv-col-picker">
+    <label>Lat column:</label>
+    <select id="sv-sel-lat"></select>
+    <label>Lon column:</label>
+    <select id="sv-sel-lon"></select>
+    <label>Label column (optional):</label>
+    <select id="sv-sel-label"><option value="">(none)</option></select>
+    <button id="sv-btn-apply-cols">Apply</button>
+</div>
+
+<div id="sv-map"></div>
+
+<div id="sv-overlay"></div>
+<div id="sv-share-panel">
+    <h3>Share this map</h3>
+    <p style="font-size:12px;color:#666;margin-bottom:8px;">Public link — data must be accessible without authentication.</p>
+    <input type="text" id="sv-share-url" readonly>
+    <div class="sv-share-actions">
+        <button class="sv-btn-primary" id="sv-btn-copy">Copy link</button>
+        <button id="sv-btn-open">Open in new tab</button>
+        <button id="sv-btn-close-share">Close</button>
+    </div>
+</div>
+
+<!-- Grist Plugin API -->
+<script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+
+<!-- sViewer embed -->
+<script src="../../js/embed.js"></script>
+
+<script>
+// ---------------------------------------------------------------------------
+// sViewer × Grist widget — Phase 1
+// ---------------------------------------------------------------------------
+
+// Column name candidates for auto-detection
+var LAT_CANDIDATES = ['lat', 'latitude', 'y', 'lat_wgs84', 'latitude_wgs84'];
+var LON_CANDIDATES = ['lon', 'lng', 'longitude', 'x', 'lon_wgs84', 'longitude_wgs84'];
+var LABEL_CANDIDATES = ['label', 'nom', 'name', 'libelle', 'titre', 'title'];
+var CONFIG_TABLE = '_sv_config';
+
+// Widget state
+var colLat = null;
+var colLon = null;
+var colLabel = null;
+var svApp = null;
+var vectorLayer = null;
+var rowIdByFeature = new WeakMap();
+var featureByRowId = {};
+var allColumns = [];
+var allRecords = [];
+var svConfig = {};
+var mapReady = false;
+
+// ---------------------------------------------------------------------------
+// Status bar
+// ---------------------------------------------------------------------------
+function setStatus(msg) {
+    document.getElementById('sv-status').textContent = msg;
+}
+
+// ---------------------------------------------------------------------------
+// Column auto-detection
+// ---------------------------------------------------------------------------
+function detectColumns(columns) {
+    var names = columns.map(function(c) { return c.toLowerCase(); });
+    var lat = null, lon = null, lbl = null;
+
+    LAT_CANDIDATES.forEach(function(c) {
+        if (!lat && names.indexOf(c) !== -1) { lat = columns[names.indexOf(c)]; }
+    });
+    LON_CANDIDATES.forEach(function(c) {
+        if (!lon && names.indexOf(c) !== -1) { lon = columns[names.indexOf(c)]; }
+    });
+    LABEL_CANDIDATES.forEach(function(c) {
+        if (!lbl && names.indexOf(c) !== -1) { lbl = columns[names.indexOf(c)]; }
+    });
+
+    return { lat: lat, lon: lon, label: lbl };
+}
+
+// ---------------------------------------------------------------------------
+// Column picker UI
+// ---------------------------------------------------------------------------
+function populateColumnPicker(columns) {
+    var selLat = document.getElementById('sv-sel-lat');
+    var selLon = document.getElementById('sv-sel-lon');
+    var selLbl = document.getElementById('sv-sel-label');
+
+    [selLat, selLon].forEach(function(sel) { sel.innerHTML = ''; });
+    selLbl.innerHTML = '<option value="">(none)</option>';
+
+    columns.forEach(function(col) {
+        [selLat, selLon, selLbl].forEach(function(sel) {
+            var opt = document.createElement('option');
+            opt.value = col;
+            opt.textContent = col;
+            sel.appendChild(opt);
+        });
+    });
+
+    if (colLat) { selLat.value = colLat; }
+    if (colLon) { selLon.value = colLon; }
+    if (colLabel) { selLbl.value = colLabel; }
+}
+
+function showColPicker() {
+    populateColumnPicker(allColumns);
+    document.getElementById('sv-col-picker').style.display = 'flex';
+}
+function hideColPicker() {
+    document.getElementById('sv-col-picker').style.display = 'none';
+}
+
+// ---------------------------------------------------------------------------
+// GeoJSON VectorLayer — rebuild from records
+// ---------------------------------------------------------------------------
+var debounceTimer = null;
+function scheduleRebuildLayer() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(rebuildLayer, 300);
+}
+
+function rebuildLayer() {
+    if (!mapReady || !colLat || !colLon) { return; }
+
+    var map = SViewer.getMap();
+    if (!map) { return; }
+
+    // Remove previous layer
+    if (vectorLayer) { map.removeLayer(vectorLayer); }
+    featureByRowId = {};
+
+    var features = [];
+    var skipped = 0;
+
+    allRecords.forEach(function(row) {
+        var lat = parseFloat(row[colLat]);
+        var lon = parseFloat(row[colLon]);
+        if (isNaN(lat) || isNaN(lon)) { skipped++; return; }
+
+        var coords = ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857');
+        var geom = new ol.geom.Point(coords);
+        var feat = new ol.Feature({ geometry: geom });
+
+        // Copy all row properties except geometry column
+        Object.keys(row).forEach(function(k) {
+            if (k !== 'geometry') { feat.set(k, row[k]); }
+        });
+
+        var rowId = row.id;
+        feat.set('_gristRowId', rowId);
+        rowIdByFeature.set(feat, rowId);
+        featureByRowId[rowId] = feat;
+        features.push(feat);
+    });
+
+    var color = (svConfig.geojson_color || '#e74c3c');
+    var fillArr = ol.color.asArray(color).slice();
+    fillArr[3] = 0.85;
+
+    vectorLayer = new ol.layer.Vector({
+        source: new ol.source.Vector({ features: features }),
+        style: new ol.style.Style({
+            image: new ol.style.Circle({
+                radius: 7,
+                fill: new ol.style.Fill({ color: fillArr }),
+                stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 })
+            })
+        })
+    });
+
+    map.addLayer(vectorLayer);
+
+    var total = allRecords.length;
+    setStatus(total + ' features' + (skipped ? ' (' + skipped + ' skipped — missing coords)' : ''));
+
+    // Fit view to features if any
+    if (features.length && !svConfig._viewSet) {
+        var source = vectorLayer.getSource();
+        var ext = source.getExtent();
+        if (ext && isFinite(ext[0])) {
+            map.getView().fit(ext, { padding: [40, 40, 40, 40], maxZoom: 16, duration: 400 });
+        }
+        svConfig._viewSet = true;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Map click → select Grist row
+// ---------------------------------------------------------------------------
+function setupMapClick() {
+    var map = SViewer.getMap();
+    map.on('singleclick', function(e) {
+        if (!vectorLayer) { return; }
+        map.forEachFeatureAtPixel(e.pixel, function(feature) {
+            var rowId = feature.get('_gristRowId');
+            if (rowId !== undefined) {
+                grist.setCursorPos({ rowId: rowId });
+            }
+            return true; // stop after first hit
+        }, { layerFilter: function(l) { return l === vectorLayer; } });
+    });
+}
+
+// ---------------------------------------------------------------------------
+// Load _sv_config table from Grist
+// ---------------------------------------------------------------------------
+function loadSvConfig(tableId) {
+    return grist.docApi.fetchTable(tableId).then(function(data) {
+        var keys = data.key || data.Key || [];
+        var vals = data.value || data.Value || [];
+        keys.forEach(function(k, i) { svConfig[k] = vals[i]; });
+    }).catch(function() {
+        // Table doesn't exist yet — use defaults
+    });
+}
+
+// ---------------------------------------------------------------------------
+// Init sViewer map
+// ---------------------------------------------------------------------------
+function initMap() {
+    var opts = {
+        x: svConfig.center_x ? parseFloat(svConfig.center_x) : 0,
+        y: svConfig.center_y ? parseFloat(svConfig.center_y) : 6000000,
+        z: svConfig.zoom_default ? parseInt(svConfig.zoom_default, 10) : 5,
+        title: 'sViewer — Grist'
+    };
+
+    if (svConfig.wms_url && svConfig.wms_layers) {
+        opts.layers = svConfig.wms_layers;
+        // embed.js will pick up wms_url via customConfig if set globally
+        // For per-widget WMS, use full URL param approach
+        opts.lb = svConfig.wms_url;
+    }
+
+    SViewer.init('#sv-map', opts).then(function(app) {
+        svApp = app;
+        mapReady = true;
+        setupMapClick();
+        rebuildLayer();
+    });
+}
+
+// ---------------------------------------------------------------------------
+// Share panel
+// ---------------------------------------------------------------------------
+function buildShareUrl() {
+    var view = SViewer.getView();
+    if (!view) { return ''; }
+
+    var center = ol.proj.transform(view.getCenter(), 'EPSG:3857', 'EPSG:4326');
+    var z = Math.round(view.getZoom());
+    var x = Math.round(ol.proj.transform(view.getCenter(), 'EPSG:4326', 'EPSG:3857')[0]);
+    var cx = view.getCenter();
+    var params = {
+        x: Math.round(cx[0]),
+        y: Math.round(cx[1]),
+        z: z
+    };
+
+    if (svConfig.wms_url && svConfig.wms_layers) {
+        params.lb = svConfig.wms_url;
+        params.layers = svConfig.wms_layers;
+    }
+
+    // Build inline GeoJSON data URL if records fit, otherwise prompt user
+    // For now: build permalink to sViewer base (assumes same origin or configured base)
+    var base = (svConfig.sviewer_base_url || '../../index.html');
+    var qs = Object.keys(params).map(function(k) {
+        return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    }).join('&');
+
+    // Include GeoJSON if records exist — inline as data URI (small sets only)
+    if (allRecords.length && colLat && colLon && allRecords.length <= 200) {
+        var fc = buildGeoJSON();
+        var encoded = encodeURIComponent(JSON.stringify(fc));
+        // data: URIs too long for URLs — skip and note
+        // Future: upload to Grist attachment or proxy
+    }
+
+    return base + '?' + qs;
+}
+
+function buildGeoJSON() {
+    var features = allRecords.filter(function(row) {
+        return !isNaN(parseFloat(row[colLat])) && !isNaN(parseFloat(row[colLon]));
+    }).map(function(row) {
+        var props = {};
+        Object.keys(row).forEach(function(k) {
+            if (k !== 'id') { props[k] = row[k]; }
+        });
+        return {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [parseFloat(row[colLon]), parseFloat(row[colLat])] },
+            properties: props
+        };
+    });
+    return { type: 'FeatureCollection', features: features };
+}
+
+function showSharePanel() {
+    var url = buildShareUrl();
+    document.getElementById('sv-share-url').value = url;
+    document.getElementById('sv-share-panel').style.display = 'block';
+    document.getElementById('sv-overlay').style.display = 'block';
+    document.getElementById('sv-share-url').select();
+}
+
+function hideSharePanel() {
+    document.getElementById('sv-share-panel').style.display = 'none';
+    document.getElementById('sv-overlay').style.display = 'none';
+}
+
+// ---------------------------------------------------------------------------
+// Toolbar events
+// ---------------------------------------------------------------------------
+document.getElementById('sv-btn-share').addEventListener('click', showSharePanel);
+document.getElementById('sv-btn-cols').addEventListener('click', function() {
+    var picker = document.getElementById('sv-col-picker');
+    if (picker.style.display === 'flex') { hideColPicker(); } else { showColPicker(); }
+});
+document.getElementById('sv-btn-apply-cols').addEventListener('click', function() {
+    colLat = document.getElementById('sv-sel-lat').value;
+    colLon = document.getElementById('sv-sel-lon').value;
+    colLabel = document.getElementById('sv-sel-label').value || null;
+    hideColPicker();
+    svConfig._viewSet = false; // allow re-fit after manual column change
+    rebuildLayer();
+});
+document.getElementById('sv-btn-copy').addEventListener('click', function() {
+    var inp = document.getElementById('sv-share-url');
+    inp.select();
+    document.execCommand('copy');
+    document.getElementById('sv-btn-copy').textContent = 'Copied!';
+    setTimeout(function() { document.getElementById('sv-btn-copy').textContent = 'Copy link'; }, 2000);
+});
+document.getElementById('sv-btn-open').addEventListener('click', function() {
+    var url = document.getElementById('sv-share-url').value;
+    if (url) { window.open(url, '_blank'); }
+});
+document.getElementById('sv-btn-close-share').addEventListener('click', hideSharePanel);
+document.getElementById('sv-overlay').addEventListener('click', hideSharePanel);
+
+// ---------------------------------------------------------------------------
+// Grist API — main init sequence
+// ---------------------------------------------------------------------------
+grist.ready({ requiredAccess: 'read table' });
+
+grist.onOptions(function(options, interaction) {
+    // Column mapping from Grist built-in column picker (if configured)
+    if (options && options.colLat) { colLat = options.colLat; }
+    if (options && options.colLon) { colLon = options.colLon; }
+    if (options && options.colLabel) { colLabel = options.colLabel; }
+});
+
+// Bootstrap: load config, then init map, then subscribe to records
+grist.getTable(CONFIG_TABLE).fetch().then(function(data) {
+    // Map key→value rows
+    var keys = data.key || data.Key || [];
+    var vals = data.value || data.Value || [];
+    keys.forEach(function(k, i) { svConfig[k] = vals[i]; });
+}).catch(function() {
+    // _sv_config absent — use defaults
+}).then(function() {
+    initMap();
+}).then(function() {
+    // Subscribe to records
+    grist.onRecords(function(records, mappings) {
+        allRecords = records;
+
+        if (records.length) {
+            // Extract column names from first record (exclude internal id)
+            allColumns = Object.keys(records[0]).filter(function(k) { return k !== 'id'; });
+
+            // Auto-detect columns if not yet set
+            if (!colLat || !colLon) {
+                var detected = detectColumns(allColumns);
+                if (detected.lat && detected.lon) {
+                    colLat = detected.lat;
+                    colLon = detected.lon;
+                    colLabel = colLabel || detected.label;
+                    setStatus('Columns auto-detected: ' + colLat + ' / ' + colLon);
+                } else {
+                    // Show picker — user must choose
+                    setStatus('Choose lat/lon columns');
+                    showColPicker();
+                }
+            }
+        }
+
+        scheduleRebuildLayer();
+    });
+
+    // Subscribe to single-row selection (Grist → map pan)
+    grist.onRecord(function(record) {
+        if (!record || !colLat || !colLon) { return; }
+        var lat = parseFloat(record[colLat]);
+        var lon = parseFloat(record[colLon]);
+        if (isNaN(lat) || isNaN(lon)) { return; }
+
+        var coords = ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857');
+        var view = SViewer.getView();
+        if (view) {
+            view.animate({ center: coords, zoom: Math.max(view.getZoom(), 14), duration: 400 });
+        }
+
+        // Highlight selected feature
+        var rowId = record.id;
+        var feat = featureByRowId[rowId];
+        if (feat && vectorLayer) {
+            var color = (svConfig.geojson_color || '#e74c3c');
+            var selArr = ol.color.asArray('#ffcc00').slice();
+            selArr[3] = 1;
+            vectorLayer.getSource().getFeatures().forEach(function(f) {
+                var fillArr = ol.color.asArray(color).slice();
+                fillArr[3] = f === feat ? 1 : 0.85;
+                var radius = f === feat ? 10 : 7;
+                f.setStyle(new ol.style.Style({
+                    image: new ol.style.Circle({
+                        radius: radius,
+                        fill: new ol.style.Fill({ color: f === feat ? selArr : fillArr }),
+                        stroke: new ol.style.Stroke({ color: '#fff', width: f === feat ? 2.5 : 1.5 })
+                    })
+                }));
+            });
+        }
+    });
+});
+</script>
+</body>
+</html>
