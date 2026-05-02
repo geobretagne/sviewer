@@ -6,6 +6,43 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-03
+
+### Added
+- **Connecteur Grist** (`connectors/grist/`) — widget embarqué dans un document Grist : affiche les géométries d'une table sur une carte sViewer, synchronisation bidirectionnelle table↔carte en temps réel ; la carte est également partageable et intégrable hors de Grist (lien, QR code, `<iframe>`, API JS)
+- Support des colonnes géométrie GeoJSON (Point, LineString, Polygon) avec sélecteur de colonne et étiquette configurable dans la barre d'outils du widget
+- `ol.style.Text` ajouté au bundle OpenLayers — étiquettes texte sur les entités vectorielles
+
+### Changed
+- Répertoire `integrations/` renommé en `connectors/` — nomenclature plus courte et extensible
+- Déplacement du bouton "Désélectionner" à droite du compteur d'entités dans la barre d'outils du widget
+- Bordures du tableau de propriétés allégées (`border-color: #ddd`, `border-width: 1px`)
+
+### Fixed
+- Toast "aucune entité" affiché à tort lors du clic sur une entité vectorielle en présence de couches WMS — `forEachFeatureAtPixel` intercepte le clic avant `queryMap()`
+- Changement de colonne géométrie sans effet — l'empreinte de reconstruction inclut désormais `colGeom` + `colLabel` (pas seulement les données)
+- `ol.style.Text is not a constructor` — `Text` absent du bundle OL, bundle reconstruit
+
+### Security
+- `safeHttpUrl()` retourne uniquement `origin` (suppression du chemin/query) — prévient l'injection de chemin SSRF sur `grist_api_base`
+- `encodeURIComponent` sur les identifiants doc et table Grist — prévient la traversée de chemin dans l'URL API
+- `safeColor()` — valide les couleurs via `ol.color.asArray` avant injection dans les styles OL
+- Remplacement de `innerHTML = ''` par `options.length = 0` pour vider les `<select>` — élimine le risque d'inspection de contenu HTML
+
+### Accessibility
+- Attributs `for`/`id` sur tous les labels du widget (WCAG 4.1.2)
+- `role="status" aria-live="polite"` sur la zone de statut (WCAG 4.1.3)
+- Contraste du texte de statut corrigé `#888` → `#666` (ratio ≥ 4.5:1, WCAG 1.4.3)
+- Attribut `lang` dynamique sur `<html>` selon la langue détectée
+- `aria-label` sur le bouton Désélectionner via `data-i18n-aria`
+- Traductions espagnol (`es`) et allemand (`de`) ajoutées au widget
+
+### Deployment
+- `etc/nginx-server.conf` mis à jour pour le chemin `connectors/` ; blocs CSP dédiés pour le widget Grist (`unsafe-inline`, `unsafe-eval`, domaine `docs.getgrist.com`)
+- `scripts/` exclu du Docker image (outil de build uniquement)
+- `CLAUDE.md` exclu du dépôt git (`.gitignore`)
+- Avertissement ajouté dans README et TECHNICAL.md : le snippet nginx est obligatoire pour protéger les fichiers de build
+
 ## [0.3.0] - 2026-05-02
 
 ### Added

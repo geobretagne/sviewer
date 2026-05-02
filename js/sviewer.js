@@ -134,6 +134,7 @@ window.SViewerApp = (function() {
     var map;
     var view;
     var marker;
+    var vectorLayer;
 
     // ----- pseudoclasses ------------------------------------------------------------------------------------
 
@@ -948,19 +949,33 @@ window.SViewerApp = (function() {
             type: 'GET',
             dataType: 'json',
             success: function(data) {
+                // Non-GeoJSON response (e.g. Grist records, ArcGIS REST) → normalize via adapter
+                var geojson = (data && data.type === 'FeatureCollection') ? data
+                    : (typeof config.jsonLayerAdapter === 'function' ? config.jsonLayerAdapter(data) : null);
+                if (!geojson) {
+                    messagePopup(tr('msg.query_failed'));
+                    return;
+                }
                 var format = new ol.format.GeoJSON();
-                var features = format.readFeatures(data, {
+                var features = format.readFeatures(geojson, {
                     dataProjection: 'EPSG:4326',
                     featureProjection: config.projcode
                 });
                 if (!features.length) { return; }
+                // Some geometries may fail reprojection — filter to valid OL geometry instances only.
+                features = features.filter(function(f) {
+                    var g = f.getGeometry();
+                    if (!g) { return false; }
+                    try { g.getType(); return true; }
+                    catch(e) { return false; }
+                });
 
                 var vectorSource = new ol.source.Vector({ features: features });
                 var gs = config.geojsonStyle || {};
                 var gsColor = gs.color || '#3388ff';
                 var gsFill = ol.color.asArray(gsColor).slice();
                 gsFill[3] = gs.fillOpacity !== undefined ? gs.fillOpacity : 0.2;
-                var vectorLayer = new ol.layer.Vector({
+                vectorLayer = new ol.layer.Vector({
                     source: vectorSource,
                     style: new ol.style.Style({
                         fill:   new ol.style.Fill({ color: gsFill }),
@@ -1830,7 +1845,12 @@ window.SViewerApp = (function() {
 
         // map events
         map.on('singleclick', function(e) {
-            queryMap(e.coordinate);
+            // Skip WMS GetFeatureInfo when user clicked any vector feature —
+            // covers both sViewer's own GeoJSON layer and external widget layers.
+            var hitVector = false;
+            map.forEachFeatureAtPixel(e.pixel, function() { hitVector = true; return true; },
+                { hitTolerance: 8 });
+if (!hitVector) { queryMap(e.coordinate); }
         });
         map.on('moveend', setPermalink);
         $('#marker').on('click', clearQuery);
@@ -2152,6 +2172,13 @@ window.SViewerApp = (function() {
     this.getView = function() { return view; };
     this.getConfig = function() { return config; };
     this.getState = function() { return state; };
+    // Update the geojson URL in state for share/embed permalinks.
+    // Does not load or render the layer — caller owns rendering.
+    // setPermalink() is intentionally omitted: panel may be closed, and
+    // togglePanel('share') already calls setPermalink() when panel opens.
+    this.setGeojsonUrl = function(url) {
+        state.geojson = url || null;
+    };
     }
 
     // Create instance

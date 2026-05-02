@@ -11,8 +11,8 @@
 
 (function() {
 
-    var SVIEWER_VERSION='0.3.0';
-    var SVIEWER_COMMIT='66a1b86';
+    var SVIEWER_VERSION='0.4.0';
+    var SVIEWER_COMMIT='7892ba1';
 
     var debug = /[?&]debug=1/.test(window.location.search);
 
@@ -412,6 +412,13 @@
 
         getView: function() {
             return window.SViewerApp ? window.SViewerApp.getView() : null;
+        },
+
+        // Set the geojson URL baked into share/embed permalinks without rendering a layer.
+        setGeojsonUrl: function(url) {
+            if (window.SViewerApp && window.SViewerApp.setGeojsonUrl) {
+                window.SViewerApp.setGeojsonUrl(url);
+            }
         }
     };
 

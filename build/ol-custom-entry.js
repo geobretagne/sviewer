@@ -32,6 +32,7 @@ import Style from 'ol/style/Style.js';
 import Fill from 'ol/style/Fill.js';
 import Stroke from 'ol/style/Stroke.js';
 import CircleStyle from 'ol/style/Circle.js';
+import Text from 'ol/style/Text.js';
 
 // Import projections (full module + proj4 submodule)
 import * as proj from 'ol/proj.js';
@@ -89,6 +90,7 @@ window.ol = {
     Fill,
     Stroke,
     Circle: CircleStyle,
+    Text,
   },
   proj: {
     ...proj,
