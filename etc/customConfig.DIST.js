@@ -96,28 +96,53 @@ customConfig = {
      * Replace with any function to support ArcGIS REST, custom APIs, etc.
      * Requires CORS support from the remote service.
      *
-     * Column name candidates for lat/lon auto-detection (first match wins):
-     *   lat: lat, latitude, y, lat_wgs84
-     *   lon: lon, lng, longitude, x, lon_wgs84
+     * Geometry column auto-detection (first match wins):
+     *   name candidates: geometry, geom, geo, shape, wkb_geometry
+     *   fallback: first column whose value parses as a GeoJSON geometry object
+     *
+     * Geometry values must be GeoJSON geometry objects (EPSG:4326).
+     * Supports Point, LineString, Polygon, Multi* — anything OL can read.
      *
      * Note: only the first page of paginated APIs is fetched — no pagination support.
      */
     jsonLayerAdapter: function(response) {
-        var LAT = ['lat', 'latitude', 'y', 'lat_wgs84'];
-        var LON = ['lon', 'lng', 'longitude', 'x', 'lon_wgs84'];
+        var GEOM_CANDIDATES = ['geometry', 'geom', 'geo', 'shape', 'wkb_geometry'];
+
+        function parseGeom(val) {
+            if (!val) { return null; }
+            var g = (typeof val === 'string') ? (function() { try { return JSON.parse(val); } catch(e) { return null; } }()) : val;
+            if (g && g.type && g.coordinates) { return g; }
+            return null;
+        }
+
+        function detectGeomKey(row) {
+            var keys = Object.keys(row);
+            var lower = keys.map(function(k) { return k.toLowerCase(); });
+            var found = null;
+            GEOM_CANDIDATES.forEach(function(c) {
+                if (!found && lower.indexOf(c) !== -1) { found = keys[lower.indexOf(c)]; }
+            });
+            if (found) { return found; }
+            // Fallback: scan values for parseable geometry
+            for (var i = 0; i < keys.length; i++) {
+                if (parseGeom(row[keys[i]])) { return keys[i]; }
+            }
+            return null;
+        }
+
         // Grist: { records: [{id, fields: {...}}] }
         var rows = (response.records || []).map(function(r) { return r.fields || r; });
         // Fallback: plain array of objects
         if (!rows.length && Array.isArray(response)) { rows = response; }
+        if (!rows.length) { return { type: 'FeatureCollection', features: [] }; }
+
+        var geomKey = detectGeomKey(rows[0]);
+        if (!geomKey) { return { type: 'FeatureCollection', features: [] }; }
+
         var features = rows.map(function(f) {
-            var latKey = null, lonKey = null;
-            var keys = Object.keys(f).map(function(k) { return k.toLowerCase(); });
-            LAT.forEach(function(c) { if (!latKey && keys.indexOf(c) !== -1) { latKey = Object.keys(f)[keys.indexOf(c)]; } });
-            LON.forEach(function(c) { if (!lonKey && keys.indexOf(c) !== -1) { lonKey = Object.keys(f)[keys.indexOf(c)]; } });
-            if (!latKey || !lonKey) { return null; }
-            var lat = parseFloat(f[latKey]), lon = parseFloat(f[lonKey]);
-            if (isNaN(lat) || isNaN(lon)) { return null; }
-            return { type: 'Feature', geometry: { type: 'Point', coordinates: [lon, lat] }, properties: f };
+            var geom = parseGeom(f[geomKey]);
+            if (!geom) { return null; }
+            return { type: 'Feature', geometry: geom, properties: f };
         }).filter(Boolean);
         return { type: 'FeatureCollection', features: features };
     },

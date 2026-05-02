@@ -54,10 +54,8 @@
 </div>
 
 <div id="sv-col-picker">
-    <label>Lat column:</label>
-    <select id="sv-sel-lat"></select>
-    <label>Lon column:</label>
-    <select id="sv-sel-lon"></select>
+    <label>Geometry column:</label>
+    <select id="sv-sel-geom"></select>
     <label>Label column (optional):</label>
     <select id="sv-sel-label"><option value="">(none)</option></select>
     <button id="sv-btn-apply-cols">Apply</button>
@@ -89,14 +87,12 @@
 // ---------------------------------------------------------------------------
 
 // Column name candidates for auto-detection
-var LAT_CANDIDATES = ['lat', 'latitude', 'y', 'lat_wgs84', 'latitude_wgs84'];
-var LON_CANDIDATES = ['lon', 'lng', 'longitude', 'x', 'lon_wgs84', 'longitude_wgs84'];
+var GEOM_CANDIDATES = ['geometry', 'geom', 'geo', 'shape', 'wkb_geometry'];
 var LABEL_CANDIDATES = ['label', 'nom', 'name', 'libelle', 'titre', 'title'];
 var CONFIG_TABLE = '_sv_config';
 
 // Widget state
-var colLat = null;
-var colLon = null;
+var colGeom = null;
 var colLabel = null;
 var svApp = null;
 var vectorLayer = null;
@@ -117,47 +113,61 @@ function setStatus(msg) {
 }
 
 // ---------------------------------------------------------------------------
+// Geometry parsing
+// ---------------------------------------------------------------------------
+function parseGeom(val) {
+    if (!val) { return null; }
+    var g = (typeof val === 'string') ? (function() { try { return JSON.parse(val); } catch(e) { return null; } }()) : val;
+    if (g && g.type && g.coordinates) { return g; }
+    return null;
+}
+
+// ---------------------------------------------------------------------------
 // Column auto-detection
 // ---------------------------------------------------------------------------
-function detectColumns(columns) {
+function detectColumns(columns, firstRow) {
     var names = columns.map(function(c) { return c.toLowerCase(); });
-    var lat = null, lon = null, lbl = null;
+    var geom = null, lbl = null;
 
-    LAT_CANDIDATES.forEach(function(c) {
-        if (!lat && names.indexOf(c) !== -1) { lat = columns[names.indexOf(c)]; }
+    GEOM_CANDIDATES.forEach(function(c) {
+        if (!geom && names.indexOf(c) !== -1) { geom = columns[names.indexOf(c)]; }
     });
-    LON_CANDIDATES.forEach(function(c) {
-        if (!lon && names.indexOf(c) !== -1) { lon = columns[names.indexOf(c)]; }
-    });
+    // Fallback: scan first row values for parseable geometry
+    if (!geom && firstRow) {
+        columns.forEach(function(c) {
+            if (!geom && parseGeom(firstRow[c])) { geom = c; }
+        });
+    }
     LABEL_CANDIDATES.forEach(function(c) {
         if (!lbl && names.indexOf(c) !== -1) { lbl = columns[names.indexOf(c)]; }
     });
 
-    return { lat: lat, lon: lon, label: lbl };
+    return { geom: geom, label: lbl };
 }
 
 // ---------------------------------------------------------------------------
 // Column picker UI
 // ---------------------------------------------------------------------------
 function populateColumnPicker(columns) {
-    var selLat = document.getElementById('sv-sel-lat');
-    var selLon = document.getElementById('sv-sel-lon');
+    var selGeom = document.getElementById('sv-sel-geom');
     var selLbl = document.getElementById('sv-sel-label');
 
-    [selLat, selLon].forEach(function(sel) { sel.innerHTML = ''; });
+    selGeom.innerHTML = '';
     selLbl.innerHTML = '<option value="">(none)</option>';
 
     columns.forEach(function(col) {
-        [selLat, selLon, selLbl].forEach(function(sel) {
-            var opt = document.createElement('option');
-            opt.value = col;
-            opt.textContent = col;
-            sel.appendChild(opt);
-        });
+        var opt = document.createElement('option');
+        opt.value = col;
+        opt.textContent = col;
+        selGeom.appendChild(opt);
+
+        var opt2 = document.createElement('option');
+        opt2.value = col;
+        opt2.textContent = col;
+        selLbl.appendChild(opt2);
     });
 
-    if (colLat) { selLat.value = colLat; }
-    if (colLon) { selLon.value = colLon; }
+    if (colGeom) { selGeom.value = colGeom; }
     if (colLabel) { selLbl.value = colLabel; }
 }
 
@@ -179,7 +189,7 @@ function scheduleRebuildLayer() {
 }
 
 function rebuildLayer() {
-    if (!mapReady || !colLat || !colLon) { return; }
+    if (!mapReady || !colGeom) { return; }
 
     var map = SViewer.getMap();
     if (!map) { return; }
@@ -190,19 +200,25 @@ function rebuildLayer() {
 
     var features = [];
     var skipped = 0;
+    var format = new ol.format.GeoJSON();
 
     allRecords.forEach(function(row) {
-        var lat = parseFloat(row[colLat]);
-        var lon = parseFloat(row[colLon]);
-        if (isNaN(lat) || isNaN(lon)) { skipped++; return; }
+        var geomVal = parseGeom(row[colGeom]);
+        if (!geomVal) { skipped++; return; }
 
-        var coords = ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857');
-        var geom = new ol.geom.Point(coords);
-        var feat = new ol.Feature({ geometry: geom });
+        var olGeom;
+        try {
+            olGeom = format.readGeometry({ type: geomVal.type, coordinates: geomVal.coordinates }, {
+                dataProjection: 'EPSG:4326',
+                featureProjection: 'EPSG:3857'
+            });
+        } catch(e) { skipped++; return; }
+
+        var feat = new ol.Feature({ geometry: olGeom });
 
         // Copy all row properties except geometry column
         Object.keys(row).forEach(function(k) {
-            if (k !== 'geometry') { feat.set(k, row[k]); }
+            if (k !== colGeom) { feat.set(k, row[k]); }
         });
 
         var rowId = row.id;
@@ -352,8 +368,7 @@ document.getElementById('sv-btn-cols').addEventListener('click', function() {
     if (picker.style.display === 'flex') { hideColPicker(); } else { showColPicker(); }
 });
 document.getElementById('sv-btn-apply-cols').addEventListener('click', function() {
-    colLat = document.getElementById('sv-sel-lat').value;
-    colLon = document.getElementById('sv-sel-lon').value;
+    colGeom = document.getElementById('sv-sel-geom').value;
     colLabel = document.getElementById('sv-sel-label').value || null;
     hideColPicker();
     svConfig._viewSet = false; // allow re-fit after manual column change
@@ -379,9 +394,7 @@ document.getElementById('sv-overlay').addEventListener('click', hideSharePanel);
 grist.ready({ requiredAccess: 'read table' });
 
 grist.onOptions(function(options, interaction) {
-    // Column mapping from Grist built-in column picker (if configured)
-    if (options && options.colLat) { colLat = options.colLat; }
-    if (options && options.colLon) { colLon = options.colLon; }
+    if (options && options.colGeom) { colGeom = options.colGeom; }
     if (options && options.colLabel) { colLabel = options.colLabel; }
 });
 
@@ -413,16 +426,14 @@ grist.docApi.fetchTable(CONFIG_TABLE).then(function(data) {
             allColumns = Object.keys(records[0]).filter(function(k) { return k !== 'id'; });
 
             // Auto-detect columns if not yet set
-            if (!colLat || !colLon) {
-                var detected = detectColumns(allColumns);
-                if (detected.lat && detected.lon) {
-                    colLat = detected.lat;
-                    colLon = detected.lon;
+            if (!colGeom) {
+                var detected = detectColumns(allColumns, records[0]);
+                if (detected.geom) {
+                    colGeom = detected.geom;
                     colLabel = colLabel || detected.label;
-                    setStatus('Columns auto-detected: ' + colLat + ' / ' + colLon);
+                    setStatus('Geometry column auto-detected: ' + colGeom);
                 } else {
-                    // Show picker — user must choose
-                    setStatus('Choose lat/lon columns');
+                    setStatus('Choose geometry column');
                     showColPicker();
                 }
             }
@@ -433,12 +444,18 @@ grist.docApi.fetchTable(CONFIG_TABLE).then(function(data) {
 
     // Subscribe to single-row selection (Grist → map pan)
     grist.onRecord(function(record) {
-        if (!record || !colLat || !colLon) { return; }
-        var lat = parseFloat(record[colLat]);
-        var lon = parseFloat(record[colLon]);
-        if (isNaN(lat) || isNaN(lon)) { return; }
+        if (!record || !colGeom) { return; }
+        var geomVal = parseGeom(record[colGeom]);
+        if (!geomVal || !geomVal.coordinates) { return; }
 
-        var coords = ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857');
+        // Use first coordinate for pan (works for Point, and centroid-approximation for others)
+        var rawCoords = geomVal.coordinates;
+        var lonlat = (geomVal.type === 'Point') ? rawCoords
+            : (geomVal.type === 'LineString' || geomVal.type === 'MultiPoint') ? rawCoords[0]
+            : rawCoords[0][0]; // Polygon/MultiLineString
+        if (!lonlat) { return; }
+
+        var coords = ol.proj.transform([lonlat[0], lonlat[1]], 'EPSG:4326', 'EPSG:3857');
         var view = SViewer.getView();
         if (view) {
             view.animate({ center: coords, zoom: Math.max(view.getZoom(), 14), duration: 400 });
