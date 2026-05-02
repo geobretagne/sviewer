@@ -961,6 +961,13 @@ window.SViewerApp = (function() {
                     featureProjection: config.projcode
                 });
                 if (!features.length) { return; }
+                // Some geometries may fail reprojection — filter to valid OL geometry instances only.
+                features = features.filter(function(f) {
+                    var g = f.getGeometry();
+                    if (!g) { return false; }
+                    try { g.getType(); return true; }
+                    catch(e) { return false; }
+                });
 
                 var vectorSource = new ol.source.Vector({ features: features });
                 var gs = config.geojsonStyle || {};
