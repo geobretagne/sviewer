@@ -1,6 +1,6 @@
 {
   "name": "sviewer",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "geOrchestra simple mobile map viewer",
   "scripts": {
     "build:ol": "esbuild build/ol-custom-entry.js --bundle --minify --format=iife --outfile=build/ol-new.js",
