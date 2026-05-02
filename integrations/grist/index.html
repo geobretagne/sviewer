@@ -447,6 +447,7 @@ grist.onRecord(function(record) {
 
     var rowId = record.id;
     var feat = featureByRowId[rowId];
+    console.log('[grist] onRecord rowId=' + rowId + ' feat=' + (feat ? 'found' : 'NOT FOUND') + ' keys=' + Object.keys(featureByRowId).slice(0,5).join(','));
     if (feat && vectorLayer) {
         var baseColor = (svConfig.geojson_color || '#e74c3c');
         var selColor = '#ffcc00';
