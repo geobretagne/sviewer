@@ -245,7 +245,7 @@ customConfig = {
                 var ext = proj.getExtent();
                 var res = [156543.03392811998,78271.51696419998,39135.758481959984,19567.879241008988,9783.939620504494,4891.969810252247,2445.9849051261233,1222.9924525765016,611.4962262882508,305.74811314412537,152.87405657206268,76.43702828603134,38.21851414301567,19.109257071507836,9.554628535753918,4.777314267876959,2.3886571339384795,1.1943285669692398,0.5971642834846199,0.29858214174231994];
                 return {
-                    attributions: ['© IGNF BD ORTHO'],
+                    attributions: ['IGNF BD ORTHO'],
                     url: 'https://data.geopf.fr/wmts',
                     layer: 'ORTHOIMAGERY.ORTHOPHOTOS',
                     matrixSet: 'PM',
@@ -278,7 +278,7 @@ customConfig = {
         // [0] Noms de lieux IGN
         new ol.layer.Tile({
             source: new ol.source.XYZ({
-                attributions: ['© IGN'],
+                attributions: ['IGN Noms de lieux'],
                 url: 'https://data.geopf.fr/tms/1.0.0/GEOGRAPHICALNAMES.NAMES/{z}/{x}/{y}.png',
                 minZoom: 6,
                 maxZoom: 18,
@@ -296,9 +296,9 @@ customConfig = {
      * Omit or set [] to fall back to legacy behavior (background button cycles layersBackground only).
      */
     backgroundPresets: [
-        { lb: 0, lo: 0  },  // Photo aérienne + étiquettes
-        { lb: 0, lo: -1 },  // Photo aérienne, sans étiquettes
-        { lb: 1, lo: -1 }   // Carte
+        { lb: 0, lo: 0,  title: 'Photo aérienne + étiquettes' },
+        { lb: 0, lo: -1, title: 'Photo aérienne' },
+        { lb: 1, lo: -1, title: 'Carte' }
     ]
 
 };

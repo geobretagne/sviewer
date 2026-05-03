@@ -21,40 +21,78 @@
         #sv-toolbar button:disabled { color: #bbb; cursor: default; }
         #sv-toolbar button:disabled:hover { background: #fff; }
 
-        /* groupe label + select inline dans la barre d'outils */
-        .sv-col-group { display: flex; align-items: center; gap: 4px; }
-        .sv-col-group label { font-size: 12px; color: #555; white-space: nowrap; cursor: default; }
-        .sv-col-group select { padding: 2px 4px; font-size: 13px; border: 1px solid #bbb; border-radius: 3px; max-width: 150px; }
-
         /* margin-left:auto pousse le statut et le bouton vers la droite */
         #sv-status { font-size: 12px; color: #666; margin-left: auto; }
 
         #sv-map { flex: 1; }
+
+        /* Settings panel — shown via onEditOptions(), hidden otherwise */
+        #sv-settings {
+            display: none; flex-direction: column; gap: 0;
+            flex: 1; overflow-y: auto; background: #fafafa;
+        }
+        #sv-settings h2 {
+            font-size: 15px; font-weight: 600; padding: 14px 16px 10px;
+            border-bottom: 1px solid #ddd; margin: 0; background: #f5f5f5;
+        }
+        .sv-cfg-fieldset {
+            border: 1px solid #ddd; border-radius: 4px; margin: 10px 12px 4px; padding: 0 0 6px;
+        }
+        .sv-cfg-fieldset legend {
+            font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase;
+            letter-spacing: 0.05em; padding: 0 6px; margin-left: 8px;
+        }
+        .sv-cfg-grid {
+            display: grid; grid-template-columns: 160px 1fr;
+            gap: 0; padding: 4px 0;
+        }
+        .sv-cfg-grid label {
+            font-size: 12px; color: #555; padding: 6px 12px 6px 12px;
+            display: flex; align-items: center;
+        }
+        .sv-cfg-grid input {
+            padding: 4px 8px; font-size: 13px; border: 1px solid #bbb;
+            border-radius: 3px; margin: 4px 12px 4px 0;
+        }
+        .sv-cfg-grid input[type=color] { padding: 1px 4px; height: 28px; width: 48px; cursor: pointer; flex-shrink: 0; }
+        .sv-cfg-grid select { padding: 2px 4px; font-size: 13px; border: 1px solid #bbb; border-radius: 3px; margin: 4px 12px 4px 0; }
+        .sv-cfg-grid input[type=number] { width: 80px; }
+        /* section separator inside the grid */
+        .sv-cfg-sep { grid-column: 1 / -1; border: none; border-top: 1px solid #e0e0e0; margin: 4px 0; }
+        /* compact style row: color swatch + opacity + optional width inline */
+        .sv-cfg-style-row { display: flex; align-items: center; gap: 6px; margin: 4px 12px 4px 0; flex-wrap: nowrap; }
+        .sv-cfg-style-row input[type=color]  { margin: 0; }
+        .sv-cfg-style-row input[type=number] { width: 58px; margin: 0; }
+#sv-settings-footer {
+            display: flex; gap: 8px; padding: 12px 16px;
+            border-top: 1px solid #ddd; background: #f5f5f5; flex-shrink: 0;
+        }
+        #sv-settings-footer button {
+            padding: 5px 14px; font-size: 13px; border: 1px solid #bbb;
+            border-radius: 3px; cursor: pointer; background: #fff;
+        }
+        #sv-btn-cfg-save { background: #2c7be5; color: #fff; border-color: #2c7be5; font-weight: 600; }
+        #sv-btn-cfg-save:hover { background: #1a66d2; }
+        #sv-settings-footer button:not(#sv-btn-cfg-save):hover { background: #e8e8e8; }
+        #sv-import-area {
+            display: none; flex-direction: column; gap: 6px;
+            padding: 8px 16px; border-top: 1px solid #ddd; background: #f5f5f5; flex-shrink: 0;
+        }
+        #sv-import-area textarea {
+            width: 100%; height: 100px; font-family: monospace; font-size: 11px;
+            border: 1px solid #bbb; border-radius: 3px; padding: 4px 6px; resize: vertical;
+        }
+        #sv-import-area button {
+            align-self: flex-start; padding: 4px 12px; font-size: 13px;
+            border: 1px solid #2c7be5; border-radius: 3px; background: #2c7be5; color: #fff; cursor: pointer;
+        }
+        #sv-import-area button:hover { background: #1a66d2; }
 
     </style>
 </head>
 <body>
 
 <div id="sv-toolbar">
-    <!-- mode géométrie (default) -->
-    <div class="sv-col-group" id="sv-group-geom">
-        <!-- libellé lié au select via for/id pour l'accessibilité (WCAG 4.1.2) -->
-        <label for="sv-sel-geom" data-i18n="geom.col"></label>
-        <select id="sv-sel-geom"></select>
-    </div>
-    <!-- mode lat/lon (hidden until auto-detected or no geometry column found) -->
-    <div class="sv-col-group" id="sv-group-lat" style="display:none">
-        <label for="sv-sel-lat" data-i18n="lat.col"></label>
-        <select id="sv-sel-lat"></select>
-    </div>
-    <div class="sv-col-group" id="sv-group-lon" style="display:none">
-        <label for="sv-sel-lon" data-i18n="lon.col"></label>
-        <select id="sv-sel-lon"></select>
-    </div>
-    <div class="sv-col-group">
-        <label for="sv-sel-label" data-i18n="label.col"></label>
-        <select id="sv-sel-label"></select>
-    </div>
     <!-- role=status + aria-live : annonce les mises à jour aux lecteurs d'écran (WCAG 4.1.3) -->
     <span id="sv-status" role="status" aria-live="polite" data-i18n="loading"></span>
     <!-- data-i18n-aria : aria-label traduit, plus fiable que title pour les lecteurs d'écran -->
@@ -62,6 +100,95 @@
 </div>
 
 <div id="sv-map"></div>
+
+<!-- Settings panel — shown by onEditOptions(), hidden during normal use -->
+<div id="sv-settings">
+    <h2 data-i18n="settings"></h2>
+
+    <!-- Carte -->
+    <fieldset class="sv-cfg-fieldset">
+        <legend data-i18n="settings.section.map"></legend>
+        <div class="sv-cfg-grid">
+            <label for="sv-cfg-lb"     data-i18n="settings.lb"></label>
+            <select id="sv-cfg-lb-sel" style="display:none"></select>
+            <input  id="sv-cfg-lb"     type="number" min="0" placeholder="0">
+            <label for="sv-cfg-layers" data-i18n="settings.layers"></label>
+            <input  id="sv-cfg-layers" type="text"   placeholder="layer1,layer2">
+            <label for="sv-cfg-x"     data-i18n="settings.x"></label>
+            <input  id="sv-cfg-x"     type="number" placeholder="0">
+            <label for="sv-cfg-y"     data-i18n="settings.y"></label>
+            <input  id="sv-cfg-y"     type="number" placeholder="6000000">
+            <label for="sv-cfg-z"     data-i18n="settings.z"></label>
+            <input  id="sv-cfg-z"     type="number" min="0" max="22" placeholder="5">
+            <label for="sv-cfg-fit"   data-i18n="settings.fit"></label>
+            <input  id="sv-cfg-fit"   type="checkbox" style="width:14px;height:14px;cursor:pointer;margin:auto 0;">
+        </div>
+    </fieldset>
+
+    <!-- Données -->
+    <fieldset class="sv-cfg-fieldset">
+        <legend data-i18n="settings.section.data"></legend>
+        <div class="sv-cfg-grid">
+            <label for="sv-cfg-geom"  data-i18n="settings.geom"></label>
+            <select id="sv-cfg-geom"></select>
+            <label for="sv-cfg-lat"   data-i18n="settings.lat" style="display:none"></label>
+            <select id="sv-cfg-lat"   style="display:none"></select>
+            <label for="sv-cfg-lon"   data-i18n="settings.lon" style="display:none"></label>
+            <select id="sv-cfg-lon"   style="display:none"></select>
+            <label for="sv-cfg-label" data-i18n="settings.label"></label>
+            <select id="sv-cfg-label"></select>
+            <hr class="sv-cfg-sep">
+            <label for="sv-cfg-stroke-color" data-i18n="settings.stroke"></label>
+            <div class="sv-cfg-style-row">
+                <input id="sv-cfg-stroke-color"   type="color"  value="#ffffff" data-i18n-title="settings.stroke">
+                <input id="sv-cfg-stroke-opacity" type="number" min="0" max="1" step="0.05" value="1"   placeholder="0–1" data-i18n-title="settings.stroke.opacity">
+                <input id="sv-cfg-stroke-width"   type="number" min="0" max="20" step="0.5" value="1.5" placeholder="px"  data-i18n-title="settings.stroke.width">
+            </div>
+            <label for="sv-cfg-fill-color"   data-i18n="settings.fill"></label>
+            <div class="sv-cfg-style-row">
+                <input id="sv-cfg-fill-color"     type="color"  value="#ffcc00" data-i18n-title="settings.fill">
+                <input id="sv-cfg-fill-opacity"   type="number" min="0" max="1" step="0.05" value="0.85" placeholder="0–1" data-i18n-title="settings.fill.opacity">
+            </div>
+            <hr class="sv-cfg-sep">
+            <label for="sv-cfg-sel-stroke-color" data-i18n="settings.sel.stroke"></label>
+            <div class="sv-cfg-style-row">
+                <input id="sv-cfg-sel-stroke-color"   type="color"  value="#ffffff" data-i18n-title="settings.sel.stroke">
+                <input id="sv-cfg-sel-stroke-opacity" type="number" min="0" max="1" step="0.05" value="1"   placeholder="0–1" data-i18n-title="settings.sel.stroke.opacity">
+                <input id="sv-cfg-sel-stroke-width"   type="number" min="0" max="20" step="0.5" value="2.5" placeholder="px"  data-i18n-title="settings.sel.stroke.width">
+            </div>
+            <label for="sv-cfg-sel-fill-color"   data-i18n="settings.sel.fill"></label>
+            <div class="sv-cfg-style-row">
+                <input id="sv-cfg-sel-fill-color"     type="color"  value="#e74c3c" data-i18n-title="settings.sel.fill">
+                <input id="sv-cfg-sel-fill-opacity"   type="number" min="0" max="1" step="0.05" value="1"   placeholder="0–1" data-i18n-title="settings.sel.fill.opacity">
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- Partage -->
+    <fieldset class="sv-cfg-fieldset">
+        <legend data-i18n="settings.section.share"></legend>
+        <div class="sv-cfg-grid">
+            <label for="sv-cfg-title"      data-i18n="settings.title"></label>
+            <input  id="sv-cfg-title"      type="text" placeholder="sViewer — Grist">
+            <label for="sv-cfg-svbase"     data-i18n="settings.svbase"></label>
+            <input  id="sv-cfg-svbase"     type="url"  placeholder="https://example.org/sviewer/">
+            <label for="sv-cfg-apibase"    data-i18n="settings.apibase"></label>
+            <input  id="sv-cfg-apibase"    type="url"  placeholder="https://docs.getgrist.com">
+            <label for="sv-cfg-georchestra" data-i18n="settings.georchestra"></label>
+            <input  id="sv-cfg-georchestra" type="url"  placeholder="https://geobretagne.fr">
+        </div>
+    </fieldset>
+    <div id="sv-settings-footer">
+        <button id="sv-btn-cfg-save"   data-i18n="settings.save"></button>
+        <button id="sv-btn-cfg-cancel" data-i18n="settings.cancel"></button>
+        <button id="sv-btn-cfg-export" data-i18n="settings.export" style="margin-left:auto"></button>
+        <button id="sv-btn-cfg-import" data-i18n="settings.import"></button>
+    </div>
+    <div id="sv-import-area">
+        <textarea id="sv-import-json" spellcheck="false" data-i18n-placeholder="settings.import.placeholder"></textarea>
+        <button id="sv-btn-cfg-apply" data-i18n="settings.import.apply"></button>
+    </div>
+</div>
 
 <!-- API Grist — doit être chargée en premier (expose l'objet global `grist`) -->
 <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>

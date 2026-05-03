@@ -20,7 +20,42 @@ var I18N = {
         'choose.lon':         'Choisir la colonne longitude',
         'features':           ' entités',
         'skipped':            ' ignorées',
-        'no.config':          'Pas de table _sviewer_customConfig — valeurs par défaut'
+        'settings':           'Paramètres de la carte',
+        'settings.geom':      'Colonne géométrie',
+        'settings.lat':       'Colonne latitude',
+        'settings.lon':       'Colonne longitude',
+        'settings.label':     'Colonne étiquette',
+        'settings.fill':          'Remplissage entités',
+        'settings.fill.opacity':  'Opacité remplissage',
+        'settings.stroke':        'Contour entités',
+        'settings.stroke.opacity':'Opacité contour',
+        'settings.stroke.width':  'Épaisseur contour (px)',
+        'settings.sel.fill':          'Remplissage sélection',
+        'settings.sel.fill.opacity':  'Opacité remplissage',
+        'settings.sel.stroke':        'Contour sélection',
+        'settings.sel.stroke.opacity':'Opacité contour',
+        'settings.sel.stroke.width':  'Épaisseur contour (px)',
+        'settings.title':     'Titre (title=)',
+        'settings.layers':    'Données WMS (layers=)',
+        'settings.lb':        'Fond de carte (lb=)',
+        'settings.x':         'Centre X (x=)',
+        'settings.y':         'Centre Y (y=)',
+        'settings.z':         'Zoom (z=)',
+        'settings.svbase':    'URL de base sViewer',
+        'settings.apibase':   'URL de base API Grist',
+        'settings.georchestra':    'URL de base geOrchestra',
+        'settings.fit':            'Ajuster à l\'étendue des données',
+        'settings.section.map':    'Carte',
+        'settings.section.data':   'Données',
+        'settings.section.share':  'Partage',
+        'settings.save':           'Enregistrer',
+        'settings.cancel':         'Annuler',
+        'settings.export':             'Exporter',
+        'settings.import':             'Importer',
+        'settings.import.apply':       'Appliquer',
+        'settings.import.placeholder': 'Coller le JSON exporté ici…',
+        'settings.export.done':        'Paramètres copiés dans le presse-papiers',
+        'settings.import.error':       'JSON invalide ou incompatible'
     },
     en: {
         'loading':            'Loading…',
@@ -37,7 +72,42 @@ var I18N = {
         'choose.lon':         'Choose longitude column',
         'features':           ' features',
         'skipped':            ' skipped',
-        'no.config':          'No _sviewer_customConfig table — using defaults'
+        'settings':           'Map settings',
+        'settings.geom':      'Geometry column',
+        'settings.lat':       'Latitude column',
+        'settings.lon':       'Longitude column',
+        'settings.label':     'Label column',
+        'settings.fill':          'Feature fill',
+        'settings.fill.opacity':  'Fill opacity',
+        'settings.stroke':        'Feature stroke',
+        'settings.stroke.opacity':'Stroke opacity',
+        'settings.stroke.width':  'Stroke width (px)',
+        'settings.sel.fill':          'Selection fill',
+        'settings.sel.fill.opacity':  'Fill opacity',
+        'settings.sel.stroke':        'Selection stroke',
+        'settings.sel.stroke.opacity':'Stroke opacity',
+        'settings.sel.stroke.width':  'Stroke width (px)',
+        'settings.title':     'Title (title=)',
+        'settings.layers':    'WMS data (layers=)',
+        'settings.lb':        'Background (lb=)',
+        'settings.x':         'Center X (x=)',
+        'settings.y':         'Center Y (y=)',
+        'settings.z':         'Zoom (z=)',
+        'settings.svbase':    'sViewer base URL',
+        'settings.apibase':   'Grist API base URL',
+        'settings.georchestra':    'geOrchestra base URL',
+        'settings.fit':            'Fit map to data extent',
+        'settings.section.map':    'Map',
+        'settings.section.data':   'Data',
+        'settings.section.share':  'Sharing',
+        'settings.save':           'Save',
+        'settings.cancel':         'Cancel',
+        'settings.export':             'Export',
+        'settings.import':             'Import',
+        'settings.import.apply':       'Apply',
+        'settings.import.placeholder': 'Paste exported JSON here…',
+        'settings.export.done':        'Settings copied to clipboard',
+        'settings.import.error':       'Invalid or incompatible JSON'
     },
     es: {
         'loading':            'Cargando…',
@@ -54,7 +124,42 @@ var I18N = {
         'choose.lon':         'Elegir columna de longitud',
         'features':           ' entidades',
         'skipped':            ' omitidas',
-        'no.config':          'Sin tabla _sviewer_customConfig — valores por defecto'
+        'settings':           'Configuración del mapa',
+        'settings.geom':      'Columna de geometría',
+        'settings.lat':       'Columna de latitud',
+        'settings.lon':       'Columna de longitud',
+        'settings.label':     'Columna de etiqueta',
+        'settings.fill':          'Relleno entidades',
+        'settings.fill.opacity':  'Opacidad relleno',
+        'settings.stroke':        'Contorno entidades',
+        'settings.stroke.opacity':'Opacidad contorno',
+        'settings.stroke.width':  'Grosor contorno (px)',
+        'settings.sel.fill':          'Relleno selección',
+        'settings.sel.fill.opacity':  'Opacidad relleno',
+        'settings.sel.stroke':        'Contorno selección',
+        'settings.sel.stroke.opacity':'Opacidad contorno',
+        'settings.sel.stroke.width':  'Grosor contorno (px)',
+        'settings.title':     'Título (title=)',
+        'settings.layers':    'Datos WMS (layers=)',
+        'settings.lb':        'Mapa base (lb=)',
+        'settings.x':         'Centro X (x=)',
+        'settings.y':         'Centro Y (y=)',
+        'settings.z':         'Zoom (z=)',
+        'settings.svbase':    'URL base sViewer',
+        'settings.apibase':   'URL base API Grist',
+        'settings.georchestra':    'URL base geOrchestra',
+        'settings.fit':            'Ajustar mapa a la extensión de datos',
+        'settings.section.map':    'Mapa',
+        'settings.section.data':   'Datos',
+        'settings.section.share':  'Compartir',
+        'settings.save':           'Guardar',
+        'settings.cancel':         'Cancelar',
+        'settings.export':             'Exportar',
+        'settings.import':             'Importar',
+        'settings.import.apply':       'Aplicar',
+        'settings.import.placeholder': 'Pegar JSON exportado aquí…',
+        'settings.export.done':        'Configuración copiada al portapapeles',
+        'settings.import.error':       'JSON inválido o incompatible'
     },
     de: {
         'loading':            'Laden…',
@@ -71,7 +176,42 @@ var I18N = {
         'choose.lon':         'Längengradpalte wählen',
         'features':           ' Objekte',
         'skipped':            ' übersprungen',
-        'no.config':          'Keine _sviewer_customConfig-Tabelle — Standardwerte'
+        'settings':           'Karteneinstellungen',
+        'settings.geom':      'Geometriespalte',
+        'settings.lat':       'Breitengradpalte',
+        'settings.lon':       'Längengradpalte',
+        'settings.label':     'Beschriftungsspalte',
+        'settings.fill':          'Füllung Objekte',
+        'settings.fill.opacity':  'Fülldeckkraft',
+        'settings.stroke':        'Kontur Objekte',
+        'settings.stroke.opacity':'Konturdeckkraft',
+        'settings.stroke.width':  'Konturstärke (px)',
+        'settings.sel.fill':          'Füllung Auswahl',
+        'settings.sel.fill.opacity':  'Fülldeckkraft',
+        'settings.sel.stroke':        'Kontur Auswahl',
+        'settings.sel.stroke.opacity':'Konturdeckkraft',
+        'settings.sel.stroke.width':  'Konturstärke (px)',
+        'settings.title':     'Titel (title=)',
+        'settings.layers':    'WMS-Daten (layers=)',
+        'settings.lb':        'Hintergrund (lb=)',
+        'settings.x':         'Mittelpunkt X (x=)',
+        'settings.y':         'Mittelpunkt Y (y=)',
+        'settings.z':         'Zoom (z=)',
+        'settings.svbase':    'sViewer Basis-URL',
+        'settings.apibase':   'Grist API Basis-URL',
+        'settings.georchestra':    'geOrchestra Basis-URL',
+        'settings.fit':            'Karte an Datenausdehnung anpassen',
+        'settings.section.map':    'Karte',
+        'settings.section.data':   'Daten',
+        'settings.section.share':  'Teilen',
+        'settings.save':           'Speichern',
+        'settings.cancel':         'Abbrechen',
+        'settings.export':             'Exportieren',
+        'settings.import':             'Importieren',
+        'settings.import.apply':       'Anwenden',
+        'settings.import.placeholder': 'Exportiertes JSON hier einfügen…',
+        'settings.export.done':        'Einstellungen in Zwischenablage kopiert',
+        'settings.import.error':       'Ungültiges oder inkompatibles JSON'
     }
 };
 
@@ -83,14 +223,15 @@ function tr(key) { return t[key] || key; }
 
 function applyDomTranslations() {
     document.documentElement.lang = lang;
-    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    document.querySelectorAll('[data-i18n],[data-i18n-title],[data-i18n-aria],[data-i18n-placeholder]').forEach(function(el) {
         var key = el.getAttribute('data-i18n');
-        if (t[key]) { el.textContent = t[key]; }
+        if (key && t[key]) { el.textContent = t[key]; }
         var titleKey = el.getAttribute('data-i18n-title');
         if (titleKey && t[titleKey]) { el.title = t[titleKey]; }
-        // data-i18n-aria : aria-label traduit, plus fiable que title pour les lecteurs d'écran
         var ariaKey = el.getAttribute('data-i18n-aria');
         if (ariaKey && t[ariaKey]) { el.setAttribute('aria-label', t[ariaKey]); }
+        var phKey = el.getAttribute('data-i18n-placeholder');
+        if (phKey && t[phKey]) { el.placeholder = t[phKey]; }
     });
 }
 
@@ -112,7 +253,7 @@ var vectorLayer = null;            // couche OL vecteur portant les entités Gri
 var featureByRowId = {};           // id ligne Grist → OL Feature
 var allColumns = [];               // noms de colonnes du dernier onRecords
 var allRecords = [];               // enregistrements bruts du dernier onRecords
-var svConfig = {};                 // paires clé/valeur de la table _sviewer_customConfig
+var svConfig = {};                 // clés de configuration (widget options)
 var mapReady = false;              // vrai une fois SViewer.init() résolu
 var recordsReady = false;          // vrai après le premier onRecords
 var mapClickWired = false;         // vrai une fois setupMapClick exécuté
@@ -167,23 +308,22 @@ function detectColumns(columns, firstRow) {
     return { geom: geom, lat: lat, lon: lon, label: lbl };
 }
 
-// Remplit les selects géométrie, lat, lon et étiquette de la barre d'outils.
-// Affiche le groupe géométrie OU le groupe lat/lon selon le mode actif.
+// Remplit les selects géométrie, lat, lon et étiquette du panneau de configuration.
+// Affiche la ligne géométrie OU les lignes lat/lon selon le mode actif.
 function populateColumnPicker(columns) {
-    var selGeom = document.getElementById('sv-sel-geom');
-    var selLat  = document.getElementById('sv-sel-lat');
-    var selLon  = document.getElementById('sv-sel-lon');
-    var selLbl  = document.getElementById('sv-sel-label');
+    var selGeom = document.getElementById('sv-cfg-geom');
+    var selLat  = document.getElementById('sv-cfg-lat');
+    var selLon  = document.getElementById('sv-cfg-lon');
+    var selLbl  = document.getElementById('sv-cfg-label');
     var noneLbl = lang === 'fr' ? '(aucune)' : lang === 'de' ? '(keine)' : lang === 'es' ? '(ninguna)' : '(none)';
 
-    // Vide tous les selects
     selGeom.options.length = 0;
     selLat.options.length  = 0;
     selLon.options.length  = 0;
     selLbl.options.length  = 0;
 
     // Placeholder désactivé pour géométrie, lat, lon
-    [['sv-sel-geom', 'choose.col'], ['sv-sel-lat', 'choose.lat'], ['sv-sel-lon', 'choose.lon']].forEach(function(pair) {
+    [['sv-cfg-geom', 'choose.col'], ['sv-cfg-lat', 'choose.lat'], ['sv-cfg-lon', 'choose.lon']].forEach(function(pair) {
         var sel = document.getElementById(pair[0]);
         var ph = document.createElement('option');
         ph.value = ''; ph.textContent = tr(pair[1]); ph.disabled = true;
@@ -202,16 +342,32 @@ function populateColumnPicker(columns) {
         selLbl.appendChild(makeOpt());
     });
 
-    // Affiche le bon groupe selon le mode
+    syncColumnPickerMode();
+}
+
+// Affiche géométrie OU lat/lon selon le mode actif, et synchronise les valeurs sélectionnées.
+function syncColumnPickerMode() {
+    var selGeom = document.getElementById('sv-cfg-geom');
+    var selLat  = document.getElementById('sv-cfg-lat');
+    var selLon  = document.getElementById('sv-cfg-lon');
+    var selLbl  = document.getElementById('sv-cfg-label');
+    if (!selGeom) { return; }
+
     var isLatLon = !colGeom && (colLat || colLon);
-    document.getElementById('sv-group-geom').style.display = isLatLon ? 'none' : '';
-    document.getElementById('sv-group-lat').style.display  = isLatLon ? '' : 'none';
-    document.getElementById('sv-group-lon').style.display  = isLatLon ? '' : 'none';
+    var lblGeom  = document.querySelector('label[for="sv-cfg-geom"]');
+    var lblLat   = document.querySelector('label[for="sv-cfg-lat"]');
+    var lblLon   = document.querySelector('label[for="sv-cfg-lon"]');
+    if (lblGeom) { lblGeom.style.display = isLatLon ? 'none' : ''; }
+    if (lblLat)  { lblLat.style.display  = isLatLon ? '' : 'none'; }
+    if (lblLon)  { lblLon.style.display  = isLatLon ? '' : 'none'; }
+    selGeom.style.display = isLatLon ? 'none' : '';
+    selLat.style.display  = isLatLon ? '' : 'none';
+    selLon.style.display  = isLatLon ? '' : 'none';
 
     if (colGeom)  { selGeom.value = colGeom; } else { selGeom.value = ''; }
     if (colLat)   { selLat.value  = colLat;  } else { selLat.value  = ''; }
     if (colLon)   { selLon.value  = colLon;  } else { selLon.value  = ''; }
-    if (colLabel) { selLbl.value  = colLabel; } else { selLbl.value = ''; }
+    if (colLabel && selLbl) { selLbl.value = colLabel; } else if (selLbl) { selLbl.value = ''; }
 }
 
 // Retourne un ol.style.Text pour une valeur d'étiquette (null-safe).
@@ -228,63 +384,70 @@ function makeTextStyle(text, bold) {
     });
 }
 
+// Construit une couleur rgba à partir d'une couleur CSS et d'une opacité (0–1).
+function colorWithOpacity(color, opacity) {
+    var arr = ol.color.asArray(color).slice();
+    arr[3] = opacity;
+    return 'rgba(' + arr.join(',') + ')';
+}
+
 // Retourne une fonction de style OL : cercle pour Point/MultiPoint, fill+stroke pour les autres.
 // Lit la propriété _label posée sur chaque feature dans rebuildLayer.
-function makeFeatureStyle(color, fillOpacity, radius, strokeWidth) {
-    var fillArr = ol.color.asArray(color).slice();
-    fillArr[3] = fillOpacity;
-    var fillColor = 'rgba(' + fillArr.join(',') + ')';
+function makeFeatureStyle(cfg, selected) {
+    var fillColor   = colorWithOpacity(cfg.fillColor,   cfg.fillOpacity);
+    var strokeColor = colorWithOpacity(cfg.strokeColor, cfg.strokeOpacity);
+    var radius      = selected ? 10 : 7;
     return function(feature) {
         var geomType = feature.getGeometry() ? feature.getGeometry().getType() : '';
-        var text = makeTextStyle(feature.get('_label'), false);
+        var text = makeTextStyle(feature.get('_label'), selected);
         if (geomType === 'Point' || geomType === 'MultiPoint') {
             return new ol.style.Style({
                 image: new ol.style.Circle({
                     radius: radius,
                     fill: new ol.style.Fill({ color: fillColor }),
-                    stroke: new ol.style.Stroke({ color: '#fff', width: strokeWidth })
+                    stroke: new ol.style.Stroke({ color: strokeColor, width: cfg.strokeWidth })
                 }),
                 text: text
             });
         }
         return new ol.style.Style({
             fill: new ol.style.Fill({ color: fillColor }),
-            stroke: new ol.style.Stroke({ color: color, width: strokeWidth }),
+            stroke: new ol.style.Stroke({ color: strokeColor, width: cfg.strokeWidth }),
             text: text
         });
     };
 }
 
-// Surligne selectedFeat en jaune ; remet toutes les autres à la couleur de base.
+// Extrait les paramètres de style depuis svConfig pour les entités normales ou sélectionnées.
+function getStyleCfg(selected) {
+    if (selected) {
+        return {
+            fillColor:     safeColor(svConfig.sel_fill_color,   '#e74c3c'),
+            fillOpacity:   svConfig.sel_fill_opacity   !== undefined ? parseFloat(svConfig.sel_fill_opacity)   : 1,
+            strokeColor:   safeColor(svConfig.sel_stroke_color, '#ffffff'),
+            strokeOpacity: svConfig.sel_stroke_opacity !== undefined ? parseFloat(svConfig.sel_stroke_opacity) : 1,
+            strokeWidth:   svConfig.sel_stroke_width   !== undefined ? parseFloat(svConfig.sel_stroke_width)   : 2.5
+        };
+    }
+    return {
+        fillColor:     safeColor(svConfig.fill_color,   '#ffcc00'),
+        fillOpacity:   svConfig.fill_opacity   !== undefined ? parseFloat(svConfig.fill_opacity)   : 0.85,
+        strokeColor:   safeColor(svConfig.stroke_color, '#ffffff'),
+        strokeOpacity: svConfig.stroke_opacity !== undefined ? parseFloat(svConfig.stroke_opacity) : 1,
+        strokeWidth:   svConfig.stroke_width   !== undefined ? parseFloat(svConfig.stroke_width)   : 1.5
+    };
+}
+
+// Surligne selectedFeat ; remet toutes les autres au style de base.
 // Passer null réinitialise toutes les entités au style de base.
 function applySelectionStyle(selectedFeat) {
     if (!vectorLayer) { return; }
-    var baseColor = safeColor(svConfig.feature_color, '#e74c3c');
-    var selColor = safeColor(svConfig.feature_highlight_color, '#ffcc00');
+    var baseCfg = getStyleCfg(false);
+    var selCfg  = getStyleCfg(true);
+    var baseStyleFn = makeFeatureStyle(baseCfg, false);
+    var selStyleFn  = makeFeatureStyle(selCfg,  true);
     vectorLayer.getSource().getFeatures().forEach(function(f) {
-        var isSel = f === selectedFeat;
-        var c = isSel ? selColor : baseColor;
-        var fillArr = ol.color.asArray(c).slice();
-        fillArr[3] = isSel ? 1 : 0.85;
-        var fillColor = 'rgba(' + fillArr.join(',') + ')';
-        var geomType = f.getGeometry() ? f.getGeometry().getType() : '';
-        var text = makeTextStyle(f.get('_label'), isSel); // étiquette en gras sur l'entité sélectionnée
-        if (geomType === 'Point' || geomType === 'MultiPoint') {
-            f.setStyle(new ol.style.Style({
-                image: new ol.style.Circle({
-                    radius: isSel ? 10 : 7,
-                    fill: new ol.style.Fill({ color: fillColor }),
-                    stroke: new ol.style.Stroke({ color: '#fff', width: isSel ? 2.5 : 1.5 })
-                }),
-                text: text
-            }));
-        } else {
-            f.setStyle(new ol.style.Style({
-                fill: new ol.style.Fill({ color: fillColor }),
-                stroke: new ol.style.Stroke({ color: c, width: isSel ? 3 : 2 }),
-                text: text
-            }));
-        }
+        f.setStyle((f === selectedFeat ? selStyleFn : baseStyleFn)(f));
     });
 }
 
@@ -292,10 +455,7 @@ function applySelectionStyle(selectedFeat) {
 // Widget options (persistance par instance via grist.widgetApi)
 // ---------------------------------------------------------------------------
 
-// Persiste les colonnes actives + les clés svConfig surchargées par l'utilisateur.
-// Appelé à chaque changement de select ou de config.
-// Les clés svConfig issues de _sviewer_customConfig ne sont pas re-sauvegardées ici —
-// seules les surcharges explicites (passées via le panneau options Grist) sont conservées.
+// Persiste les colonnes actives + les clés svConfig dans les options widget Grist.
 function saveOptions() {
     if (!grist.widgetApi || typeof grist.widgetApi.setOptions !== 'function') { return; }
     var opts = {};
@@ -303,27 +463,176 @@ function saveOptions() {
     if (colLat)   { opts._colLat   = colLat; }
     if (colLon)   { opts._colLon   = colLon; }
     if (colLabel) { opts._colLabel = colLabel; }
-    // Fusionne les surcharges svConfig déjà présentes dans les options widget
-    if (widgetOptions) {
-        Object.keys(widgetOptions).forEach(function(k) {
-            if (k[0] !== '_') { opts[k] = widgetOptions[k]; }
-        });
-    }
+    var configKeys = ['fill_color', 'fill_opacity', 'stroke_color', 'stroke_opacity', 'stroke_width',
+                      'sel_fill_color', 'sel_fill_opacity', 'sel_stroke_color', 'sel_stroke_opacity', 'sel_stroke_width',
+                      'title', 'layers', 'lb', 'x', 'y', 'z', 'sviewer_base', 'grist_api_base', 'georchestra_base', 'fit_on_load'];
+    configKeys.forEach(function(k) { if (svConfig[k] !== undefined) { opts[k] = svConfig[k]; } });
     grist.widgetApi.setOptions(opts).catch(function(e) { console.warn('[sviewer] setOptions failed:', e); });
 }
 
-// Applique les options widget : surcharge svConfig + restaure les colonnes actives.
-// Appelé au démarrage et via onOptions (édition en direct du panneau Grist).
+// Applique les options widget : restaure svConfig + colonnes actives.
 function applyOptions(opts) {
     if (!opts) { return; }
     widgetOptions = opts;
-    // Surcharges svConfig (clés sans préfixe _)
-    Object.keys(opts).forEach(function(k) { if (k[0] !== '_') { svConfig[k] = opts[k]; } });
-    // Restauration des colonnes
+    var configKeys = ['fill_color', 'fill_opacity', 'stroke_color', 'stroke_opacity', 'stroke_width',
+                      'sel_fill_color', 'sel_fill_opacity', 'sel_stroke_color', 'sel_stroke_opacity', 'sel_stroke_width',
+                      'title', 'layers', 'lb', 'x', 'y', 'z', 'sviewer_base', 'grist_api_base', 'georchestra_base', 'fit_on_load'];
+    configKeys.forEach(function(k) { if (opts[k] !== undefined) { svConfig[k] = opts[k]; } });
+    // migrate legacy keys
+    if (opts.feature_color && !opts.fill_color)                 { svConfig.fill_color      = opts.feature_color; }
+    if (opts.feature_highlight_color && !opts.sel_fill_color)   { svConfig.sel_fill_color  = opts.feature_highlight_color; }
     if (opts._colGeom)  { colGeom  = opts._colGeom;  colLat = null; colLon = null; }
     if (opts._colLat)   { colLat   = opts._colLat;   colGeom = null; }
     if (opts._colLon)   { colLon   = opts._colLon;   colGeom = null; }
     if (opts._colLabel) { colLabel = opts._colLabel; }
+}
+
+// Returns a human-readable label for an OL layer: attribution text first, then title.
+// Strips HTML tags (attributions may contain <a> markup).
+function layerLabel(layer) {
+    if (!layer) { return ''; }
+    try {
+        var src = layer.getSource ? layer.getSource() : null;
+        var attrFn = src ? src.getAttributions() : null;
+        if (attrFn) {
+            var arr = typeof attrFn === 'function' ? attrFn(null) : attrFn;
+            if (!Array.isArray(arr)) { arr = [arr]; }
+            var text = arr.join(', ').replace(/<[^>]+>/g, '').trim();
+            if (text) { return text; }
+        }
+    } catch(e) { /* fall through */ }
+    return layer.get('title') || '';
+}
+
+// ---------------------------------------------------------------------------
+// Panneau de configuration (onEditOptions)
+// ---------------------------------------------------------------------------
+
+function openSettings() {
+    var panel = document.getElementById('sv-settings');
+    if (!panel) { return; }
+    syncColumnPickerMode();
+    document.getElementById('sv-cfg-title').value               = svConfig.title || '';
+    document.getElementById('sv-cfg-fill-color').value          = safeColor(svConfig.fill_color,       '#ffcc00');
+    document.getElementById('sv-cfg-fill-opacity').value        = svConfig.fill_opacity    !== undefined ? svConfig.fill_opacity    : 0.85;
+    document.getElementById('sv-cfg-stroke-color').value        = safeColor(svConfig.stroke_color,     '#ffffff');
+    document.getElementById('sv-cfg-stroke-opacity').value      = svConfig.stroke_opacity  !== undefined ? svConfig.stroke_opacity  : 1;
+    document.getElementById('sv-cfg-stroke-width').value        = svConfig.stroke_width    !== undefined ? svConfig.stroke_width    : 1.5;
+    document.getElementById('sv-cfg-sel-fill-color').value      = safeColor(svConfig.sel_fill_color,   '#e74c3c');
+    document.getElementById('sv-cfg-sel-fill-opacity').value    = svConfig.sel_fill_opacity   !== undefined ? svConfig.sel_fill_opacity   : 1;
+    document.getElementById('sv-cfg-sel-stroke-color').value    = safeColor(svConfig.sel_stroke_color, '#ffffff');
+    document.getElementById('sv-cfg-sel-stroke-opacity').value  = svConfig.sel_stroke_opacity !== undefined ? svConfig.sel_stroke_opacity : 1;
+    document.getElementById('sv-cfg-sel-stroke-width').value    = svConfig.sel_stroke_width   !== undefined ? svConfig.sel_stroke_width   : 2.5;
+    document.getElementById('sv-cfg-layers').value  = svConfig.layers || '';
+    var hc     = window.hardConfig || {};
+var bgLayers  = hc.layersBackground  || [];
+    var loLayers  = hc.layersOverlay     || [];
+    var presets   = hc.backgroundPresets && hc.backgroundPresets.length ? hc.backgroundPresets : null;
+    var lbSel = document.getElementById('sv-cfg-lb-sel');
+    var lbNum = document.getElementById('sv-cfg-lb');
+    var pool = presets || bgLayers;
+    if (pool.length) {
+        lbSel.options.length = 0;
+        var noneOpt = document.createElement('option');
+        noneOpt.value = ''; noneOpt.textContent = lang === 'fr' ? '(défaut)' : lang === 'de' ? '(Standard)' : lang === 'es' ? '(defecto)' : '(default)';
+        lbSel.appendChild(noneOpt);
+        pool.forEach(function(item, idx) {
+            var opt = document.createElement('option');
+            opt.value = idx;
+var label = presets ? (item.title || idx) : layerLabel(item);
+            opt.textContent = label || idx;
+            lbSel.appendChild(opt);
+        });
+        lbSel.value = svConfig.lb !== undefined ? svConfig.lb : '';
+        lbSel.style.display = '';
+        lbNum.style.display = 'none';
+    } else {
+        lbSel.style.display = 'none';
+        lbNum.style.display = '';
+        lbNum.value = svConfig.lb !== undefined ? svConfig.lb : '';
+    }
+    document.getElementById('sv-cfg-x').value       = svConfig.x  !== undefined ? svConfig.x  : '';
+    document.getElementById('sv-cfg-y').value       = svConfig.y  !== undefined ? svConfig.y  : '';
+    document.getElementById('sv-cfg-z').value       = svConfig.z  !== undefined ? svConfig.z  : '';
+    var defaultSvBase = svConfig.sviewer_base || (function() {
+        var loc = window.location;
+        var dir = loc.pathname.replace(/\/[^\/]*$/, '/');
+        return loc.origin + dir.replace(/connectors\/grist\/$/, '');
+    }());
+    document.getElementById('sv-cfg-svbase').value = defaultSvBase;
+    var defaultApiBase = svConfig.grist_api_base || (function() {
+        try { return document.referrer ? new URL(document.referrer).origin : ''; } catch(e) { return ''; }
+    }());
+    document.getElementById('sv-cfg-apibase').value = defaultApiBase;
+    document.getElementById('sv-cfg-georchestra').value = svConfig.georchestra_base ||
+        (window.hardConfig && window.hardConfig.geOrchestraBaseUrl) ||
+        (window.customConfig && window.customConfig.geOrchestraBaseUrl) || '';
+    // fit_on_load: true = always fit; false = never fit; undefined = fit only when no x/y saved
+    document.getElementById('sv-cfg-fit').checked = svConfig.fit_on_load === true ||
+        (svConfig.fit_on_load === undefined && !svConfig.x && !svConfig.y);
+    panel.style.display = 'flex';
+    document.getElementById('sv-map').style.display    = 'none';
+    document.getElementById('sv-toolbar').style.display = 'none';
+}
+
+function closeSettings(save) {
+    if (save) {
+        // Column selects — determine mode from which select is visible
+        var selGeom = document.getElementById('sv-cfg-geom');
+        var selLat  = document.getElementById('sv-cfg-lat');
+        var selLon  = document.getElementById('sv-cfg-lon');
+        var selLbl  = document.getElementById('sv-cfg-label');
+        var isLatLon = selGeom.style.display === 'none';
+        if (isLatLon) {
+            var newLat = selLat.value; var newLon = selLon.value;
+            if (newLat && newLon) { colLat = newLat; colLon = newLon; colGeom = null; }
+        } else {
+            var newGeom = selGeom.value;
+            if (newGeom) { colGeom = newGeom; colLat = null; colLon = null; }
+        }
+        colLabel = selLbl.value || null;
+
+        function readFloat(id, fallback) { var v = parseFloat(document.getElementById(id).value); return isNaN(v) ? fallback : v; }
+        svConfig.fill_color          = document.getElementById('sv-cfg-fill-color').value;
+        svConfig.fill_opacity        = readFloat('sv-cfg-fill-opacity',       0.85);
+        svConfig.stroke_color        = document.getElementById('sv-cfg-stroke-color').value;
+        svConfig.stroke_opacity      = readFloat('sv-cfg-stroke-opacity',     1);
+        svConfig.stroke_width        = readFloat('sv-cfg-stroke-width',       1.5);
+        svConfig.sel_fill_color      = document.getElementById('sv-cfg-sel-fill-color').value;
+        svConfig.sel_fill_opacity    = readFloat('sv-cfg-sel-fill-opacity',   1);
+        svConfig.sel_stroke_color    = document.getElementById('sv-cfg-sel-stroke-color').value;
+        svConfig.sel_stroke_opacity  = readFloat('sv-cfg-sel-stroke-opacity', 1);
+        svConfig.sel_stroke_width    = readFloat('sv-cfg-sel-stroke-width',   2.5);
+
+        var title   = document.getElementById('sv-cfg-title').value.trim();
+        var layers  = document.getElementById('sv-cfg-layers').value.trim();
+        var lbSelEl = document.getElementById('sv-cfg-lb-sel');
+        var lb = (lbSelEl.style.display !== 'none') ? lbSelEl.value.trim() : document.getElementById('sv-cfg-lb').value.trim();
+        var x       = document.getElementById('sv-cfg-x').value.trim();
+        var y       = document.getElementById('sv-cfg-y').value.trim();
+        var z       = document.getElementById('sv-cfg-z').value.trim();
+        var apibase = document.getElementById('sv-cfg-apibase').value.trim();
+        if (title)   { svConfig.title   = title;  } else { delete svConfig.title; }
+        if (layers)  { svConfig.layers  = layers; } else { delete svConfig.layers; }
+        if (lb !== '')      { svConfig.lb = parseInt(lb, 10);   } else { delete svConfig.lb; }
+        if (x !== '')       { svConfig.x  = parseFloat(x);     } else { delete svConfig.x; }
+        if (y !== '')       { svConfig.y  = parseFloat(y);     } else { delete svConfig.y; }
+        if (z !== '')       { svConfig.z  = parseInt(z, 10);   } else { delete svConfig.z; }
+        var svbase  = document.getElementById('sv-cfg-svbase').value.trim();
+        if (svbase)  { svConfig.sviewer_base   = svbase;  } else { delete svConfig.sviewer_base; }
+        if (apibase) { svConfig.grist_api_base = apibase; } else { delete svConfig.grist_api_base; }
+        var georchestra = document.getElementById('sv-cfg-georchestra').value.trim();
+        if (georchestra) { svConfig.georchestra_base = georchestra; } else { delete svConfig.georchestra_base; }
+        svConfig.fit_on_load = document.getElementById('sv-cfg-fit').checked;
+        saveOptions();
+        viewFitted = false;
+        rebuildLayer();
+    }
+    document.getElementById('sv-settings').style.display    = 'none';
+    document.getElementById('sv-import-area').style.display = 'none';
+    document.getElementById('sv-import-json').value         = '';
+    document.getElementById('sv-map').style.display         = '';
+    document.getElementById('sv-toolbar').style.display     = '';
 }
 
 // onRecords se déclenche aussi à chaque changement de sélection — le debounce évite les rebuilds inutiles.
@@ -355,7 +664,6 @@ function rebuildLayer() {
     var features = [];
     var skipped = 0;
     var format = new ol.format.GeoJSON();
-    var color = safeColor(svConfig.feature_color, '#e74c3c');
 
     allRecords.forEach(function(row) {
         var geomVal;
@@ -388,15 +696,17 @@ function rebuildLayer() {
 
     vectorLayer = new ol.layer.Vector({
         source: new ol.source.Vector({ features: features }),
-        style: makeFeatureStyle(color, 0.85, 7, 1.5)
+        style: makeFeatureStyle(getStyleCfg(false), false)
     });
 
     map.addLayer(vectorLayer);
 
     setStatus(allRecords.length + tr('features') + (skipped ? ' (' + skipped + tr('skipped') + ')' : ''));
 
-    // Fit uniquement si aucune position n'est configurée (x/y dans svConfig = vue imposée)
-    if (features.length && !viewFitted && !svConfig.x && !svConfig.y) {
+    // fit_on_load===true: always fit; false: never; undefined: fit only when no x/y saved
+    var shouldFit = svConfig.fit_on_load === true ||
+        (svConfig.fit_on_load !== false && !svConfig.x && !svConfig.y);
+    if (features.length && !viewFitted && shouldFit) {
         var ext = vectorLayer.getSource().getExtent();
         if (ext && isFinite(ext[0])) {
             map.getView().fit(ext, { padding: [40, 40, 40, 40], maxZoom: 16, duration: 400 });
@@ -483,6 +793,8 @@ function initMap() {
     };
     if (svConfig.layers) { opts.layers = svConfig.layers; }
     if (svConfig.lb !== undefined) { opts.lb = parseInt(svConfig.lb, 10); }
+    var georchestraBase = safeHttpUrl(svConfig.georchestra_base);
+    if (georchestraBase && window.hardConfig) { window.hardConfig.geOrchestraBaseUrl = georchestraBase; }
 
     SViewer.init('#sv-map', opts).then(function() {
         mapReady = true;
@@ -508,46 +820,96 @@ document.getElementById('sv-btn-clear').addEventListener('click', function() {
         vectorLayer.getSource().getFeatures().forEach(function(f) { f.setStyle(null); });
     }
 });
-document.getElementById('sv-sel-geom').addEventListener('change', function() {
-    colGeom = this.value;
-    colLat = null; colLon = null;
-    viewFitted = false;
-    saveOptions();
-    rebuildLayer();
+document.getElementById('sv-btn-cfg-save').addEventListener('click', function() { closeSettings(true); });
+document.getElementById('sv-btn-cfg-cancel').addEventListener('click', function() { closeSettings(false); });
+
+document.getElementById('sv-btn-cfg-export').addEventListener('click', function() {
+    function rf(id) { return document.getElementById(id) ? document.getElementById(id).value : undefined; }
+    function rn(id) { var v = parseFloat(rf(id)); return isNaN(v) ? undefined : v; }
+    var lbSel = document.getElementById('sv-cfg-lb-sel');
+    var lbNum = document.getElementById('sv-cfg-lb');
+    var lbVal = (lbSel.style.display !== 'none') ? lbSel.value : lbNum.value;
+    var out = {
+        stroke_color:        rf('sv-cfg-stroke-color'),
+        stroke_opacity:      rn('sv-cfg-stroke-opacity'),
+        stroke_width:        rn('sv-cfg-stroke-width'),
+        fill_color:          rf('sv-cfg-fill-color'),
+        fill_opacity:        rn('sv-cfg-fill-opacity'),
+        sel_stroke_color:    rf('sv-cfg-sel-stroke-color'),
+        sel_stroke_opacity:  rn('sv-cfg-sel-stroke-opacity'),
+        sel_stroke_width:    rn('sv-cfg-sel-stroke-width'),
+        sel_fill_color:      rf('sv-cfg-sel-fill-color'),
+        sel_fill_opacity:    rn('sv-cfg-sel-fill-opacity'),
+        fit_on_load:         document.getElementById('sv-cfg-fit').checked
+    };
+    var title = rf('sv-cfg-title'); if (title)   { out.title          = title; }
+    var layers = rf('sv-cfg-layers'); if (layers) { out.layers         = layers; }
+    if (lbVal !== '')                             { out.lb             = parseInt(lbVal, 10); }
+    var x = rf('sv-cfg-x'); if (x !== '')        { out.x              = parseFloat(x); }
+    var y = rf('sv-cfg-y'); if (y !== '')        { out.y              = parseFloat(y); }
+    var z = rf('sv-cfg-z'); if (z !== '')        { out.z              = parseInt(z, 10); }
+    var svbase = rf('sv-cfg-svbase'); if (svbase) { out.sviewer_base   = svbase; }
+    var api = rf('sv-cfg-apibase'); if (api)      { out.grist_api_base = api; }
+    var geo = rf('sv-cfg-georchestra'); if (geo)  { out.georchestra_base = geo; }
+    var json = JSON.stringify(out, null, 2);
+    navigator.clipboard.writeText(json).then(function() {
+        var btn = document.getElementById('sv-btn-cfg-export');
+        var orig = btn.textContent;
+        btn.textContent = tr('settings.export.done');
+        setTimeout(function() { btn.textContent = orig; }, 2000);
+    }).catch(function() { alert(json); });
 });
-document.getElementById('sv-sel-lat').addEventListener('change', function() {
-    colLat = this.value;
-    colGeom = null;
-    viewFitted = false;
-    saveOptions();
-    rebuildLayer();
+
+function applyImportData(data) {
+    var lbSel = document.getElementById('sv-cfg-lb-sel');
+    var lbNum = document.getElementById('sv-cfg-lb');
+    if (data.fill_color !== undefined)          { document.getElementById('sv-cfg-fill-color').value         = safeColor(data.fill_color, '#ffcc00'); }
+    if (data.fill_opacity !== undefined)        { document.getElementById('sv-cfg-fill-opacity').value       = data.fill_opacity; }
+    if (data.stroke_color !== undefined)        { document.getElementById('sv-cfg-stroke-color').value       = safeColor(data.stroke_color, '#ffffff'); }
+    if (data.stroke_opacity !== undefined)      { document.getElementById('sv-cfg-stroke-opacity').value     = data.stroke_opacity; }
+    if (data.stroke_width !== undefined)        { document.getElementById('sv-cfg-stroke-width').value       = data.stroke_width; }
+    if (data.sel_fill_color !== undefined)      { document.getElementById('sv-cfg-sel-fill-color').value     = safeColor(data.sel_fill_color, '#e74c3c'); }
+    if (data.sel_fill_opacity !== undefined)    { document.getElementById('sv-cfg-sel-fill-opacity').value   = data.sel_fill_opacity; }
+    if (data.sel_stroke_color !== undefined)    { document.getElementById('sv-cfg-sel-stroke-color').value   = safeColor(data.sel_stroke_color, '#ffffff'); }
+    if (data.sel_stroke_opacity !== undefined)  { document.getElementById('sv-cfg-sel-stroke-opacity').value = data.sel_stroke_opacity; }
+    if (data.sel_stroke_width !== undefined)    { document.getElementById('sv-cfg-sel-stroke-width').value   = data.sel_stroke_width; }
+    if (data.title !== undefined)               { document.getElementById('sv-cfg-title').value              = data.title; }
+    if (data.layers !== undefined)              { document.getElementById('sv-cfg-layers').value             = data.layers; }
+    if (data.lb !== undefined) {
+        if (lbSel.style.display !== 'none') { lbSel.value = data.lb; } else { lbNum.value = data.lb; }
+    }
+    if (data.x !== undefined)                   { document.getElementById('sv-cfg-x').value      = data.x; }
+    if (data.y !== undefined)                   { document.getElementById('sv-cfg-y').value      = data.y; }
+    if (data.z !== undefined)                   { document.getElementById('sv-cfg-z').value      = data.z; }
+    if (data.sviewer_base !== undefined)        { document.getElementById('sv-cfg-svbase').value = data.sviewer_base; }
+    if (data.grist_api_base !== undefined)      { document.getElementById('sv-cfg-apibase').value = data.grist_api_base; }
+    if (data.georchestra_base !== undefined)    { document.getElementById('sv-cfg-georchestra').value = data.georchestra_base; }
+    if (data.fit_on_load !== undefined)         { document.getElementById('sv-cfg-fit').checked  = data.fit_on_load; }
+}
+
+document.getElementById('sv-btn-cfg-import').addEventListener('click', function() {
+    var area = document.getElementById('sv-import-area');
+    var visible = area.style.display === 'flex';
+    area.style.display = visible ? 'none' : 'flex';
+    if (!visible) { document.getElementById('sv-import-json').focus(); }
 });
-document.getElementById('sv-sel-lon').addEventListener('change', function() {
-    colLon = this.value;
-    colGeom = null;
-    viewFitted = false;
-    saveOptions();
-    rebuildLayer();
-});
-document.getElementById('sv-sel-label').addEventListener('change', function() {
-    colLabel = this.value || null;
-    saveOptions();
-    rebuildLayer();
+
+document.getElementById('sv-btn-cfg-apply').addEventListener('click', function() {
+    var text = document.getElementById('sv-import-json').value.trim();
+    var data;
+    try { data = JSON.parse(text); } catch(e) { alert(tr('settings.import.error')); return; }
+    if (typeof data !== 'object' || Array.isArray(data)) { alert(tr('settings.import.error')); return; }
+    applyImportData(data);
+    document.getElementById('sv-import-area').style.display = 'none';
+    document.getElementById('sv-import-json').value = '';
 });
 
 // ---------------------------------------------------------------------------
 // Séquence d'initialisation Grist
 // ---------------------------------------------------------------------------
 
-// Les IDs de tables Grist suivent la convention Python : underscores initiaux supprimés,
-// première lettre en majuscule. '_sviewer_customConfig' (affichage) → 'Sviewer_customConfig' (API).
-var CONFIG_TABLE = 'Sviewer_customConfig';
+grist.ready({ requiredAccess: 'read table', onEditOptions: function() { openSettings(); } });
 
-// requiredAccess: full — nécessaire pour docApi.fetchTable sur _sviewer_customConfig
-grist.ready({ requiredAccess: 'full' });
-
-// Mise à jour en direct quand l'utilisateur édite les options widget dans le panneau Grist.
-// Réinitialise la carte avec les nouvelles valeurs sans recharger la page.
 if (grist.widgetApi && typeof grist.widgetApi.onOptions === 'function') {
     grist.widgetApi.onOptions(function(opts) {
         applyOptions(opts);
@@ -557,6 +919,7 @@ if (grist.widgetApi && typeof grist.widgetApi.onOptions === 'function') {
         }
     });
 }
+
 
 // Enregistré immédiatement après ready() — Grist envoie le premier onRecords
 // dès réception de Ready ; un enregistrement tardif (dans une Promise) le manquerait.
@@ -619,29 +982,17 @@ grist.onRecord(function(record) {
 
 applyDomTranslations();
 
-// Chaîne de démarrage : config → IDs doc/table → init carte avec URL geojson intégrée.
-// Les IDs sont attendus avant initMap() pour que le panneau de partage sViewer
-// inclue l'URL des données Grist dès le départ.
-grist.docApi.fetchTable(CONFIG_TABLE)
-    .then(function(data) {
-        var keys = data.key || [];
-        var vals = data.value || [];
-        keys.forEach(function(k, i) { svConfig[k] = vals[i]; });
-    })
-    .catch(function(e) { console.warn('[sviewer] config table missing or error:', e); setStatus(tr('no.config')); })
-    .then(function() {
-        // Widget options chargées après la config table — elles ont priorité sur _sviewer_customConfig
-        var optionsPromise = (grist.widgetApi && typeof grist.widgetApi.getOptions === 'function')
-            ? grist.widgetApi.getOptions().then(function(opts) { applyOptions(opts); }).catch(function() {})
-            : Promise.resolve();
-        var docPromise = (grist.docApi && typeof grist.docApi.getDocName === 'function')
-            ? grist.docApi.getDocName().then(function(id) { gristDocId = id; }).catch(function() {})
-            : Promise.resolve();
-        var tablePromise = (grist.selectedTable)
-            ? grist.selectedTable.getTableId().then(function(id) { gristTableId = id; }).catch(function() {})
-            : Promise.resolve();
-        return Promise.all([optionsPromise, docPromise, tablePromise]);
-    })
-    .then(function() {
-        initMap();
-    });
+// Chaîne de démarrage : options widget + IDs doc/table → init carte.
+var optionsPromise = (grist.widgetApi && typeof grist.widgetApi.getOptions === 'function')
+    ? grist.widgetApi.getOptions().then(function(opts) { applyOptions(opts); }).catch(function() {})
+    : Promise.resolve();
+var docPromise = (grist.docApi && typeof grist.docApi.getDocName === 'function')
+    ? grist.docApi.getDocName().then(function(id) { gristDocId = id; }).catch(function() {})
+    : Promise.resolve();
+var tablePromise = (grist.selectedTable)
+    ? grist.selectedTable.getTableId().then(function(id) { gristTableId = id; }).catch(function() {})
+    : Promise.resolve();
+
+Promise.all([optionsPromise, docPromise, tablePromise]).then(function() {
+    initMap();
+});
