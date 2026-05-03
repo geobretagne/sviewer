@@ -1021,6 +1021,7 @@ window.SViewerApp = (function() {
                         $('#queryContent').html('').append($table);
                         marker.setPosition(e.coordinate);
                         $('#marker').show();
+                        closePanel();
                         togglePanel('query');
                     }, { layerFilter: function(l) { return l === vectorLayer; } });
                 });
