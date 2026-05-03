@@ -105,19 +105,34 @@ customConfig = {
      *
      * Note: only the first page of paginated APIs is fetched — no pagination support.
      */
-    // Example adapter for the Grist public records API.
+    // Adapter for the Grist public records API (and generic JSON sources).
     // Input:  { records: [ { id, fields: { geometry: '{"type":...}', col1, col2, ... } } ] }
     // Output: GeoJSON FeatureCollection (EPSG:4326)
     //
+    // sourceUrl (2nd arg): when the URL contains _geomcol/_geommode/_collat/_collon/_labelcol
+    // hints (added by the sViewer Grist widget), those hints drive geometry extraction and
+    // bypass auto-detection. Supports all widget modes: geojson, latlon, latlon_str,
+    // lonlat_str, wkt. Falls back to auto-detection when hints are absent.
+    //
     // To support a different API, replace this function.
-    // The function receives the raw parsed JSON response and must return a FeatureCollection.
-    jsonLayerAdapter: function(response) {
-        // Known geometry column names — first match wins.
+    jsonLayerAdapter: function(response, sourceUrl) {
         var GEOM_CANDIDATES = ['geometry', 'geom', 'geo', 'shape', 'wkb_geometry'];
         var LAT_CANDIDATES  = ['latitude', 'lat'];
         var LON_CANDIDATES  = ['longitude', 'lon', 'lng'];
 
-        // Accept geometry as a GeoJSON object or a JSON string.
+        // Parse _geom* hints from the source URL query string.
+        var hints = { mode: null, geomcol: null, collat: null, collon: null, labelcol: null };
+        if (sourceUrl) {
+            try {
+                var u = new URL(sourceUrl);
+                hints.mode    = u.searchParams.get('_geommode') || null;
+                hints.geomcol = u.searchParams.get('_geomcol')  || null;
+                hints.collat  = u.searchParams.get('_collat')   || null;
+                hints.collon  = u.searchParams.get('_collon')   || null;
+                hints.labelcol= u.searchParams.get('_labelcol') || null;
+            } catch(e) { /* URL API unavailable or malformed — ignore hints */ }
+        }
+
         function parseGeom(val) {
             if (!val) { return null; }
             var g = (typeof val === 'string') ? (function() { try { return JSON.parse(val); } catch(e) { return null; } }()) : val;
@@ -125,7 +140,6 @@ customConfig = {
             return null;
         }
 
-        // Find the geometry column by name, then by value scan.
         function detectGeomKey(row) {
             var keys = Object.keys(row);
             var lower = keys.map(function(k) { return k.toLowerCase(); });
@@ -140,7 +154,6 @@ customConfig = {
             return null;
         }
 
-        // Find lat + lon column pair by name. Returns { latKey, lonKey } or null.
         function detectLatLon(row) {
             var keys = Object.keys(row);
             var lower = keys.map(function(k) { return k.toLowerCase(); });
@@ -152,32 +165,79 @@ customConfig = {
 
         // Flatten Grist envelope: { records: [{id, fields:{...}}] } → array of field objects.
         var rows = (response.records || []).map(function(r) { return r.fields || r; });
-        // Fallback: plain array (non-Grist APIs).
         if (!rows.length && Array.isArray(response)) { rows = response; }
         if (!rows.length) { return { type: 'FeatureCollection', features: [] }; }
 
-        var geomKey = detectGeomKey(rows[0]);
-        var latlon  = geomKey ? null : detectLatLon(rows[0]);
-        if (!geomKey && !latlon) { return { type: 'FeatureCollection', features: [] }; }
-
         var features = rows.map(function(f) {
-            var geom;
-            if (geomKey) {
-                geom = parseGeom(f[geomKey]);
-            } else {
-                var lat = parseFloat(f[latlon.latKey]);
-                var lon = parseFloat(f[latlon.lonKey]);
+            var geom = null;
+            var excludeKeys = {};
+            var mode = hints.mode;
+
+            if (mode === 'latlon' && hints.collat && hints.collon) {
+                var lat = parseFloat(f[hints.collat]);
+                var lon = parseFloat(f[hints.collon]);
                 if (isNaN(lat) || isNaN(lon)) { return null; }
                 geom = { type: 'Point', coordinates: [lon, lat] };
+                excludeKeys[hints.collat] = true;
+                excludeKeys[hints.collon] = true;
+
+            } else if ((mode === 'latlon_str' || mode === 'lonlat_str') && hints.geomcol) {
+                var val = f[hints.geomcol];
+                if (typeof val === 'string') {
+                    var parts = val.split(',');
+                    if (parts.length === 2) {
+                        var a = parseFloat(parts[0].trim()), b = parseFloat(parts[1].trim());
+                        if (!isNaN(a) && !isNaN(b)) {
+                            geom = mode === 'latlon_str'
+                                ? { type: 'Point', coordinates: [b, a] }
+                                : { type: 'Point', coordinates: [a, b] };
+                        }
+                    }
+                }
+                excludeKeys[hints.geomcol] = true;
+
+            } else if (mode === 'wkt' && hints.geomcol) {
+                var wktVal = f[hints.geomcol];
+                if (typeof wktVal === 'string') {
+                    try {
+                        var wktFmt = new ol.format.WKT();
+                        var olGeom = wktFmt.readGeometry(wktVal, { dataProjection: 'EPSG:4326', featureProjection: 'EPSG:4326' });
+                        // Convert back to GeoJSON for the FeatureCollection output
+                        var gjFmt = new ol.format.GeoJSON();
+                        geom = JSON.parse(gjFmt.writeGeometry(olGeom));
+                    } catch(e) { return null; }
+                }
+                excludeKeys[hints.geomcol] = true;
+
+            } else if ((mode === 'geojson' || !mode) && hints.geomcol) {
+                geom = parseGeom(f[hints.geomcol]);
+                excludeKeys[hints.geomcol] = true;
+
+            } else {
+                // Auto-detect: no hints or unrecognised mode
+                var geomKey = detectGeomKey(rows[0]);
+                var latlon  = geomKey ? null : detectLatLon(rows[0]);
+                if (geomKey) {
+                    geom = parseGeom(f[geomKey]);
+                    excludeKeys[geomKey] = true;
+                } else if (latlon) {
+                    var lat2 = parseFloat(f[latlon.latKey]);
+                    var lon2 = parseFloat(f[latlon.lonKey]);
+                    if (isNaN(lat2) || isNaN(lon2)) { return null; }
+                    geom = { type: 'Point', coordinates: [lon2, lat2] };
+                    excludeKeys[latlon.latKey] = true;
+                    excludeKeys[latlon.lonKey] = true;
+                }
             }
+
             if (!geom) { return null; }
-            // Exclude geometry key from properties to avoid OL confusion.
             var props = {};
-            Object.keys(f).forEach(function(k) {
-                if (k !== geomKey && (!latlon || (k !== latlon.latKey && k !== latlon.lonKey))) { props[k] = f[k]; }
-            });
-            return { type: 'Feature', geometry: geom, properties: props };
+            Object.keys(f).forEach(function(k) { if (!excludeKeys[k]) { props[k] = f[k]; } });
+            var feat = { type: 'Feature', geometry: geom, properties: props };
+            if (hints.labelcol && f[hints.labelcol] !== undefined) { feat.properties._label = f[hints.labelcol]; }
+            return feat;
         }).filter(Boolean);
+
         return { type: 'FeatureCollection', features: features };
     },
 

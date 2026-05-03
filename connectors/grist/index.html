@@ -124,6 +124,15 @@
     <!-- Données -->
     <div class="sv-tab-panel sv-tab-visible" data-tab="data">
         <div class="sv-cfg-grid">
+            <label for="sv-cfg-geom-mode" data-i18n="settings.geom.mode"></label>
+            <select id="sv-cfg-geom-mode">
+                <option value="auto"       data-i18n="settings.geom.mode.auto"></option>
+                <option value="geojson"    data-i18n="settings.geom.mode.geojson"></option>
+                <option value="latlon"     data-i18n="settings.geom.mode.latlon"></option>
+                <option value="lonlat_str" data-i18n="settings.geom.mode.lonlat_str"></option>
+                <option value="latlon_str" data-i18n="settings.geom.mode.latlon_str"></option>
+                <option value="wkt"        data-i18n="settings.geom.mode.wkt"></option>
+            </select>
             <label for="sv-cfg-geom"  data-i18n="settings.geom"></label>
             <select id="sv-cfg-geom"></select>
             <label for="sv-cfg-lat"   data-i18n="settings.lat" style="display:none"></label>
@@ -167,6 +176,8 @@
             <input  id="sv-cfg-lb"     type="number" min="0" placeholder="0">
             <label for="sv-cfg-layers" data-i18n="settings.layers"></label>
             <input  id="sv-cfg-layers" type="text"   placeholder="layer1,layer2">
+            <label for="sv-cfg-md"     data-i18n="settings.md"></label>
+            <input  id="sv-cfg-md"     type="text"   placeholder="fr-geobretagne-...">
             <label for="sv-cfg-x"     data-i18n="settings.x"></label>
             <input  id="sv-cfg-x"     type="number" placeholder="0">
             <label for="sv-cfg-y"     data-i18n="settings.y"></label>

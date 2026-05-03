@@ -951,7 +951,7 @@ window.SViewerApp = (function() {
             success: function(data) {
                 // Non-GeoJSON response (e.g. Grist records, ArcGIS REST) → normalize via adapter
                 var geojson = (data && data.type === 'FeatureCollection') ? data
-                    : (typeof config.jsonLayerAdapter === 'function' ? config.jsonLayerAdapter(data) : null);
+                    : (typeof config.jsonLayerAdapter === 'function' ? config.jsonLayerAdapter(data, url) : null);
                 if (!geojson) {
                     messagePopup(tr('msg.query_failed'));
                     return;
