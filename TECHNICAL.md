@@ -228,7 +228,7 @@ Charge un fichier GeoJSON distant comme couche vectorielle interactive.
 - Composable avec `?layers=` : superpose les données GeoJSON à des couches WMS
 - Compatible embed : `SViewer.init('#map', { geojson: 'https://...' })`
 - Si une entité possède une propriété `_label`, celle-ci est affichée comme étiquette texte sur la carte
-- Si l'URL source n'est pas un GeoJSON natif, `customConfig.jsonLayerAdapter` est appelé pour normaliser la réponse (voir [jsonLayerAdapter](#jsonlayeradapter))
+- Si l'URL source n'est pas un GeoJSON natif, les adaptateurs déclarés dans `customConfig.adapters` sont essayés dans l'ordre pour normaliser la réponse (voir [Adaptateurs JSON](#adaptateurs-json-adapters))
 
 Persistant dans le permalien et le code embed.
 
@@ -390,7 +390,7 @@ customConfig = {
         fillOpacity: 0.35,
         strokeWidth: 2.5
     },
-    jsonLayerAdapter: function(response, sourceUrl) { /* ... */ },
+    adapters: ['grist'],
     layersBackground: [ /* ... */ ]
 };
 ```
@@ -494,19 +494,45 @@ geojsonStyle: {
 - Valeurs par défaut : orange `#ff6600`, opacité `0.35`, trait `2.5 px` — choix colorblind-friendly, visible sur orthophoto et fond de carte
 - Si une entité possède une propriété `_label`, elle est affichée comme étiquette texte au-dessus de l'entité
 
-### jsonLayerAdapter
+### Adaptateurs JSON (`adapters`)
 
-Fonction de normalisation appelée quand la réponse de `?geojson=` n'est pas un GeoJSON natif (`FeatureCollection`). Permet de supporter des APIs JSON arbitraires (Grist, ArcGIS REST, etc.).
+Les adaptateurs normalisent les réponses d'APIs non-GeoJSON (Grist, ArcGIS REST…) en `FeatureCollection` pour affichage via `?geojson=`.
+
+**Activer un adaptateur** — ajouter son nom dans `customConfig.js` :
 
 ```javascript
-jsonLayerAdapter: function(response, sourceUrl) {
-    // response  : objet JSON brut retourné par l'API
-    // sourceUrl : URL complète de la requête (avec ses paramètres query)
-    // retourne  : GeoJSON FeatureCollection (EPSG:4326)
-}
+adapters: ['grist']
 ```
 
-**Paramètres hint dans `sourceUrl` :** le widget Grist encode des hints géométriques dans les paramètres query de l'URL source. L'adaptateur par défaut les lit pour bypasser l'auto-détection :
+Chaque nom correspond à `connectors/{nom}/adapter.js`. Seuls les adaptateurs fournis avec sViewer sont supportés (pas de chemin externe).
+
+**Adaptateurs disponibles**
+
+| Nom | API supportée |
+|-----|---------------|
+| `grist` | Grist `/api/docs/…/tables/…/records` |
+
+**Plusieurs adaptateurs** — listés dans l'ordre de priorité. Chaque adaptateur déclare un `match(url)` qui limite son activation à certaines URLs source :
+
+```javascript
+adapters: ['grist', 'arcgis']
+```
+
+**Écrire son propre adaptateur** — créer `connectors/monadaptateur/adapter.js` :
+
+```javascript
+window.SViewerAdapters = window.SViewerAdapters || {};
+window.SViewerAdapters['monadaptateur'] = {
+    match: function(url) { return url.indexOf('monapi.example.com') !== -1; },
+    convert: function(response, sourceUrl) {
+        // retourner un GeoJSON FeatureCollection (EPSG:4326)
+    }
+};
+```
+
+`match` est optionnel — sans `match`, l'adaptateur est appelé pour toutes les URLs (fallback).
+
+**Paramètres hint Grist** — le widget Grist encode des hints géométriques dans l'URL source pour bypasser l'auto-détection :
 
 | Paramètre | Rôle |
 |-----------|------|
@@ -516,7 +542,7 @@ jsonLayerAdapter: function(response, sourceUrl) {
 | `_collon` | Colonne longitude (mode `latlon`) |
 | `_labelcol` | Colonne étiquette → propriété `_label` sur chaque feature |
 
-En l'absence de hints, l'adaptateur auto-détecte la géométrie (candidats : `geometry`, `geom`, `geo`, `shape`, `wkb_geometry`; puis paire lat/lon; puis colonne WKT; puis colonne texte `lat,lon`).
+En l'absence de hints, l'adaptateur Grist auto-détecte la géométrie (candidats : `geometry`, `geom`, `geo`, `shape`, `wkb_geometry` ; puis paire lat/lon).
 
 ### Sécurité — liste blanche de domaines OGC
 

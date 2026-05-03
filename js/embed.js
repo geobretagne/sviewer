@@ -273,8 +273,17 @@
         ])
             .then(function() { return loadResource(baseUrl + 'build/ol-new.js', 'js'); })
             .then(function() { return loadResource(baseUrl + 'etc/customConfig.js', 'js'); })
-            .then(function() { return loadResource(baseUrl + 'lib/mustache/mustache.min.js', 'js'); })
-            .then(function() { return Promise.all([Promise.all(cssPromises), bootstrapPromise, loadTemplates(baseUrl)]); });
+            .then(function() {
+                var adapterPromises = ((window.customConfig && window.customConfig.adapters) || [])
+                    .map(function(name) { return loadResource(baseUrl + 'connectors/' + name + '/adapter.js', 'js'); });
+                return Promise.all([
+                    Promise.all(adapterPromises),
+                    loadResource(baseUrl + 'lib/mustache/mustache.min.js', 'js'),
+                    Promise.all(cssPromises),
+                    bootstrapPromise,
+                    loadTemplates(baseUrl)
+                ]);
+            });
     }
 
     // Fetch all Mustache templates and store them in window.svTemplates

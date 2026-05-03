@@ -949,9 +949,18 @@ window.SViewerApp = (function() {
             type: 'GET',
             dataType: 'json',
             success: function(data) {
-                // Non-GeoJSON response (e.g. Grist records, ArcGIS REST) → normalize via adapter
-                var geojson = (data && data.type === 'FeatureCollection') ? data
-                    : (typeof config.jsonLayerAdapter === 'function' ? config.jsonLayerAdapter(data, url) : null);
+                // Non-GeoJSON response → normalize via registered adapters (customConfig.adapters)
+                var geojson = (data && data.type === 'FeatureCollection') ? data : (function() {
+                    var adapters = window.SViewerAdapters || {};
+                    for (var name in adapters) {
+                        var a = adapters[name];
+                        if (a.match && !a.match(url)) { continue; }
+                        var result = a.convert(data, url);
+                        if (result) { return result; }
+                    }
+                    // Legacy: single-function adapter in customConfig
+                    return (typeof config.jsonLayerAdapter === 'function') ? config.jsonLayerAdapter(data, url) : null;
+                }());
                 if (!geojson) {
                     messagePopup(tr('msg.query_failed'));
                     return;
