@@ -626,12 +626,12 @@ window.SViewerApp = (function() {
      * @return {String} translated string
      */
     function tr(s) {
-        if (typeof hardConfig.i18n[config.lang][s] === 'string') {
-                return hardConfig.i18n[config.lang][s];
-            }
-        else {
-            return s;
+        var t = (typeof hardConfig.i18n[config.lang][s] === 'string') ? hardConfig.i18n[config.lang][s] : s;
+        // Replace {0}, {1}, … with extra arguments passed to tr().
+        for (var i = 1; i < arguments.length; i++) {
+            t = t.replace('{' + (i - 1) + '}', arguments[i]);
         }
+        return t;
     }
 
     /**
@@ -944,23 +944,46 @@ window.SViewerApp = (function() {
      * displayed as a table in the query panel (same UX as WMS GetFeatureInfo).
      */
     function loadGeoJSON(url) {
+        // Warn early if _format hint names an adapter that is not loaded.
+        // Catches sysadmin misconfiguration before the fetch even starts.
+        var formatHint = (function() { try { return new URL(url).searchParams.get('_format'); } catch(e) { return null; } }());
+        if (formatHint) {
+            var hintedAdapter = (window.SViewerAdapters || {})[formatHint];
+            if (!hintedAdapter) {
+                messagePopup(tr('msg.adapter_not_loaded', formatHint));
+                log('_format hint "' + formatHint + '" found but adapter not loaded — add to customConfig adapters[]');
+                return;
+            }
+        }
+        // Check if any loaded adapter needs raw text instead of parsed JSON (e.g. CSV adapter).
+        var textAdapter = null;
+        var adapters = window.SViewerAdapters || {};
+        for (var adName in adapters) {
+            if (adapters[adName].wantsText && adapters[adName].match && adapters[adName].match(url)) {
+                textAdapter = adapters[adName];
+                break;
+            }
+        }
         $.ajax({
             url: url,
             type: 'GET',
-            dataType: 'json',
+            dataType: textAdapter ? 'text' : 'json',
             success: function(data) {
+                // Text adapters (e.g. CSV) receive raw string; dispatch directly.
+                var geojson = textAdapter ? textAdapter.convert(data, url) : (
                 // Non-GeoJSON response → normalize via registered adapters (customConfig.adapters)
-                var geojson = (data && data.type === 'FeatureCollection') ? data : (function() {
-                    var adapters = window.SViewerAdapters || {};
-                    for (var name in adapters) {
-                        var a = adapters[name];
+                (data && data.type === 'FeatureCollection') ? data : (function() {
+                    var jsonAdapters = window.SViewerAdapters || {};
+                    for (var name in jsonAdapters) {
+                        var a = jsonAdapters[name];
+                        if (a.wantsText) { continue; } // text adapters already handled above
                         if (a.match && !a.match(url)) { continue; }
                         var result = a.convert(data, url);
                         if (result) { return result; }
                     }
                     // Legacy: single-function adapter in customConfig
                     return (typeof config.jsonLayerAdapter === 'function') ? config.jsonLayerAdapter(data, url) : null;
-                }());
+                }()));
                 if (!geojson) {
                     messagePopup(tr('msg.query_failed'));
                     return;

@@ -91,7 +91,8 @@ customConfig = {
      * Adapters for non-GeoJSON API sources loaded via ?geojson=
      * Each name maps to connectors/{name}/adapter.js (loaded before sviewer.js).
      * Empty array = no adapter loaded, no performance cost.
-     * Example: adapters: ['grist']
+     * Available adapters: 'grist', 'csv'
+     * Example: adapters: ['grist', 'csv']
      */
     adapters: [],
 
