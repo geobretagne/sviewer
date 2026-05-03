@@ -6,6 +6,21 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Connecteur Grist v2** — widget Grist étendu : panneau de configuration tabulé (Données / Carte / Partage / Aide), export/import JSON de la configuration, persistance complète des options par instance via l'API widget Grist
+- Support des modes géométrie : GeoJSON, Lat/Lon (2 colonnes), Lat\,Lon (texte), Lon\,Lat (texte), WKT
+- `md=` (identifiant CSW) configurable dans le panneau de paramètres du widget, avec rechargement si modifié
+- Étiquette texte (`_label`) affichée sur les entités GeoJSON dans sViewer standalone — la propriété est définie par `jsonLayerAdapter` via le paramètre hint `_labelcol`
+
+### Changed
+- Style GeoJSON par défaut : orange `#ff6600`, opacité `0.35`, trait `2.5 px` — colorblind-friendly, visible sur orthophoto et fond de carte
+- `customConfig.geojsonStyle` est désormais lu comme source de vérité pour les valeurs par défaut du style dans le widget Grist (plus de valeurs codées en dur)
+- `jsonLayerAdapter` reçoit `sourceUrl` comme 2e argument — permet à l'adaptateur de lire les hints géométriques encodés dans l'URL par le widget Grist
+
+### Fixed
+- Lien de partage sViewer depuis le widget Grist : le mode géométrie et la colonne sélectionnés sont désormais encodés comme paramètres hint dans l'URL de l'API Grist (`_geommode`, `_geomcol`, `_collat`, `_collon`, `_labelcol`) — l'auto-détection ne surcharge plus le choix manuel
+- Clic successif sur des entités GeoJSON : le panneau de résultats s'ouvre correctement à chaque clic au lieu de se fermer (comportement identique aux couches WMS)
+
 ## [0.4.0] - 2026-05-03
 
 ### Added

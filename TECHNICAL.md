@@ -227,6 +227,8 @@ Charge un fichier GeoJSON distant comme couche vectorielle interactive.
 - CORS requis sur le serveur source
 - Composable avec `?layers=` : superpose les données GeoJSON à des couches WMS
 - Compatible embed : `SViewer.init('#map', { geojson: 'https://...' })`
+- Si une entité possède une propriété `_label`, celle-ci est affichée comme étiquette texte sur la carte
+- Si l'URL source n'est pas un GeoJSON natif, `customConfig.jsonLayerAdapter` est appelé pour normaliser la réponse (voir [jsonLayerAdapter](#jsonlayeradapter))
 
 Persistant dans le permalien et le code embed.
 
@@ -383,6 +385,12 @@ customConfig = {
     nodata: '<!--nodatadetect-->\n<!--nodatadetect-->',
     openLSGeocodeUrl: "https://data.geopf.fr/geocodage/search",
     allowedDomains: [],              // optionnel — [] = tous les domaines autorisés
+    geojsonStyle: {                  // style des couches GeoJSON (?geojson=)
+        color: '#ff6600',
+        fillOpacity: 0.35,
+        strokeWidth: 2.5
+    },
+    jsonLayerAdapter: function(response, sourceUrl) { /* ... */ },
     layersBackground: [ /* ... */ ]
 };
 ```
@@ -469,6 +477,46 @@ Le service doit :
 - Supporter l'API OpenLS (standard OGC)
 - Accepter les requêtes GET/POST JSON
 - Supporter CORS
+
+### Style des couches GeoJSON
+
+La clé `geojsonStyle` contrôle l'apparence des couches vectorielles chargées via `?geojson=`.
+
+```javascript
+geojsonStyle: {
+    color: '#ff6600',      // couleur contour + remplissage des points (CSS color)
+    fillOpacity: 0.35,     // opacité du remplissage polygone (0–1)
+    strokeWidth: 2.5       // épaisseur du trait en pixels
+}
+```
+
+- `color` s'applique au trait **et** au remplissage des points — les polygones utilisent `color` + `fillOpacity` pour le fond
+- Valeurs par défaut : orange `#ff6600`, opacité `0.35`, trait `2.5 px` — choix colorblind-friendly, visible sur orthophoto et fond de carte
+- Si une entité possède une propriété `_label`, elle est affichée comme étiquette texte au-dessus de l'entité
+
+### jsonLayerAdapter
+
+Fonction de normalisation appelée quand la réponse de `?geojson=` n'est pas un GeoJSON natif (`FeatureCollection`). Permet de supporter des APIs JSON arbitraires (Grist, ArcGIS REST, etc.).
+
+```javascript
+jsonLayerAdapter: function(response, sourceUrl) {
+    // response  : objet JSON brut retourné par l'API
+    // sourceUrl : URL complète de la requête (avec ses paramètres query)
+    // retourne  : GeoJSON FeatureCollection (EPSG:4326)
+}
+```
+
+**Paramètres hint dans `sourceUrl` :** le widget Grist encode des hints géométriques dans les paramètres query de l'URL source. L'adaptateur par défaut les lit pour bypasser l'auto-détection :
+
+| Paramètre | Rôle |
+|-----------|------|
+| `_geommode` | Mode : `geojson`, `latlon`, `latlon_str`, `lonlat_str`, `wkt` |
+| `_geomcol` | Colonne géométrie (modes geojson, latlon_str, lonlat_str, wkt) |
+| `_collat` | Colonne latitude (mode `latlon`) |
+| `_collon` | Colonne longitude (mode `latlon`) |
+| `_labelcol` | Colonne étiquette → propriété `_label` sur chaque feature |
+
+En l'absence de hints, l'adaptateur auto-détecte la géométrie (candidats : `geometry`, `geom`, `geo`, `shape`, `wkb_geometry`; puis paire lat/lon; puis colonne WKT; puis colonne texte `lat,lon`).
 
 ### Sécurité — liste blanche de domaines OGC
 
