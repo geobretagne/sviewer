@@ -503,23 +503,35 @@ function makeFeatureStyle(cfg, selected) {
     };
 }
 
+// Returns geojsonStyle defaults from customConfig/hardConfig, with built-in fallbacks.
+function geojsonStyleDefaults() {
+    var gs = (window.customConfig && window.customConfig.geojsonStyle) ||
+             (window.hardConfig   && window.hardConfig.geojsonStyle)   || {};
+    return {
+        color:       safeColor(gs.color, '#ff6600'),
+        fillOpacity: gs.fillOpacity  !== undefined ? gs.fillOpacity  : 0.35,
+        strokeWidth: gs.strokeWidth  !== undefined ? gs.strokeWidth  : 2.5
+    };
+}
+
 // Extrait les paramètres de style depuis svConfig pour les entités normales ou sélectionnées.
 function getStyleCfg(selected) {
+    var d = geojsonStyleDefaults();
     if (selected) {
         return {
             fillColor:     safeColor(svConfig.sel_fill_color,   '#e74c3c'),
             fillOpacity:   svConfig.sel_fill_opacity   !== undefined ? parseFloat(svConfig.sel_fill_opacity)   : 1,
             strokeColor:   safeColor(svConfig.sel_stroke_color, '#ffffff'),
             strokeOpacity: svConfig.sel_stroke_opacity !== undefined ? parseFloat(svConfig.sel_stroke_opacity) : 1,
-            strokeWidth:   svConfig.sel_stroke_width   !== undefined ? parseFloat(svConfig.sel_stroke_width)   : 2.5
+            strokeWidth:   svConfig.sel_stroke_width   !== undefined ? parseFloat(svConfig.sel_stroke_width)   : d.strokeWidth + 1
         };
     }
     return {
-        fillColor:     safeColor(svConfig.fill_color,   '#ffcc00'),
-        fillOpacity:   svConfig.fill_opacity   !== undefined ? parseFloat(svConfig.fill_opacity)   : 0.85,
-        strokeColor:   safeColor(svConfig.stroke_color, '#ffffff'),
+        fillColor:     safeColor(svConfig.fill_color,   d.color),
+        fillOpacity:   svConfig.fill_opacity   !== undefined ? parseFloat(svConfig.fill_opacity)   : d.fillOpacity,
+        strokeColor:   safeColor(svConfig.stroke_color, d.color),
         strokeOpacity: svConfig.stroke_opacity !== undefined ? parseFloat(svConfig.stroke_opacity) : 1,
-        strokeWidth:   svConfig.stroke_width   !== undefined ? parseFloat(svConfig.stroke_width)   : 1.5
+        strokeWidth:   svConfig.stroke_width   !== undefined ? parseFloat(svConfig.stroke_width)   : d.strokeWidth
     };
 }
 
@@ -610,16 +622,17 @@ function openSettings() {
     if (modeElOs) { modeElOs.value = colGeomMode; }
     syncColumnPickerMode();
     document.getElementById('sv-cfg-title').value               = svConfig.title || '';
-    document.getElementById('sv-cfg-fill-color').value          = safeColor(svConfig.fill_color,       '#ffcc00');
-    document.getElementById('sv-cfg-fill-opacity').value        = svConfig.fill_opacity    !== undefined ? svConfig.fill_opacity    : 0.85;
-    document.getElementById('sv-cfg-stroke-color').value        = safeColor(svConfig.stroke_color,     '#ffffff');
+    var d = geojsonStyleDefaults();
+    document.getElementById('sv-cfg-fill-color').value          = safeColor(svConfig.fill_color,       d.color);
+    document.getElementById('sv-cfg-fill-opacity').value        = svConfig.fill_opacity    !== undefined ? svConfig.fill_opacity    : d.fillOpacity;
+    document.getElementById('sv-cfg-stroke-color').value        = safeColor(svConfig.stroke_color,     d.color);
     document.getElementById('sv-cfg-stroke-opacity').value      = svConfig.stroke_opacity  !== undefined ? svConfig.stroke_opacity  : 1;
-    document.getElementById('sv-cfg-stroke-width').value        = svConfig.stroke_width    !== undefined ? svConfig.stroke_width    : 1.5;
+    document.getElementById('sv-cfg-stroke-width').value        = svConfig.stroke_width    !== undefined ? svConfig.stroke_width    : d.strokeWidth;
     document.getElementById('sv-cfg-sel-fill-color').value      = safeColor(svConfig.sel_fill_color,   '#e74c3c');
     document.getElementById('sv-cfg-sel-fill-opacity').value    = svConfig.sel_fill_opacity   !== undefined ? svConfig.sel_fill_opacity   : 1;
     document.getElementById('sv-cfg-sel-stroke-color').value    = safeColor(svConfig.sel_stroke_color, '#ffffff');
     document.getElementById('sv-cfg-sel-stroke-opacity').value  = svConfig.sel_stroke_opacity !== undefined ? svConfig.sel_stroke_opacity : 1;
-    document.getElementById('sv-cfg-sel-stroke-width').value    = svConfig.sel_stroke_width   !== undefined ? svConfig.sel_stroke_width   : 2.5;
+    document.getElementById('sv-cfg-sel-stroke-width').value    = svConfig.sel_stroke_width   !== undefined ? svConfig.sel_stroke_width   : d.strokeWidth + 1;
     document.getElementById('sv-cfg-layers').value  = svConfig.layers || '';
     document.getElementById('sv-cfg-md').value      = svConfig.md     || '';
     var hc     = window.hardConfig || {};
@@ -693,17 +706,18 @@ function closeSettings(save) {
         }
         colLabel = selLbl.value || null;
 
+        var dcs = geojsonStyleDefaults();
         function readFloat(id, fallback) { var v = parseFloat(document.getElementById(id).value); return isNaN(v) ? fallback : v; }
         svConfig.fill_color          = document.getElementById('sv-cfg-fill-color').value;
-        svConfig.fill_opacity        = readFloat('sv-cfg-fill-opacity',       0.85);
+        svConfig.fill_opacity        = readFloat('sv-cfg-fill-opacity',       dcs.fillOpacity);
         svConfig.stroke_color        = document.getElementById('sv-cfg-stroke-color').value;
         svConfig.stroke_opacity      = readFloat('sv-cfg-stroke-opacity',     1);
-        svConfig.stroke_width        = readFloat('sv-cfg-stroke-width',       1.5);
+        svConfig.stroke_width        = readFloat('sv-cfg-stroke-width',       dcs.strokeWidth);
         svConfig.sel_fill_color      = document.getElementById('sv-cfg-sel-fill-color').value;
         svConfig.sel_fill_opacity    = readFloat('sv-cfg-sel-fill-opacity',   1);
         svConfig.sel_stroke_color    = document.getElementById('sv-cfg-sel-stroke-color').value;
         svConfig.sel_stroke_opacity  = readFloat('sv-cfg-sel-stroke-opacity', 1);
-        svConfig.sel_stroke_width    = readFloat('sv-cfg-sel-stroke-width',   2.5);
+        svConfig.sel_stroke_width    = readFloat('sv-cfg-sel-stroke-width',   dcs.strokeWidth + 1);
 
         var title   = document.getElementById('sv-cfg-title').value.trim();
         var layers  = document.getElementById('sv-cfg-layers').value.trim();
@@ -1023,9 +1037,10 @@ document.getElementById('sv-btn-cfg-export').addEventListener('click', function(
 function applyImportData(data) {
     var lbSel = document.getElementById('sv-cfg-lb-sel');
     var lbNum = document.getElementById('sv-cfg-lb');
-    if (data.fill_color !== undefined)          { document.getElementById('sv-cfg-fill-color').value         = safeColor(data.fill_color, '#ffcc00'); }
+    var dai = geojsonStyleDefaults();
+    if (data.fill_color !== undefined)          { document.getElementById('sv-cfg-fill-color').value         = safeColor(data.fill_color, dai.color); }
     if (data.fill_opacity !== undefined)        { document.getElementById('sv-cfg-fill-opacity').value       = data.fill_opacity; }
-    if (data.stroke_color !== undefined)        { document.getElementById('sv-cfg-stroke-color').value       = safeColor(data.stroke_color, '#ffffff'); }
+    if (data.stroke_color !== undefined)        { document.getElementById('sv-cfg-stroke-color').value       = safeColor(data.stroke_color, dai.color); }
     if (data.stroke_opacity !== undefined)      { document.getElementById('sv-cfg-stroke-opacity').value     = data.stroke_opacity; }
     if (data.stroke_width !== undefined)        { document.getElementById('sv-cfg-stroke-width').value       = data.stroke_width; }
     if (data.sel_fill_color !== undefined)      { document.getElementById('sv-cfg-sel-fill-color').value     = safeColor(data.sel_fill_color, '#e74c3c'); }
