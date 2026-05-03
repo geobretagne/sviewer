@@ -5,6 +5,16 @@ sViewer affiche des cartes interactives dans un navigateur, sur téléphone, tab
 
 ---
 
+**À qui s'adresse sViewer ?**
+
+sViewer est fait pour les gens qui veulent une carte sans passer par un logiciel SIG, sans formation cartographique, sans compte à créer.
+
+Le cas typique : une ou deux données parmi les nombreuses données déjà publiées par les géomaticiens, à partager avec des collègues ou à afficher sur son site.
+
+sViewer n'est **pas** un logiciel SIG : pas de dessin, pas d'analyse spatiale, pas de gestion de "couches". Si vous cherchez un outil pour publier beaucoup de données, regardez [mviewer](https://mviewer.github.io/fr/), [mapstore](https://docs.georchestra.geo-solutions.it/fr/latest/mapstore/index.html) ou encore [georchestra](https://georchestra.org). Ceci dit, sViewer complètera parfaitement ces environnements ! Pour de l'analyse complexe, regardez [QGIS](https://qgis.org/). Les données géographiques bénéficient d'un large écosystème et tout est disponible en logiciel libre : faites confiance à leurs communautés.
+
+---
+
 ![sViewer — carte avec panneau d'information ouvert](examples/screenshot-desktop.png)
 
 
@@ -16,12 +26,12 @@ Que permet sViewer ?
 * **Exporter en image** — PNG depuis le panneau de partage
 * **Interroger les données** — cliquez sur la carte pour afficher la fiche d'une zone ou d'un objet
 * **Traçabilité des données** — producteur, licence, date de mise à jour affichés automatiquement depuis les métadonnées
-* **Superposer des données JSON ou GeoJSON** — chargez n'importe quel fichier GeoJSON ou API JSON distant avec `?geojson=URL`, sans serveur cartographique ; connecteur [Grist](https://www.getgrist.com) intégré (GitHub, data.gouv.fr, API REST…)
+* **Superposer des données JSON ou GeoJSON** — chargez un fichier GeoJSON ou API JSON distant avec `?geojson=URL` ; connecteur [Grist](https://www.getgrist.com) intégré (GitHub, data.gouv.fr, API REST…)
 * **Rechercher une adresse** — barre de recherche intégrée, géolocalisation ; service de géocodage configurable (France ou mondial)
 * **Thème clair et sombre** — manuel ou automatique selon le système
 * **Tous les appareils** — téléphone, tablette, ordinateur, même URL
-* **Intégrer dans n'importe quelle page** — une ligne `<iframe>` suffit, sans compétences techniques
-* **API JavaScript** — intégrez et contrôlez la carte en quelques lignes, sans framework ni build
+* **Intégrer dans n'importe quelle page** — une ligne `<iframe>` suffit
+* **API JavaScript** — intégrez et contrôlez la carte
 * **Logiciel libre, gratuit, auto-hébergeable** — licence GPL, aucun compte, aucune inscription, aucune dépendance externe
 
 

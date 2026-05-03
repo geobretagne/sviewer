@@ -1057,9 +1057,9 @@ function applyImportData(data) {
     if (data.x !== undefined)                   { document.getElementById('sv-cfg-x').value      = data.x; }
     if (data.y !== undefined)                   { document.getElementById('sv-cfg-y').value      = data.y; }
     if (data.z !== undefined)                   { document.getElementById('sv-cfg-z').value      = data.z; }
-    if (data.sviewer_base !== undefined)        { document.getElementById('sv-cfg-svbase').value = data.sviewer_base; }
-    if (data.grist_api_base !== undefined)      { document.getElementById('sv-cfg-apibase').value = data.grist_api_base; }
-    if (data.georchestra_base !== undefined)    { document.getElementById('sv-cfg-georchestra').value = data.georchestra_base; }
+    if (data.sviewer_base !== undefined)        { document.getElementById('sv-cfg-svbase').value = safeHttpUrl(data.sviewer_base) || ''; }
+    if (data.grist_api_base !== undefined)      { document.getElementById('sv-cfg-apibase').value = safeHttpUrl(data.grist_api_base) || ''; }
+    if (data.georchestra_base !== undefined)    { document.getElementById('sv-cfg-georchestra').value = safeHttpUrl(data.georchestra_base) || ''; }
     if (data.fit_on_load !== undefined)         { document.getElementById('sv-cfg-fit').checked  = data.fit_on_load; }
     if (data.geom_mode !== undefined) {
         var modeElAi = document.getElementById('sv-cfg-geom-mode');

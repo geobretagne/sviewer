@@ -4,7 +4,7 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.5.0] - 2026-05-03
 
 ### Added
 - **Connecteur Grist v2** — widget Grist étendu : panneau de configuration tabulé (Données / Carte / Partage / Aide), export/import JSON de la configuration, persistance complète des options par instance via l'API widget Grist

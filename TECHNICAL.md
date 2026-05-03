@@ -642,6 +642,69 @@ Panneau Documentation
 
 ---
 
+## Connecteur Grist
+
+Le connecteur Grist est un widget personnalisé Grist qui affiche les données d'une table sur une carte sViewer et synchronise la sélection dans les deux sens.
+
+**Documentation complète :** [connectors/grist/README.md](connectors/grist/README.md)
+
+### Architecture
+
+```
+Grist document
+  └─ Widget personnalisé → connectors/grist/index.html
+       ├─ embed.js        (charge OL, jQuery, Bootstrap, crée le DOM sViewer dans #sv-map)
+       ├─ widget.js       (logique widget : Grist API, colonnes, styles, panneau config)
+       └─ grist-plugin-api.js (CDN docs.getgrist.com — obligatoire)
+```
+
+### Persistance de la configuration
+
+La configuration est stockée **par instance** via `grist.widgetApi.setOptions()` / `getOptions()`. Chaque vue (widget) d'un document Grist dispose de sa propre configuration indépendante.
+
+Clés persistées :
+
+| Clé | Type | Rôle |
+|-----|------|------|
+| `geom_mode` | string | Mode géométrie (`auto`, `geojson`, `latlon`, `latlon_str`, `lonlat_str`, `wkt`) |
+| `_colGeom` | string | Colonne géométrie active |
+| `_colLat` / `_colLon` | string | Colonnes latitude/longitude (mode `latlon`) |
+| `_colLabel` | string | Colonne étiquette |
+| `fill_color` / `fill_opacity` | string/number | Style remplissage entités |
+| `stroke_color` / `stroke_opacity` / `stroke_width` | string/number | Style contour entités |
+| `sel_fill_color` / `sel_fill_opacity` | string/number | Style remplissage sélection |
+| `sel_stroke_color` / `sel_stroke_opacity` / `sel_stroke_width` | string/number | Style contour sélection |
+| `title` | string | Titre affiché dans la barre sViewer |
+| `layers` | string | Couche(s) WMS additionnelles |
+| `md` | string | Identifiant CSW |
+| `lb` | number | Index fond de carte initial |
+| `x` / `y` / `z` | number | Centre et zoom initiaux (EPSG:3857) |
+| `sviewer_base` | string | URL de base sViewer (pour le lien de partage) |
+| `grist_api_base` | string | Hôte Grist (instances auto-hébergées) |
+| `georchestra_base` | string | Hôte geOrchestra |
+| `fit_on_load` | boolean | Recadrage automatique sur les données |
+
+### Lien de partage et hints géométriques
+
+Lorsque l'utilisateur clique sur **Partager** dans sViewer, l'URL générée inclut `?geojson=` pointant vers l'API Grist avec des paramètres *hint* encodés par `buildGristGeojsonUrl()` dans `widget.js` :
+
+```
+?geojson=https://docs.getgrist.com/api/docs/{docId}/tables/{tableId}/records
+         ?_geommode=latlon_str&_geomcol=geo_point_2d&_labelcol=nom
+```
+
+Ces hints sont lus par `jsonLayerAdapter` (voir section **jsonLayerAdapter** ci-dessus) pour reproduire exactement le même rendu dans sViewer standalone, sans auto-détection.
+
+### Styles par défaut
+
+Les valeurs par défaut des contrôles couleur/opacité du panneau de configuration sont lues depuis `customConfig.geojsonStyle` (ou `hardConfig.geojsonStyle`). En l'absence de configuration, les valeurs codées en dur sont : `#ff6600`, opacité `0.35`, épaisseur `2.5 px` (identiques à `geojsonStyle`).
+
+### Migration depuis v0.4.0
+
+La table Grist `_sviewer_customConfig` n'est plus utilisée. Les clés `feature_color` et `feature_highlight_color` sont migrées automatiquement vers `fill_color` et `sel_fill_color` lors du premier chargement.
+
+---
+
 ## Projections et Repères
 
 ### Projections supportées
