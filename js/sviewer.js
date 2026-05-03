@@ -975,17 +975,34 @@ window.SViewerApp = (function() {
                 var gsColor = gs.color || '#3388ff';
                 var gsFill = ol.color.asArray(gsColor).slice();
                 gsFill[3] = gs.fillOpacity !== undefined ? gs.fillOpacity : 0.2;
+                var gsBaseStyle = new ol.style.Style({
+                    fill:   new ol.style.Fill({ color: gsFill }),
+                    stroke: new ol.style.Stroke({ color: gsColor, width: gs.strokeWidth || 2 }),
+                    image:  new ol.style.Circle({
+                        radius: 6,
+                        fill:   new ol.style.Fill({ color: gsColor }),
+                        stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 })
+                    })
+                });
                 vectorLayer = new ol.layer.Vector({
                     source: vectorSource,
-                    style: new ol.style.Style({
-                        fill:   new ol.style.Fill({ color: gsFill }),
-                        stroke: new ol.style.Stroke({ color: gsColor, width: gs.strokeWidth || 2 }),
-                        image:  new ol.style.Circle({
-                            radius: 6,
-                            fill:   new ol.style.Fill({ color: gsColor }),
-                            stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 })
-                        })
-                    })
+                    style: function(feature) {
+                        var lbl = feature.get('_label');
+                        if (!lbl && lbl !== 0) { return gsBaseStyle; }
+                        return new ol.style.Style({
+                            fill:   gsBaseStyle.getFill(),
+                            stroke: gsBaseStyle.getStroke(),
+                            image:  gsBaseStyle.getImage(),
+                            text:   new ol.style.Text({
+                                text: String(lbl),
+                                font: '12px sans-serif',
+                                fill: new ol.style.Fill({ color: '#222' }),
+                                stroke: new ol.style.Stroke({ color: '#fff', width: 3 }),
+                                overflow: true,
+                                offsetY: -14
+                            })
+                        });
+                    }
                 });
                 map.addLayer(vectorLayer);
 
