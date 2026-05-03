@@ -107,6 +107,7 @@ var colGeom = null;                // colonne géométrie active
 var colLabel = null;               // colonne étiquette active (optionnelle)
 var colLat = null;                 // colonne latitude (mode lat/lon)
 var colLon = null;                 // colonne longitude (mode lat/lon)
+var widgetOptions = null;          // options widget Grist (surcharges par instance)
 var vectorLayer = null;            // couche OL vecteur portant les entités Grist
 var featureByRowId = {};           // id ligne Grist → OL Feature
 var allColumns = [];               // noms de colonnes du dernier onRecords
@@ -285,6 +286,44 @@ function applySelectionStyle(selectedFeat) {
             }));
         }
     });
+}
+
+// ---------------------------------------------------------------------------
+// Widget options (persistance par instance via grist.widgetApi)
+// ---------------------------------------------------------------------------
+
+// Persiste les colonnes actives + les clés svConfig surchargées par l'utilisateur.
+// Appelé à chaque changement de select ou de config.
+// Les clés svConfig issues de _sviewer_customConfig ne sont pas re-sauvegardées ici —
+// seules les surcharges explicites (passées via le panneau options Grist) sont conservées.
+function saveOptions() {
+    if (!grist.widgetApi || typeof grist.widgetApi.setOptions !== 'function') { return; }
+    var opts = {};
+    if (colGeom)  { opts._colGeom  = colGeom; }
+    if (colLat)   { opts._colLat   = colLat; }
+    if (colLon)   { opts._colLon   = colLon; }
+    if (colLabel) { opts._colLabel = colLabel; }
+    // Fusionne les surcharges svConfig déjà présentes dans les options widget
+    if (widgetOptions) {
+        Object.keys(widgetOptions).forEach(function(k) {
+            if (k[0] !== '_') { opts[k] = widgetOptions[k]; }
+        });
+    }
+    grist.widgetApi.setOptions(opts).catch(function(e) { console.warn('[sviewer] setOptions failed:', e); });
+}
+
+// Applique les options widget : surcharge svConfig + restaure les colonnes actives.
+// Appelé au démarrage et via onOptions (édition en direct du panneau Grist).
+function applyOptions(opts) {
+    if (!opts) { return; }
+    widgetOptions = opts;
+    // Surcharges svConfig (clés sans préfixe _)
+    Object.keys(opts).forEach(function(k) { if (k[0] !== '_') { svConfig[k] = opts[k]; } });
+    // Restauration des colonnes
+    if (opts._colGeom)  { colGeom  = opts._colGeom;  colLat = null; colLon = null; }
+    if (opts._colLat)   { colLat   = opts._colLat;   colGeom = null; }
+    if (opts._colLon)   { colLon   = opts._colLon;   colGeom = null; }
+    if (opts._colLabel) { colLabel = opts._colLabel; }
 }
 
 // onRecords se déclenche aussi à chaque changement de sélection — le debounce évite les rebuilds inutiles.
@@ -473,22 +512,26 @@ document.getElementById('sv-sel-geom').addEventListener('change', function() {
     colGeom = this.value;
     colLat = null; colLon = null;
     viewFitted = false;
+    saveOptions();
     rebuildLayer();
 });
 document.getElementById('sv-sel-lat').addEventListener('change', function() {
     colLat = this.value;
     colGeom = null;
     viewFitted = false;
+    saveOptions();
     rebuildLayer();
 });
 document.getElementById('sv-sel-lon').addEventListener('change', function() {
     colLon = this.value;
     colGeom = null;
     viewFitted = false;
+    saveOptions();
     rebuildLayer();
 });
 document.getElementById('sv-sel-label').addEventListener('change', function() {
     colLabel = this.value || null;
+    saveOptions();
     rebuildLayer();
 });
 
@@ -502,6 +545,18 @@ var CONFIG_TABLE = 'Sviewer_customConfig';
 
 // requiredAccess: full — nécessaire pour docApi.fetchTable sur _sviewer_customConfig
 grist.ready({ requiredAccess: 'full' });
+
+// Mise à jour en direct quand l'utilisateur édite les options widget dans le panneau Grist.
+// Réinitialise la carte avec les nouvelles valeurs sans recharger la page.
+if (grist.widgetApi && typeof grist.widgetApi.onOptions === 'function') {
+    grist.widgetApi.onOptions(function(opts) {
+        applyOptions(opts);
+        if (mapReady) {
+            viewFitted = false;
+            rebuildLayer();
+        }
+    });
+}
 
 // Enregistré immédiatement après ready() — Grist envoie le premier onRecords
 // dès réception de Ready ; un enregistrement tardif (dans une Promise) le manquerait.
@@ -575,13 +630,17 @@ grist.docApi.fetchTable(CONFIG_TABLE)
     })
     .catch(function(e) { console.warn('[sviewer] config table missing or error:', e); setStatus(tr('no.config')); })
     .then(function() {
+        // Widget options chargées après la config table — elles ont priorité sur _sviewer_customConfig
+        var optionsPromise = (grist.widgetApi && typeof grist.widgetApi.getOptions === 'function')
+            ? grist.widgetApi.getOptions().then(function(opts) { applyOptions(opts); }).catch(function() {})
+            : Promise.resolve();
         var docPromise = (grist.docApi && typeof grist.docApi.getDocName === 'function')
             ? grist.docApi.getDocName().then(function(id) { gristDocId = id; }).catch(function() {})
             : Promise.resolve();
         var tablePromise = (grist.selectedTable)
             ? grist.selectedTable.getTableId().then(function(id) { gristTableId = id; }).catch(function() {})
             : Promise.resolve();
-        return Promise.all([docPromise, tablePromise]);
+        return Promise.all([optionsPromise, docPromise, tablePromise]);
     })
     .then(function() {
         initMap();
