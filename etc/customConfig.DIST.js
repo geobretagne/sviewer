@@ -82,9 +82,9 @@ customConfig = {
      * strokeWidth: line and polygon stroke width in pixels
      */
     geojsonStyle: {
-        color: '#e74c3c',
-        fillOpacity: 0.6,
-        strokeWidth: 3
+        color: '#ff6600',
+        fillOpacity: 0.35,
+        strokeWidth: 2.5
     },
 
     /**

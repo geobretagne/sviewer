@@ -972,12 +972,12 @@ window.SViewerApp = (function() {
 
                 var vectorSource = new ol.source.Vector({ features: features });
                 var gs = config.geojsonStyle || {};
-                var gsColor = gs.color || '#3388ff';
+                var gsColor = gs.color || '#ff6600';
                 var gsFill = ol.color.asArray(gsColor).slice();
-                gsFill[3] = gs.fillOpacity !== undefined ? gs.fillOpacity : 0.2;
+                gsFill[3] = gs.fillOpacity !== undefined ? gs.fillOpacity : 0.35;
                 var gsBaseStyle = new ol.style.Style({
                     fill:   new ol.style.Fill({ color: gsFill }),
-                    stroke: new ol.style.Stroke({ color: gsColor, width: gs.strokeWidth || 2 }),
+                    stroke: new ol.style.Stroke({ color: gsColor, width: gs.strokeWidth || 2.5 }),
                     image:  new ol.style.Circle({
                         radius: 6,
                         fill:   new ol.style.Fill({ color: gsColor }),
