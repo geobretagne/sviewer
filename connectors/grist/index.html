@@ -35,13 +35,17 @@
             font-size: 15px; font-weight: 600; padding: 14px 16px 10px;
             border-bottom: 1px solid #ddd; margin: 0; background: #f5f5f5;
         }
-        .sv-cfg-fieldset {
-            border: 1px solid #ddd; border-radius: 4px; margin: 10px 12px 4px; padding: 0 0 6px;
+        #sv-tab-bar {
+            display: flex; border-bottom: 1px solid #ddd; background: #f5f5f5; flex-shrink: 0;
         }
-        .sv-cfg-fieldset legend {
-            font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase;
-            letter-spacing: 0.05em; padding: 0 6px; margin-left: 8px;
+        #sv-tab-bar button {
+            flex: 1; padding: 7px 4px; font-size: 12px; border: none; border-bottom: 2px solid transparent;
+            background: transparent; cursor: pointer; color: #666;
         }
+        #sv-tab-bar button:hover { color: #333; background: #ebebeb; }
+        #sv-tab-bar button.sv-tab-active { color: #2c7be5; border-bottom-color: #2c7be5; font-weight: 600; background: #fff; }
+        .sv-tab-panel { display: none; }
+        .sv-tab-panel.sv-tab-visible { display: block; }
         .sv-cfg-grid {
             display: grid; grid-template-columns: 160px 1fr;
             gap: 0; padding: 4px 0;
@@ -63,7 +67,7 @@
         .sv-cfg-style-row { display: flex; align-items: center; gap: 6px; margin: 4px 12px 4px 0; flex-wrap: nowrap; }
         .sv-cfg-style-row input[type=color]  { margin: 0; }
         .sv-cfg-style-row input[type=number] { width: 58px; margin: 0; }
-#sv-settings-footer {
+        #sv-settings-footer {
             display: flex; gap: 8px; padding: 12px 16px;
             border-top: 1px solid #ddd; background: #f5f5f5; flex-shrink: 0;
         }
@@ -71,8 +75,8 @@
             padding: 5px 14px; font-size: 13px; border: 1px solid #bbb;
             border-radius: 3px; cursor: pointer; background: #fff;
         }
-        #sv-btn-cfg-save { background: #2c7be5; color: #fff; border-color: #2c7be5; font-weight: 600; }
-        #sv-btn-cfg-save:hover { background: #1a66d2; }
+        #sv-settings-footer #sv-btn-cfg-save { background: #2c7be5; color: #fff; border-color: #2c7be5; font-weight: 600; }
+        #sv-settings-footer #sv-btn-cfg-save:hover { background: #1a66d2; }
         #sv-settings-footer button:not(#sv-btn-cfg-save):hover { background: #e8e8e8; }
         #sv-import-area {
             display: none; flex-direction: column; gap: 6px;
@@ -87,6 +91,11 @@
             border: 1px solid #2c7be5; border-radius: 3px; background: #2c7be5; color: #fff; cursor: pointer;
         }
         #sv-import-area button:hover { background: #1a66d2; }
+        #sv-help { padding: 14px 16px; font-size: 13px; color: #333; line-height: 1.6; }
+        #sv-help h3 { font-size: 12px; font-weight: 600; margin: 10px 0 3px; color: #555; text-transform: uppercase; letter-spacing: 0.04em; }
+        #sv-help h3:first-child { margin-top: 0; }
+        #sv-help p { margin-bottom: 4px; }
+        #sv-help a { color: #2c7be5; }
 
     </style>
 </head>
@@ -105,29 +114,15 @@
 <div id="sv-settings">
     <h2 data-i18n="settings"></h2>
 
-    <!-- Carte -->
-    <fieldset class="sv-cfg-fieldset">
-        <legend data-i18n="settings.section.map"></legend>
-        <div class="sv-cfg-grid">
-            <label for="sv-cfg-lb"     data-i18n="settings.lb"></label>
-            <select id="sv-cfg-lb-sel" style="display:none"></select>
-            <input  id="sv-cfg-lb"     type="number" min="0" placeholder="0">
-            <label for="sv-cfg-layers" data-i18n="settings.layers"></label>
-            <input  id="sv-cfg-layers" type="text"   placeholder="layer1,layer2">
-            <label for="sv-cfg-x"     data-i18n="settings.x"></label>
-            <input  id="sv-cfg-x"     type="number" placeholder="0">
-            <label for="sv-cfg-y"     data-i18n="settings.y"></label>
-            <input  id="sv-cfg-y"     type="number" placeholder="6000000">
-            <label for="sv-cfg-z"     data-i18n="settings.z"></label>
-            <input  id="sv-cfg-z"     type="number" min="0" max="22" placeholder="5">
-            <label for="sv-cfg-fit"   data-i18n="settings.fit"></label>
-            <input  id="sv-cfg-fit"   type="checkbox" style="width:14px;height:14px;cursor:pointer;margin:auto 0;">
-        </div>
-    </fieldset>
+    <div id="sv-tab-bar">
+        <button class="sv-tab-btn sv-tab-active" data-tab="data"  data-i18n="settings.section.data"></button>
+        <button class="sv-tab-btn"               data-tab="map"   data-i18n="settings.section.map"></button>
+        <button class="sv-tab-btn"               data-tab="share" data-i18n="settings.section.share"></button>
+        <button class="sv-tab-btn"               data-tab="help"  data-i18n="settings.section.help"></button>
+    </div>
 
     <!-- Données -->
-    <fieldset class="sv-cfg-fieldset">
-        <legend data-i18n="settings.section.data"></legend>
+    <div class="sv-tab-panel sv-tab-visible" data-tab="data">
         <div class="sv-cfg-grid">
             <label for="sv-cfg-geom"  data-i18n="settings.geom"></label>
             <select id="sv-cfg-geom"></select>
@@ -162,11 +157,29 @@
                 <input id="sv-cfg-sel-fill-opacity"   type="number" min="0" max="1" step="0.05" value="1"   placeholder="0–1" data-i18n-title="settings.sel.fill.opacity">
             </div>
         </div>
-    </fieldset>
+    </div>
+
+    <!-- Carte -->
+    <div class="sv-tab-panel" data-tab="map">
+        <div class="sv-cfg-grid">
+            <label for="sv-cfg-lb"     data-i18n="settings.lb"></label>
+            <select id="sv-cfg-lb-sel" style="display:none"></select>
+            <input  id="sv-cfg-lb"     type="number" min="0" placeholder="0">
+            <label for="sv-cfg-layers" data-i18n="settings.layers"></label>
+            <input  id="sv-cfg-layers" type="text"   placeholder="layer1,layer2">
+            <label for="sv-cfg-x"     data-i18n="settings.x"></label>
+            <input  id="sv-cfg-x"     type="number" placeholder="0">
+            <label for="sv-cfg-y"     data-i18n="settings.y"></label>
+            <input  id="sv-cfg-y"     type="number" placeholder="6000000">
+            <label for="sv-cfg-z"     data-i18n="settings.z"></label>
+            <input  id="sv-cfg-z"     type="number" min="0" max="22" placeholder="5">
+            <label for="sv-cfg-fit"   data-i18n="settings.fit"></label>
+            <input  id="sv-cfg-fit"   type="checkbox" style="width:14px;height:14px;cursor:pointer;margin:auto 0;">
+        </div>
+    </div>
 
     <!-- Partage -->
-    <fieldset class="sv-cfg-fieldset">
-        <legend data-i18n="settings.section.share"></legend>
+    <div class="sv-tab-panel" data-tab="share">
         <div class="sv-cfg-grid">
             <label for="sv-cfg-title"      data-i18n="settings.title"></label>
             <input  id="sv-cfg-title"      type="text" placeholder="sViewer — Grist">
@@ -177,7 +190,24 @@
             <label for="sv-cfg-georchestra" data-i18n="settings.georchestra"></label>
             <input  id="sv-cfg-georchestra" type="url"  placeholder="https://geobretagne.fr">
         </div>
-    </fieldset>
+    </div>
+
+    <!-- Aide -->
+    <div class="sv-tab-panel" data-tab="help">
+        <div id="sv-help">
+            <h3>Données</h3>
+            <p>Colonne géométrie (GeoJSON) ou paire latitude/longitude utilisée pour afficher les entités. Colonne étiquette affichée au survol. Couleurs et opacités des entités normales et sélectionnées.</p>
+            <h3>Carte</h3>
+            <p>Fond de carte, couches WMS additionnelles, centre et zoom par défaut. <em>Ajuster à l'étendue</em> : la carte se recadre automatiquement sur les données à chaque chargement.</p>
+            <h3>Partage</h3>
+            <p>Titre affiché dans la barre, URL de base sViewer (pour le lien de partage), URL de l'API Grist et URL geOrchestra (fonctions avancées).</p>
+            <h3>Enregistrer / Annuler</h3>
+            <p><strong>Enregistrer</strong> applique les modifications et reconstruit la carte. <strong>Annuler</strong> ferme sans modifier.</p>
+            <h3>Exporter / Importer</h3>
+            <p><strong>Exporter</strong> copie la configuration dans le presse-papiers (JSON). <strong>Importer</strong> charge un JSON précédemment exporté pour dupliquer la configuration sur un autre widget.</p>
+        </div>
+    </div>
+
     <div id="sv-settings-footer">
         <button id="sv-btn-cfg-save"   data-i18n="settings.save"></button>
         <button id="sv-btn-cfg-cancel" data-i18n="settings.cancel"></button>

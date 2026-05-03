@@ -48,6 +48,7 @@ var I18N = {
         'settings.section.map':    'Carte',
         'settings.section.data':   'Données',
         'settings.section.share':  'Partage',
+        'settings.section.help':   'Aide',
         'settings.save':           'Enregistrer',
         'settings.cancel':         'Annuler',
         'settings.export':             'Exporter',
@@ -100,6 +101,7 @@ var I18N = {
         'settings.section.map':    'Map',
         'settings.section.data':   'Data',
         'settings.section.share':  'Sharing',
+        'settings.section.help':   'Help',
         'settings.save':           'Save',
         'settings.cancel':         'Cancel',
         'settings.export':             'Export',
@@ -152,6 +154,7 @@ var I18N = {
         'settings.section.map':    'Mapa',
         'settings.section.data':   'Datos',
         'settings.section.share':  'Compartir',
+        'settings.section.help':   'Ayuda',
         'settings.save':           'Guardar',
         'settings.cancel':         'Cancelar',
         'settings.export':             'Exportar',
@@ -204,6 +207,7 @@ var I18N = {
         'settings.section.map':    'Karte',
         'settings.section.data':   'Daten',
         'settings.section.share':  'Teilen',
+        'settings.section.help':   'Hilfe',
         'settings.save':           'Speichern',
         'settings.cancel':         'Abbrechen',
         'settings.export':             'Exportieren',
@@ -511,6 +515,12 @@ function layerLabel(layer) {
 function openSettings() {
     var panel = document.getElementById('sv-settings');
     if (!panel) { return; }
+    document.querySelectorAll('.sv-tab-btn').forEach(function(b) { b.classList.remove('sv-tab-active'); });
+    document.querySelectorAll('.sv-tab-panel[data-tab]').forEach(function(fs) { fs.classList.remove('sv-tab-visible'); });
+    var firstBtn = document.querySelector('.sv-tab-btn[data-tab="data"]');
+    var firstFs  = document.querySelector('.sv-tab-panel[data-tab="data"]');
+    if (firstBtn) { firstBtn.classList.add('sv-tab-active'); }
+    if (firstFs)  { firstFs.classList.add('sv-tab-visible'); }
     syncColumnPickerMode();
     document.getElementById('sv-cfg-title').value               = svConfig.title || '';
     document.getElementById('sv-cfg-fill-color').value          = safeColor(svConfig.fill_color,       '#ffcc00');
@@ -981,6 +991,17 @@ grist.onRecord(function(record) {
 // ---------------------------------------------------------------------------
 
 applyDomTranslations();
+
+document.getElementById('sv-tab-bar').addEventListener('click', function(e) {
+    var btn = e.target.closest('.sv-tab-btn');
+    if (!btn) { return; }
+    var tab = btn.getAttribute('data-tab');
+    document.querySelectorAll('.sv-tab-btn').forEach(function(b) { b.classList.remove('sv-tab-active'); });
+    document.querySelectorAll('.sv-tab-panel[data-tab]').forEach(function(fs) { fs.classList.remove('sv-tab-visible'); });
+    btn.classList.add('sv-tab-active');
+    var target = document.querySelector('.sv-tab-panel[data-tab="' + tab + '"]');
+    if (target) { target.classList.add('sv-tab-visible'); }
+});
 
 // Chaîne de démarrage : options widget + IDs doc/table → init carte.
 var optionsPromise = (grist.widgetApi && typeof grist.widgetApi.getOptions === 'function')
