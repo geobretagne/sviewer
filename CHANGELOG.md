@@ -4,6 +4,23 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-05-04
+
+### Added
+- **Connecteur CSV** (`connectors/csv/`) — charge des fichiers CSV distants (extension `.csv` ou hint `_format=csv`) et les convertit en FeatureCollection GeoJSON. Détection automatique des colonnes géométrie (`geometry`, `geom`…), latitude/longitude (`latitude`/`lat`, `longitude`/`lon`/`lng`). Support : séparateur virgule ou point-virgule, BOM UTF-8, champs entre guillemets, colonnes personnalisées via hints `_collat`/`_collon`/`_labelcol`. Nécessite CORS et UTF-8 côté serveur.
+- **Connecteur sample** (`connectors/sample/`) — connecteur de référence commenté pour guider la création de nouveaux connecteurs. Entrée : tableau JSON plat `[{latitude, longitude, …}]`.
+- **Pages de diagnostic `check.html`** pour les connecteurs CSV, sample et Grist — vérifient l'enregistrement de l'adaptateur, `match()`, `convert()` et proposent un lien de test bout-en-bout. Données de test Bretagne intégrées (pas de dépendance réseau pour les checks unitaires).
+- **Logs de debug permanents dans `loadGeoJSON`** — avec `?debug=true` : adaptateur détecté, nombre de features après conversion et après filtre de reprojection OL.
+- **Vérification de bundle dans `check.html`** (étape 0) — détecte un `sviewer.min.js` périmé avant d'exécuter les checks.
+- Système de hints URL généralisé : `_format`, `_geommode`, `_geomcol`, `_collat`, `_collon`, `_labelcol` — documenté dans `connectors/MISSION.md`.
+- Message d'erreur i18n `msg.adapter_not_loaded` (4 langues) si `_format=X` est présent mais l'adaptateur n'est pas chargé dans `customConfig`.
+
+### Changed
+- `loadGeoJSON` : dispatch `wantsText` — les adaptateurs déclarant `wantsText: true` reçoivent le texte brut (`dataType:'text'`) au lieu d'un objet JSON parsé.
+- `tr()` supporte les substitutions positionnelles `{0}`, `{1}`… pour les messages i18n paramétrés.
+- nginx : `js/` et `css/` servis avec `Cache-Control: no-cache, must-revalidate` — évite les bundles périmés en cache navigateur.
+- nginx : `templates/` ajouté à la liste blanche des répertoires servis.
+
 ## [0.5.0] - 2026-05-03
 
 ### Added
