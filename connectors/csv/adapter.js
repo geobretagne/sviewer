@@ -88,7 +88,7 @@
         function splitLine(line) {
             var fields = [];
             var i = 0;
-            while (i <= line.length) {
+            while (i < line.length) {
                 if (line[i] === '"') {
                     // Quoted field: consume until closing quote, unescape "" → "
                     var val = '';
