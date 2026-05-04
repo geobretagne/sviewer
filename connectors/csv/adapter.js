@@ -24,6 +24,10 @@
  * CORS required: the CSV file must be served with Access-Control-Allow-Origin.
  * Known compatible sources: data.gouv.fr (static.data.gouv.fr), GitHub raw,
  * Google Sheets published CSV.
+ *
+ * Encoding: UTF-8 only. No automatic charset detection — same constraint as CORS
+ * (both require modern server config; the operator who enables CORS can also set
+ * Content-Type: text/csv; charset=utf-8).
  */
 (function() {
     'use strict';
