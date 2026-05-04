@@ -688,7 +688,7 @@ window.SViewerApp = (function() {
         for (var i = 0; i < s.length; ++i)
         {
             var p=s[i].split('=');
-            if (p.length != 2) {
+            if (p.length !== 2) {
                 continue;
             }
             b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
@@ -753,7 +753,7 @@ window.SViewerApp = (function() {
     function setPermalink () {
         // permalink, social links & QR code update only if share panel is visible
         if ($('#sharePanel').is(':visible')) {
-            var permalinkHash, permalinkQuery;
+            var permalinkQuery;
             var c = view.getCenter();
             var linkParams = {};
             linkParams.x = encodeURIComponent(Math.round(c[0]));
@@ -776,7 +776,6 @@ window.SViewerApp = (function() {
             var standaloneBase = window.SViewerBaseUrl
                 ? window.SViewerBaseUrl + 'index.html'
                 : window.location.origin + window.location.pathname;
-            permalinkHash = standaloneBase + "#" + $.param(linkParams);
             permalinkQuery = standaloneBase + "?" + $.param(linkParams);
 
             $('#permalinkUrl')
@@ -1181,7 +1180,6 @@ window.SViewerApp = (function() {
      * getFeatureInfo
      */
     function queryMap(coord) {
-        var p = map.getPixelFromCoordinate(coord);
         state.gficoord = coord;
         state.gfiok = false;
         state.gfiz = view.getZoom();
@@ -1355,7 +1353,7 @@ window.SViewerApp = (function() {
     function onSearchItemClick (event) {
         var data = event.data;
         marker.setPosition(data.coordinates);
-        if (data.extent.length===4 && !(data.extent[0] == data.extent[2] && data.extent[1] == data.extent[3])) {
+        if (data.extent.length === 4 && !(data.extent[0] === data.extent[2] && data.extent[1] === data.extent[3])) {
             view.fit(data.extent);
         } else {
             view.setCenter(data.coordinates);
@@ -1494,7 +1492,7 @@ window.SViewerApp = (function() {
     }
 
     // panel size and placement to fit small screens
-    function panelLayout (e) {
+    function panelLayout (_e) {
         var panel = $(this);
         panel.css('max-width', Math.min($(window).width() - 44, 450) + 'px');
         panel.css('max-height', $(window).height() - 64 + 'px');
@@ -1553,7 +1551,7 @@ window.SViewerApp = (function() {
     }
 
     // updates title on keypress
-    function onTitle(e) {
+    function onTitle(_e) {
         setTitle($(this).val());
     }
 
