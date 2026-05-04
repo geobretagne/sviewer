@@ -20,10 +20,21 @@
 </head>
 <body>
 <h1>csv connector — check</h1>
-<p style="color:#888;font-size:12px;margin-bottom:16px;">
+<p style="color:#888;font-size:12px;margin-bottom:12px;">
     Unit checks use inline CSV strings — no external fetch, no CORS dependency.
     End-to-end checks use data.gouv.fr (CORS-enabled). Requires <code>adapters: ['csv']</code> in customConfig.
 </p>
+<div style="background:#fff;border:1px solid #ddd;border-radius:4px;padding:10px 16px;margin-bottom:16px;font-size:12px;">
+    <strong>Data sources used by end-to-end checks</strong>
+    <ul style="margin:6px 0 0 16px;line-height:1.8;">
+        <li>
+            <a href="https://static.data.gouv.fr/resources/liste-des-coordonnees-gps-des-monuments-nationaux/20190729-144937/liste-coordonnees-gps-des-monuments.csv" target="_blank">
+                Coordonnées GPS des monuments nationaux (data.gouv.fr)
+            </a>
+            — comma CSV, columns: <code>latitude</code>, <code>longitude</code>, ~50 rows
+        </li>
+    </ul>
+</div>
 
 <div class="check">
     <div class="check-title">1. Adapter registration</div>

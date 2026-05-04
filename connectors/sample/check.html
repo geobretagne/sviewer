@@ -20,10 +20,19 @@
 </head>
 <body>
 <h1>sample connector — check</h1>
-<p style="color:#888;font-size:12px;margin-bottom:16px;">
+<p style="color:#888;font-size:12px;margin-bottom:12px;">
     Verifies adapter registration, convert() output, and end-to-end sViewer load.
     All test data is inline — no external fetch required for unit checks.
 </p>
+<div style="background:#fff;border:1px solid #ddd;border-radius:4px;padding:10px 16px;margin-bottom:16px;font-size:12px;">
+    <strong>Data sources used by end-to-end checks</strong>
+    <ul style="margin:6px 0 0 16px;line-height:1.8;">
+        <li>
+            Inline data URI — 3 Brittany cities (Brest, Rennes, Saint-Malo) encoded directly in the URL.
+            No external fetch. Format: flat JSON array <code>[{name, latitude, longitude, pop}, …]</code>
+        </li>
+    </ul>
+</div>
 
 <div class="check">
     <div class="check-title">1. Adapter registration</div>

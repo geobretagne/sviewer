@@ -20,11 +20,22 @@
 </head>
 <body>
 <h1>grist connector — check</h1>
-<p style="color:#888;font-size:12px;margin-bottom:16px;">
+<p style="color:#888;font-size:12px;margin-bottom:12px;">
     Unit checks use inline Grist-envelope JSON — no external fetch, no CORS dependency.
     End-to-end check requires network access to a public Grist document and
     <code>adapters: ['grist']</code> in customConfig.
 </p>
+<div style="background:#fff;border:1px solid #ddd;border-radius:4px;padding:10px 16px;margin-bottom:16px;font-size:12px;">
+    <strong>Data sources used by end-to-end checks</strong>
+    <ul style="margin:6px 0 0 16px;line-height:1.8;">
+        <li>
+            Grist records API — replace <code>DOC_ID</code> and <code>TABLE_ID</code> in the script below
+            with a real public Grist document. The document must be shared publicly (no API key required).
+            Example API URL shape:
+            <code>https://docs.getgrist.com/api/docs/{docId}/tables/{tableId}/records</code>
+        </li>
+    </ul>
+</div>
 
 <div class="check">
     <div class="check-title">1. Adapter registration</div>
