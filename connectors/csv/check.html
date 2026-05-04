@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sViewer — csv connector check</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; font-size: 14px; background: #f8f8f8; padding: 20px; }
+        h1 { font-size: 16px; margin-bottom: 16px; }
+        .check { background: #fff; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 12px; padding: 12px 16px; }
+        .check-title { font-weight: bold; margin-bottom: 6px; }
+        .check-desc  { color: #555; font-size: 12px; margin-bottom: 10px; }
+        .result { font-size: 13px; padding: 6px 10px; border-radius: 3px; background: #eee; }
+        .result.pass { background: #e6f4ea; color: #1a7a3a; }
+        .result.fail { background: #fce8e8; color: #c0392b; }
+        .result.info { background: #e8f0fe; color: #1a5276; }
+        a { color: #1a5276; }
+    </style>
+</head>
+<body>
+<h1>csv connector — check</h1>
+<p style="color:#888;font-size:12px;margin-bottom:12px;">
+    Unit checks use inline CSV strings — no external fetch, no CORS dependency.
+    End-to-end checks use data.gouv.fr (CORS-enabled). Requires <code>adapters: ['csv']</code> in customConfig.
+</p>
+<div style="background:#fff;border:1px solid #ddd;border-radius:4px;padding:10px 16px;margin-bottom:16px;font-size:12px;">
+    <strong>Data sources used by end-to-end checks</strong>
+    <ul style="margin:6px 0 0 16px;line-height:1.8;">
+        <li>
+            <a href="https://static.data.gouv.fr/resources/liste-des-coordonnees-gps-des-monuments-nationaux/20190729-144937/liste-coordonnees-gps-des-monuments.csv" target="_blank">
+                Coordonnées GPS des monuments nationaux (data.gouv.fr)
+            </a>
+            — comma CSV, columns: <code>latitude</code>, <code>longitude</code>, ~50 rows, UTF-8
+        </li>
+    </ul>
+</div>
+
+<div class="check">
+    <div class="check-title">0. sviewer.min.js bundle check</div>
+    <div class="check-desc">Verifies the deployed minified bundle contains the adapter dispatch code. Stale bundle = silent wrong behavior.</div>
+    <div class="result" id="r-bundle">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">1. Adapter registration</div>
+    <div class="check-desc">window.SViewerAdapters['csv'] must exist after adapter.js loads.</div>
+    <div class="result" id="r-register">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">2. match() — .csv extension</div>
+    <div class="check-desc">Must return true for URLs ending in .csv (with or without query string).</div>
+    <div class="result" id="r-match-ext">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">3. match() — _format=csv hint</div>
+    <div class="check-desc">Must return true for extension-less URLs with &_format=csv appended.</div>
+    <div class="result" id="r-match-hint">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">4. match() — negative</div>
+    <div class="check-desc">Must return false for plain JSON URLs with no csv signal.</div>
+    <div class="result" id="r-match-neg">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">5. CSV parser — comma separator, auto lat/lon detection</div>
+    <div class="check-desc">Standard CSV with latitude/longitude columns → 3-feature FeatureCollection.</div>
+    <div class="result" id="r-comma">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">6. CSV parser — semicolon separator</div>
+    <div class="check-desc">Semicolon-separated CSV (common in French exports) parsed correctly.</div>
+    <div class="result" id="r-semicolon">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">7. CSV parser — quoted fields</div>
+    <div class="check-desc">Fields containing commas inside double quotes handled correctly.</div>
+    <div class="result" id="r-quoted">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">8. CSV parser — UTF-8 BOM</div>
+    <div class="check-desc">BOM (0xFEFF) at start of file stripped — header parsed correctly.</div>
+    <div class="result" id="r-bom">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">9. convert() — _collat/_collon hints</div>
+    <div class="check-desc">Custom column names via URL hints override auto-detection.</div>
+    <div class="result" id="r-hints">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">10. convert() — invalid rows skipped</div>
+    <div class="check-desc">Rows with empty or non-numeric coordinates produce no feature.</div>
+    <div class="result" id="r-invalid">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">11. End-to-end — data.gouv.fr (CORS)</div>
+    <div class="check-desc">
+        GPS coordinates of French national monuments — 50 rows, comma CSV, latitude/longitude columns.<br>
+        Requires network + CORS from static.data.gouv.fr. Checks adapter loaded in this sViewer instance.
+    </div>
+    <div class="result info" id="r-e2e">
+        <a id="e2e-link" href="#" target="_blank">Open sViewer with data.gouv.fr CSV →</a>
+        <span style="color:#888;margin-left:8px;">(visual check — ~50 monuments on map expected)</span>
+    </div>
+</div>
+
+<div class="check">
+    <div class="check-title">12. End-to-end — _format=csv hint (extension-less URL)</div>
+    <div class="check-desc">
+        Same dataset via its resource UUID URL (no .csv extension) + &_format=csv hint.<br>
+        Tests the extension-less URL path through the full stack.
+    </div>
+    <div class="result info" id="r-e2e-hint">
+        <a id="e2e-hint-link" href="#" target="_blank">Open sViewer with _format=csv hint →</a>
+        <span style="color:#888;margin-left:8px;">(visual check — same result as above expected)</span>
+    </div>
+</div>
+
+<script src="adapter.js"></script>
+<script>
+(function() {
+    'use strict';
+
+    function pass(id, msg) { var el = document.getElementById(id); el.textContent = '✓ ' + msg; el.className = 'result pass'; }
+    function fail(id, msg) { var el = document.getElementById(id); el.textContent = '✗ ' + msg; el.className = 'result fail'; }
+
+    // --- Inline CSV fixtures — Brittany cities -------------------------------
+
+    var CSV_COMMA = 'name,latitude,longitude,population\n'
+        + 'Brest,48.3904,-4.4861,139676\n'
+        + 'Rennes,48.1173,-1.6778,216815\n'
+        + 'Saint-Malo,48.6493,-2.0253,46094\n';
+
+    var CSV_SEMICOLON = 'name;latitude;longitude;population\n'
+        + 'Quimper;47.9960;-4.0999;63082\n'
+        + 'Lorient;47.7486;-3.3673;57728\n'
+        + 'Vannes;47.6559;-2.7604;53429\n';
+
+    var CSV_QUOTED = 'name,latitude,longitude,note\n'
+        + '"Brest, Finistère",48.3904,-4.4861,"port, naval base"\n'
+        + 'Rennes,48.1173,-1.6778,capital\n';
+
+    // BOM = U+FEFF prepended as first character
+    var CSV_BOM = '﻿name,latitude,longitude\n'
+        + 'Brest,48.3904,-4.4861\n'
+        + 'Rennes,48.1173,-1.6778\n';
+
+    var CSV_CUSTOM_COLS = 'label,lat,lng\n'
+        + 'Brest,48.3904,-4.4861\n'
+        + 'Rennes,48.1173,-1.6778\n';
+
+    var CSV_INVALID = 'name,latitude,longitude\n'
+        + 'ok1,48.3904,-4.4861\n'
+        + 'no-lat,,−4.4861\n'
+        + 'no-lon,48.3904,\n'
+        + 'ok2,47.9960,-4.0999\n';
+
+    // 0 — bundle check: fetch sviewer.min.js, verify wantsText dispatch code present
+    fetch('../../js/sviewer.min.js')
+        .then(function(r) { return r.text(); })
+        .then(function(src) {
+            src.indexOf('wantsText') !== -1
+                ? pass('r-bundle', 'sviewer.min.js contains wantsText dispatch — bundle is current')
+                : fail('r-bundle', 'sviewer.min.js missing wantsText — bundle is STALE, run npm run minify');
+        })
+        .catch(function() { fail('r-bundle', 'could not fetch sviewer.min.js'); });
+
+    // 1 — registration
+    if (window.SViewerAdapters && window.SViewerAdapters['csv']) {
+        pass('r-register', "window.SViewerAdapters['csv'] registered");
+    } else {
+        fail('r-register', 'adapter not found — check adapter.js loaded and adapters:[\'csv\'] in customConfig');
+        return;
+    }
+
+    var adapter = window.SViewerAdapters['csv'];
+
+    // 2 — match extension
+    var extOk  = adapter.match('https://example.com/data.csv') &&
+                 adapter.match('https://example.com/data.csv?token=abc') &&
+                 adapter.match('https://example.com/data.CSV');
+    extOk ? pass('r-match-ext', 'match(.csv), match(.csv?query), match(.CSV) → all true')
+          : fail('r-match-ext', 'one or more .csv extension patterns returned false');
+
+    // 3 — match hint
+    var hintOk = adapter.match('https://example.com/api/resource/uuid?_format=csv') &&
+                 adapter.match('https://example.com/r/uuid&_format=csv');
+    hintOk ? pass('r-match-hint', 'match(…&_format=csv) → true')
+           : fail('r-match-hint', '_format=csv hint not matched');
+
+    // 4 — match negative
+    var negOk = !adapter.match('https://example.com/data.json') &&
+                !adapter.match('https://example.com/data.geojson') &&
+                !adapter.match('https://example.com/api/records');
+    negOk ? pass('r-match-neg', 'JSON/GeoJSON URLs → false')
+          : fail('r-match-neg', 'match() too broad — returning true for non-CSV URLs');
+
+    // 5 — comma CSV
+    var fc1 = adapter.convert(CSV_COMMA, 'https://x.com/data.csv');
+    if (fc1 && fc1.features.length === 3) {
+        var c = fc1.features[0].geometry.coordinates;
+        Math.abs(c[0] - (-4.4861)) < 0.001 && Math.abs(c[1] - 48.3904) < 0.001
+            ? pass('r-comma', '3 features, coordinates [lon, lat] correct')
+            : fail('r-comma', 'coordinates wrong: got [' + c + ']');
+    } else {
+        fail('r-comma', 'expected 3 features, got ' + (fc1 ? fc1.features.length : 'null'));
+    }
+
+    // 6 — semicolon CSV
+    var fc2 = adapter.convert(CSV_SEMICOLON, 'https://x.com/data.csv');
+    fc2 && fc2.features.length === 3
+        ? pass('r-semicolon', '3 features parsed from semicolon-separated CSV')
+        : fail('r-semicolon', 'expected 3 features, got ' + (fc2 ? fc2.features.length : 'null'));
+
+    // 7 — quoted fields
+    var fc3 = adapter.convert(CSV_QUOTED, 'https://x.com/data.csv');
+    if (fc3 && fc3.features.length === 2) {
+        var name0 = fc3.features[0].properties.name;
+        name0 === 'Brest, Finistère'
+            ? pass('r-quoted', '2 features, quoted field with comma preserved: "' + name0 + '"')
+            : fail('r-quoted', 'quoted field wrong: got "' + name0 + '"');
+    } else {
+        fail('r-quoted', 'expected 2 features, got ' + (fc3 ? fc3.features.length : 'null'));
+    }
+
+    // 8 — BOM
+    var fc4 = adapter.convert(CSV_BOM, 'https://x.com/data.csv');
+    fc4 && fc4.features.length === 2
+        ? pass('r-bom', '2 features, BOM stripped correctly')
+        : fail('r-bom', 'BOM not handled — expected 2 features, got ' + (fc4 ? fc4.features.length : 'null'));
+
+    // 9 — custom column hints
+    var urlHints = 'https://x.com/data.csv?_collat=lat&_collon=lng&_labelcol=label';
+    var fc5 = adapter.convert(CSV_CUSTOM_COLS, urlHints);
+    if (fc5 && fc5.features.length === 2 && fc5.features[0].properties._label === 'Brest') {
+        pass('r-hints', '2 features, _label set from _labelcol hint');
+    } else {
+        fail('r-hints', 'hint override failed — got ' + (fc5 ? fc5.features.length + ' features' : 'null'));
+    }
+
+    // 10 — invalid rows
+    var fc6 = adapter.convert(CSV_INVALID, 'https://x.com/data.csv');
+    fc6 && fc6.features.length === 2
+        ? pass('r-invalid', '2 valid features, 2 invalid rows skipped')
+        : fail('r-invalid', 'expected 2 features, got ' + (fc6 ? fc6.features.length : 'null'));
+
+    // 11 — e2e data.gouv.fr
+    var csvUrl = 'https://static.data.gouv.fr/resources/liste-des-coordonnees-gps-des-monuments-nationaux/20190729-144937/liste-coordonnees-gps-des-monuments.csv';
+    var svBase = '../../';
+    document.getElementById('e2e-link').href = svBase + '?geojson=' + encodeURIComponent(csvUrl)
+        + '&title=Monuments+nationaux+(CSV)&debug=true';
+
+    // 12 — e2e _format=csv hint (extension-less URL simulation)
+    var csvUrlHint = csvUrl + '?_format=csv';
+    document.getElementById('e2e-hint-link').href = svBase + '?geojson=' + encodeURIComponent(csvUrlHint)
+        + '&title=Monuments+(format+hint)&debug=true';
+
+}());
+</script>
+</body>
+</html>
