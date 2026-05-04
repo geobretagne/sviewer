@@ -88,7 +88,7 @@ Résumé des fonctions du panneau, accessible directement dans l'interface.
 ## Fonctionnalités
 
 - **Grist → carte** : sélectionnez une ligne dans Grist pour centrer et zoomer la carte sur l'entité
-- **Carte → Grist** : cliquez sur une entité de la carte pour la mettre en surbrillance sur la carte (la ligne n'est pas sélectionnée dans le tableau — limitation API Grist)
+- **Carte → Grist** : cliquez sur une entité de la carte pour ouvrir le panneau de propriétés sViewer et mettre en surbrillance l'entité (la ligne n'est pas sélectionnée dans le tableau — limitation API Grist)
 - **Étiquettes** : texte de chaque entité affiché sur la carte ; entité sélectionnée en gras
 - **Partager** : génère un lien autonome (`?geojson=<url_api_grist>`) incluant les hints géométriques — le mode et la colonne choisis sont préservés dans le lien
 
@@ -100,7 +100,7 @@ Pour que la sélection d'une ligne dans le tableau centre et zoome automatiqueme
 
 Résultat :
 - Clic sur une ligne du tableau → la carte zoome et met en surbrillance l'entité correspondante.
-- Clic sur une entité de la carte → surbrillance visuelle sur la carte uniquement (pas de sélection dans le tableau).
+- Clic sur une entité de la carte → panneau de propriétés sViewer ouvert + surbrillance visuelle sur la carte (pas de sélection dans le tableau).
 
 > **Limitation Grist :** la sélection dans les deux sens simultanément n'est pas possible. L'API Grist (`setSelectedRows`) provoque une erreur de cycle de liens (`LinkConfig invalid cycle`) lorsque le widget est à la fois source et cible de la sélection, ce qui casse la synchronisation tableau → carte.
 
