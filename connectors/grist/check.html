@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sViewer — grist connector check</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; font-size: 14px; background: #f8f8f8; padding: 20px; }
+        h1 { font-size: 16px; margin-bottom: 16px; }
+        .check { background: #fff; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 12px; padding: 12px 16px; }
+        .check-title { font-weight: bold; margin-bottom: 6px; }
+        .check-desc  { color: #555; font-size: 12px; margin-bottom: 10px; }
+        .result { font-size: 13px; padding: 6px 10px; border-radius: 3px; background: #eee; }
+        .result.pass { background: #e6f4ea; color: #1a7a3a; }
+        .result.fail { background: #fce8e8; color: #c0392b; }
+        .result.info { background: #e8f0fe; color: #1a5276; }
+        a { color: #1a5276; }
+    </style>
+</head>
+<body>
+<h1>grist connector — check</h1>
+<p style="color:#888;font-size:12px;margin-bottom:16px;">
+    Unit checks use inline Grist-envelope JSON — no external fetch, no CORS dependency.
+    End-to-end check requires network access to a public Grist document and
+    <code>adapters: ['grist']</code> in customConfig.
+</p>
+
+<div class="check">
+    <div class="check-title">1. Adapter registration</div>
+    <div class="check-desc">window.SViewerAdapters['grist'] must exist after adapter.js loads.</div>
+    <div class="result" id="r-register">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">2. match() — Grist records API URL</div>
+    <div class="check-desc">Must return true for /api/docs/{docId}/tables/{tableId}/records URLs.</div>
+    <div class="result" id="r-match-pos">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">3. match() — negative</div>
+    <div class="check-desc">Must return false for non-Grist URLs.</div>
+    <div class="result" id="r-match-neg">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">4. convert() — GeoJSON geometry column (auto-detect)</div>
+    <div class="check-desc">
+        Grist envelope with a 'geometry' column containing GeoJSON strings.<br>
+        Auto-detection should find the column without hints.
+    </div>
+    <div class="result" id="r-geojson">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">5. convert() — lat/lon columns (auto-detect)</div>
+    <div class="check-desc">Grist envelope with 'latitude' and 'longitude' columns — no geometry column.</div>
+    <div class="result" id="r-latlon">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">6. convert() — explicit _geommode=latlon hints</div>
+    <div class="check-desc">_collat/_collon hints override auto-detection for non-standard column names.</div>
+    <div class="result" id="r-hints">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">7. convert() — geometry excluded from properties</div>
+    <div class="check-desc">The geometry column must not appear in feature.properties.</div>
+    <div class="result" id="r-exclude">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">8. convert() — invalid rows skipped</div>
+    <div class="check-desc">Rows with no recognisable geometry produce no feature (no crash).</div>
+    <div class="result" id="r-invalid">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">9. convert() — _label property</div>
+    <div class="check-desc">_labelcol hint sets feature.properties._label from named column.</div>
+    <div class="result" id="r-label">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">10. End-to-end — public Grist document (sViewer standalone)</div>
+    <div class="check-desc">
+        Opens sViewer with a ?geojson= URL pointing at a public Grist records API.<br>
+        Requires network + CORS from docs.getgrist.com. Visual check only.
+    </div>
+    <div class="result info">
+        <a id="e2e-link" href="#" target="_blank">Open sViewer with Grist data →</a>
+        <span style="color:#888;margin-left:8px;">(replace DOC_ID and TABLE_ID below with a real public document)</span>
+    </div>
+</div>
+
+<script src="adapter.js"></script>
+<script>
+(function() {
+    'use strict';
+
+    function pass(id, msg) { var el = document.getElementById(id); el.textContent = '✓ ' + msg; el.className = 'result pass'; }
+    function fail(id, msg) { var el = document.getElementById(id); el.textContent = '✗ ' + msg; el.className = 'result fail'; }
+
+    // --- Inline Grist-envelope fixtures — Brittany cities -------------------
+
+    // Standard Grist envelope: { records: [{ id, fields: {…} }] }
+    var GRIST_GEOJSON = {
+        records: [
+            { id: 1, fields: { name: 'Brest',      geometry: '{"type":"Point","coordinates":[-4.4861,48.3904]}', pop: 139676 } },
+            { id: 2, fields: { name: 'Rennes',     geometry: '{"type":"Point","coordinates":[-1.6778,48.1173]}', pop: 216815 } },
+            { id: 3, fields: { name: 'Saint-Malo', geometry: '{"type":"Point","coordinates":[-2.0253,48.6493]}', pop:  46094 } }
+        ]
+    };
+
+    var GRIST_LATLON = {
+        records: [
+            { id: 1, fields: { name: 'Quimper', latitude: 47.9960, longitude: -4.0999 } },
+            { id: 2, fields: { name: 'Lorient', latitude: 47.7486, longitude: -3.3673 } }
+        ]
+    };
+
+    var GRIST_CUSTOM = {
+        records: [
+            { id: 1, fields: { label: 'Vannes', lat: 47.6559, lon: -2.7604 } },
+            { id: 2, fields: { label: 'Auray',  lat: 47.6659, lon: -2.9874 } }
+        ]
+    };
+
+    var GRIST_INVALID = {
+        records: [
+            { id: 1, fields: { name: 'ok',    geometry: '{"type":"Point","coordinates":[-4.49,48.39]}' } },
+            { id: 2, fields: { name: 'bad',   geometry: 'not-json' } },
+            { id: 3, fields: { name: 'empty', geometry: ''         } },
+            { id: 4, fields: { name: 'ok2',   geometry: '{"type":"Point","coordinates":[-4.10,47.99]}' } }
+        ]
+    };
+
+    var GRIST_LABEL = {
+        records: [
+            { id: 1, fields: { name: 'Brest',  geometry: '{"type":"Point","coordinates":[-4.4861,48.3904]}' } },
+            { id: 2, fields: { name: 'Rennes', geometry: '{"type":"Point","coordinates":[-1.6778,48.1173]}' } }
+        ]
+    };
+
+    // --- Tests ---------------------------------------------------------------
+
+    // 1 — registration
+    if (window.SViewerAdapters && window.SViewerAdapters['grist']) {
+        pass('r-register', "window.SViewerAdapters['grist'] registered");
+    } else {
+        fail('r-register', "adapter not found — check adapter.js loaded and adapters:['grist'] in customConfig");
+        return;
+    }
+
+    var adapter = window.SViewerAdapters['grist'];
+
+    // 2 — match positive
+    var urlPos = 'https://docs.getgrist.com/api/docs/abc123/tables/Cities/records';
+    adapter.match(urlPos)
+        ? pass('r-match-pos', 'match(…/api/docs/…/tables/…/records) → true')
+        : fail('r-match-pos', 'Grist records URL not matched');
+
+    // 3 — match negative
+    var negOk = !adapter.match('https://docs.getgrist.com/api/docs/abc123/tables/Cities')  &&
+                !adapter.match('https://example.com/data.geojson') &&
+                !adapter.match('https://docs.getgrist.com');
+    negOk ? pass('r-match-neg', 'non-records URLs → false')
+          : fail('r-match-neg', 'match() too broad');
+
+    // 4 — GeoJSON geometry auto-detect
+    var fc1 = adapter.convert(GRIST_GEOJSON, urlPos);
+    if (fc1 && fc1.features.length === 3) {
+        var c = fc1.features[0].geometry.coordinates;
+        Math.abs(c[0] - (-4.4861)) < 0.001 && Math.abs(c[1] - 48.3904) < 0.001
+            ? pass('r-geojson', '3 features, geometry column auto-detected, [lon,lat] correct')
+            : fail('r-geojson', 'coordinates wrong: got [' + c + ']');
+    } else {
+        fail('r-geojson', 'expected 3 features, got ' + (fc1 ? fc1.features.length : 'null'));
+    }
+
+    // 5 — lat/lon auto-detect
+    var fc2 = adapter.convert(GRIST_LATLON, urlPos);
+    if (fc2 && fc2.features.length === 2) {
+        var c2 = fc2.features[0].geometry.coordinates;
+        Math.abs(c2[0] - (-4.0999)) < 0.001
+            ? pass('r-latlon', '2 features, latitude/longitude columns auto-detected')
+            : fail('r-latlon', 'coordinates wrong: got [' + c2 + ']');
+    } else {
+        fail('r-latlon', 'expected 2 features, got ' + (fc2 ? fc2.features.length : 'null'));
+    }
+
+    // 6 — explicit hints
+    var urlHints = urlPos + '?_geommode=latlon&_collat=lat&_collon=lon';
+    var fc3 = adapter.convert(GRIST_CUSTOM, urlHints);
+    fc3 && fc3.features.length === 2
+        ? pass('r-hints', '2 features via explicit _collat=lat&_collon=lon hints')
+        : fail('r-hints', 'hint override failed — got ' + (fc3 ? fc3.features.length + ' features' : 'null'));
+
+    // 7 — geometry excluded from properties
+    var fc4 = adapter.convert(GRIST_GEOJSON, urlPos);
+    if (fc4 && fc4.features.length > 0) {
+        'geometry' in fc4.features[0].properties
+            ? fail('r-exclude', 'geometry column still present in properties')
+            : pass('r-exclude', 'geometry column absent from properties');
+    }
+
+    // 8 — invalid rows
+    var fc5 = adapter.convert(GRIST_INVALID, urlPos);
+    fc5 && fc5.features.length === 2
+        ? pass('r-invalid', '2 valid features, 2 invalid rows skipped')
+        : fail('r-invalid', 'expected 2 features, got ' + (fc5 ? fc5.features.length : 'null'));
+
+    // 9 — _label
+    var urlLabel = urlPos + '?_labelcol=name';
+    var fc6 = adapter.convert(GRIST_LABEL, urlLabel);
+    if (fc6 && fc6.features.length === 2 && fc6.features[0].properties._label === 'Brest') {
+        pass('r-label', '_label set to "Brest" from _labelcol=name hint');
+    } else {
+        fail('r-label', '_label not set — got: ' + (fc6 && fc6.features[0] ? fc6.features[0].properties._label : 'null'));
+    }
+
+    // 10 — e2e link (placeholder — replace with a real public Grist doc)
+    var svBase = '../../';
+    var gristApiBase = 'https://docs.getgrist.com';
+    var docId  = 'DOC_ID';   // replace with a real public Grist document ID
+    var tableId = 'TABLE_ID'; // replace with a real table name
+    var gristUrl = gristApiBase + '/api/docs/' + docId + '/tables/' + tableId + '/records';
+    document.getElementById('e2e-link').href = svBase + '?geojson=' + encodeURIComponent(gristUrl)
+        + '&x=-2.8&y=48.2&z=8&title=Grist+check';
+
+}());
+</script>
+</body>
+</html>
