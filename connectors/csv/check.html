@@ -242,13 +242,12 @@
     var csvUrl = 'https://static.data.gouv.fr/resources/liste-des-coordonnees-gps-des-monuments-nationaux/20190729-144937/liste-coordonnees-gps-des-monuments.csv';
     var svBase = '../../';
     document.getElementById('e2e-link').href = svBase + '?geojson=' + encodeURIComponent(csvUrl)
-        + '&x=-2.8&y=48.2&z=7&title=Monuments+nationaux+(CSV)&debug=true';
+        + '&title=Monuments+nationaux+(CSV)&debug=true';
 
     // 12 — e2e _format=csv hint (extension-less URL simulation)
-    // Using same URL but stripping extension via adding hint explicitly
     var csvUrlHint = csvUrl + '?_format=csv';
     document.getElementById('e2e-hint-link').href = svBase + '?geojson=' + encodeURIComponent(csvUrlHint)
-        + '&x=-2.8&y=48.2&z=7&title=Monuments+(format+hint)&debug=true';
+        + '&title=Monuments+(format+hint)&debug=true';
 
 }());
 </script>
