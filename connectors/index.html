@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sViewer — connectors</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; font-size: 14px; background: #f8f8f8; padding: 20px; max-width: 800px; }
+        h1 { font-size: 16px; margin-bottom: 4px; }
+        .subtitle { color: #888; font-size: 12px; margin-bottom: 20px; }
+        .connector { background: #fff; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 16px; padding: 16px; }
+        .connector-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+        .connector-name { font-size: 15px; font-weight: bold; }
+        .connector-key { font-family: monospace; font-size: 12px; background: #f0f0f0; padding: 2px 6px; border-radius: 3px; color: #555; }
+        .connector-desc { color: #333; margin-bottom: 10px; line-height: 1.5; }
+        .caps { margin-bottom: 10px; }
+        .caps-title { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #888; margin-bottom: 4px; letter-spacing: 0.05em; }
+        .caps ul { margin-left: 16px; line-height: 1.7; font-size: 13px; color: #444; }
+        .hints { margin-bottom: 10px; }
+        table { font-size: 12px; border-collapse: collapse; width: 100%; }
+        th { text-align: left; color: #888; font-weight: normal; padding: 2px 8px 2px 0; }
+        td { padding: 2px 8px 2px 0; font-family: monospace; color: #333; }
+        td:last-child { font-family: sans-serif; }
+        .footer { display: flex; align-items: center; gap: 12px; padding-top: 10px; border-top: 1px solid #eee; font-size: 12px; }
+        .check-link { background: #1a5276; color: #fff; padding: 4px 10px; border-radius: 3px; text-decoration: none; font-size: 12px; }
+        .check-link:hover { background: #154360; }
+        .config { font-family: monospace; font-size: 12px; color: #555; }
+        .req { color: #888; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<h1>sViewer — connectors</h1>
+<p class="subtitle">
+    Connectors extend sViewer to load non-GeoJSON sources via <code>?geojson=</code>.
+    Each connector is a self-contained <code>adapter.js</code> activated in <code>customConfig.js</code>.
+</p>
+
+<!-- CSV -->
+<div class="connector">
+    <div class="connector-header">
+        <span class="connector-name">CSV</span>
+        <span class="connector-key">adapters: ['csv']</span>
+    </div>
+    <div class="connector-desc">
+        Loads comma or semicolon-separated files and converts them to map features.
+        Geometry is auto-detected from column names — no configuration required for standard files.
+    </div>
+    <div class="caps">
+        <div class="caps-title">Capabilities</div>
+        <ul>
+            <li>Auto-detects <code>latitude</code>/<code>longitude</code> columns (and common variants: <code>lat</code>, <code>lon</code>, <code>lng</code>)</li>
+            <li>Auto-detects <code>geometry</code> column containing GeoJSON strings</li>
+            <li>Comma and semicolon separators — auto-detected from first row</li>
+            <li>Quoted fields containing commas or line breaks</li>
+            <li>UTF-8 BOM stripped automatically</li>
+            <li>Invalid rows (missing or non-numeric coordinates) skipped silently</li>
+        </ul>
+    </div>
+    <div class="hints">
+        <div class="caps-title">URL hints</div>
+        <table>
+            <tr><th>Hint</th><th>Example</th><th>Effect</th></tr>
+            <tr><td>_format=csv</td><td>…&amp;_format=csv</td><td>Force CSV adapter for extension-less URLs</td></tr>
+            <tr><td>_collat</td><td>_collat=lat</td><td>Override latitude column name</td></tr>
+            <tr><td>_collon</td><td>_collon=lng</td><td>Override longitude column name</td></tr>
+            <tr><td>_labelcol</td><td>_labelcol=name</td><td>Column used as feature label</td></tr>
+        </table>
+    </div>
+    <div class="footer">
+        <a class="check-link" href="csv/check.html">Run checks →</a>
+        <span class="req">Requires CORS · UTF-8 encoding</span>
+        <span class="config" style="margin-left:auto;">URL match: <code>.csv</code> extension or <code>_format=csv</code></span>
+    </div>
+</div>
+
+<!-- Grist -->
+<div class="connector">
+    <div class="connector-header">
+        <span class="connector-name">Grist</span>
+        <span class="connector-key">adapters: ['grist']</span>
+    </div>
+    <div class="connector-desc">
+        Loads data from the Grist records API and renders it as map features.
+        Works both as a standalone <code>?geojson=</code> URL and as a Grist widget embedded in a document.
+    </div>
+    <div class="caps">
+        <div class="caps-title">Capabilities</div>
+        <ul>
+            <li>Auto-detects <code>geometry</code> column containing GeoJSON strings (Point, LineString, Polygon)</li>
+            <li>Auto-detects <code>latitude</code>/<code>longitude</code> column pair</li>
+            <li>Supports GeoJSON, lat/lon, lat,lon text, lon,lat text, and WKT geometry modes</li>
+            <li>Invalid rows (unparseable geometry) skipped silently</li>
+            <li>Full Grist widget with configuration panel, style, sharing, and real-time sync</li>
+        </ul>
+    </div>
+    <div class="hints">
+        <div class="caps-title">URL hints</div>
+        <table>
+            <tr><th>Hint</th><th>Example</th><th>Effect</th></tr>
+            <tr><td>_geommode</td><td>_geommode=latlon</td><td>Force geometry mode (geojson · latlon · latlon_str · lonlat_str · wkt)</td></tr>
+            <tr><td>_geomcol</td><td>_geomcol=shape</td><td>Override geometry column name</td></tr>
+            <tr><td>_collat</td><td>_collat=lat</td><td>Override latitude column name</td></tr>
+            <tr><td>_collon</td><td>_collon=lng</td><td>Override longitude column name</td></tr>
+            <tr><td>_labelcol</td><td>_labelcol=name</td><td>Column used as feature label</td></tr>
+        </table>
+    </div>
+    <div class="footer">
+        <a class="check-link" href="grist/check.html">Run checks →</a>
+        <span class="req">Requires CORS · Public document (no API key)</span>
+        <span class="config" style="margin-left:auto;">URL match: <code>/api/docs/{id}/tables/{table}/records</code></span>
+    </div>
+</div>
+
+<!-- Sample -->
+<div class="connector">
+    <div class="connector-header">
+        <span class="connector-name">Sample</span>
+        <span class="connector-key">adapters: ['sample']</span>
+    </div>
+    <div class="connector-desc">
+        Annotated reference connector for connector authors. Loads a flat JSON array
+        <code>[{latitude, longitude, …}, …]</code> and converts it to map features.
+        Read <code>connectors/sample/adapter.js</code> as a starting point for new connectors.
+    </div>
+    <div class="caps">
+        <div class="caps-title">Capabilities</div>
+        <ul>
+            <li>Flat JSON array input — no envelope, no nested structure</li>
+            <li>Auto-detects <code>latitude</code>/<code>longitude</code> columns</li>
+            <li>Custom column names via <code>_collat</code>/<code>_collon</code> hints</li>
+            <li>Invalid rows skipped silently</li>
+        </ul>
+    </div>
+    <div class="hints">
+        <div class="caps-title">URL hints</div>
+        <table>
+            <tr><th>Hint</th><th>Example</th><th>Effect</th></tr>
+            <tr><td>_format=sample</td><td>…&amp;_format=sample</td><td>Required — activates this adapter</td></tr>
+            <tr><td>_collat</td><td>_collat=lat</td><td>Override latitude column name</td></tr>
+            <tr><td>_collon</td><td>_collon=lng</td><td>Override longitude column name</td></tr>
+            <tr><td>_labelcol</td><td>_labelcol=name</td><td>Column used as feature label</td></tr>
+        </table>
+    </div>
+    <div class="footer">
+        <a class="check-link" href="sample/check.html">Run checks →</a>
+        <span class="req">Reference implementation — not for production use</span>
+        <span class="config" style="margin-left:auto;">URL match: <code>_format=sample</code> only</span>
+    </div>
+</div>
+
+</body>
+</html>

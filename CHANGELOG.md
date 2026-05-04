@@ -4,6 +4,17 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.6.1] - 2026-05-04
+
+### Added
+- `connectors/index.html` — index page listing all connectors with capabilities, URL hints, and links to check pages
+
+### Fixed
+- All `check.html` pages: yellow prerequisite warning banner at top (customConfig adapters[] required for e2e)
+- `grist/check.html`: replace DOC_ID placeholder with real public dataset (Cales de mise à l'eau des Côtes d'Armor, grist.dataregion.fr)
+- `grist/check.html`, `sample/check.html`: remove hardcoded x/y/z viewport — auto-fit to features
+- `csv/adapter.js`: document UTF-8-only constraint in header
+
 ## [0.6.0] - 2026-05-04
 
 ### Added
