@@ -325,7 +325,7 @@ window.SViewerApp = (function() {
                         log('Legend appended to DOM');
 
                         var xmlMetaUrl = null;
-                        if (mdLayer.hasOwnProperty('MetadataURL')) {
+                        if (Object.prototype.hasOwnProperty.call(mdLayer, 'MetadataURL')) {
                             $.each(mdLayer.MetadataURL, function() {
                                 if (this.Format === "text/xml" && !xmlMetaUrl) {
                                     xmlMetaUrl = this.OnlineResource;
@@ -546,7 +546,7 @@ window.SViewerApp = (function() {
             return config.allowedDomains.some(function(d) {
                 return host === d || host.slice(-(d.length + 1)) === '.' + d;
             });
-        } catch(e) { return false; }
+        } catch(_e) { return false; }
     }
 
     // ISO 19139 XML namespaces shared by parseISOMetadata and parseCSWForWMS
@@ -834,10 +834,10 @@ window.SViewerApp = (function() {
         }
         var baseUrl = window.SViewerBaseUrl || config.baseUrl || window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
         var code = '<div id="sviewer-map" style="width: 100%; height: 500px;"></div>\n' +
-                   '<script src="' + baseUrl + 'js/embed.js"><\/script>\n' +
+                   '<script src="' + baseUrl + 'js/embed.js"></script>\n' +
                    '<script>\n' +
                    '  SViewer.init("#sviewer-map", ' + JSON.stringify(embedParams, null, 2).split('\n').join('\n    ') + ');\n' +
-                   '<\/script>';
+                   '</script>';
         return code;
     }
 
@@ -872,7 +872,7 @@ window.SViewerApp = (function() {
                         .prepend(items)
                         .prepend(Mustache.render(window.svTemplates['search-header'], { label: tr('lbl.geocode_results') }));
                 }
-            } catch(err) {
+            } catch(_err) {
                 $('#locateMsg').text(tr('msg.geolocation_failed'));
             }
         }
@@ -901,7 +901,7 @@ window.SViewerApp = (function() {
                 });
                 svSpinner.show();
             }
-        } catch(err) {
+        } catch(_err) {
             messagePopup(tr('msg.geolocation_failed'));
             svSpinner.hide();
         }
@@ -1082,7 +1082,7 @@ window.SViewerApp = (function() {
             var g = f.getGeometry();
             if (!g) { return false; }
             try { g.getType(); return true; }
-            catch(e) { return false; }
+            catch(_e) { return false; }
         });
         log('_applyGeoJSON: OL features after reprojection filter=', features.length);
         _buildVectorLayer(features, {});
@@ -1097,7 +1097,7 @@ window.SViewerApp = (function() {
         try {
             var u = new URL(url);
             return decodeURIComponent(u.pathname.split('/').pop()) || u.hostname;
-        } catch(e) { return 'GeoJSON'; }
+        } catch(_e) { return 'GeoJSON'; }
     }
 
     function _renderGeoJSONInfoPanel(count, sourceUrl, adapter) {
@@ -1123,7 +1123,7 @@ window.SViewerApp = (function() {
             return;
         }
         // Warn early if _format hint names an adapter that is not loaded.
-        var formatHint = (function() { try { return new URL(url).searchParams.get('_format'); } catch(e) { return null; } }());
+        var formatHint = (function() { try { return new URL(url).searchParams.get('_format'); } catch(_e) { return null; } }());
         if (formatHint) {
             var hintedAdapter = (window.SViewerAdapters || {})[formatHint];
             if (!hintedAdapter) {
@@ -1474,7 +1474,7 @@ window.SViewerApp = (function() {
                 searchAllWFSLayers($("#searchInput").val());
             }
         }
-        catch(err) {
+        catch(_err) {
             messagePopup(tr('msg.geolocation_failed'));
             svSpinner.hide();
         }
@@ -1730,7 +1730,7 @@ window.SViewerApp = (function() {
         var resolvedLang = (qs.lang && /^[a-z]{2}$/.test(qs.lang)) ? qs.lang
                          : (window.customConfig && window.customConfig.lang) ? window.customConfig.lang
                          : browserLang;
-        config.lang = i18n.hasOwnProperty(resolvedLang) ? resolvedLang : 'en';
+        config.lang = Object.prototype.hasOwnProperty.call(i18n, resolvedLang) ? resolvedLang : 'en';
 
         document.documentElement.lang = config.lang;
         config.projection = ol.proj.get(config.projcode);
@@ -1797,9 +1797,8 @@ window.SViewerApp = (function() {
         // querystring param: layers
         if (qs.layers) {
             config.layersQueryString = qs.layers;
-            var ns_layer_style_list = [];
             // parser to retrieve serialized namespace:name[*style[*cql_filter]] and store the description in config
-            ns_layer_style_list = (typeof qs.layers === 'string') ? qs.layers.split(',') : qs.layers;
+            var ns_layer_style_list = (typeof qs.layers === 'string') ? qs.layers.split(',') : qs.layers;
             $.each(ns_layer_style_list, function() {
                 config.layersQueryable.push(new LayerQueryable(this));
             });
@@ -1842,8 +1841,7 @@ window.SViewerApp = (function() {
 
         // querystring param: qcl_filters
         if (qs.qcl_filters) {
-            var qcl_filters_list = [];
-            qcl_filters_list = (typeof qs.qcl_filters === 'string') ? qs.qcl_filters.split(';') : qs.qcl_filters;
+            var qcl_filters_list = (typeof qs.qcl_filters === 'string') ? qs.qcl_filters.split(';') : qs.qcl_filters;
 
             $.each(qcl_filters_list, function(index) {
                 if (index < config.layersQueryable.length) {
