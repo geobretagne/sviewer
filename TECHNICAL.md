@@ -1030,6 +1030,8 @@ state = {
 | `app.getView()` | `ol.View` | Identique à `SViewer.getView()` |
 | `app.getConfig()` | `object` | Configuration fusionnée (lecture seule) |
 | `app.getState()` | `object` | État interne courant (lecture seule) |
+| `SViewer.setGeojsonUrl(url)` | — | Met à jour l'URL GeoJSON dans l'état (permalien/partage) sans recharger la couche |
+| `SViewer.onTitleChange` | callback | Fonction appelée quand l'utilisateur modifie le titre via le panneau de partage. `null` par défaut. Non appelée lors des modifications programmatiques (init, chargement md). Exemple : `SViewer.onTitleChange = function(title) { /* persister */ };` |
 
 **Contrôle de la vue :**
 ```javascript

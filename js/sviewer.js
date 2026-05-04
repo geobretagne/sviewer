@@ -767,6 +767,7 @@ window.SViewerApp = (function() {
             if (state.position) { linkParams.position = '1'; }
             if (state.opacity !== null && state.opacity !== 1) { linkParams.opacity = state.opacity; }
             if (state.geojson) { linkParams.geojson = state.geojson; }
+            if (config.title) { linkParams.title = config.title; }
             // In embed mode, permalink must point to the standalone sViewer, not the host page
             var standaloneBase = window.SViewerBaseUrl
                 ? window.SViewerBaseUrl + 'index.html'
@@ -1428,7 +1429,7 @@ window.SViewerApp = (function() {
     }
 
    // updates title
-   function setTitle(title) {
+   function setTitle(title, silent) {
         config.title = title;
         document.title = config.title;
        if (config.title!=='') {
@@ -1436,6 +1437,9 @@ window.SViewerApp = (function() {
        }
         if ($("#shareSetTitle").val()==='') {
             $("#shareSetTitle").val(config.title);
+        }
+        if (!silent && typeof SViewer.onTitleChange === 'function') {
+            SViewer.onTitleChange(title);
         }
     }
 
@@ -1710,7 +1714,7 @@ window.SViewerApp = (function() {
                 config.layersQueryable.push(lq);
                 map.addLayer(lq.wmslayer);
                 lq.md.title = title;
-                setTitle(title);
+                setTitle(title, true);
                 var legendUrl = wmsUrl + '?' + $.param({
                     SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetLegendGraphic',
                     FORMAT: 'image/png', LAYER: layername
@@ -1758,10 +1762,10 @@ window.SViewerApp = (function() {
         // querystring param: title
         // controls map title
         if (qs.title) {
-            setTitle(qs.title);
+            setTitle(qs.title, true);
         }
         else {
-            setTitle(config.title);
+            setTitle(config.title, true);
         }
 
         // querystring param: perform getFeatureInfo on map center
@@ -2232,6 +2236,10 @@ if (!hitVector) { queryMap(e.coordinate); }
     this.setGeojsonUrl = function(url) {
         state.geojson = url || null;
     };
+    // Optional callback — set by embedders to be notified when the user
+    // changes the title via the share panel. Not called for programmatic
+    // setTitle() calls (init, md/WFS auto-title). Null by default.
+    this.onTitleChange = null;
     }
 
     // Create instance

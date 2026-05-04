@@ -621,7 +621,6 @@ function openSettings() {
     var modeElOs = document.getElementById('sv-cfg-geom-mode');
     if (modeElOs) { modeElOs.value = colGeomMode; }
     syncColumnPickerMode();
-    document.getElementById('sv-cfg-title').value               = svConfig.title || '';
     var d = geojsonStyleDefaults();
     document.getElementById('sv-cfg-fill-color').value          = safeColor(svConfig.fill_color,       d.color);
     document.getElementById('sv-cfg-fill-opacity').value        = svConfig.fill_opacity    !== undefined ? svConfig.fill_opacity    : d.fillOpacity;
@@ -719,7 +718,6 @@ function closeSettings(save) {
         svConfig.sel_stroke_opacity  = readFloat('sv-cfg-sel-stroke-opacity', 1);
         svConfig.sel_stroke_width    = readFloat('sv-cfg-sel-stroke-width',   dcs.strokeWidth + 1);
 
-        var title   = document.getElementById('sv-cfg-title').value.trim();
         var layers  = document.getElementById('sv-cfg-layers').value.trim();
         var md      = document.getElementById('sv-cfg-md').value.trim();
         var lbSelEl = document.getElementById('sv-cfg-lb-sel');
@@ -728,7 +726,6 @@ function closeSettings(save) {
         var y       = document.getElementById('sv-cfg-y').value.trim();
         var z       = document.getElementById('sv-cfg-z').value.trim();
         var apibase = document.getElementById('sv-cfg-apibase').value.trim();
-        if (title)   { svConfig.title   = title;  } else { delete svConfig.title; }
         if (layers)  { svConfig.layers  = layers; } else { delete svConfig.layers; }
         if (md)      { svConfig.md      = md;     } else { delete svConfig.md; }
         if (lb !== '')      { svConfig.lb = parseInt(lb, 10);   } else { delete svConfig.lb; }
@@ -970,6 +967,12 @@ function initMap() {
 
     SViewer.init('#sv-map', opts).then(function() {
         mapReady = true;
+        // Persist title edits made via the sViewer share panel into widget options.
+        // Only fires on user interaction (not programmatic setTitle calls).
+        SViewer.onTitleChange = function(title) {
+            svConfig.title = title;
+            saveOptions();
+        };
         var geojsonUrl = buildGristGeojsonUrl();
         if (geojsonUrl) { SViewer.setGeojsonUrl(geojsonUrl); }
         maybeSetupMapClick();
@@ -1014,7 +1017,7 @@ document.getElementById('sv-btn-cfg-export').addEventListener('click', function(
         sel_fill_opacity:    rn('sv-cfg-sel-fill-opacity'),
         fit_on_load:         document.getElementById('sv-cfg-fit').checked
     };
-    var title = rf('sv-cfg-title'); if (title)   { out.title          = title; }
+    if (svConfig.title)                            { out.title          = svConfig.title; }
     var layers = rf('sv-cfg-layers'); if (layers) { out.layers         = layers; }
     var md = rf('sv-cfg-md'); if (md)             { out.md             = md; }
     if (lbVal !== '')                             { out.lb             = parseInt(lbVal, 10); }
@@ -1048,7 +1051,12 @@ function applyImportData(data) {
     if (data.sel_stroke_color !== undefined)    { document.getElementById('sv-cfg-sel-stroke-color').value   = safeColor(data.sel_stroke_color, '#ffffff'); }
     if (data.sel_stroke_opacity !== undefined)  { document.getElementById('sv-cfg-sel-stroke-opacity').value = data.sel_stroke_opacity; }
     if (data.sel_stroke_width !== undefined)    { document.getElementById('sv-cfg-sel-stroke-width').value   = data.sel_stroke_width; }
-    if (data.title !== undefined)               { document.getElementById('sv-cfg-title').value              = data.title; }
+    if (data.title !== undefined) {
+        svConfig.title = data.title;
+        // Update share panel field directly — bypass onTitleChange (import is not a user edit)
+        var sf = document.getElementById('shareSetTitle');
+        if (sf) { sf.value = data.title; }
+    }
     if (data.layers !== undefined)              { document.getElementById('sv-cfg-layers').value             = data.layers; }
     if (data.md !== undefined)                  { document.getElementById('sv-cfg-md').value                 = data.md; }
     if (data.lb !== undefined) {

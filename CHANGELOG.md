@@ -4,6 +4,18 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.6.2] - 2026-05-04
+
+### Added
+- `SViewer.onTitleChange` — public callback fired when user edits the map title via the share panel (not on programmatic/init calls). Allows embedders to persist title changes without coupling to sViewer internals. Documented in `TECHNICAL.md`.
+
+### Fixed
+- Permalink URL missing `&title=` parameter — title set via share panel now included in standalone permalink
+- Grist widget: title edited in sViewer share panel now persists across reloads via widget options (`SViewer.onTitleChange` + `saveOptions()`)
+
+### Changed
+- Grist widget: title field removed from settings panel (Share tab) — title managed exclusively via sViewer share panel, consistent with standalone mode. Existing saved titles migrate transparently on first load.
+
 ## [0.6.1] - 2026-05-04
 
 ### Added
