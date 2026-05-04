@@ -16,6 +16,7 @@ Guide technique complet pour développeurs et intégrateurs..
 8. [Progressive Web App (PWA)](#progressive-web-app-pwa)
 9. [Internationalization (i18n)](#internationalization-i18n)
 10. [Architecture et API Interne](#architecture-et-api-interne)
+    - [Embed SDK — bus d'événements](#embed-sdk--bus-dévénements)
 11. [Dépannage](#dépannage)
 
 ---
@@ -511,6 +512,7 @@ Chaque nom correspond à `connectors/{nom}/adapter.js`. Seuls les adaptateurs fo
 | Nom | API supportée |
 |-----|---------------|
 | `grist` | Grist `/api/docs/…/tables/…/records` |
+| `csv` | Fichiers CSV (`,` ou `;`), colonnes lat/lon auto-détectées ou colonne géométrie GeoJSON/WKT. Extension `.csv` ou hint `?_format=csv`. |
 
 **Plusieurs adaptateurs** — listés dans l'ordre de priorité. Chaque adaptateur déclare un `match(url)` qui limite son activation à certaines URLs source :
 
@@ -970,6 +972,7 @@ Toutes les dépendances sont **self-hosted** (pas de CDN).
 
 ```
 embed.js
+  ├── Crée le bus d'événements (_svBus) — exposé via window._SViewerInternals (figé)
   ├── Détecte baseUrl depuis l'URL du script (window.SViewerBaseUrl)
   ├── Stocke les options dans window._svEmbedOptions
   ├── Crée le DOM (.sv-scope container)
@@ -980,6 +983,8 @@ embed.js
         ├── Merge _svEmbedOptions dans qs (priorité sur la page hôte)
         ├── Charge customConfig.js via SViewerBaseUrl (chemin absolu)
         └── doConfiguration() → doMap() → doGUI()
+              └── init() : s'abonne à sv:loadFeatures / sv:loadFeatureObjects / sv:selectFeature
+                           émet sv:mapReady
 ```
 
 ### Objet config (global)
@@ -1032,6 +1037,14 @@ state = {
 | `app.getState()` | `object` | État interne courant (lecture seule) |
 | `SViewer.setGeojsonUrl(url)` | — | Met à jour l'URL GeoJSON dans l'état (permalien/partage) sans recharger la couche |
 | `SViewer.onTitleChange` | callback | Fonction appelée quand l'utilisateur modifie le titre via le panneau de partage. `null` par défaut. Non appelée lors des modifications programmatiques (init, chargement md). Exemple : `SViewer.onTitleChange = function(title) { /* persister */ };` |
+| `SViewer.loadFeatures(geojson)` | — | Charge un GeoJSON FeatureCollection (objet JS) comme couche vectorielle. Équivalent à `?geojson=` mais avec données déjà parsées. |
+| `SViewer.loadFeatureObjects(features, options)` | — | Charge un tableau d'entités OpenLayers (`ol.Feature[]`) déjà en EPSG:3857. Zéro reprojection, zéro sérialisation — chemin haute performance pour les widgets. Voir options ci-dessous. |
+| `SViewer.selectFeature(id)` | — | Sélectionne une entité par son id OL (`feature.getId()`), zoome dessus, affiche ses propriétés dans le panneau. |
+| `SViewer.clearSelection()` | — | Efface la sélection courante et ferme le panneau de propriétés. |
+| `SViewer.onMapReady(fn)` | — | Enregistre un callback appelé une fois la carte initialisée. Argument : `{ map, view }`. |
+| `SViewer.onFeatureClick(fn)` | — | Enregistre un callback appelé à chaque clic sur une entité vectorielle. Argument : `{ feature, coordinate, properties }`. |
+| `SViewer.onFeatureSelect(fn)` | — | Enregistre un callback appelé à chaque changement de sélection (clic ou `selectFeature`/`clearSelection`). Argument : `{ feature, properties }` — `null` si désélection. |
+| `SViewer.onFeaturesLoaded(fn)` | — | Enregistre un callback appelé après chaque chargement de couche vectorielle. Argument : `{ features, count }`. |
 
 **Contrôle de la vue :**
 ```javascript
@@ -1089,6 +1102,62 @@ SViewer.init('#ma-carte', {}).then(function(app) {
 ```
 
 > **Note :** Ces exemples utilisent l'API OpenLayers directement. Consulter la [documentation OpenLayers](https://openlayers.org/en/latest/apidoc/) pour l'ensemble des méthodes disponibles sur `ol.Map` et `ol.View`.
+
+### Embed SDK — bus d'événements
+
+Le bus d'événements permet aux widgets embarqués (Grist, futures intégrations) de réagir aux événements cartographiques et de piloter la carte sans accéder aux internals OpenLayers.
+
+**Canal de communication** — `window._SViewerInternals.bus` (objet figé, non modifiable depuis l'extérieur). Créé par `embed.js` avant tout chargement de dépendance. Absent en mode simple (pas d'embed.js).
+
+**Options de `loadFeatureObjects`**
+
+| Clé | Type | Défaut | Description |
+|-----|------|--------|-------------|
+| `styleOverride` | `ol.style.Style` ou fonction style OL | `null` | Style personnalisé. Si absent, utilise `customConfig.geojsonStyle`. |
+| `fitExtent` | `boolean` | `false` | Recadre la vue sur l'étendue des entités après chargement. |
+
+**Exemple — widget qui charge des entités OL et écoute les clics**
+
+```javascript
+// Après SViewer.init(...)
+SViewer.onMapReady(function() {
+    // Charger des ol.Feature[] déjà en EPSG:3857
+    SViewer.loadFeatureObjects(olFeatures, { fitExtent: true });
+});
+
+SViewer.onFeatureClick(function(e) {
+    console.log('Clic sur :', e.feature.getId(), e.properties);
+});
+
+SViewer.onFeatureSelect(function(e) {
+    if (!e.feature) { console.log('Désélection'); return; }
+    console.log('Sélection :', e.properties);
+});
+```
+
+**Exemple — charger un GeoJSON parsé**
+
+```javascript
+fetch('https://example.com/data.geojson')
+    .then(function(r) { return r.json(); })
+    .then(function(geojson) {
+        SViewer.loadFeatures(geojson);
+    });
+```
+
+**Exemple — sélectionner une entité par id**
+
+```javascript
+// Sélectionne l'entité dont feature.getId() === 'row_42'
+SViewer.selectFeature('row_42');
+
+// Efface la sélection
+SViewer.clearSelection();
+```
+
+**Sécurité** — le bus est encapsulé dans la closure `embed.js` et exposé via `Object.defineProperty` avec `writable: false, configurable: false`. La page hôte ne peut ni remplacer ni supprimer `window._SViewerInternals`.
+
+**Usage multiple** — plusieurs appels `onFeatureClick(fn)` enregistrent plusieurs callbacks, tous appelés dans l'ordre d'enregistrement. Utiliser `SViewer.onFeatureClick` uniquement après que `embed.js` est chargé (c'est toujours le cas en mode embed).
 
 ### Minification
 

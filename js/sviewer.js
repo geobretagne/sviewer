@@ -9,6 +9,10 @@ window.SViewerApp = (function() {
     ]);
     ol.proj.proj4.register(proj4);
 
+    // Bus shared with embed.js — null when running standalone (no embed.js loaded).
+    var _bus = (window._SViewerInternals && window._SViewerInternals.bus) || null;
+    function _emit(event, data) { if (_bus) { _bus.emit(event, data); } }
+
     var config = {};
     var state = {};
     var customConfig = window.customConfig || {};
@@ -939,14 +943,160 @@ window.SViewerApp = (function() {
         });
     }
 
+    // Build an OL vector layer from a feature array using geojsonStyle config.
+    // options.styleOverride: ol.style.StyleFunction — skips built-in style when provided.
+    function _buildVectorLayer(features, options) {
+        options = options || {};
+        if (vectorLayer) { map.removeLayer(vectorLayer); }
+        var vectorSource = new ol.source.Vector({ features: features });
+        if (options.styleOverride) {
+            vectorLayer = new ol.layer.Vector({ source: vectorSource, style: options.styleOverride });
+        } else {
+            var gs = config.geojsonStyle || {};
+            var gsColor = gs.color || '#ff6600';
+            var gsFill = ol.color.asArray(gsColor).slice();
+            gsFill[3] = gs.fillOpacity !== undefined ? gs.fillOpacity : 0.35;
+            var gsBaseStyle = new ol.style.Style({
+                fill:   new ol.style.Fill({ color: gsFill }),
+                stroke: new ol.style.Stroke({ color: gsColor, width: gs.strokeWidth || 2.5 }),
+                image:  new ol.style.Circle({
+                    radius: 6,
+                    fill:   new ol.style.Fill({ color: gsColor }),
+                    stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 })
+                })
+            });
+            vectorLayer = new ol.layer.Vector({
+                source: vectorSource,
+                style: function(feature) {
+                    var lbl = feature.get('_label');
+                    if (!lbl && lbl !== 0) { return gsBaseStyle; }
+                    return new ol.style.Style({
+                        fill:   gsBaseStyle.getFill(),
+                        stroke: gsBaseStyle.getStroke(),
+                        image:  gsBaseStyle.getImage(),
+                        text:   new ol.style.Text({
+                            text: String(lbl),
+                            font: '12px sans-serif',
+                            fill: new ol.style.Fill({ color: '#222' }),
+                            stroke: new ol.style.Stroke({ color: '#fff', width: 3 }),
+                            overflow: true,
+                            offsetY: -14
+                        })
+                    });
+                }
+            });
+        }
+        map.addLayer(vectorLayer);
+        return vectorLayer;
+    }
+
+    // Wire the singleclick handler on the current vectorLayer.
+    // Shows feature properties in query panel + emits sv:featureClick / sv:featureSelect.
+    // Must be called once per layer rebuild (OL event listeners are per-map, not per-layer,
+    // so we track the active layer via closure over vectorLayer).
+    var _vectorClickBound = false;
+    function _bindVectorClick() {
+        if (_vectorClickBound) { return; }
+        _vectorClickBound = true;
+        map.on('singleclick', function(e) {
+            if (!vectorLayer) { return; }
+            var hit = false;
+            map.forEachFeatureAtPixel(e.pixel, function(feature) {
+                if (hit) { return; }
+                hit = true;
+                var props = feature.getProperties();
+                var $table = $('<table class="table table-sm table-bordered sv-feature-props">');
+                $.each(props, function(key, val) {
+                    if (key === 'geometry' || typeof val === 'object') { return; }
+                    $table.append($('<tr>').append($('<th>').text(key)).append($('<td>').text(val)));
+                });
+                $('#queryContent').html('').append($table);
+                marker.setPosition(e.coordinate);
+                $('#marker').show();
+                closePanel();
+                togglePanel('query');
+                _emit('sv:featureClick', { feature: feature, coordinate: e.coordinate, properties: props });
+                _emit('sv:featureSelect', { feature: feature, properties: props });
+            }, { layerFilter: function(l) { return l === vectorLayer; }, hitTolerance: 8 });
+        });
+    }
+
+    // Select feature by OL feature id (set via feature.setId()). Zooms to feature,
+    // shows properties panel, emits sv:featureSelect.
+    function selectFeatureById(id) {
+        if (!vectorLayer) { return; }
+        if (id === null || id === undefined) {
+            closePanel();
+            _emit('sv:featureSelect', { feature: null, properties: null });
+            return;
+        }
+        var feature = vectorLayer.getSource().getFeatureById(id);
+        if (!feature) { return; }
+        var geom = feature.getGeometry();
+        if (geom) { view.fit(geom.getExtent(), { maxZoom: 16, duration: 400, padding: [40,40,40,40] }); }
+        var props = feature.getProperties();
+        var $table = $('<table class="table table-sm table-bordered sv-feature-props">');
+        $.each(props, function(key, val) {
+            if (key === 'geometry' || typeof val === 'object') { return; }
+            $table.append($('<tr>').append($('<th>').text(key)).append($('<td>').text(val)));
+        });
+        $('#queryContent').html('').append($table);
+        closePanel();
+        togglePanel('query');
+        _emit('sv:featureSelect', { feature: feature, properties: props });
+    }
+
+    // Load pre-built OL Feature objects directly into the map (no fetch, no reprojection).
+    // features: OL Feature array, already in map projection.
+    // options.styleOverride: ol.style.StyleFunction — use widget's own style function.
+    // options.fitExtent: boolean — zoom to fit features after load (default false).
+    function loadFeatureObjects(features, options) {
+        options = options || {};
+        if (!features || !features.length) { return; }
+        _buildVectorLayer(features, options);
+        _bindVectorClick();
+        if (options.fitExtent) {
+            var ext = vectorLayer.getSource().getExtent();
+            if (ext && isFinite(ext[0])) { view.fit(ext, { maxZoom: 16, duration: 400, padding: [40,40,40,40] }); }
+        }
+        _emit('sv:featuresLoaded', { features: features, count: features.length });
+        log('loadFeatureObjects: loaded', features.length, 'features');
+    }
+
     /**
      * Loads an external GeoJSON URL as a vector layer.
      * Points, lines and polygons all supported. Features are clickable — properties
      * displayed as a table in the query panel (same UX as WMS GetFeatureInfo).
      */
-    function loadGeoJSON(url) {
+    // Shared: parse a GeoJSON FeatureCollection into OL features + build layer.
+    function _applyGeoJSON(geojson) {
+        var format = new ol.format.GeoJSON();
+        var features = format.readFeatures(geojson, {
+            dataProjection: 'EPSG:4326',
+            featureProjection: config.projcode
+        });
+        if (!features.length) { return; }
+        features = features.filter(function(f) {
+            var g = f.getGeometry();
+            if (!g) { return false; }
+            try { g.getType(); return true; }
+            catch(e) { return false; }
+        });
+        log('_applyGeoJSON: OL features after reprojection filter=', features.length);
+        _buildVectorLayer(features, {});
+        _bindVectorClick();
+        _emit('sv:featuresLoaded', { features: features, count: features.length });
+    }
+
+    // url: GeoJSON URL to fetch. geojsonDirect: pre-parsed FeatureCollection (skips fetch).
+    function loadGeoJSON(url, geojsonDirect) {
+        // Direct data path — skip fetch entirely.
+        if (geojsonDirect) {
+            log('loadGeoJSON: direct data, features=', geojsonDirect.features ? geojsonDirect.features.length : '?');
+            _applyGeoJSON(geojsonDirect);
+            return;
+        }
         // Warn early if _format hint names an adapter that is not loaded.
-        // Catches sysadmin misconfiguration before the fetch even starts.
         var formatHint = (function() { try { return new URL(url).searchParams.get('_format'); } catch(e) { return null; } }());
         if (formatHint) {
             var hintedAdapter = (window.SViewerAdapters || {})[formatHint];
@@ -991,76 +1141,7 @@ window.SViewerApp = (function() {
                     messagePopup(tr('msg.query_failed'));
                     return;
                 }
-                var format = new ol.format.GeoJSON();
-                var features = format.readFeatures(geojson, {
-                    dataProjection: 'EPSG:4326',
-                    featureProjection: config.projcode
-                });
-                if (!features.length) { return; }
-                // Some geometries may fail reprojection — filter to valid OL geometry instances only.
-                features = features.filter(function(f) {
-                    var g = f.getGeometry();
-                    if (!g) { return false; }
-                    try { g.getType(); return true; }
-                    catch(e) { return false; }
-                });
-                log('loadGeoJSON: OL features after reprojection filter=', features.length);
-
-                var vectorSource = new ol.source.Vector({ features: features });
-                var gs = config.geojsonStyle || {};
-                var gsColor = gs.color || '#ff6600';
-                var gsFill = ol.color.asArray(gsColor).slice();
-                gsFill[3] = gs.fillOpacity !== undefined ? gs.fillOpacity : 0.35;
-                var gsBaseStyle = new ol.style.Style({
-                    fill:   new ol.style.Fill({ color: gsFill }),
-                    stroke: new ol.style.Stroke({ color: gsColor, width: gs.strokeWidth || 2.5 }),
-                    image:  new ol.style.Circle({
-                        radius: 6,
-                        fill:   new ol.style.Fill({ color: gsColor }),
-                        stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 })
-                    })
-                });
-                vectorLayer = new ol.layer.Vector({
-                    source: vectorSource,
-                    style: function(feature) {
-                        var lbl = feature.get('_label');
-                        if (!lbl && lbl !== 0) { return gsBaseStyle; }
-                        return new ol.style.Style({
-                            fill:   gsBaseStyle.getFill(),
-                            stroke: gsBaseStyle.getStroke(),
-                            image:  gsBaseStyle.getImage(),
-                            text:   new ol.style.Text({
-                                text: String(lbl),
-                                font: '12px sans-serif',
-                                fill: new ol.style.Fill({ color: '#222' }),
-                                stroke: new ol.style.Stroke({ color: '#fff', width: 3 }),
-                                overflow: true,
-                                offsetY: -14
-                            })
-                        });
-                    }
-                });
-                map.addLayer(vectorLayer);
-
-                // Click handler — show feature properties in query panel
-                map.on('singleclick', function(e) {
-                    var hit = false;
-                    map.forEachFeatureAtPixel(e.pixel, function(feature) {
-                        if (hit) { return; }
-                        hit = true;
-                        var props = feature.getProperties();
-                        var $table = $('<table class="table table-sm table-bordered sv-feature-props">');
-                        $.each(props, function(key, val) {
-                            if (key === 'geometry' || typeof val === 'object') { return; }
-                            $table.append($('<tr>').append($('<th>').text(key)).append($('<td>').text(val)));
-                        });
-                        $('#queryContent').html('').append($table);
-                        marker.setPosition(e.coordinate);
-                        $('#marker').show();
-                        closePanel();
-                        togglePanel('query');
-                    }, { layerFilter: function(l) { return l === vectorLayer; } });
-                });
+                _applyGeoJSON(geojson);
             },
             error: function() {
                 messagePopup(tr('msg.query_failed'));
@@ -1899,6 +1980,7 @@ window.SViewerApp = (function() {
 
     function doGUI() {
         applyTheme(state.theme);
+        _emit('sv:mapReady', { map: map, view: view });
 
         // map events
         map.on('singleclick', function(e) {
@@ -2219,6 +2301,13 @@ if (!hitVector) { queryMap(e.coordinate); }
             loadGeoJSON(state.geojson);
         }
 
+        // Bus inbound — embedder pushes data or drives selection via SViewer SDK.
+        if (_bus) {
+            _bus.on('sv:loadFeatures', function(d) { if (d && d.geojson) { loadGeoJSON(null, d.geojson); } });
+            _bus.on('sv:loadFeatureObjects', function(d) { if (d && d.features) { loadFeatureObjects(d.features, d.options); } });
+            _bus.on('sv:selectFeature', function(d) { selectFeatureById(d && d.id); });
+        }
+
     }
 
 
@@ -2236,6 +2325,13 @@ if (!hitVector) { queryMap(e.coordinate); }
     this.setGeojsonUrl = function(url) {
         state.geojson = url || null;
     };
+    // Load pre-built OL Feature array into the map (no fetch, no reprojection).
+    // options: { styleOverride, fitExtent } — see loadFeatureObjects().
+    this.loadFeatureObjects = function(features, options) { loadFeatureObjects(features, options); };
+    // Load a GeoJSON FeatureCollection object directly into the map (no fetch).
+    this.loadGeoJSON = function(geojson) { loadGeoJSON(null, geojson); };
+    // Select feature by OL feature id (feature.setId()). null clears selection.
+    this.selectFeatureById = function(id) { selectFeatureById(id); };
     // Optional callback — set by embedders to be notified when the user
     // changes the title via the share panel. Not called for programmatic
     // setTitle() calls (init, md/WFS auto-title). Null by default.

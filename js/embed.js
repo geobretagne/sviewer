@@ -14,6 +14,27 @@
     var SVIEWER_VERSION='0.6.3';
     var SVIEWER_COMMIT='bc589c3';
 
+    // Internal event bus — shared with sviewer.js via window._SViewerInternals.
+    // Frozen after creation to prevent host-page collision or tampering.
+    var _svBus = {
+        _handlers: {},
+        on: function(event, fn) {
+            (this._handlers[event] = this._handlers[event] || []).push(fn);
+        },
+        off: function(event, fn) {
+            if (!this._handlers[event]) { return; }
+            this._handlers[event] = this._handlers[event].filter(function(h) { return h !== fn; });
+        },
+        emit: function(event, data) {
+            (this._handlers[event] || []).forEach(function(h) { try { h(data); } catch(e) { console.error('SViewer bus handler error [' + event + ']:', e); } });
+        }
+    };
+    Object.defineProperty(window, '_SViewerInternals', {
+        value: { bus: _svBus },
+        writable: false,
+        configurable: false
+    });
+
     var debug = /[?&]debug=1/.test(window.location.search);
 
     var SV_SHELL_HTML = `
@@ -428,7 +449,48 @@
             if (window.SViewerApp && window.SViewerApp.setGeojsonUrl) {
                 window.SViewerApp.setGeojsonUrl(url);
             }
-        }
+        },
+
+        // --- Embed SDK ---
+        // Push a GeoJSON FeatureCollection into the map, replacing any existing vector layer.
+        // geojson: GeoJSON FeatureCollection object (already parsed, not a URL).
+        loadFeatures: function(geojson) {
+            _svBus.emit('sv:loadFeatures', { geojson: geojson });
+        },
+
+        // Push pre-built OL Feature objects into the map (no reprojection).
+        // features: OL Feature array in map projection (EPSG:3857).
+        // options: { styleOverride: ol.style.StyleFunction, fitExtent: boolean }
+        loadFeatureObjects: function(features, options) {
+            _svBus.emit('sv:loadFeatureObjects', { features: features, options: options });
+        },
+
+        // Drive feature selection from outside — highlights feature with matching id property.
+        // id: value of the feature's 'id' property (or null / undefined to clear selection).
+        selectFeature: function(id) {
+            _svBus.emit('sv:selectFeature', { id: id });
+        },
+
+        // Clear current feature selection.
+        clearSelection: function() {
+            _svBus.emit('sv:selectFeature', { id: null });
+        },
+
+        // Register callback fired once the OL map is ready.
+        // fn({ map, view })
+        onMapReady: function(fn) { _svBus.on('sv:mapReady', fn); },
+
+        // Register callback fired when user clicks a vector feature on the map.
+        // fn({ feature, coordinate, properties })
+        onFeatureClick: function(fn) { _svBus.on('sv:featureClick', fn); },
+
+        // Register callback fired when selection changes (click or selectFeature).
+        // fn({ feature, properties }) — feature/properties null on deselect.
+        onFeatureSelect: function(fn) { _svBus.on('sv:featureSelect', fn); },
+
+        // Register callback fired after loadFeatures completes and layer is on map.
+        // fn({ features, count })
+        onFeaturesLoaded: function(fn) { _svBus.on('sv:featuresLoaded', fn); }
     };
 
     console.log('SViewer: Embed script loaded');

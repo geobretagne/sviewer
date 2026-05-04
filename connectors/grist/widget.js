@@ -293,21 +293,18 @@ var initialLayers = null;          // valeur de layers= à l'init — rechargeme
 var initialMd = null;              // valeur de md= à l'init — rechargement si modifiée
 var optionsLoaded = false;         // vrai une fois applyOptions() appelé au moins une fois
 var widgetOptions = null;          // options widget Grist (surcharges par instance)
-var vectorLayer = null;            // couche OL vecteur portant les entités Grist
 var featureByRowId = {};           // id ligne Grist → OL Feature
 var allColumns = [];               // noms de colonnes du dernier onRecords
 var allRecords = [];               // enregistrements bruts du dernier onRecords
 var svConfig = {};                 // clés de configuration (widget options)
 var mapReady = false;              // vrai une fois SViewer.init() résolu
-var recordsReady = false;          // vrai après le premier onRecords
-var mapClickWired = false;         // vrai une fois setupMapClick exécuté
 var gristDocId = null;             // identifiant du document Grist (pour l'URL de partage)
 var gristTableId = null;           // identifiant de la table Grist (pour l'URL de partage)
 var debounceTimer = null;
 var selectedRowId = null;          // id de la ligne Grist sélectionnée (pour le surlignage post-rebuild)
 var lastRecordsFingerprint = null; // empreinte JSON pour éviter un rebuild si seule la sélection a changé
 var viewFitted = false;            // vrai une fois le premier fit de vue effectué
-var mapClickPending = false;       // vrai entre setCursorPos (map click) et onRecord bounce — supprime le pan/zoom
+var layerBuilt = false;            // vrai une fois la couche OL passée à SViewer via loadFeatureObjects
 
 // ---------------------------------------------------------------------------
 // Utilitaires
@@ -539,12 +536,13 @@ function getStyleCfg(selected) {
 // Surligne selectedFeat ; remet toutes les autres au style de base.
 // Passer null réinitialise toutes les entités au style de base.
 function applySelectionStyle(selectedFeat) {
-    if (!vectorLayer) { return; }
+    if (!layerBuilt) { return; }
     var baseCfg = getStyleCfg(false);
     var selCfg  = getStyleCfg(true);
     var baseStyleFn = makeFeatureStyle(baseCfg, false);
     var selStyleFn  = makeFeatureStyle(selCfg,  true);
-    vectorLayer.getSource().getFeatures().forEach(function(f) {
+    Object.keys(featureByRowId).forEach(function(id) {
+        var f = featureByRowId[id];
         f.setStyle((f === selectedFeat ? selStyleFn : baseStyleFn)(f));
     });
 }
@@ -758,7 +756,7 @@ function scheduleRebuildLayer() {
     debounceTimer = setTimeout(rebuildLayer, 300);
 }
 
-// Reconstruit la couche OL vecteur depuis allRecords.
+// Reconstruit la couche OL vecteur depuis allRecords et la passe à SViewer via loadFeatureObjects.
 // Reprojette EPSG:4326 → EPSG:3857. Fit de vue au premier chargement uniquement.
 // Court-circuite le rebuild si les données n'ont pas changé (empreinte identique).
 function rebuildLayer() {
@@ -767,17 +765,14 @@ function rebuildLayer() {
 
     // colonnes actives dans l'empreinte : force le rebuild si la colonne change sans que les données bougent
     var fingerprint = JSON.stringify(allRecords) + '|' + colGeom + '|' + colLat + '|' + colLon + '|' + colLabel + '|' + colGeomMode;
-    if (vectorLayer && fingerprint === lastRecordsFingerprint) {
+    if (layerBuilt && fingerprint === lastRecordsFingerprint) {
         applySelectionStyle(selectedRowId !== null ? featureByRowId[selectedRowId] : null);
         return;
     }
     lastRecordsFingerprint = fingerprint;
 
-    var map = SViewer.getMap();
-    if (!map) { return; }
-
-    if (vectorLayer) { map.removeLayer(vectorLayer); }
     featureByRowId = {};
+    layerBuilt = false;
 
     var features = [];
     var skipped = 0;
@@ -848,12 +843,15 @@ function rebuildLayer() {
         features.push(feat);
     });
 
-    vectorLayer = new ol.layer.Vector({
-        source: new ol.source.Vector({ features: features }),
-        style: makeFeatureStyle(getStyleCfg(false), false)
-    });
+    var shouldFit = svConfig.fit_on_load === true ||
+        (svConfig.fit_on_load !== false && !svConfig.x && !svConfig.y);
 
-    map.addLayer(vectorLayer);
+    SViewer.loadFeatureObjects(features, {
+        styleOverride: makeFeatureStyle(getStyleCfg(false), false),
+        fitExtent: features.length > 0 && !viewFitted && shouldFit
+    });
+    layerBuilt = true;
+    if (shouldFit && features.length) { viewFitted = true; }
 
     // Refresh share URL with current column hints after each rebuild
     var geojsonUrl = buildGristGeojsonUrl();
@@ -861,53 +859,19 @@ function rebuildLayer() {
 
     setStatus(allRecords.length + tr('features') + (skipped ? ' (' + skipped + tr('skipped') + ')' : ''));
 
-    // fit_on_load===true: always fit; false: never; undefined: fit only when no x/y saved
-    var shouldFit = svConfig.fit_on_load === true ||
-        (svConfig.fit_on_load !== false && !svConfig.x && !svConfig.y);
-    if (features.length && !viewFitted && shouldFit) {
-        var ext = vectorLayer.getSource().getExtent();
-        if (ext && isFinite(ext[0])) {
-            map.getView().fit(ext, { padding: [40, 40, 40, 40], maxZoom: 16, duration: 400 });
-        }
-        viewFitted = true;
-    }
-
     if (selectedRowId !== null && featureByRowId[selectedRowId]) {
         applySelectionStyle(featureByRowId[selectedRowId]);
     }
 }
 
-// Arme le clic carte uniquement après que la carte ET le premier batch d'enregistrements sont prêts.
-// Évite que setSelectedRows se déclenche avant que la grille ait des données à sélectionner.
-function maybeSetupMapClick() {
-    if (mapClickWired || !mapReady || !recordsReady) { return; }
-    mapClickWired = true;
-    setupMapClick();
-}
-
-// hitTolerance: 8px facilite le clic sur les entités linéaires.
-function setupMapClick() {
-    var map = SViewer.getMap();
-    if (!map) { mapClickWired = false; return; }
-    map.on('singleclick', function(e) {
-        if (!vectorLayer) { return; }
-        var hit = false;
-        map.forEachFeatureAtPixel(e.pixel, function(feature) {
-            var rowId = feature.get('_gristRowId');
-            if (rowId !== undefined) {
-                hit = true;
-                selectedRowId = rowId;
-                document.getElementById('sv-btn-clear').disabled = false;
-                applySelectionStyle(feature);
-            }
-            return true; // arrêt après le premier hit
-        }, { layerFilter: function(l) { return l === vectorLayer; }, hitTolerance: 8 });
-        if (!hit) {
-            selectedRowId = null;
-            document.getElementById('sv-btn-clear').disabled = true;
-            vectorLayer.getSource().getFeatures().forEach(function(f) { f.setStyle(null); });
-        }
-    });
+// Réagit au clic sur une entité de la carte (émis par sViewer via sv:featureClick).
+// Met à jour selectedRowId, active le bouton Désélectionner, applique le style sélection.
+function onMapFeatureClick(e) {
+    var rowId = e.feature.get('_gristRowId');
+    if (rowId === undefined) { return; }
+    selectedRowId = rowId;
+    document.getElementById('sv-btn-clear').disabled = false;
+    applySelectionStyle(e.feature);
 }
 
 // Valide une couleur CSS. Retourne la couleur ou le fallback.
@@ -971,9 +935,10 @@ function initMap() {
             svConfig.title = title;
             saveOptions();
         };
+        // React to map feature clicks — Grist-specific: track selectedRowId + apply selection style.
+        SViewer.onFeatureClick(onMapFeatureClick);
         var geojsonUrl = buildGristGeojsonUrl();
         if (geojsonUrl) { SViewer.setGeojsonUrl(geojsonUrl); }
-        maybeSetupMapClick();
         rebuildLayer();
     }).catch(function(e) {
         console.error('[sviewer] init failed:', e);
@@ -988,9 +953,7 @@ function initMap() {
 document.getElementById('sv-btn-clear').addEventListener('click', function() {
     selectedRowId = null;
     document.getElementById('sv-btn-clear').disabled = true;
-    if (vectorLayer) {
-        vectorLayer.getSource().getFeatures().forEach(function(f) { f.setStyle(null); });
-    }
+    applySelectionStyle(null);
 });
 document.getElementById('sv-btn-cfg-save').addEventListener('click', function() { closeSettings(true); });
 document.getElementById('sv-btn-cfg-cancel').addEventListener('click', function() { closeSettings(false); });
@@ -1093,7 +1056,7 @@ document.getElementById('sv-btn-cfg-apply').addEventListener('click', function()
 // Séquence d'initialisation Grist
 // ---------------------------------------------------------------------------
 
-grist.ready({ requiredAccess: 'read table', supportsCursor: true, onEditOptions: function() { openSettings(); } });
+grist.ready({ requiredAccess: 'read table', onEditOptions: function() { openSettings(); } });
 
 if (grist.widgetApi && typeof grist.widgetApi.onOptions === 'function') {
     grist.widgetApi.onOptions(function(opts) {
@@ -1113,7 +1076,6 @@ if (grist.widgetApi && typeof grist.widgetApi.onOptions === 'function') {
 // dès réception de Ready ; un enregistrement tardif (dans une Promise) le manquerait.
 grist.onRecords(function(records) {
     allRecords = records;
-    if (!recordsReady) { recordsReady = true; maybeSetupMapClick(); }
 
     if (records.length) {
         allColumns = Object.keys(records[0]).filter(function(k) { return k !== 'id'; });
@@ -1147,8 +1109,6 @@ grist.onRecords(function(records) {
 // Ligne sélectionnée dans la grille → pan/zoom carte sur l'entité et surlignage
 grist.onRecord(function(record) {
     if (!mapReady || !record) { return; }
-    // Suppress pan/zoom when onRecord fires as a bounce from our own setCursorPos call (map click).
-    if (mapClickPending) { mapClickPending = false; applySelectionStyle(featureByRowId[record.id]); return; }
     var geomVal;
     if (colGeomMode === 'latlon') {
         var lat = parseFloat(record[colLat]);
