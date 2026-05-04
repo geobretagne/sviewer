@@ -187,6 +187,10 @@
         match: function(url) {
             return typeof url === 'string' && /\/api\/docs\/[^/]+\/tables\/[^/]+\/records/.test(url);
         },
+        label: function(url) {
+            var m = url.match(/\/tables\/([^/?#]+)\/records/);
+            return 'Grist — ' + (m ? decodeURIComponent(m[1]) : url);
+        },
         convert: convert
     };
 }());

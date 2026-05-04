@@ -44,6 +44,8 @@ $.extend(hardConfig, {
 
             // Runtime messages
             'msg.source':               'Source',
+            'msg.feature_count':        'Features',
+            'msg.source_url':           'Source data',
 
             'msg.full_record':          'Full record',
             'msg.new_tab':              'opens in a new tab',
@@ -109,6 +111,8 @@ $.extend(hardConfig, {
             'inp.search_placeholder': 'ex: 10 rue Maurice Fabre, Rennes',
 
             'msg.source':               'source',
+            'msg.feature_count':        'Entités',
+            'msg.source_url':           'Données source',
 
             'msg.full_record':          'Fiche complète',
             'msg.new_tab':              'ouvre dans un nouvel onglet',
@@ -174,6 +178,8 @@ $.extend(hardConfig, {
             'inp.search_placeholder': 'ej: Calle Gran Vía 1, Madrid',
 
             'msg.source':               'fuente',
+            'msg.feature_count':        'Entidades',
+            'msg.source_url':           'Datos fuente',
 
             'msg.full_record':          'Ficha completa',
             'msg.new_tab':              'se abre en una nueva pestaña',
@@ -239,6 +245,8 @@ $.extend(hardConfig, {
             'inp.search_placeholder': 'z.B. Unter den Linden 1, Berlin',
 
             'msg.source':               'Quelle',
+            'msg.feature_count':        'Objekte',
+            'msg.source_url':           'Quelldaten',
 
             'msg.full_record':          'Vollständiger Datensatz',
             'msg.new_tab':              'öffnet in einem neuen Tab',

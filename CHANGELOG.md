@@ -4,6 +4,17 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.7.2] - 2026-05-04
+
+### Added
+- Info panel: GeoJSON/adapter source data card — shows data source name, feature count, and clickable source URL for traceability
+- Info panel: `layer-panel` template extended with optional `{{#featureCount}}` / `{{#sourceUrl}}` blocks — WMS panels unaffected
+- Adapter API: `label(url)` function — Grist returns `"Grist — {tableName}"`, CSV returns filename; sViewer calls it when present, falls back to filename/hostname
+- i18n: `msg.feature_count` + `msg.source_url` in fr/en/es/de
+
+### Changed
+- Info panel title: `word-break: break-word` — long filenames wrap instead of overflow
+
 ## [0.7.1] - 2026-05-04
 
 ### Added
@@ -24,6 +35,7 @@ Versioning: [Semantic Versioning](https://semver.org/).
 - Grist widget: share link used `getgrist.com` instead of configured `grist_api_base` — fixed
 - Grist widget: features not displayed on share link — root cause: `grist` adapter missing from `customConfig.adapters`
 - Query panel: feature properties invisible in dark mode — Bootstrap table color overrides now applied under `[data-theme="dark"]`
+- Opacity slider hidden when no WMS layer is loaded (`layersQueryable` empty) — was always visible regardless of context
 
 ## [0.7.0] - 2026-05-04
 

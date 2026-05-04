@@ -1071,7 +1071,7 @@ window.SViewerApp = (function() {
      * displayed as a table in the query panel (same UX as WMS GetFeatureInfo).
      */
     // Shared: parse a GeoJSON FeatureCollection into OL features + build layer.
-    function _applyGeoJSON(geojson) {
+    function _applyGeoJSON(geojson, sourceUrl, adapter) {
         var format = new ol.format.GeoJSON();
         var features = format.readFeatures(geojson, {
             dataProjection: 'EPSG:4326',
@@ -1087,7 +1087,31 @@ window.SViewerApp = (function() {
         log('_applyGeoJSON: OL features after reprojection filter=', features.length);
         _buildVectorLayer(features, {});
         _bindVectorClick();
+        _renderGeoJSONInfoPanel(features.length, sourceUrl || state.geojson, adapter);
         _emit('sv:featuresLoaded', { features: features, count: features.length });
+    }
+
+    function _sourceLabel(url, adapter) {
+        if (adapter && typeof adapter.label === 'function') { return adapter.label(url); }
+        if (!url) { return 'GeoJSON'; }
+        try {
+            var u = new URL(url);
+            return decodeURIComponent(u.pathname.split('/').pop()) || u.hostname;
+        } catch(e) { return 'GeoJSON'; }
+    }
+
+    function _renderGeoJSONInfoPanel(count, sourceUrl, adapter) {
+        if (!window.svTemplates || !window.svTemplates['layer-panel']) { return; }
+        var $card = $(Mustache.render(window.svTemplates['layer-panel'], {
+            title:        _sourceLabel(sourceUrl, adapter),
+            featureCount: count,
+            labelCount:   tr('msg.feature_count'),
+            labelSource:  tr('msg.source_url'),
+            sourceUrl:    sourceUrl || null
+        })).attr('id', 'sv-geojson-info');
+        var $existing = $('#sv-geojson-info');
+        if ($existing.length) { $existing.replaceWith($card); }
+        else { $('#legend').prepend($card); }
     }
 
     // url: GeoJSON URL to fetch. geojsonDirect: pre-parsed FeatureCollection (skips fetch).
@@ -1110,10 +1134,12 @@ window.SViewerApp = (function() {
         }
         // Check if any loaded adapter needs raw text instead of parsed JSON (e.g. CSV adapter).
         var textAdapter = null;
+        var matchedAdapter = null;
         var adapters = window.SViewerAdapters || {};
         for (var adName in adapters) {
             if (adapters[adName].wantsText && adapters[adName].match && adapters[adName].match(url)) {
                 textAdapter = adapters[adName];
+                matchedAdapter = textAdapter;
                 break;
             }
         }
@@ -1133,7 +1159,7 @@ window.SViewerApp = (function() {
                         if (a.wantsText) { continue; } // text adapters already handled above
                         if (a.match && !a.match(url)) { continue; }
                         var result = a.convert(data, url);
-                        if (result) { return result; }
+                        if (result) { matchedAdapter = a; return result; }
                     }
                     // Legacy: single-function adapter in customConfig
                     return (typeof config.jsonLayerAdapter === 'function') ? config.jsonLayerAdapter(data, url) : null;
@@ -1143,7 +1169,7 @@ window.SViewerApp = (function() {
                     messagePopup(tr('msg.query_failed'));
                     return;
                 }
-                _applyGeoJSON(geojson);
+                _applyGeoJSON(geojson, url, matchedAdapter);
             },
             error: function() {
                 messagePopup(tr('msg.query_failed'));
@@ -2030,7 +2056,9 @@ if (!hitVector) { queryMap(e.coordinate); }
             $('#zpBt').hide();
         }
 
-        // layer opacity slider
+        // layer opacity slider — only relevant when WMS layers are loaded
+        if (config.layersQueryable.length === 0) { $('.sv-opacity-bar').hide(); }
+
         function applyLayerOpacity(val) {
             state.opacity = val;
             $.each(config.layersQueryable, function() {

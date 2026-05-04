@@ -237,6 +237,10 @@
                 /[?&]_format=csv(&|$)/.test(url)
             );
         },
+        label: function(url) {
+            try { return decodeURIComponent(new URL(url).pathname.split('/').pop()) || 'CSV'; }
+            catch(e) { return 'CSV'; }
+        },
         // Signal to sviewer.js dispatcher that this adapter needs raw text, not parsed JSON.
         wantsText: true,
         convert: convert

@@ -1,5 +1,5 @@
 <div class="sv-md">
-  <h4 class="sv-md-title">{{title}}</h4>
+  <h4 class="sv-md-title" title="{{title}}">{{title}}</h4>
   {{#attribution}}
   <p class="sv-md-attrib">
     {{#logo}}<img class="sv-md-logo" src="{{url}}" alt=""><br>{{/logo}}
@@ -7,7 +7,17 @@
        aria-label="{{title}} ({{newTab}})">{{title}}</a>
   </p>
   {{/attribution}}
+  {{#legendUrl}}
   <img class="sv-md-legend" role="img" src="{{legendUrl}}" alt="{{legendAlt}}">
+  {{/legendUrl}}
+  {{#featureCount}}
+  <table class="table table-sm sv-feature-props sv-md-stats mt-1">
+    <tr><th>{{labelCount}}</th><td>{{featureCount}}</td></tr>
+    {{#sourceUrl}}
+    <tr><th>{{labelSource}}</th><td class="text-break"><a href="{{sourceUrl}}" target="_blank" rel="noopener noreferrer">{{sourceUrl}}</a></td></tr>
+    {{/sourceUrl}}
+  </table>
+  {{/featureCount}}
   <p class="sv-md-abstract">{{abstract}}</p>
   <div class="sv-md-doclink">
     {{#metadataLinks}}
