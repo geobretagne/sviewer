@@ -887,6 +887,7 @@ function maybeSetupMapClick() {
 // hitTolerance: 8px facilite le clic sur les entités linéaires.
 function setupMapClick() {
     var map = SViewer.getMap();
+    if (!map) { mapClickWired = false; return; }
     map.on('singleclick', function(e) {
         if (!vectorLayer) { return; }
         var hit = false;
@@ -895,17 +896,13 @@ function setupMapClick() {
             if (rowId !== undefined) {
                 hit = true;
                 selectedRowId = rowId;
-                grist.setSelectedRows([rowId]);
                 document.getElementById('sv-btn-clear').disabled = false;
-                // Surlignage immédiat — l'aller-retour onRecord n'est pas garanti
-                // quand c'est le widget qui est la source de sélection (carte→grille).
                 applySelectionStyle(feature);
             }
             return true; // arrêt après le premier hit
         }, { layerFilter: function(l) { return l === vectorLayer; }, hitTolerance: 8 });
         if (!hit) {
             selectedRowId = null;
-            grist.setSelectedRows(null);
             document.getElementById('sv-btn-clear').disabled = true;
             vectorLayer.getSource().getFeatures().forEach(function(f) { f.setStyle(null); });
         }
@@ -989,7 +986,6 @@ function initMap() {
 
 document.getElementById('sv-btn-clear').addEventListener('click', function() {
     selectedRowId = null;
-    grist.setSelectedRows(null);
     document.getElementById('sv-btn-clear').disabled = true;
     if (vectorLayer) {
         vectorLayer.getSource().getFeatures().forEach(function(f) { f.setStyle(null); });
@@ -1096,7 +1092,7 @@ document.getElementById('sv-btn-cfg-apply').addEventListener('click', function()
 // Séquence d'initialisation Grist
 // ---------------------------------------------------------------------------
 
-grist.ready({ requiredAccess: 'read table', onEditOptions: function() { openSettings(); } });
+grist.ready({ requiredAccess: 'read table', supportsCursor: true, onEditOptions: function() { openSettings(); } });
 
 if (grist.widgetApi && typeof grist.widgetApi.onOptions === 'function') {
     grist.widgetApi.onOptions(function(opts) {

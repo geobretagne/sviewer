@@ -4,6 +4,11 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.6.3] - 2026-05-04
+
+### Fixed
+- Grist widget: removed `grist.setSelectedRows()` from map click handler — when widget is "Selected by" its own table, Grist raises `LinkConfig invalid cycle` which permanently breaks grid→map sync until page reload. Map click now applies visual highlight on map only; grid→map direction (click grid row → map pans to feature) is unaffected.
+
 ## [0.6.2] - 2026-05-04
 
 ### Added

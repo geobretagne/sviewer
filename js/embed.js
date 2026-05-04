@@ -11,8 +11,8 @@
 
 (function() {
 
-    var SVIEWER_VERSION='0.6.2';
-    var SVIEWER_COMMIT='4033cfd';
+    var SVIEWER_VERSION='0.6.3';
+    var SVIEWER_COMMIT='bc589c3';
 
     var debug = /[?&]debug=1/.test(window.location.search);
 
