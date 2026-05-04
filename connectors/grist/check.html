@@ -38,6 +38,12 @@
 </div>
 
 <div class="check">
+    <div class="check-title">0. sviewer.min.js bundle check</div>
+    <div class="check-desc">Verifies the deployed minified bundle contains the adapter dispatch code. Stale bundle = silent wrong behavior.</div>
+    <div class="result" id="r-bundle">waiting…</div>
+</div>
+
+<div class="check">
     <div class="check-title">1. Adapter registration</div>
     <div class="check-desc">window.SViewerAdapters['grist'] must exist after adapter.js loads.</div>
     <div class="result" id="r-register">waiting…</div>
@@ -156,6 +162,16 @@
     };
 
     // --- Tests ---------------------------------------------------------------
+
+    // 0 — bundle check
+    fetch('../../js/sviewer.min.js')
+        .then(function(r) { return r.text(); })
+        .then(function(src) {
+            src.indexOf('wantsText') !== -1
+                ? pass('r-bundle', 'sviewer.min.js contains wantsText dispatch — bundle is current')
+                : fail('r-bundle', 'sviewer.min.js missing wantsText — bundle is STALE, run npm run minify');
+        })
+        .catch(function() { fail('r-bundle', 'could not fetch sviewer.min.js'); });
 
     // 1 — registration
     if (window.SViewerAdapters && window.SViewerAdapters['grist']) {

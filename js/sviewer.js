@@ -964,6 +964,7 @@ window.SViewerApp = (function() {
                 break;
             }
         }
+        log('loadGeoJSON:', url, '| textAdapter:', textAdapter ? 'yes' : 'no', '| adapters loaded:', Object.keys(adapters).join(',') || 'none');
         $.ajax({
             url: url,
             type: 'GET',
@@ -984,6 +985,7 @@ window.SViewerApp = (function() {
                     // Legacy: single-function adapter in customConfig
                     return (typeof config.jsonLayerAdapter === 'function') ? config.jsonLayerAdapter(data, url) : null;
                 }()));
+                log('loadGeoJSON: geojson features=', geojson ? geojson.features.length : 'null (no adapter matched or conversion failed)');
                 if (!geojson) {
                     messagePopup(tr('msg.query_failed'));
                     return;
@@ -1001,6 +1003,7 @@ window.SViewerApp = (function() {
                     try { g.getType(); return true; }
                     catch(e) { return false; }
                 });
+                log('loadGeoJSON: OL features after reprojection filter=', features.length);
 
                 var vectorSource = new ol.source.Vector({ features: features });
                 var gs = config.geojsonStyle || {};
