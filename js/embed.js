@@ -11,8 +11,8 @@
 
 (function() {
 
-    var SVIEWER_VERSION='0.7.0';
-    var SVIEWER_COMMIT='5ec6b98';
+    var SVIEWER_VERSION='0.7.1';
+    var SVIEWER_COMMIT='cdbfd3f';
 
     // Internal event bus — shared with sviewer.js via window._SViewerInternals.
     // Frozen after creation to prevent host-page collision or tampering.
@@ -421,6 +421,13 @@
                     // SViewerApp instance is now available
                     if (window.SViewerApp) {
                         console.log('SViewer: Ready');
+                        // Patch version footer with active adapter names
+                        var versionEl = document.querySelector('.sv-scope .mt-3.text-end');
+                        if (versionEl) {
+                            var adapterNames = (window.customConfig && window.customConfig.adapters) || [];
+                            var adapterStr = adapterNames.length ? ' ' + adapterNames.join(', ') : '';
+                            versionEl.innerHTML = 'sViewer ' + SVIEWER_VERSION + ' <span style="font-family:monospace">' + SVIEWER_COMMIT + '</span>' + adapterStr;
+                        }
                         return window.SViewerApp;
                     } else {
                         throw new Error('SViewerApp instance not found after loading');

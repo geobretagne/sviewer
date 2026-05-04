@@ -746,8 +746,27 @@
 
 .sv-feature-props th,
 .sv-feature-props td {
-    border-color: #ddd;
+    border-color: var(--sv-border-color, #ddd);
     border-width: 1px;
+    color: var(--sv-fg);
+    background-color: transparent;
+}
+.sv-feature-props th {
+    white-space: normal;
+    word-break: break-word;
+    width: 40%;
+    font-weight: 600;
+    font-size: 0.82em;
+}
+.sv-feature-props tr:nth-child(odd) td,
+.sv-feature-props tr:nth-child(odd) th {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+.sv-scope[data-theme="dark"] .sv-feature-props tr:nth-child(odd) td,
+.sv-scope[data-theme="dark"] .sv-feature-props tr:nth-child(odd) th,
+:root[data-theme="dark"] .sv-scope .sv-feature-props tr:nth-child(odd) td,
+:root[data-theme="dark"] .sv-scope .sv-feature-props tr:nth-child(odd) th {
+    background-color: rgba(255, 255, 255, 0.06);
 }
 
 #queryPanel .sv-noitem {
@@ -1332,6 +1351,20 @@
 .sv-scope[data-theme="dark"] .btn-close,
 :root[data-theme="dark"] .sv-scope .btn-close {
     filter: invert(1);
+}
+
+/* query results: override Bootstrap table defaults for dark theme */
+.sv-scope[data-theme="dark"] #queryContent,
+:root[data-theme="dark"] .sv-scope #queryContent {
+    background-color: var(--sv-panel-input-bg);
+}
+.sv-scope[data-theme="dark"] .sv-feature-props th,
+.sv-scope[data-theme="dark"] .sv-feature-props td,
+:root[data-theme="dark"] .sv-scope .sv-feature-props th,
+:root[data-theme="dark"] .sv-scope .sv-feature-props td {
+    --bs-table-color: var(--sv-fg);
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--sv-panel-border);
 }
 
 /* page background in standalone mode only —

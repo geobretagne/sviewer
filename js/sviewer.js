@@ -1010,7 +1010,7 @@ window.SViewerApp = (function() {
                     if (key === 'geometry' || typeof val === 'object') { return; }
                     if (key.charAt(0) === '_') { return; } /* skip internal keys (_label, _gristRowId, …) */
                     if (val === null || val === undefined || val === '') { return; }
-                    $table.append($('<tr>').append($('<th>').text(key)).append($('<td>').text(val)));
+                    $table.append($('<tr>').append($('<th>').text(key).attr('title', key)).append($('<td>').text(val)));
                 });
                 $('#queryContent').html('').append($table);
                 marker.setPosition(e.coordinate);
@@ -1040,7 +1040,7 @@ window.SViewerApp = (function() {
         var $table = $('<table class="table table-sm table-bordered sv-feature-props">');
         $.each(props, function(key, val) {
             if (key === 'geometry' || typeof val === 'object') { return; }
-            $table.append($('<tr>').append($('<th>').text(key)).append($('<td>').text(val)));
+            $table.append($('<tr>').append($('<th>').text(key).attr('title', key)).append($('<td>').text(val)));
         });
         $('#queryContent').html('').append($table);
         closePanel();

@@ -4,6 +4,27 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.7.1] - 2026-05-04
+
+### Added
+- Grist widget: full dark mode support — CSS variables + `grist.onThemeChange`; all controls (buttons, inputs, selects) consistent across light / dark / accessibility themes
+- Grist widget: inline opacity/width labels in style rows ("opacité" / "épais."), i18n fr/en/es/de — no more trial-and-error on number inputs
+- Query panel: zebra striping on feature properties table (odd/even rows), dark-theme aware
+- Query panel: `title` attribute on property keys — hover reveals full truncated column name
+- Active adapter names shown in sViewer version footer (share panel) — visible hint when adapter is missing
+
+### Changed
+- Grist widget: "Enregistrer" button renamed "Appliquer / Apply" — clarifies two-step save flow (widget Apply + Grist bar Save)
+- Grist widget: geometry mode labels include concrete format examples (e.g. `"48.85,2.35" (lat,lon)`, `WKT "POINT(2.35 48.85)"`)
+- Grist widget: help panel Partage section rewritten — accurate field descriptions, title mention removed
+- Query panel: property key column wraps at 40% width with `word-break: break-word` — no more truncated keys
+
+### Fixed
+- Grist widget: "Deselect" button removed — redundant; deselect via click on empty area or panel close
+- Grist widget: share link used `getgrist.com` instead of configured `grist_api_base` — fixed
+- Grist widget: features not displayed on share link — root cause: `grist` adapter missing from `customConfig.adapters`
+- Query panel: feature properties invisible in dark mode — Bootstrap table color overrides now applied under `[data-theme="dark"]`
+
 ## [0.7.0] - 2026-05-04
 
 ### Added

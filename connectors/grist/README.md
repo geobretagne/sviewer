@@ -21,7 +21,6 @@ Le widget démarre et détecte automatiquement la colonne géométrie.
 | Contrôle | Rôle |
 |----------|------|
 | *N entités (M ignorées)* | Nombre d'entités chargées. Les lignes sans géométrie valide sont comptées comme ignorées. |
-| **✕ Désélectionner** | Efface la sélection courante. Actif uniquement lorsqu'une ligne est sélectionnée. |
 
 ## Panneau de configuration
 
@@ -72,9 +71,9 @@ Configure la géométrie et le style des entités affichées.
 
 Résumé des fonctions du panneau, accessible directement dans l'interface.
 
-### Enregistrer / Annuler
+### Appliquer / Annuler
 
-**Enregistrer** applique les paramètres, reconstruit la carte et persiste la configuration dans les options widget Grist (par instance). Un avertissement s'affiche tant que vous n'avez pas cliqué sur **Enregistrer** dans la barre Grist pour figer les options.
+**Appliquer** reconstruit la carte avec les nouveaux paramètres. Pour les conserver au rechargement, cliquez ensuite sur **Enregistrer** dans la barre Grist (en dehors du widget) — un avertissement s'affiche tant que cette étape n'est pas faite.
 
 **Annuler** ferme le panneau sans modifier quoi que ce soit.
 

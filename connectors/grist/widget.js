@@ -22,12 +22,12 @@ var I18N = {
         'skipped':            ' ignorées',
         'settings':           'Paramètres de la carte',
         'settings.geom.mode':          'Mode géométrie',
-        'settings.geom.mode.auto':     'Auto',
-        'settings.geom.mode.geojson':  'GeoJSON',
-        'settings.geom.mode.latlon':   'Lat / Lon (colonnes)',
-        'settings.geom.mode.lonlat_str': 'Lon,Lat (texte)',
-        'settings.geom.mode.latlon_str': 'Lat,Lon (texte)',
-        'settings.geom.mode.wkt':        'WKT',
+        'settings.geom.mode.auto':     'Auto (détection automatique)',
+        'settings.geom.mode.geojson':  'GeoJSON {"type":"Point"…}',
+        'settings.geom.mode.latlon':   'Lat + Lon (2 colonnes numériques)',
+        'settings.geom.mode.lonlat_str': 'Texte "2.35,48.85" (lon,lat)',
+        'settings.geom.mode.latlon_str': 'Texte "48.85,2.35" (lat,lon)',
+        'settings.geom.mode.wkt':        'WKT "POINT(2.35 48.85)"',
         'settings.geom':      'Colonne géométrie',
         'settings.lat':       'Colonne latitude',
         'settings.lon':       'Colonne longitude',
@@ -37,6 +37,8 @@ var I18N = {
         'settings.stroke':        'Contour entités',
         'settings.stroke.opacity':'Opacité contour',
         'settings.stroke.width':  'Épaisseur contour (px)',
+        'settings.inline.opacity': 'opacité',
+        'settings.inline.width':   'épais.',
         'settings.sel.fill':          'Remplissage sélection',
         'settings.sel.fill.opacity':  'Opacité remplissage',
         'settings.sel.stroke':        'Contour sélection',
@@ -57,7 +59,7 @@ var I18N = {
         'settings.section.data':   'Données',
         'settings.section.share':  'Partage',
         'settings.section.help':   'Aide',
-        'settings.save':           'Enregistrer',
+        'settings.save':           'Appliquer',
         'settings.cancel':         'Annuler',
         'settings.export':             'Exporter',
         'settings.import':             'Importer',
@@ -65,7 +67,7 @@ var I18N = {
         'settings.import.placeholder': 'Coller le JSON exporté ici…',
         'settings.export.done':        'Paramètres copiés dans le presse-papiers',
         'settings.import.error':       'JSON invalide ou incompatible',
-        'settings.save.reminder':      '⚠ Cliquez sur Enregistrer dans Grist pour figer les paramètres'
+        'settings.save.reminder':      '⚠ Cliquez sur Enregistrer dans la barre Grist pour conserver les paramètres'
     },
     en: {
         'loading':            'Loading…',
@@ -84,12 +86,12 @@ var I18N = {
         'skipped':            ' skipped',
         'settings':           'Map settings',
         'settings.geom.mode':          'Geometry mode',
-        'settings.geom.mode.auto':     'Auto',
-        'settings.geom.mode.geojson':  'GeoJSON',
-        'settings.geom.mode.latlon':   'Lat / Lon (columns)',
-        'settings.geom.mode.lonlat_str': 'Lon,Lat (text)',
-        'settings.geom.mode.latlon_str': 'Lat,Lon (text)',
-        'settings.geom.mode.wkt':        'WKT',
+        'settings.geom.mode.auto':     'Auto (automatic detection)',
+        'settings.geom.mode.geojson':  'GeoJSON {"type":"Point"…}',
+        'settings.geom.mode.latlon':   'Lat + Lon (2 numeric columns)',
+        'settings.geom.mode.lonlat_str': 'Text "2.35,48.85" (lon,lat)',
+        'settings.geom.mode.latlon_str': 'Text "48.85,2.35" (lat,lon)',
+        'settings.geom.mode.wkt':        'WKT "POINT(2.35 48.85)"',
         'settings.geom':      'Geometry column',
         'settings.lat':       'Latitude column',
         'settings.lon':       'Longitude column',
@@ -99,6 +101,8 @@ var I18N = {
         'settings.stroke':        'Feature stroke',
         'settings.stroke.opacity':'Stroke opacity',
         'settings.stroke.width':  'Stroke width (px)',
+        'settings.inline.opacity': 'opacity',
+        'settings.inline.width':   'width',
         'settings.sel.fill':          'Selection fill',
         'settings.sel.fill.opacity':  'Fill opacity',
         'settings.sel.stroke':        'Selection stroke',
@@ -119,7 +123,7 @@ var I18N = {
         'settings.section.data':   'Data',
         'settings.section.share':  'Sharing',
         'settings.section.help':   'Help',
-        'settings.save':           'Save',
+        'settings.save':           'Apply',
         'settings.cancel':         'Cancel',
         'settings.export':             'Export',
         'settings.import':             'Import',
@@ -127,7 +131,7 @@ var I18N = {
         'settings.import.placeholder': 'Paste exported JSON here…',
         'settings.export.done':        'Settings copied to clipboard',
         'settings.import.error':       'Invalid or incompatible JSON',
-        'settings.save.reminder':      '⚠ Click Save in Grist to keep settings'
+        'settings.save.reminder':      '⚠ Click Save in the Grist bar to persist settings'
     },
     es: {
         'loading':            'Cargando…',
@@ -146,12 +150,12 @@ var I18N = {
         'skipped':            ' omitidas',
         'settings':           'Configuración del mapa',
         'settings.geom.mode':          'Modo geometría',
-        'settings.geom.mode.auto':     'Auto',
-        'settings.geom.mode.geojson':  'GeoJSON',
-        'settings.geom.mode.latlon':   'Lat / Lon (columnas)',
-        'settings.geom.mode.lonlat_str': 'Lon,Lat (texto)',
-        'settings.geom.mode.latlon_str': 'Lat,Lon (texto)',
-        'settings.geom.mode.wkt':        'WKT',
+        'settings.geom.mode.auto':     'Auto (detección automática)',
+        'settings.geom.mode.geojson':  'GeoJSON {"type":"Point"…}',
+        'settings.geom.mode.latlon':   'Lat + Lon (2 columnas numéricas)',
+        'settings.geom.mode.lonlat_str': 'Texto "2.35,48.85" (lon,lat)',
+        'settings.geom.mode.latlon_str': 'Texto "48.85,2.35" (lat,lon)',
+        'settings.geom.mode.wkt':        'WKT "POINT(2.35 48.85)"',
         'settings.geom':      'Columna de geometría',
         'settings.lat':       'Columna de latitud',
         'settings.lon':       'Columna de longitud',
@@ -161,6 +165,8 @@ var I18N = {
         'settings.stroke':        'Contorno entidades',
         'settings.stroke.opacity':'Opacidad contorno',
         'settings.stroke.width':  'Grosor contorno (px)',
+        'settings.inline.opacity': 'opacidad',
+        'settings.inline.width':   'grosor',
         'settings.sel.fill':          'Relleno selección',
         'settings.sel.fill.opacity':  'Opacidad relleno',
         'settings.sel.stroke':        'Contorno selección',
@@ -181,7 +187,7 @@ var I18N = {
         'settings.section.data':   'Datos',
         'settings.section.share':  'Compartir',
         'settings.section.help':   'Ayuda',
-        'settings.save':           'Guardar',
+        'settings.save':           'Aplicar',
         'settings.cancel':         'Cancelar',
         'settings.export':             'Exportar',
         'settings.import':             'Importar',
@@ -189,7 +195,7 @@ var I18N = {
         'settings.import.placeholder': 'Pegar JSON exportado aquí…',
         'settings.export.done':        'Configuración copiada al portapapeles',
         'settings.import.error':       'JSON inválido o incompatible',
-        'settings.save.reminder':      '⚠ Haga clic en Guardar en Grist para conservar los ajustes'
+        'settings.save.reminder':      '⚠ Haga clic en Guardar en la barra Grist para conservar los ajustes'
     },
     de: {
         'loading':            'Laden…',
@@ -208,12 +214,12 @@ var I18N = {
         'skipped':            ' übersprungen',
         'settings':           'Karteneinstellungen',
         'settings.geom.mode':          'Geometriemodus',
-        'settings.geom.mode.auto':     'Auto',
-        'settings.geom.mode.geojson':  'GeoJSON',
-        'settings.geom.mode.latlon':   'Lat / Lon (Spalten)',
-        'settings.geom.mode.lonlat_str': 'Lon,Lat (Text)',
-        'settings.geom.mode.latlon_str': 'Lat,Lon (Text)',
-        'settings.geom.mode.wkt':        'WKT',
+        'settings.geom.mode.auto':     'Auto (automatische Erkennung)',
+        'settings.geom.mode.geojson':  'GeoJSON {"type":"Point"…}',
+        'settings.geom.mode.latlon':   'Lat + Lon (2 numerische Spalten)',
+        'settings.geom.mode.lonlat_str': 'Text "2.35,48.85" (lon,lat)',
+        'settings.geom.mode.latlon_str': 'Text "48.85,2.35" (lat,lon)',
+        'settings.geom.mode.wkt':        'WKT "POINT(2.35 48.85)"',
         'settings.geom':      'Geometriespalte',
         'settings.lat':       'Breitengradpalte',
         'settings.lon':       'Längengradpalte',
@@ -223,6 +229,8 @@ var I18N = {
         'settings.stroke':        'Kontur Objekte',
         'settings.stroke.opacity':'Konturdeckkraft',
         'settings.stroke.width':  'Konturstärke (px)',
+        'settings.inline.opacity': 'Deck.',
+        'settings.inline.width':   'Stärke',
         'settings.sel.fill':          'Füllung Auswahl',
         'settings.sel.fill.opacity':  'Fülldeckkraft',
         'settings.sel.stroke':        'Kontur Auswahl',
@@ -243,7 +251,7 @@ var I18N = {
         'settings.section.data':   'Daten',
         'settings.section.share':  'Teilen',
         'settings.section.help':   'Hilfe',
-        'settings.save':           'Speichern',
+        'settings.save':           'Anwenden',
         'settings.cancel':         'Abbrechen',
         'settings.export':             'Exportieren',
         'settings.import':             'Importieren',
@@ -251,7 +259,7 @@ var I18N = {
         'settings.import.placeholder': 'Exportiertes JSON hier einfügen…',
         'settings.export.done':        'Einstellungen in Zwischenablage kopiert',
         'settings.import.error':       'Ungültiges oder inkompatibles JSON',
-        'settings.save.reminder':      '⚠ Klicken Sie in Grist auf Speichern, um die Einstellungen zu behalten'
+        'settings.save.reminder':      '⚠ Klicken Sie in der Grist-Leiste auf Speichern, um die Einstellungen zu behalten'
     }
 };
 
@@ -869,12 +877,11 @@ function rebuildLayer() {
 }
 
 // Réagit au clic sur une entité de la carte (émis par sViewer via sv:featureClick).
-// Met à jour selectedRowId, active le bouton Désélectionner, applique le style sélection.
+// Met à jour selectedRowId et applique le style sélection.
 function onMapFeatureClick(e) {
     var rowId = e.feature.get('_gristRowId');
     if (rowId === undefined) { return; }
     selectedRowId = rowId;
-    document.getElementById('sv-btn-clear').disabled = false;
     applySelectionStyle(e.feature);
 }
 
@@ -954,11 +961,6 @@ function initMap() {
 // Événements barre d'outils
 // ---------------------------------------------------------------------------
 
-document.getElementById('sv-btn-clear').addEventListener('click', function() {
-    selectedRowId = null;
-    document.getElementById('sv-btn-clear').disabled = true;
-    applySelectionStyle(null);
-});
 document.getElementById('sv-btn-cfg-save').addEventListener('click', function() { closeSettings(true); });
 document.getElementById('sv-btn-cfg-cancel').addEventListener('click', function() { closeSettings(false); });
 
@@ -1062,6 +1064,12 @@ document.getElementById('sv-btn-cfg-apply').addEventListener('click', function()
 
 grist.ready({ requiredAccess: 'read table', onEditOptions: function() { openSettings(); } });
 
+if (typeof grist.onThemeChange === 'function') {
+    grist.onThemeChange(function(theme) {
+        document.body.classList.toggle('dark', theme.appearance === 'dark');
+    });
+}
+
 if (grist.widgetApi && typeof grist.widgetApi.onOptions === 'function') {
     grist.widgetApi.onOptions(function(opts) {
         applyOptions(opts);
@@ -1144,7 +1152,6 @@ grist.onRecord(function(record) {
                 var view = SViewer.getView();
                 if (view) {
                     selectedRowId = rowId;
-                    document.getElementById('sv-btn-clear').disabled = false;
                     var ext = wktOlGeomR.getExtent();
                     view.fit(ext, { padding: [60, 60, 60, 60], maxZoom: 17, duration: 400 });
                     if (feat) { applySelectionStyle(feat); }
@@ -1168,7 +1175,6 @@ grist.onRecord(function(record) {
 
     var view = SViewer.getView();
     if (view && feat) {
-        document.getElementById('sv-btn-clear').disabled = false;
         var ext = feat.getGeometry().getExtent();
         view.fit(ext, { padding: [60, 60, 60, 60], maxZoom: 17, duration: 400 });
         applySelectionStyle(feat);

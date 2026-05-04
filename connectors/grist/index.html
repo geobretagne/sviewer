@@ -3,47 +3,83 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
     <title>sViewer — Grist widget</title>
     <style>
+        :root {
+            --bg:        #fff;
+            --bg-panel:  #f5f5f5;
+            --bg-body:   #fafafa;
+            --bg-btn:    #fff;
+            --bg-hover:  #e8e8e8;
+            --bg-active: #fff;
+            --border:    #ddd;
+            --border-in: #bbb;
+            --border-sep:#e0e0e0;
+            --text:      #333;
+            --text-muted:#666;
+            --text-label:#555;
+            --text-dis:  #bbb;
+            --accent:    #2c7be5;
+            --accent-hov:#1a66d2;
+        }
+        body.dark {
+            --bg:        #1a1a1a;
+            --bg-panel:  #2a2a2a;
+            --bg-body:   #222;
+            --bg-btn:    #333;
+            --bg-hover:  #444;
+            --bg-active: #1a1a1a;
+            --border:    #444;
+            --border-in: #555;
+            --border-sep:#3a3a3a;
+            --text:      #e8e8e8;
+            --text-muted:#aaa;
+            --text-label:#bbb;
+            --text-dis:  #666;
+            --accent:    #5b9cf6;
+            --accent-hov:#3a80f0;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: sans-serif; font-size: 14px; background: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { font-family: sans-serif; font-size: 14px; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
         #sv-toolbar {
             display: flex; align-items: center; gap: 8px;
-            padding: 6px 10px; background: #f5f5f5; border-bottom: 1px solid #ddd;
+            padding: 6px 10px; background: var(--bg-panel); border-bottom: 1px solid var(--border);
             flex-shrink: 0; flex-wrap: wrap; /* wrap pour les widgets étroits */
         }
         #sv-toolbar button {
-            padding: 4px 10px; font-size: 13px; border: 1px solid #bbb;
-            border-radius: 3px; background: #fff; cursor: pointer;
+            padding: 4px 10px; font-size: 13px; border: 1px solid var(--border-in);
+            border-radius: 3px; background: var(--bg-btn); color: var(--text); cursor: pointer;
         }
-        #sv-toolbar button:hover { background: #e8e8e8; }
-        #sv-toolbar button:disabled { color: #bbb; cursor: default; }
-        #sv-toolbar button:disabled:hover { background: #fff; }
+        #sv-toolbar button:hover { background: var(--bg-hover); }
+        #sv-toolbar button:disabled { color: var(--text-dis); cursor: default; }
+        #sv-toolbar button:disabled:hover { background: var(--bg-btn); }
 
         /* margin-left:auto pousse le statut et le bouton vers la droite */
-        #sv-status { font-size: 12px; color: #666; margin-left: auto; }
+        #sv-status { font-size: 12px; color: var(--text-muted); margin-left: auto; }
 
         #sv-map { flex: 1; }
 
         /* Settings panel — shown via onEditOptions(), hidden otherwise */
         #sv-settings {
             display: none; flex-direction: column; gap: 0;
-            flex: 1; overflow-y: auto; background: #fafafa;
+            flex: 1; overflow-y: auto; background: var(--bg-body);
         }
         #sv-settings h2 {
             font-size: 15px; font-weight: 600; padding: 14px 16px 10px;
-            border-bottom: 1px solid #ddd; margin: 0; background: #f5f5f5;
+            border-bottom: 1px solid var(--border); margin: 0; background: var(--bg-panel);
         }
         #sv-tab-bar {
-            display: flex; border-bottom: 1px solid #ddd; background: #f5f5f5; flex-shrink: 0;
+            display: flex; border-bottom: 1px solid var(--border); background: var(--bg-panel); flex-shrink: 0;
         }
         #sv-tab-bar button {
             flex: 1; padding: 7px 4px; font-size: 12px; border: none; border-bottom: 2px solid transparent;
-            background: transparent; cursor: pointer; color: #666;
+            background: transparent; cursor: pointer; color: var(--text-muted);
         }
-        #sv-tab-bar button:hover { color: #333; background: #ebebeb; }
-        #sv-tab-bar button.sv-tab-active { color: #2c7be5; border-bottom-color: #2c7be5; font-weight: 600; background: #fff; }
+        #sv-tab-bar button:hover { color: var(--text); background: var(--bg-hover); }
+        #sv-tab-bar button.sv-tab-active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; background: var(--bg-active); }
         .sv-tab-panel { display: none; }
         .sv-tab-panel.sv-tab-visible { display: block; }
         .sv-cfg-grid {
@@ -51,51 +87,53 @@
             gap: 0; padding: 4px 0;
         }
         .sv-cfg-grid label {
-            font-size: 12px; color: #555; padding: 6px 12px 6px 12px;
+            font-size: 12px; color: var(--text-label); padding: 6px 12px 6px 12px;
             display: flex; align-items: center;
         }
         .sv-cfg-grid input {
-            padding: 4px 8px; font-size: 13px; border: 1px solid #bbb;
+            padding: 4px 8px; font-size: 13px; border: 1px solid var(--border-in);
             border-radius: 3px; margin: 4px 12px 4px 0;
         }
         .sv-cfg-grid input[type=color] { padding: 1px 4px; height: 28px; width: 48px; cursor: pointer; flex-shrink: 0; }
-        .sv-cfg-grid select { padding: 2px 4px; font-size: 13px; border: 1px solid #bbb; border-radius: 3px; margin: 4px 12px 4px 0; }
+        .sv-cfg-grid select { padding: 2px 4px; font-size: 13px; border: 1px solid var(--border-in); border-radius: 3px; margin: 4px 12px 4px 0; }
         .sv-cfg-grid input[type=number] { width: 80px; }
         /* section separator inside the grid */
-        .sv-cfg-sep { grid-column: 1 / -1; border: none; border-top: 1px solid #e0e0e0; margin: 4px 0; }
+        .sv-cfg-sep { grid-column: 1 / -1; border: none; border-top: 1px solid var(--border-sep); margin: 4px 0; }
         /* compact style row: color swatch + opacity + optional width inline */
         .sv-cfg-style-row { display: flex; align-items: center; gap: 6px; margin: 4px 12px 4px 0; flex-wrap: nowrap; }
         .sv-cfg-style-row input[type=color]  { margin: 0; }
         .sv-cfg-style-row input[type=number] { width: 58px; margin: 0; }
+        .sv-cfg-style-row .sv-inline-label { font-size: 11px; color: var(--text-label); white-space: nowrap; }
         #sv-settings-footer {
             display: flex; gap: 8px; padding: 12px 16px;
-            border-top: 1px solid #ddd; background: #f5f5f5; flex-shrink: 0;
+            border-top: 1px solid var(--border); background: var(--bg-panel); flex-shrink: 0;
         }
         #sv-settings-footer button {
-            padding: 5px 14px; font-size: 13px; border: 1px solid #bbb;
-            border-radius: 3px; cursor: pointer; background: #fff;
+            padding: 5px 14px; font-size: 13px; border: 1px solid var(--border-in);
+            border-radius: 3px; cursor: pointer; background: var(--bg-btn); color: var(--text);
         }
-        #sv-settings-footer #sv-btn-cfg-save { background: #2c7be5; color: #fff; border-color: #2c7be5; font-weight: 600; }
-        #sv-settings-footer #sv-btn-cfg-save:hover { background: #1a66d2; }
-        #sv-settings-footer button:not(#sv-btn-cfg-save):hover { background: #e8e8e8; }
+        #sv-settings-footer #sv-btn-cfg-save { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+        #sv-settings-footer #sv-btn-cfg-save:hover { background: var(--accent-hov); }
+        #sv-settings-footer button:not(#sv-btn-cfg-save):hover { background: var(--bg-hover); }
         #sv-import-area {
             display: none; flex-direction: column; gap: 6px;
-            padding: 8px 16px; border-top: 1px solid #ddd; background: #f5f5f5; flex-shrink: 0;
+            padding: 8px 16px; border-top: 1px solid var(--border); background: var(--bg-panel); flex-shrink: 0;
         }
         #sv-import-area textarea {
             width: 100%; height: 100px; font-family: monospace; font-size: 11px;
-            border: 1px solid #bbb; border-radius: 3px; padding: 4px 6px; resize: vertical;
+            border: 1px solid var(--border-in); border-radius: 3px; padding: 4px 6px; resize: vertical;
+            background: var(--bg); color: var(--text);
         }
         #sv-import-area button {
             align-self: flex-start; padding: 4px 12px; font-size: 13px;
-            border: 1px solid #2c7be5; border-radius: 3px; background: #2c7be5; color: #fff; cursor: pointer;
+            border: 1px solid var(--accent); border-radius: 3px; background: var(--accent); color: #fff; cursor: pointer;
         }
-        #sv-import-area button:hover { background: #1a66d2; }
-        #sv-help { padding: 14px 16px; font-size: 13px; color: #333; line-height: 1.6; }
-        #sv-help h3 { font-size: 12px; font-weight: 600; margin: 10px 0 3px; color: #555; text-transform: uppercase; letter-spacing: 0.04em; }
+        #sv-import-area button:hover { background: var(--accent-hov); }
+        #sv-help { padding: 14px 16px; font-size: 13px; color: var(--text); line-height: 1.6; }
+        #sv-help h3 { font-size: 12px; font-weight: 600; margin: 10px 0 3px; color: var(--text-label); text-transform: uppercase; letter-spacing: 0.04em; }
         #sv-help h3:first-child { margin-top: 0; }
         #sv-help p { margin-bottom: 4px; }
-        #sv-help a { color: #2c7be5; }
+        #sv-help a { color: var(--accent); }
 
     </style>
 </head>
@@ -105,7 +143,6 @@
     <!-- role=status + aria-live : annonce les mises à jour aux lecteurs d'écran (WCAG 4.1.3) -->
     <span id="sv-status" role="status" aria-live="polite" data-i18n="loading"></span>
     <!-- data-i18n-aria : aria-label traduit, plus fiable que title pour les lecteurs d'écran -->
-    <button id="sv-btn-clear" data-i18n="clear" data-i18n-aria="clear.title" disabled></button>
 </div>
 
 <div id="sv-map"></div>
@@ -145,24 +182,30 @@
             <label for="sv-cfg-stroke-color" data-i18n="settings.stroke"></label>
             <div class="sv-cfg-style-row">
                 <input id="sv-cfg-stroke-color"   type="color"  value="#ff6600" data-i18n-title="settings.stroke">
+                <span class="sv-inline-label" data-i18n="settings.inline.opacity"></span>
                 <input id="sv-cfg-stroke-opacity" type="number" min="0" max="1" step="0.05" value="1"   placeholder="0–1" data-i18n-title="settings.stroke.opacity">
+                <span class="sv-inline-label" data-i18n="settings.inline.width"></span>
                 <input id="sv-cfg-stroke-width"   type="number" min="0" max="20" step="0.5" value="2.5" placeholder="px"  data-i18n-title="settings.stroke.width">
             </div>
             <label for="sv-cfg-fill-color"   data-i18n="settings.fill"></label>
             <div class="sv-cfg-style-row">
                 <input id="sv-cfg-fill-color"     type="color"  value="#ff6600" data-i18n-title="settings.fill">
+                <span class="sv-inline-label" data-i18n="settings.inline.opacity"></span>
                 <input id="sv-cfg-fill-opacity"   type="number" min="0" max="1" step="0.05" value="0.35" placeholder="0–1" data-i18n-title="settings.fill.opacity">
             </div>
             <hr class="sv-cfg-sep">
             <label for="sv-cfg-sel-stroke-color" data-i18n="settings.sel.stroke"></label>
             <div class="sv-cfg-style-row">
                 <input id="sv-cfg-sel-stroke-color"   type="color"  value="#ffffff" data-i18n-title="settings.sel.stroke">
+                <span class="sv-inline-label" data-i18n="settings.inline.opacity"></span>
                 <input id="sv-cfg-sel-stroke-opacity" type="number" min="0" max="1" step="0.05" value="1"   placeholder="0–1" data-i18n-title="settings.sel.stroke.opacity">
+                <span class="sv-inline-label" data-i18n="settings.inline.width"></span>
                 <input id="sv-cfg-sel-stroke-width"   type="number" min="0" max="20" step="0.5" value="2.5" placeholder="px"  data-i18n-title="settings.sel.stroke.width">
             </div>
             <label for="sv-cfg-sel-fill-color"   data-i18n="settings.sel.fill"></label>
             <div class="sv-cfg-style-row">
                 <input id="sv-cfg-sel-fill-color"     type="color"  value="#e74c3c" data-i18n-title="settings.sel.fill">
+                <span class="sv-inline-label" data-i18n="settings.inline.opacity"></span>
                 <input id="sv-cfg-sel-fill-opacity"   type="number" min="0" max="1" step="0.05" value="1"   placeholder="0–1" data-i18n-title="settings.sel.fill.opacity">
             </div>
         </div>
@@ -212,9 +255,9 @@
             <h3>Carte</h3>
             <p>Fond de carte, couches WMS additionnelles, centre et zoom par défaut. <em>Ajuster à l'étendue</em> : la carte se recadre automatiquement sur les données à chaque chargement.</p>
             <h3>Partage</h3>
-            <p>Titre affiché dans la barre, URL de base sViewer (pour le lien de partage), URL de l'API Grist et URL geOrchestra (fonctions avancées).</p>
-            <h3>Enregistrer / Annuler</h3>
-            <p><strong>Enregistrer</strong> applique les modifications et reconstruit la carte. <strong>Annuler</strong> ferme sans modifier.</p>
+            <p>URL de base sViewer (pour le lien de partage), URL de l'API Grist (instances auto-hébergées), intégration geOrchestra (catalogue CSW, proxy WMS).</p>
+            <h3>Appliquer / Annuler</h3>
+            <p><strong>Appliquer</strong> reconstruit la carte avec les nouveaux paramètres. Pour les conserver au rechargement, cliquez ensuite sur <strong>Enregistrer</strong> dans la barre Grist (en dehors du widget). <strong>Annuler</strong> ferme sans modifier.</p>
             <h3>Exporter / Importer</h3>
             <p><strong>Exporter</strong> copie la configuration dans le presse-papiers (JSON). <strong>Importer</strong> charge un JSON précédemment exporté pour dupliquer la configuration sur un autre widget.</p>
         </div>
