@@ -307,6 +307,7 @@ var debounceTimer = null;
 var selectedRowId = null;          // id de la ligne Grist sélectionnée (pour le surlignage post-rebuild)
 var lastRecordsFingerprint = null; // empreinte JSON pour éviter un rebuild si seule la sélection a changé
 var viewFitted = false;            // vrai une fois le premier fit de vue effectué
+var mapClickPending = false;       // vrai entre setCursorPos (map click) et onRecord bounce — supprime le pan/zoom
 
 // ---------------------------------------------------------------------------
 // Utilitaires
@@ -1146,6 +1147,8 @@ grist.onRecords(function(records) {
 // Ligne sélectionnée dans la grille → pan/zoom carte sur l'entité et surlignage
 grist.onRecord(function(record) {
     if (!mapReady || !record) { return; }
+    // Suppress pan/zoom when onRecord fires as a bounce from our own setCursorPos call (map click).
+    if (mapClickPending) { mapClickPending = false; applySelectionStyle(featureByRowId[record.id]); return; }
     var geomVal;
     if (colGeomMode === 'latlon') {
         var lat = parseFloat(record[colLat]);
