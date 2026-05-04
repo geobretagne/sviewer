@@ -5,7 +5,7 @@
 - [ ] P1 Test dual-widget setup (two tables, two sViewer widgets) on a clean Grist doc
 - [x] P1 Investigate / document the Grist console error "LinkConfig invalid cycle" on setSelectedRows — root cause: Grist rejects setSelectedRows when widget is "Selected by" same table; corrupts onRecord after firing; fix: replaced with setCursorPos({rowId}) — scrolls grid to row, no filter, no cycle
 - [ ] P3 File Grist upstream issue: setSelectedRows breaks onRecord when widget is "Selected by" same table; setCursorPos also corrupts grid→map via onRecord feedback loop
-- [ ] P2 Investigate map→grid row highlight in separate branch (both setSelectedRows and setCursorPos ruled out on main)
+- [ ] P2 Investigate map→grid row highlight in separate branch (both setSelectedRows and setCursorPos ruled out on main) — still looking for 2-way sync via Grist API
 - [ ] P1 Test with real world users for usability
 - [ ] P2 draft for geometry edit support in widget
 

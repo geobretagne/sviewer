@@ -670,7 +670,7 @@ Panneau Documentation
 
 ## Connecteur Grist
 
-Le connecteur Grist est un widget personnalisé Grist qui affiche les données d'une table sur une carte sViewer et synchronise la sélection dans les deux sens.
+Le connecteur Grist est un widget personnalisé Grist qui affiche les données d'une table sur une carte sViewer. La synchronisation tableau → carte est supportée (sélection d'une ligne → zoom carte). La direction inverse (clic carte → sélection dans le tableau) n'est pas possible : l'API Grist `setSelectedRows` provoque une erreur `LinkConfig invalid cycle` qui casse la synchronisation tableau → carte. Clic carte = surbrillance visuelle uniquement.
 
 **Documentation complète :** [connectors/grist/README.md](connectors/grist/README.md)
 

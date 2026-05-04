@@ -23,7 +23,7 @@
 <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:10px 16px;margin-bottom:12px;font-size:12px;">
     <strong>⚠ Prerequisite for end-to-end checks:</strong>
     <code>adapters: ['csv']</code> must be set in <code>customConfig.js</code>.
-    Unit checks (0–10) run without it — only the e2e links (11–12) require it.
+    Unit checks (0–13) run without it — only the e2e links (14–15) require it.
 </div>
 <p style="color:#888;font-size:12px;margin-bottom:12px;">
     Unit checks use inline CSV strings — no external fetch, no CORS dependency.
@@ -108,7 +108,25 @@
 </div>
 
 <div class="check">
-    <div class="check-title">11. End-to-end — data.gouv.fr (CORS)</div>
+    <div class="check-title">11. CSV parser — geometry column auto-detection</div>
+    <div class="check-desc">CSV with a column named "geom" containing GeoJSON → auto-detected without any hint.</div>
+    <div class="result" id="r-geomcol">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">12. CSV parser — empty file (header only)</div>
+    <div class="check-desc">CSV with header row but no data rows → 0 features, no crash.</div>
+    <div class="result" id="r-empty">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">13. convert() — _labelcol + semicolon separator combined</div>
+    <div class="check-desc">Semicolon CSV with _labelcol hint → _label property set on features.</div>
+    <div class="result" id="r-label-semi">waiting…</div>
+</div>
+
+<div class="check">
+    <div class="check-title">14. End-to-end — data.gouv.fr (CORS)</div>
     <div class="check-desc">
         GPS coordinates of French national monuments — 50 rows, comma CSV, latitude/longitude columns.<br>
         Requires network + CORS from static.data.gouv.fr. Checks adapter loaded in this sViewer instance.
@@ -120,7 +138,7 @@
 </div>
 
 <div class="check">
-    <div class="check-title">12. End-to-end — _format=csv hint (extension-less URL)</div>
+    <div class="check-title">15. End-to-end — _format=csv hint (extension-less URL)</div>
     <div class="check-desc">
         Same dataset via its resource UUID URL (no .csv extension) + &_format=csv hint.<br>
         Tests the extension-less URL path through the full stack.
@@ -259,13 +277,43 @@
         ? pass('r-invalid', '2 valid features, 2 invalid rows skipped')
         : fail('r-invalid', 'expected 2 features, got ' + (fc6 ? fc6.features.length : 'null'));
 
-    // 11 — e2e data.gouv.fr
+    // 11 — geom column auto-detection
+    var CSV_GEOMCOL = 'name,geom,population\n'
+        + 'Brest,"{""type"":""Point"",""coordinates"":[-4.4861,48.3904]}",139676\n'
+        + 'Rennes,"{""type"":""Point"",""coordinates"":[-1.6778,48.1173]}",216815\n';
+    var fc7 = adapter.convert(CSV_GEOMCOL, 'https://x.com/data.csv');
+    if (fc7 && fc7.features.length === 2) {
+        var g = fc7.features[0].geometry;
+        g && g.type === 'Point' && Math.abs(g.coordinates[0] - (-4.4861)) < 0.001
+            ? pass('r-geomcol', '2 features, "geom" column auto-detected, coordinates correct')
+            : fail('r-geomcol', 'geometry wrong: ' + JSON.stringify(g));
+    } else {
+        fail('r-geomcol', 'expected 2 features, got ' + (fc7 ? fc7.features.length : 'null'));
+    }
+
+    // 12 — empty CSV (header only)
+    var CSV_EMPTY = 'name,latitude,longitude\n';
+    var fc8 = adapter.convert(CSV_EMPTY, 'https://x.com/data.csv');
+    fc8 && fc8.features.length === 0
+        ? pass('r-empty', '0 features, no crash on header-only CSV')
+        : fail('r-empty', 'expected 0 features, got ' + (fc8 ? fc8.features.length : 'null or error'));
+
+    // 13 — _labelcol + semicolon combined
+    var CSV_LABEL_SEMI = 'nom;latitude;longitude\nBrest;48.3904;-4.4861\nRennes;48.1173;-1.6778\n';
+    var fc9 = adapter.convert(CSV_LABEL_SEMI, 'https://x.com/data.csv?_labelcol=nom');
+    if (fc9 && fc9.features.length === 2 && fc9.features[0].properties._label === 'Brest') {
+        pass('r-label-semi', '2 features, semicolon parsed, _label="Brest" set from _labelcol');
+    } else {
+        fail('r-label-semi', 'got ' + (fc9 ? fc9.features.length + ' features, _label=' + (fc9.features[0] && fc9.features[0].properties._label) : 'null'));
+    }
+
+    // 14 — e2e data.gouv.fr
     var csvUrl = 'https://static.data.gouv.fr/resources/liste-des-coordonnees-gps-des-monuments-nationaux/20190729-144937/liste-coordonnees-gps-des-monuments.csv';
     var svBase = '../../';
     document.getElementById('e2e-link').href = svBase + '?geojson=' + encodeURIComponent(csvUrl)
         + '&title=Monuments+nationaux+(CSV)&debug=true';
 
-    // 12 — e2e _format=csv hint (extension-less URL simulation)
+    // 15 — e2e _format=csv hint (extension-less URL simulation)
     var csvUrlHint = csvUrl + '?_format=csv';
     document.getElementById('e2e-hint-link').href = svBase + '?geojson=' + encodeURIComponent(csvUrlHint)
         + '&title=Monuments+(format+hint)&debug=true';
