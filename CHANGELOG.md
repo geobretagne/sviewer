@@ -4,6 +4,27 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.7.0] - 2026-05-04
+
+### Added
+- **Embed SDK** — event bus (`window._SViewerInternals.bus`) shared between `embed.js` and `sviewer.js`, frozen via `Object.defineProperty` (tamper-proof). Enables embedded widgets to drive the map and react to events without accessing OpenLayers internals.
+- `SViewer.loadFeatureObjects(features, options)` — load an `ol.Feature[]` array already in EPSG:3857 as the active vector layer. Zero reprojection, zero serialisation — high-performance path for widgets. Options: `styleOverride`, `fitExtent`.
+- `SViewer.loadFeatures(geojson)` — load a parsed GeoJSON FeatureCollection as the active vector layer.
+- `SViewer.selectFeature(id)` — select a feature by OL id, zoom to it, open properties panel.
+- `SViewer.clearSelection()` — clear current selection and close properties panel.
+- `SViewer.onMapReady(fn)` — callback fired once map is initialised (`{ map, view }`).
+- `SViewer.onFeatureClick(fn)` — callback fired on every vector feature click (`{ feature, coordinate, properties }`).
+- `SViewer.onFeatureSelect(fn)` — callback fired on selection change (`{ feature, properties }`, `null` on deselect).
+- `SViewer.onFeaturesLoaded(fn)` — callback fired after every vector layer load (`{ features, count }`).
+- `_buildVectorLayer` / `_bindVectorClick` — shared internal layer build and click handler, registered once per instance (no duplicate handlers on layer rebuild).
+
+### Changed
+- Grist widget: delegates layer management and click handling entirely to sViewer SDK — drops own `vectorLayer`, `mapClickWired`, `mapClickPending` state. `applySelectionStyle` iterates `featureByRowId` directly.
+- Grist widget: map click now opens the sViewer properties panel (consistent with standalone mode), in addition to visual highlight.
+
+### Fixed
+- Lighthouse Performance score improved from ~96 to 99 — leaner widget init path (removed blocking guard variables).
+
 ## [0.6.3] - 2026-05-04
 
 ### Fixed
