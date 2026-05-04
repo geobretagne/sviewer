@@ -20,6 +20,11 @@
 </head>
 <body>
 <h1>csv connector — check</h1>
+<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:10px 16px;margin-bottom:12px;font-size:12px;">
+    <strong>⚠ Prerequisite for end-to-end checks:</strong>
+    <code>adapters: ['csv']</code> must be set in <code>customConfig.js</code>.
+    Unit checks (0–10) run without it — only the e2e links (11–12) require it.
+</div>
 <p style="color:#888;font-size:12px;margin-bottom:12px;">
     Unit checks use inline CSV strings — no external fetch, no CORS dependency.
     End-to-end checks use data.gouv.fr (CORS-enabled). Requires <code>adapters: ['csv']</code> in customConfig.

@@ -20,6 +20,11 @@
 </head>
 <body>
 <h1>grist connector — check</h1>
+<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:10px 16px;margin-bottom:12px;font-size:12px;">
+    <strong>⚠ Prerequisite for end-to-end checks:</strong>
+    <code>adapters: ['grist']</code> must be set in <code>customConfig.js</code>.
+    Unit checks (0–9) run without it — only the e2e link (10) requires it.
+</div>
 <p style="color:#888;font-size:12px;margin-bottom:12px;">
     Unit checks use inline Grist-envelope JSON — no external fetch, no CORS dependency.
     End-to-end check requires network access to a public Grist document and
@@ -29,10 +34,10 @@
     <strong>Data sources used by end-to-end checks</strong>
     <ul style="margin:6px 0 0 16px;line-height:1.8;">
         <li>
-            Grist records API — replace <code>DOC_ID</code> and <code>TABLE_ID</code> in the script below
-            with a real public Grist document. The document must be shared publicly (no API key required).
-            Example API URL shape:
-            <code>https://docs.getgrist.com/api/docs/{docId}/tables/{tableId}/records</code>
+            <a href="https://grist.dataregion.fr/o/docs/bqmkNRNcQcxi/" target="_blank">
+                Cales de mise à l'eau des Côtes d'Armor (grist.dataregion.fr)
+            </a>
+            — table <code>Cales_de_mise_a_l_eau_des_Cotes_d_Armor</code>, column <code>geometry</code> (GeoJSON Polygon), public, CORS enabled
         </li>
     </ul>
 </div>
@@ -248,14 +253,11 @@
         fail('r-label', '_label not set — got: ' + (fc6 && fc6.features[0] ? fc6.features[0].properties._label : 'null'));
     }
 
-    // 10 — e2e link (placeholder — replace with a real public Grist doc)
+    // 10 — e2e link — cales de mise à l'eau des Côtes d'Armor (grist.dataregion.fr, public, CORS)
     var svBase = '../../';
-    var gristApiBase = 'https://docs.getgrist.com';
-    var docId  = 'DOC_ID';   // replace with a real public Grist document ID
-    var tableId = 'TABLE_ID'; // replace with a real table name
-    var gristUrl = gristApiBase + '/api/docs/' + docId + '/tables/' + tableId + '/records';
+    var gristUrl = 'https://grist.dataregion.fr/api/docs/bqmkNRNcQcxi/tables/Cales_de_mise_a_l_eau_des_Cotes_d_Armor/records';
     document.getElementById('e2e-link').href = svBase + '?geojson=' + encodeURIComponent(gristUrl)
-        + '&title=Grist+check&debug=true';
+        + '&title=Cales+C%C3%B4tes+d%27Armor&debug=true';
 
 }());
 </script>

@@ -20,6 +20,11 @@
 </head>
 <body>
 <h1>sample connector — check</h1>
+<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:10px 16px;margin-bottom:12px;font-size:12px;">
+    <strong>⚠ Prerequisite for end-to-end checks:</strong>
+    <code>adapters: ['sample']</code> must be set in <code>customConfig.js</code>.
+    Unit checks (0–6) run without it — only the e2e link (7) requires it.
+</div>
 <p style="color:#888;font-size:12px;margin-bottom:12px;">
     Verifies adapter registration, convert() output, and end-to-end sViewer load.
     All test data is inline — no external fetch required for unit checks.
