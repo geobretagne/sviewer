@@ -740,6 +740,8 @@ function closeSettings(save) {
         saveOptions();
         if ((svConfig.layers || null) !== initialLayers || (svConfig.md || null) !== initialMd) { window.location.reload(); return; }
         viewFitted = false;
+        var geojsonUrl = buildGristGeojsonUrl();
+        if (geojsonUrl) { SViewer.setGeojsonUrl(geojsonUrl); }
         rebuildLayer();
         setStatus(tr('settings.save.reminder'));
     }
@@ -808,6 +810,7 @@ function rebuildLayer() {
                     var feat = new ol.Feature({ geometry: wktOlGeom });
                     var rowId = row.id;
                     feat.set('_gristRowId', rowId);
+                    Object.keys(row).forEach(function(k) { if (k !== 'id' && k !== colGeom && k !== colLat && k !== colLon) { feat.set(k, row[k]); } });
                     if (colLabel && row[colLabel] !== undefined && row[colLabel] !== null) { feat.set('_label', row[colLabel]); }
                     featureByRowId[rowId] = feat;
                     features.push(feat);
@@ -836,6 +839,7 @@ function rebuildLayer() {
         var feat = new ol.Feature({ geometry: olGeom });
         var rowId = row.id;
         feat.set('_gristRowId', rowId);
+        Object.keys(row).forEach(function(k) { if (k !== 'id' && k !== colGeom && k !== colLat && k !== colLon) { feat.set(k, row[k]); } });
         if (colLabel && row[colLabel] !== undefined && row[colLabel] !== null) {
             feat.set('_label', row[colLabel]);
         }
@@ -895,7 +899,7 @@ function safeHttpUrl(url) {
 // Retourne null si les identifiants ne sont pas encore connus.
 function buildGristGeojsonUrl() {
     if (!gristDocId || !gristTableId) { return null; }
-    var gristBase = (safeHttpUrl(svConfig.grist_api_base) || 'https://docs.getgrist.com').replace(/\/+$/, '');
+var gristBase = (safeHttpUrl(svConfig.grist_api_base) || 'https://docs.getgrist.com').replace(/\/+$/, '');
     var base = gristBase + '/api/docs/' + encodeURIComponent(gristDocId) + '/tables/' + encodeURIComponent(gristTableId) + '/records';
     var params = [];
     if (colGeomMode && colGeomMode !== 'auto') { params.push('_geommode=' + encodeURIComponent(colGeomMode)); }
@@ -1065,6 +1069,8 @@ if (grist.widgetApi && typeof grist.widgetApi.onOptions === 'function') {
         var s = document.getElementById('sv-status');
         if (s && s.textContent === tr('settings.save.reminder')) { setStatus(''); }
         if (mapReady) {
+            var geojsonUrl = buildGristGeojsonUrl();
+            if (geojsonUrl) { SViewer.setGeojsonUrl(geojsonUrl); }
             viewFitted = false;
             rebuildLayer();
         }
