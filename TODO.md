@@ -25,7 +25,19 @@
 
 ## v0.8 — security & connectors
 
-- [ ] Grist connector : vendor grist-plugin-api.js into static/lib/grist/ — remove CDN dependency, update CSP (script-src 'self' only for connectors)
+- [~] Grist connector : dépendance CDN docs.getgrist.com — investigué, impossible à supprimer côté sViewer.
+
+  **Analyse (2026-05-05) :**
+  L'URL `grist-plugin-api.js` est prévisible sur toute instance Grist (`{origin}/grist-plugin-api.js`).
+  Mais le chargement dynamique depuis l'instance hébergeuse est bloqué par le CSP que Grist injecte
+  sur la page wrapper de l'iframe widget. Ce CSP n'autorise que `https://docs.getgrist.com` pour
+  les scripts — y compris sur les instances auto-hébergées (ex. `grist.numerique.gouv.fr` bloque
+  son propre origin). C'est une misconfiguration upstream : le CSP devrait autoriser `'self'`.
+
+  **À signaler upstream :** chaque instance Grist auto-hébergée devrait ajouter son propre origin
+  (ou `'self'`) dans le CSP de ses iframes widget. Ticket à ouvrir sur le dépôt Grist si nécessaire.
+
+  **Status sViewer :** CDN `docs.getgrist.com` conservé, aucune action possible côté sViewer.
 - [x] All modes : hardConfig complete defaults — IGN aerial + OSM + labels overlay + 3 presets, geocodeAdapter, all keys; no customConfig.js required for basic operation
 - [x] Docker : switch to nginxinc/nginx-unprivileged (non-root process, port 8080) + HEALTHCHECK
 - [x] nginx : CSP hashes stripped from non-index locations; hash only on index.html/sw.js/manifest.json
