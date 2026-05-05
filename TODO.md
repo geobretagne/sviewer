@@ -26,6 +26,7 @@
 ## v0.8 — security & connectors
 
 - [ ] Grist connector : vendor grist-plugin-api.js into static/lib/grist/ — remove CDN dependency, update CSP (script-src 'self' only for connectors)
+- [ ] All modes : review hardConfig defaults for generic out-of-box usage — no deployer customConfig required for basic operation
 
 ## v0.8 — connectors & testing
 

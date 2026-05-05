@@ -128,7 +128,7 @@
                             </button>
                         </div>
                         <div class="mt-3 text-end" style="font-size:0.7em;opacity:0.4;user-select:none;" aria-hidden="true">
-                            sViewer ` + SVIEWER_VERSION + ` <span style="font-family:monospace">` + SVIEWER_COMMIT + `</span>
+                            <a href="https://github.com/geobretagne/sviewer/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">sViewer ` + SVIEWER_VERSION + `</a> <span style="font-family:monospace">` + SVIEWER_COMMIT + `</span>
                         </div>
                     </div>
                 </div>
@@ -429,7 +429,7 @@
                         if (versionEl) {
                             var adapterNames = (window.customConfig && window.customConfig.adapters) || [];
                             var adapterStr = adapterNames.length ? ' ' + adapterNames.join(', ') : '';
-                            versionEl.innerHTML = 'sViewer ' + SVIEWER_VERSION + ' <span style="font-family:monospace">' + SVIEWER_COMMIT + '</span>' + adapterStr;
+                            versionEl.innerHTML = '<a href="https://github.com/geobretagne/sviewer/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">sViewer ' + SVIEWER_VERSION + '</a> <span style="font-family:monospace">' + SVIEWER_COMMIT + '</span>' + adapterStr;
                         }
                         return window.SViewerApp;
                     } else {
