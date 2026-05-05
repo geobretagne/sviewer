@@ -31,14 +31,11 @@ body { margin: 0; font-family: monospace; font-size: 13px; background: #1a1a1a; 
 .sv-test-detail { font-size: 11px; color: #666; margin-top: 2px; }
 .sv-test-detail.pass { color: #4a7a4c; }
 .sv-test-detail.fail { color: #a03030; }
-.sv-test-type { font-size: 10px; color: #555; flex-shrink: 0; margin-top: 2px; }
+.sv-test-num { color: #555; font-size: 11px; min-width: 2ch; display: inline-block; }
 
 #sv-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
 #sv-test-frame { width: 100%; flex: 1; border: none; background: #111; display: none; }
-#sv-unit-pane { flex: 1; padding: 20px; overflow-y: auto; display: none; }
-#sv-unit-container { width: 100%; height: 400px; }
-#sv-unit-output { margin-top: 12px; font-size: 12px; color: #888; }
 
 #sv-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: #444; font-size: 12px; }
 </style>
@@ -56,10 +53,6 @@ body { margin: 0; font-family: monospace; font-size: 13px; background: #1a1a1a; 
   <div id="sv-panel"><!-- populated by JS --></div>
   <div id="sv-content">
     <iframe id="sv-test-frame" title="sViewer visual test"></iframe>
-    <div id="sv-unit-pane">
-      <div id="sv-unit-container"></div>
-      <div id="sv-unit-output"></div>
-    </div>
     <div id="sv-empty">← select a test</div>
   </div>
 </div>

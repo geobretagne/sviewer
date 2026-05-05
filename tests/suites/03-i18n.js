@@ -1,6 +1,6 @@
-/* Suite 03 — i18n key coverage (unit tests)
- * Verifies all keys exist in all 4 languages and return non-empty strings.
- * No network needed.
+/* Suite 03 — i18n key coverage (visual tests)
+ * Each test loads sViewer with ?lang=XX and asserts on hardConfig.i18n from sv:ready.
+ * hardConfig.i18n contains all languages regardless of ?lang= — full coverage per load.
  */
 
 var I18N_REQUIRED_KEYS = [
@@ -26,15 +26,15 @@ var I18N_REQUIRED_KEYS = [
 
 var I18N_LANGS = ['en', 'fr', 'es', 'de'];
 
-function makeI18nTest(lang) {
+function makeI18nCoverageTest(lang) {
     return {
         id: 'i18n-coverage-' + lang,
-        label: 'i18n [' + lang + '] — all keys defined, non-empty',
+        label: 'i18n [' + lang + '] — all required keys defined and non-empty',
         group: 'i18n',
-        type: 'unit',
-        config: { lang: lang },
+        type: 'visual',
+        params: { lang: lang },
         assert: function(hardConfig) {
-            if (!hardConfig.i18n) throw new Error('hardConfig.i18n missing');
+            if (!hardConfig || !hardConfig.i18n) throw new Error('hardConfig.i18n missing');
             var dict = hardConfig.i18n[lang];
             if (!dict) throw new Error('language "' + lang + '" missing from i18n');
             var missing = [];
@@ -50,19 +50,19 @@ function makeI18nTest(lang) {
 }
 
 I18N_LANGS.forEach(function(lang) {
-    SV_TESTS.push(makeI18nTest(lang));
+    SV_TESTS.push(makeI18nCoverageTest(lang));
 });
 
 SV_TESTS.push({
     id: 'i18n-no-extra-langs',
-    label: 'i18n — exactly 4 languages defined (fr, en, es, de)',
+    label: 'i18n — exactly 4 languages defined (de, en, es, fr)',
     group: 'i18n',
-    type: 'unit',
-    config: {},
+    type: 'visual',
+    params: {},
     assert: function(hardConfig) {
-        if (!hardConfig.i18n) throw new Error('hardConfig.i18n missing');
+        if (!hardConfig || !hardConfig.i18n) throw new Error('hardConfig.i18n missing');
         var langs = Object.keys(hardConfig.i18n).sort().join(',');
-        var expected = ['de', 'en', 'es', 'fr'].join(',');
+        var expected = 'de,en,es,fr';
         if (langs !== expected) {
             throw new Error('expected ' + expected + ', got ' + langs);
         }
@@ -73,10 +73,10 @@ SV_TESTS.push({
     id: 'i18n-key-parity',
     label: 'i18n — all languages have identical key sets',
     group: 'i18n',
-    type: 'unit',
-    config: {},
+    type: 'visual',
+    params: {},
     assert: function(hardConfig) {
-        if (!hardConfig.i18n) throw new Error('hardConfig.i18n missing');
+        if (!hardConfig || !hardConfig.i18n) throw new Error('hardConfig.i18n missing');
         var refKeys = Object.keys(hardConfig.i18n['en'] || {}).sort().join(',');
         var mismatched = [];
         I18N_LANGS.forEach(function(lang) {
@@ -84,8 +84,6 @@ SV_TESTS.push({
             var keys = Object.keys(hardConfig.i18n[lang] || {}).sort().join(',');
             if (keys !== refKeys) mismatched.push(lang);
         });
-        if (mismatched.length) {
-            throw new Error('key sets differ from [en] in: ' + mismatched.join(', '));
-        }
+        if (mismatched.length) throw new Error('key sets differ from [en] in: ' + mismatched.join(', '));
     }
 });

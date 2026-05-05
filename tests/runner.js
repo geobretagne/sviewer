@@ -1,5 +1,5 @@
 /* sViewer Test Runner
- * Two test types: 'visual' (iframe + postMessage) and 'unit' (same-window embed.js + onReady).
+ * All tests are visual: iframe loads sViewer, sv:ready postMessage carries hardConfig.
  * Test authors only write SV_TESTS.push({...}) — never touch this file.
  */
 
@@ -8,7 +8,6 @@
 
     var TIMEOUT_MS = 10000;
     var BASE_URL = (function() {
-        // tests/ is one level below sViewer root
         var scripts = document.getElementsByTagName('script');
         for (var i = 0; i < scripts.length; i++) {
             var src = scripts[i].src || '';
@@ -25,20 +24,17 @@
     window.SVRunner = {
         run: run,
         runAll: runAll,
+        renderRunning: renderRunning,
+        renderResult: renderResult,
         getBaseUrl: function() { return BASE_URL; }
     };
 
     // ------ Core -------------------------------------------------------------
 
-    function assert(condition, message) {
-        if (!condition) throw new Error(message || 'Assertion failed');
-    }
-
     function run(test) {
         var start = Date.now();
         return new Promise(function(resolve) {
-            var p = test.type === 'unit' ? runUnit(test) : runVisual(test);
-            p.then(function(detail) {
+            runVisual(test).then(function(detail) {
                 resolve({ test: test, pass: true, detail: detail || '', ms: Date.now() - start });
             }).catch(function(err) {
                 resolve({ test: test, pass: false, detail: err.message || String(err), ms: Date.now() - start });
@@ -85,8 +81,13 @@
                 clearTimeout(timer);
                 window.removeEventListener('message', onMessage);
                 try {
-                    if (typeof test.assert === 'function') test.assert(event.data.hardConfig);
-                    resolve('map loaded');
+                    var result = test.assert ? test.assert(event.data.hardConfig) : undefined;
+                    // assert may return a Promise (for fetch-based checks)
+                    if (result && typeof result.then === 'function') {
+                        result.then(function() { resolve('ok'); }).catch(reject);
+                    } else {
+                        resolve('map loaded');
+                    }
                 } catch(e) {
                     reject(e);
                 }
@@ -94,67 +95,6 @@
 
             window.addEventListener('message', onMessage);
             iframe.src = url;
-        });
-    }
-
-    // ------ Unit (same-window embed.js + onReady) ----------------------------
-
-    var _embedLoaded = false;
-    var _embedLoading = false;
-    var _embedQueue = [];
-
-    function ensureEmbed() {
-        return new Promise(function(resolve, reject) {
-            if (_embedLoaded) { resolve(); return; }
-            _embedQueue.push({ resolve: resolve, reject: reject });
-            if (_embedLoading) return;
-            _embedLoading = true;
-            var s = document.createElement('script');
-            s.src = BASE_URL + 'static/js/embed.js';
-            s.onload = function() {
-                _embedLoaded = true;
-                _embedQueue.forEach(function(cb) { cb.resolve(); });
-                _embedQueue = [];
-            };
-            s.onerror = function() {
-                _embedQueue.forEach(function(cb) { cb.reject(new Error('Failed to load embed.js')); });
-                _embedQueue = [];
-            };
-            document.head.appendChild(s);
-        });
-    }
-
-    function runUnit(test) {
-        return ensureEmbed().then(function() {
-            return new Promise(function(resolve, reject) {
-                // Set customConfig inline before init
-                window.customConfig = test.config || {};
-
-                var timer = setTimeout(function() {
-                    reject(new Error('Timeout — onReady not called after ' + TIMEOUT_MS + 'ms'));
-                }, TIMEOUT_MS);
-
-                var container = document.getElementById('sv-unit-container');
-                if (!container) { reject(new Error('No div#sv-unit-container in page')); return; }
-
-                // Clear previous embed instance
-                container.innerHTML = '';
-
-                window.SViewerApp.init({
-                    target: '#sv-unit-container',
-                    debug: false
-                });
-
-                window.SViewerApp.onReady(function() {
-                    clearTimeout(timer);
-                    try {
-                        if (typeof test.assert === 'function') test.assert(window.hardConfig);
-                        resolve('init ok');
-                    } catch(e) {
-                        reject(e);
-                    }
-                });
-            });
         });
     }
 

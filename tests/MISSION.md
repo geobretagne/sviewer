@@ -13,57 +13,39 @@ Browser-based test runner doubling as live demo. No build tooling, no framework,
 - `?autorun=1` runs all suites headlessly — CI-friendly
 - Live WMS tests use real endpoints — marked `group: 'Live'`, skipped in CI
 
-## Two Test Types
+## Test Type
 
-Every test declares `type: 'visual'` or `type: 'unit'`. Runner handles execution mechanics.
-
-### `visual` — iframe + postMessage
-
-For tests where seeing the map matters (params, rendering, didactic demos).
+All tests are **visual**: sViewer loads in an iframe, the map renders, `sv:ready` postMessage
+carries `hardConfig` back to the runner for assertions.
 
 ```
 runner sets iframe.src with URL params
 → sViewer loads, map renders visibly
 → sViewer emits postMessage({type:'sv:ready', hardConfig:{...}})
-→ runner receives, runs assertions, shows pass/fail
+→ runner receives, runs assert(hardConfig), shows pass/fail + timing
 → map stays visible in right panel
 ```
 
-sViewer change required: one line at end of `init()`:
-```javascript
-if (window.parent !== window) {
-    window.parent.postMessage({ type: 'sv:ready', hardConfig: window.hardConfig }, '*');
-}
-```
-
-### `unit` — same-window + embed.js + onReady
-
-For tests of JS API, config merge logic, i18n — no map needed, instant.
-
-```
-runner sets window.customConfig
-→ calls SViewer.init()
-→ waits for SViewer.onReady()
-→ asserts on window.hardConfig or SViewer API
-→ pass/fail shown inline
-```
-
-sViewer change required: `SViewer.onReady(fn)` hook (~5 lines in `sviewer.js`).
+Config-merge and i18n tests use `?c=test` to load `local/customConfig_test.js` (fixed known
+values) or `?lang=XX` — no same-window reinit needed.
 
 ## Architecture
 
 ```
 tests/
-  index.html              — runner UI + suite manifest (two tabs: Visual / Unit)
-  runner.js               — runVisual(), runUnit(), assert(), renderResults()
+  index.html              — runner UI (left panel + iframe)
+  runner.js               — runVisual(), renderResult(), renderRunning()
+  ui.js                   — panel DOM, click handlers, run-all/run-group, ?autorun=1
+  MISSION.md              — this file
   suites/
-    01-params.js          — visual: URL KVP params (?x= ?y= ?z= ?c= ?layers= ?lang= ?lb=)
-    02-config-merge.js    — unit: hardConfig/customConfig merge order
-    03-i18n.js            — unit: key coverage, all 4 languages
-    04-wms-services.js    — visual: live WMS GetCapabilities (geobretagne.fr + others)
-```
+    01-params.js          — visual: URL KVP params (?x= ?y= ?z= ?c= ?lang= ?lb= ?layers=)
+    02-config-merge.js    — visual: hardConfig/customConfig merge via ?c=test
+    03-i18n.js            — visual: key coverage, all 4 languages
+    04-wms-services.js    — visual: live WMS endpoints (geobretagne.fr, IGN GPF)
 
-No fixtures directory needed — unit tests set `window.customConfig` inline.
+local/
+  customConfig_test.js    — fixed test profile (title, initialExtent, maxFeatures)
+```
 
 ## Test Object Shape
 
@@ -72,80 +54,65 @@ SV_TESTS.push({
     id: 'unique-id',
     label: 'Human readable description',
     group: 'Params',         // 'Params' | 'Config' | 'i18n' | 'Live'
-    type: 'visual',          // 'visual' | 'unit'
+    type: 'visual',
 
-    // visual only: URL params to load sViewer with
+    // URL params to load sViewer with
     params: { x: 350000, y: 6200000, z: 10, c: 'test' },
 
-    // unit only: config to set before init
-    config: { title: 'Test Title', lang: 'en' },
-
-    // both: assertions on received/available state
+    // assertions on hardConfig received via sv:ready postMessage
+    // may return a Promise (for fetch-based checks)
     assert: function(hardConfig) {
-        if (hardConfig.title !== 'Test Title') throw new Error('got: ' + hardConfig.title);
+        if (hardConfig.title !== 'sViewer Test Profile') throw new Error('got: ' + hardConfig.title);
     }
 });
 ```
 
 ## Adding a Test (no JS expertise needed)
 
-**Add a WMS endpoint test** — copy an object in `suites/04-wms-services.js`, change `id`, `label`, and the URL in `params`. Nothing else.
+**Add a WMS endpoint test** — copy an object in `suites/04-wms-services.js`, change `id`,
+`label`, and the `makeWmsTest(...)` arguments. Nothing else.
 
-**Add a param test** — copy an object in `suites/01-params.js`, change `params` and the assertion condition.
+**Add a param test** — copy an object in `suites/01-params.js`, change `params` and the
+assertion condition.
+
+**Add a config test** — copy an object in `suites/02-config-merge.js`. Use `params: { c: 'test' }`
+to load the test profile, or `params: {}` to test defaults.
 
 ## What is Tested
 
-### URL KVP params (visual)
+### URL KVP params (visual, suite 01)
 - `?x=` `?y=` `?z=` — map centered at correct coords
 - `?c=name` — named profile loaded, hardConfig reflects it
 - `?c=../etc/passwd` — path traversal blocked, default config used
 - `?lang=en/fr/es/de` — correct language applied
 - `?lb=N` — background layer index applied
-- `?layers=URL|NAME` — layer loaded
 
-### Config merge (unit)
-- `customConfig` key overrides `hardConfig` default
-- Missing `customConfig` key → `hardConfig` default present
-- `hardConfig` complete (no undefined required keys)
+### Config merge (visual, suite 02)
+- Default title, projcode, backgroundPresets present with no customConfig
+- `?c=test` overrides title, initialExtent, maxFeatures
+- Missing customConfig key → hardConfig default present
 
-### i18n (unit)
-- All keys defined in all 4 languages (fr, en, es, de)
-- No key returns `undefined`
+### i18n (visual, suite 03)
+- All required keys defined in all 4 languages (fr, en, es, de)
+- Exactly 4 languages, identical key sets across all
 
-### Live WMS services (visual)
+### Live WMS services (visual, suite 04)
+- Layer renders in iframe via `layerName@wmsUrl` format
 - `GetCapabilities` returns HTTP 200 + valid XML
-- Response includes `WMS_Capabilities` root element
-- Latency recorded
+- Endpoints: GeoBretagne CI, IGN Géoportail
 
-## UI Layout
+## sViewer Changes
 
-```
-┌─────────────────────────────────────────────────────┐
-│ sViewer Test Suite              [Run all] [Visual|Unit]│
-├──────────────┬──────────────────────────────────────┤
-│ ✓ Param ?x=  │                                      │
-│ ✓ Param ?c=  │     [ iframe — live map here ]       │
-│ ✗ Lang ?en   │       (visual tests only)            │
-│ … 12 tests   │                                      │
-└──────────────┴──────────────────────────────────────┘
-```
-
-Click test in left panel → iframe reloads (visual) or inline result (unit).
-
-## sViewer Changes Required (minimal)
-
-| Change | File | Size | Risk |
-|---|---|---|---|
-| `postMessage` on init | `sviewer.js` | 3 lines | none |
-| `SViewer.onReady(fn)` | `sviewer.js` | ~5 lines | none |
-
-Both additions useful outside tests (parent-iframe integration, embed caller timing).
+| Change | File | Purpose |
+|---|---|---|
+| `postMessage` on init | `sviewer.js` | Sends serializable `hardConfig` to parent frame |
+| `SViewer.onReady(fn)` | `sviewer.js` | Hook for embed callers |
+| `layername@url` no-namespace fix | `sviewer.js` | Alien WMS without geOrchestra namespace |
 
 ## CI Integration (future)
 
 ```bash
-# Playwright one-shot, no install in repo
 npx playwright test --config tests/playwright.config.js
 ```
 
-Runs only non-`Live` groups. Live tests are manual only.
+Runs only non-`Live` groups (`?autorun=1` skips Live by convention — implement filter in CI config).

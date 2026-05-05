@@ -1,18 +1,21 @@
-/* Suite 02 — hardConfig / customConfig merge (unit tests)
- * Tests run in same window via embed.js. window.customConfig set inline before init.
- * No network needed — pure config logic.
+/* Suite 02 — hardConfig / customConfig merge (visual tests)
+ * Each test loads sViewer in the iframe. ?c=test loads local/customConfig_test.js
+ * with known fixed values. Assert on the hardConfig received via sv:ready postMessage.
  *
- * NOTE: unit tests share the same window. embed.js is loaded once.
- * window.customConfig is set per-test before SViewer.onReady fires.
+ * Fixed values in customConfig_test.js:
+ *   title: 'sViewer Test Profile'
+ *   initialExtent: [-582000, 5977000, -104000, 6268000]
+ *   maxFeatures: 7
  */
 
 SV_TESTS.push({
     id: 'merge-default-title',
-    label: 'No customConfig — hardConfig default title is "sViewer"',
+    label: 'No ?c= — hardConfig default title is "sViewer"',
     group: 'Config',
-    type: 'unit',
-    config: {},
+    type: 'visual',
+    params: {},
     assert: function(hardConfig) {
+        if (!hardConfig) throw new Error('hardConfig not received');
         if (hardConfig.title !== 'sViewer') {
             throw new Error('expected "sViewer", got "' + hardConfig.title + '"');
         }
@@ -21,25 +24,26 @@ SV_TESTS.push({
 
 SV_TESTS.push({
     id: 'merge-custom-title',
-    label: 'customConfig.title overrides hardConfig default',
+    label: '?c=test — customConfig.title overrides default',
     group: 'Config',
-    type: 'unit',
-    config: { title: 'My Custom Title' },
+    type: 'visual',
+    params: { c: 'test' },
     assert: function(hardConfig) {
-        if (hardConfig.title !== 'My Custom Title') {
-            throw new Error('expected "My Custom Title", got "' + hardConfig.title + '"');
+        if (!hardConfig) throw new Error('hardConfig not received');
+        if (hardConfig.title !== 'sViewer Test Profile') {
+            throw new Error('expected "sViewer Test Profile", got "' + hardConfig.title + '"');
         }
     }
 });
 
 SV_TESTS.push({
     id: 'merge-extent',
-    label: 'customConfig.initialExtent overrides hardConfig default',
+    label: '?c=test — customConfig.initialExtent overrides default',
     group: 'Config',
-    type: 'unit',
-    config: { initialExtent: [-582000, 5977000, -104000, 6268000] },
+    type: 'visual',
+    params: { c: 'test' },
     assert: function(hardConfig) {
-        if (!hardConfig.initialExtent) throw new Error('initialExtent missing');
+        if (!hardConfig || !hardConfig.initialExtent) throw new Error('initialExtent missing');
         if (hardConfig.initialExtent[0] !== -582000) {
             throw new Error('expected -582000, got ' + hardConfig.initialExtent[0]);
         }
@@ -47,17 +51,15 @@ SV_TESTS.push({
 });
 
 SV_TESTS.push({
-    id: 'merge-missing-key',
-    label: 'Missing customConfig key — hardConfig default present',
+    id: 'merge-maxfeatures',
+    label: '?c=test — customConfig.maxFeatures overrides default (7)',
     group: 'Config',
-    type: 'unit',
-    config: { title: 'Only Title' },
+    type: 'visual',
+    params: { c: 'test' },
     assert: function(hardConfig) {
-        if (!hardConfig.openLSGeocodeUrl) {
-            throw new Error('openLSGeocodeUrl missing — hardConfig default not applied');
-        }
-        if (!hardConfig.geocodeAdapter || typeof hardConfig.geocodeAdapter !== 'function') {
-            throw new Error('geocodeAdapter missing or not a function');
+        if (!hardConfig) throw new Error('hardConfig not received');
+        if (hardConfig.maxFeatures !== 7) {
+            throw new Error('expected 7, got ' + hardConfig.maxFeatures);
         }
     }
 });
@@ -66,9 +68,10 @@ SV_TESTS.push({
     id: 'merge-projcode',
     label: 'hardConfig.projcode defaults to EPSG:3857',
     group: 'Config',
-    type: 'unit',
-    config: {},
+    type: 'visual',
+    params: {},
     assert: function(hardConfig) {
+        if (!hardConfig) throw new Error('hardConfig not received');
         if (hardConfig.projcode !== 'EPSG:3857') {
             throw new Error('expected EPSG:3857, got ' + hardConfig.projcode);
         }
@@ -76,14 +79,15 @@ SV_TESTS.push({
 });
 
 SV_TESTS.push({
-    id: 'merge-maxfeatures',
-    label: 'hardConfig.maxFeatures defaults to 3',
+    id: 'merge-missing-key',
+    label: 'Missing customConfig key — hardConfig default present (openLSGeocodeUrl)',
     group: 'Config',
-    type: 'unit',
-    config: {},
+    type: 'visual',
+    params: {},
     assert: function(hardConfig) {
-        if (typeof hardConfig.maxFeatures !== 'number') {
-            throw new Error('maxFeatures not a number: ' + typeof hardConfig.maxFeatures);
+        if (!hardConfig) throw new Error('hardConfig not received');
+        if (!hardConfig.openLSGeocodeUrl) {
+            throw new Error('openLSGeocodeUrl missing — hardConfig default not applied');
         }
     }
 });
@@ -92,28 +96,16 @@ SV_TESTS.push({
     id: 'merge-background-presets',
     label: 'hardConfig.backgroundPresets is an array with entries',
     group: 'Config',
-    type: 'unit',
-    config: {},
+    type: 'visual',
+    params: {},
     assert: function(hardConfig) {
+        if (!hardConfig) throw new Error('hardConfig not received');
         if (!Array.isArray(hardConfig.backgroundPresets) || hardConfig.backgroundPresets.length === 0) {
             throw new Error('backgroundPresets missing or empty');
         }
         var p = hardConfig.backgroundPresets[0];
         if (typeof p.lb === 'undefined' || typeof p.title === 'undefined') {
             throw new Error('backgroundPreset entry missing lb or title');
-        }
-    }
-});
-
-SV_TESTS.push({
-    id: 'merge-layers-background',
-    label: 'hardConfig.layersBackground is an array with OL layer objects',
-    group: 'Config',
-    type: 'unit',
-    config: {},
-    assert: function(hardConfig) {
-        if (!Array.isArray(hardConfig.layersBackground) || hardConfig.layersBackground.length === 0) {
-            throw new Error('layersBackground missing or empty');
         }
     }
 });

@@ -1,45 +1,37 @@
 /* Suite 04 — Live WMS service health (visual tests)
- * Tests fire real GetCapabilities requests against known WMS endpoints.
- * group: 'Live' — skipped in CI, manual only.
+ * Tests fire real WMS requests against known endpoints.
+ * group: 'Live' — skipped in CI autorun, manual only.
  *
- * To add an endpoint: copy a block, change id/label/params.layers.
+ * To add an endpoint: copy a makeWmsTest block, change id/label/wmsUrl/layerName.
  * params.layers format: "WMS_URL|LAYER_NAME"
  */
 
-function makeWmsTest(id, label, wmsUrl, layerName) {
+// layers format: "layerName@wmsUrl"  (@ separator, layer first)
+function makeWmsTest(id, label, wmsUrl, layerName, x, y, z) {
     return {
         id: id,
         label: label,
         group: 'Live',
         type: 'visual',
-        // Load sViewer with the WMS layer — map shows the service live
         params: {
-            layers: wmsUrl + '|' + layerName,
-            z: 7,
-            x: -200000,
-            y: 6100000
+            layers: layerName + '@' + wmsUrl,
+            z: z || 7,
+            x: x || -200000,
+            y: y || 6100000
         },
         assert: function(hardConfig) {
-            // sViewer started — layer load errors show in map, not here
             if (!hardConfig) throw new Error('hardConfig not received');
         }
     };
 }
 
-// ------ GeoBretagne ----------------------------------------------------------
+// ------ GeoBretagne CI layer (unprotected, stable) ---------------------------
 
 SV_TESTS.push(makeWmsTest(
-    'wms-geobretagne-scan25',
-    'GeoBretagne — Scan25 (IGN raster)',
-    'https://geobretagne.fr/geoserver/ign/wms',
-    'scan25'
-));
-
-SV_TESTS.push(makeWmsTest(
-    'wms-geobretagne-communes',
-    'GeoBretagne — Communes (vector)',
-    'https://geobretagne.fr/geoserver/ref/wms',
-    'communes'
+    'wms-geobretagne-ci',
+    'GeoBretagne — CI unprotected vector layer',
+    'https://geobretagne.fr/geoserver/ci/wms',
+    'unprotectedVectorLayer'
 ));
 
 // ------ Géoportail (IGN) -----------------------------------------------------
@@ -52,14 +44,13 @@ SV_TESTS.push(makeWmsTest(
 ));
 
 SV_TESTS.push(makeWmsTest(
-    'wms-ign-scan',
-    'IGN Géoportail — Carte SCAN (WMS)',
-    'https://data.geopf.fr/wms-r',
-    'GEOGRAPHICALGRIDSYSTEMS.MAPS'
+    'wms-geobretagne-legend',
+    'GeoBretagne CI — GetLegendGraphic (unprotectedVectorLayer)',
+    'https://geobretagne.fr/geoserver/ci/wms',
+    'unprotectedVectorLayer'
 ));
 
-// ------ GetCapabilities health checks (no layer needed) ----------------------
-// These tests check the endpoint directly via fetch, not via sViewer layer load.
+// ------ GetCapabilities health checks (fetch, no layer needed) ---------------
 
 SV_TESTS.push({
     id: 'caps-geobretagne',
@@ -68,8 +59,7 @@ SV_TESTS.push({
     type: 'visual',
     params: {},
     assert: function(hardConfig) {
-        // Piggyback: run fetch check after sViewer loads
-        return fetch('https://geobretagne.fr/geoserver/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities')
+        return fetch('https://geobretagne.fr/geoserver/ci/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities')
             .then(function(r) {
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 return r.text();

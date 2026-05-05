@@ -249,19 +249,23 @@ window.SViewerApp = (function() {
             self.options.cql_filter  = layerParts.length > 2 ? layerParts[2] : '';
 
             self.options.namespace = (self.options.nslayername.indexOf(":")>0) ? self.options.nslayername.split(':',2)[0]:''; // namespace
-            self.options.layername = (self.options.nslayername.indexOf(':')>0) ? self.options.nslayername.split(':',2)[1]:''; // layername
+            self.options.layername = (self.options.nslayername.indexOf(':')>0) ? self.options.nslayername.split(':',2)[1] : self.options.nslayername; // layername
 
             if (customWmsUrl) {
                 if (!isDomainAllowed(customWmsUrl)) {
                     console.warn('sViewer: blocked WMS URL not in allowedDomains:', customWmsUrl);
                     return;
                 }
-                // Use custom WMS endpoint
+                // Use custom WMS endpoint — namespace not required for alien WMS
                 self.options.wmsurl_global = customWmsUrl;
                 self.options.wmsurl_ns = customWmsUrl;
                 self.options.wmsurl_layer = customWmsUrl;
             } else {
-                // Use default geOrchestra endpoints
+                // Use default geOrchestra endpoints — namespace required
+                if (!self.options.namespace) {
+                    console.warn('Layer parameter format error: namespace required for geOrchestra layers, expected "namespace:layername", got "' + s + '"');
+                    return;
+                }
                 var ns = encodeURIComponent(self.options.namespace);
                 var ln = encodeURIComponent(self.options.layername);
                 self.options.wmsurl_global = hardConfig.geOrchestraBaseUrl + '/geoserver/wms'; // global getcap
@@ -277,10 +281,6 @@ window.SViewerApp = (function() {
                 customWmsUrl: customWmsUrl,
                 wmsurl_layer: self.options.wmsurl_layer
             });
-
-            if (!self.options.namespace || !self.options.layername) {
-                console.warn('Layer parameter format error: expected "namespace:layername[*style][*cql_filter][@wms-endpoint]" format, got "' + s + '"');
-            }
         }
 
         /**
