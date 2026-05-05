@@ -188,6 +188,7 @@ window.SViewerApp = (function() {
     var view;
     var marker;
     var vectorLayer;
+    var _onReadyCallbacks = [];
 
     // ----- pseudoclasses ------------------------------------------------------------------------------------
 
@@ -2386,6 +2387,14 @@ if (!hitVector) { queryMap(e.coordinate); }
             _bus.on('sv:selectFeature', function(d) { selectFeatureById(d && d.id); });
         }
 
+        // Notify parent frame (test runner or embedder) that sViewer is ready.
+        if (window.parent !== window) {
+            window.parent.postMessage({ type: 'sv:ready', hardConfig: window.hardConfig }, '*');
+        }
+        // Notify onReady callbacks registered by embed callers.
+        _onReadyCallbacks.forEach(function(fn) { try { fn(); } catch(e) {} });
+        _onReadyCallbacks = [];
+
     }
 
 
@@ -2414,6 +2423,8 @@ if (!hitVector) { queryMap(e.coordinate); }
     // changes the title via the share panel. Not called for programmatic
     // setTitle() calls (init, md/WFS auto-title). Null by default.
     this.onTitleChange = null;
+    // Register a callback to fire once after sViewer init completes.
+    this.onReady = function(fn) { _onReadyCallbacks.push(fn); };
     }
 
     // Create instance

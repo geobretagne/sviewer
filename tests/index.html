@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sViewer Test Suite</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: monospace; font-size: 13px; background: #1a1a1a; color: #ccc; display: flex; flex-direction: column; height: 100vh; }
+
+#sv-toolbar { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #111; border-bottom: 1px solid #333; flex-shrink: 0; }
+#sv-toolbar h1 { font-size: 13px; margin: 0; color: #fff; flex: 1; }
+#sv-toolbar button { font-family: monospace; font-size: 12px; padding: 3px 10px; background: #333; color: #ccc; border: 1px solid #555; cursor: pointer; border-radius: 2px; }
+#sv-toolbar button:hover { background: #444; }
+#sv-toolbar button.active { background: #0066cc; color: #fff; border-color: #0066cc; }
+
+#sv-main { display: flex; flex: 1; overflow: hidden; }
+
+#sv-panel { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid #333; overflow-y: auto; }
+
+.sv-group-header { padding: 4px 10px; background: #222; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #2a2a2a; position: sticky; top: 0; }
+
+.sv-test-row { display: flex; align-items: flex-start; gap: 6px; padding: 5px 10px; border-bottom: 1px solid #222; cursor: pointer; }
+.sv-test-row:hover { background: #222; }
+.sv-test-row.active { background: #1a2a3a; }
+.sv-test-status { width: 14px; flex-shrink: 0; text-align: center; color: #555; margin-top: 1px; }
+.sv-test-status.pass { color: #4caf50; }
+.sv-test-status.fail { color: #f44336; }
+.sv-test-status.running { color: #ff9800; }
+.sv-test-label { flex: 1; color: #bbb; line-height: 1.4; }
+.sv-test-detail { font-size: 11px; color: #666; margin-top: 2px; }
+.sv-test-detail.pass { color: #4a7a4c; }
+.sv-test-detail.fail { color: #a03030; }
+.sv-test-type { font-size: 10px; color: #555; flex-shrink: 0; margin-top: 2px; }
+
+#sv-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+#sv-test-frame { width: 100%; flex: 1; border: none; background: #111; display: none; }
+#sv-unit-pane { flex: 1; padding: 20px; overflow-y: auto; display: none; }
+#sv-unit-container { width: 100%; height: 400px; }
+#sv-unit-output { margin-top: 12px; font-size: 12px; color: #888; }
+
+#sv-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: #444; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div id="sv-toolbar">
+  <h1>sViewer Test Suite</h1>
+  <button id="btn-run-all">Run all</button>
+  <button id="btn-run-group">Run group</button>
+  <span id="sv-summary" style="color:#666;font-size:11px;margin-left:8px;"></span>
+</div>
+
+<div id="sv-main">
+  <div id="sv-panel"><!-- populated by JS --></div>
+  <div id="sv-content">
+    <iframe id="sv-test-frame" title="sViewer visual test"></iframe>
+    <div id="sv-unit-pane">
+      <div id="sv-unit-container"></div>
+      <div id="sv-unit-output"></div>
+    </div>
+    <div id="sv-empty">← select a test</div>
+  </div>
+</div>
+
+<!-- Runner core -->
+<script src="runner.js"></script>
+
+<!-- Test suites — add new suite files here -->
+<script src="suites/01-params.js"></script>
+<script src="suites/02-config-merge.js"></script>
+<script src="suites/03-i18n.js"></script>
+<script src="suites/04-wms-services.js"></script>
+
+<script>
+(function() {
+    'use strict';
+
+    var activeTestId = null;
+    var activeGroup = null;
+
+    // ------ Build panel -------------------------------------------------------
+
+    function buildPanel() {
+        var panel = document.getElementById('sv-panel');
+        panel.innerHTML = '';
+        var groups = {};
+        window.SV_TESTS.forEach(function(t) {
+            if (!groups[t.group]) groups[t.group] = [];
+            groups[t.group].push(t);
+        });
+        Object.keys(groups).forEach(function(g) {
+            var header = document.createElement('div');
+            header.className = 'sv-group-header';
+            header.textContent = g;
+            panel.appendChild(header);
+            groups[g].forEach(function(t) {
+                var row = document.createElement('div');
+                row.className = 'sv-test-row';
+                row.id = 'row-' + t.id;
+                row.innerHTML =
+                    '<span class="sv-test-status">·</span>' +
+                    '<div style="flex:1">' +
+                        '<div class="sv-test-label">' + escHtml(t.label) + '</div>' +
+                        '<div class="sv-test-detail"></div>' +
+                    '</div>' +
+                    '<span class="sv-test-type">' + (t.type === 'unit' ? 'unit' : 'vis') + '</span>';
+                row.addEventListener('click', function() { selectTest(t); });
+                panel.appendChild(row);
+            });
+        });
+    }
+
+    // ------ Select + run single test ------------------------------------------
+
+    function selectTest(test) {
+        if (activeTestId) {
+            var prev = document.getElementById('row-' + activeTestId);
+            if (prev) prev.classList.remove('active');
+        }
+        activeTestId = test.id;
+        var row = document.getElementById('row-' + test.id);
+        if (row) row.classList.add('active');
+
+        showPane(test.type);
+        SVRunner.run(test);
+    }
+
+    function showPane(type) {
+        var frame = document.getElementById('sv-test-frame');
+        var unit = document.getElementById('sv-unit-pane');
+        var empty = document.getElementById('sv-empty');
+        frame.style.display = (type !== 'unit') ? 'block' : 'none';
+        unit.style.display = (type === 'unit') ? 'flex' : 'none';
+        unit.style.flexDirection = 'column';
+        empty.style.display = 'none';
+    }
+
+    // ------ Run all / run group -----------------------------------------------
+
+    document.getElementById('btn-run-all').addEventListener('click', function() {
+        runGroup(null);
+    });
+
+    document.getElementById('btn-run-group').addEventListener('click', function() {
+        if (activeTestId) {
+            var test = window.SV_TESTS.filter(function(t) { return t.id === activeTestId; })[0];
+            if (test) runGroup(test.group);
+        }
+    });
+
+    function runGroup(group) {
+        activeGroup = group;
+        var label = document.getElementById('sv-summary');
+        label.textContent = 'running…';
+        SVRunner.runAll(group).then(function(results) {
+            var pass = results.filter(function(r) { return r.pass; }).length;
+            label.textContent = pass + '/' + results.length + ' passed';
+            label.style.color = (pass === results.length) ? '#4caf50' : '#f44336';
+        });
+    }
+
+    // ------ Auto-run ----------------------------------------------------------
+
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    buildPanel();
+
+    if (/[?&]autorun=1/.test(window.location.search)) {
+        runGroup(null);
+    }
+
+})();
+</script>
+</body>
+</html>
