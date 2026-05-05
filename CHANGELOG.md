@@ -6,7 +6,20 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **`hardConfig` complet** : sViewer démarre sans aucun `customConfig.js` — fond IGN Géoportail (photo aérienne + noms de lieux) + OpenStreetMap, 3 presets de fond, geocodeur IGN Géoplateforme avec adaptateur intégré, toutes les clés avec valeurs par défaut sensées.
+- **Docker : image non-root** : base `nginxinc/nginx-unprivileged:1.26-alpine` — processus nginx tourne en utilisateur non-privilégié, port 8080. Même taille (~42 MB) que l'image alpine précédente.
+- **Docker : HEALTHCHECK** : `wget` sur `/sviewer/` toutes les 30 s — état du conteneur visible via `docker inspect` et orchestrateurs (Compose, Swarm, K8s).
+- **`customConfig.DIST.js` réécrit** : miroir commenté de `hardConfig` — toutes les clés documentées avec leur valeur par défaut, alternative Nominatim incluse. Déployeur décommente uniquement ce qu'il veut surcharger.
+- **Footer version → lien GitHub** : le numéro de version dans le panneau Partage est cliquable (`https://github.com/geobretagne/sviewer/`).
+
 ### Changed
+
+- **CSP simplifiée** : hash `sha256-` retiré des locations nginx `static/`, `static/lib/`, `local/` — hash inutile sur des fichiers sans `<script>` inline. Hash conservé uniquement sur `index.html`, `sw.js`, `manifest.json`.
+- **Cache `static/lib/`** : `max-age=31536000, immutable` → `max-age=3600, must-revalidate` dans les 3 configs nginx. `immutable` était incorrect pour des chemins sans versioning dans l'URL.
+- **`geOrchestraBaseUrl`** : valeur par défaut `'https://georchestra.org'` dans `hardConfig`.
+- **`searchPlaceholder`** : valeur par défaut `'adresse, lieu-dit, commune...'` dans `hardConfig`.
 
 - **Répertoire `etc/` renommé en `local/`** : séparation explicite entre assets applicatifs (`static/`) et sandbox déployeur (`local/`).
 

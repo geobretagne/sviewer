@@ -26,7 +26,12 @@
 ## v0.8 — security & connectors
 
 - [ ] Grist connector : vendor grist-plugin-api.js into static/lib/grist/ — remove CDN dependency, update CSP (script-src 'self' only for connectors)
-- [ ] All modes : review hardConfig defaults for generic out-of-box usage — no deployer customConfig required for basic operation
+- [x] All modes : hardConfig complete defaults — IGN aerial + OSM + labels overlay + 3 presets, geocodeAdapter, all keys; no customConfig.js required for basic operation
+- [x] Docker : switch to nginxinc/nginx-unprivileged (non-root process, port 8080) + HEALTHCHECK
+- [x] nginx : CSP hashes stripped from non-index locations; hash only on index.html/sw.js/manifest.json
+- [x] nginx : static/lib/ cache corrected — 1h must-revalidate (was 1-year immutable, incorrect for unversioned paths)
+- [x] customConfig.DIST.js : rewritten as commented mirror of hardConfig — all keys documented with defaults
+- [x] embed.js : version footer → clickable GitHub link
 
 ## v0.8 — connectors & testing
 
