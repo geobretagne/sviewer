@@ -296,7 +296,14 @@
             loadResource(baseUrl + 'static/lib/ol/proj4.js', 'js')
         ])
             .then(function() { return loadResource(baseUrl + 'static/lib/ol/ol.js', 'js'); })
-            .then(function() { return loadResource(baseUrl + 'local/customConfig.js', 'js').catch(function() {}); })
+            .then(function() {
+                var qs = new URLSearchParams(window.location.search);
+                var c = qs.get('c');
+                var cfgFile = (c && /^[A-Za-z0-9_-]+$/.test(c))
+                    ? 'local/customConfig_' + c + '.js'
+                    : 'local/customConfig.js';
+                return loadResource(baseUrl + cfgFile, 'js').catch(function() {});
+            })
             .then(function() {
                 var adapterPromises = ((window.customConfig && window.customConfig.adapters) || [])
                     .map(function(name) { return loadResource(baseUrl + 'connectors/' + name + '/adapter.js', 'js'); });
