@@ -4,6 +4,33 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.8.0] - 2026-05-05
+
+### Changed
+
+- **Refactoring arborescence** : tous les assets servis au navigateur (JS minifiés, CSS minifiés, bibliothèques, polices, images, templates) sont regroupés sous `static/`.
+
+  **Motivations :**
+  - Configuration nginx réduite à deux règles (`static/lib/` immutable, `static/` court cache) — fini les blocs par répertoire.
+  - Image Docker plus petite : sources, outils de build et config infra exclus d'un seul bloc.
+  - Surface d'attaque réduite : un seul sous-chemin à exposer, tout le reste bloqué par défaut.
+  - Installation simplifiée : un déployeur sait exactement ce qui est servi et ce qui ne l'est pas.
+
+- Fichiers de configuration infra (nginx, Docker) déplacés dans `deploy/` — hors de la racine web, jamais servis.
+- L'URL d'intégration embed change : `js/embed.js` → `static/js/embed.min.js`.
+- `deploy/nginx/nginx-server-proxy.conf` : `proxy_pass` utilise le placeholder `BACKEND_URL` (sed-able) — plus d'URL codée en dur.
+
+### Migration depuis 0.7.x
+
+```bash
+# Mettre à jour l'URL embed dans les pages hôtes
+# Avant : <script src=".../sviewer/js/embed.js"></script>
+# Après : <script src=".../sviewer/static/js/embed.min.js"></script>
+
+# Proxy nginx : remplacer BACKEND_URL par l'URL réelle
+sed -i 's|BACKEND_URL|http://your-backend:8080|g' deploy/nginx/nginx-server-proxy.conf
+```
+
 ## [0.7.2] - 2026-05-04
 
 ### Added

@@ -1,13 +1,13 @@
 {
   "name": "sviewer",
-  "version": "0.7.2",
+  "version": "0.8.0",
   "description": "geOrchestra simple mobile map viewer",
   "scripts": {
-    "build:ol": "esbuild build/ol-custom-entry.js --bundle --minify --format=iife --outfile=build/ol-new.js",
+    "build:ol": "esbuild build/ol-custom-entry.js --bundle --minify --format=iife --outfile=static/lib/ol/ol.js",
     "minify": "npm run minify:js && npm run minify:embed && npm run minify:css",
-    "minify:js": "terser js/sviewer.js -o js/sviewer.min.js -c -m",
-    "minify:embed": "terser js/embed.js -o js/embed.min.js -c -m",
-    "minify:css": "postcss css/sviewer.css -o css/sviewer.min.css",
+    "minify:js": "terser js/sviewer.js -o static/js/sviewer.min.js -c -m",
+    "minify:embed": "terser js/embed.js -o static/js/embed.min.js -c -m",
+    "minify:css": "postcss css/sviewer.css -o static/css/sviewer.min.css",
     "build": "npm run build:ol && npm run minify",
     "stamp": "node scripts/stamp.js"
   },

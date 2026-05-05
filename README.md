@@ -104,7 +104,7 @@ Fonctionne dans tout CMS (WordPress, Drupal, Joomla, Typo3‚Ä¶) sans aucune comp√
 
 ```html
 <div id="ma-carte" style="height:500px"></div>
-<script src="https://geobretagne.fr/sviewer/js/embed.js"></script>
+<script src="https://geobretagne.fr/sviewer/static/js/embed.min.js"></script>
 <script>
   SViewer.init('#ma-carte', {
     x: -390192, y: 6122108, z: 10,
