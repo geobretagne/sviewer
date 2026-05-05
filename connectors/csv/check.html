@@ -189,7 +189,7 @@
         + 'ok2,47.9960,-4.0999\n';
 
     // 0 — bundle check: fetch sviewer.min.js, verify wantsText dispatch code present
-    fetch('../../js/sviewer.min.js')
+    fetch('../../static/js/sviewer.min.js')
         .then(function(r) { return r.text(); })
         .then(function(src) {
             src.indexOf('wantsText') !== -1

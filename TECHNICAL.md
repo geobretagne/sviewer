@@ -301,7 +301,7 @@ Le paramètre `debug` n'est **pas** persistant.
 ```html
 <div id="ma-carte"></div>
 
-<script src="https://geobretagne.fr/sviewer/js/embed.js"></script>
+<script src="https://geobretagne.fr/sviewer/static/js/embed.min.js"></script>
 <script>
   SViewer.init('#ma-carte', options);
 </script>
@@ -833,7 +833,7 @@ sViewer est configuré comme Progressive Web App. Sur navigateurs compatibles (C
 **Fichiers PWA :**
 - `manifest.json` : Métadonnées (nom, icônes, thème, etc.)
 - `sw.js` : Service Worker pour offline + caching
-- `img/icon-192.png` + `img/icon-512.png` : Icônes application
+- `static/img/icon-192.png` + `static/img/icon-512.png` : Icônes application
 
 ### Service Worker
 
@@ -946,6 +946,43 @@ Par ordre de priorité :
 ---
 
 ## Architecture et API Interne
+
+### Arborescence
+
+```
+sviewer/
+├── index.html              — point d'entrée mode simple
+├── manifest.json           — PWA manifest
+├── sw.js                   — Service Worker
+├── connectors/             — widgets tiers (Grist, CSV…)
+├── deploy/                 — config infra (nginx, Docker) — non servi
+├── etc/
+│   ├── customConfig.js     — configuration locale (obligatoire)
+│   └── i18n.js             — traductions UI
+├── js/                     — sources non-minifiées
+│   ├── embed.js
+│   └── sviewer.js
+└── static/                 — tout ce qui est servi au navigateur
+    ├── css/
+    │   └── sviewer.min.css
+    ├── fonts/
+    │   ├── bootstrap-icons.subset.css
+    │   └── bootstrap-icons.subset.woff2
+    ├── img/
+    │   ├── icon-192.png / icon-512.png / icon.svg
+    │   └── pin-red.png
+    ├── js/
+    │   ├── embed.min.js
+    │   └── sviewer.min.js
+    ├── lib/                — dépendances vendored
+    │   ├── bootstrap/
+    │   ├── bootstrap-icons/
+    │   ├── jquery/
+    │   ├── mustache/
+    │   ├── ol/             — OpenLayers + proj4
+    │   └── qrcode/
+    └── templates/          — templates Mustache
+```
 
 ### Fichiers clés
 
@@ -1172,9 +1209,9 @@ npm run build         # build OL custom bundle + minify
 
 | Source | Minifié | Outil |
 |--------|---------|-------|
-| `js/embed.js` | `js/embed.min.js` | terser |
-| `js/sviewer.js` | `js/sviewer.min.js` | terser |
-| `css/sviewer.css` | `css/sviewer.min.css` | postcss + cssnano |
+| `js/embed.js` | `static/js/embed.min.js` | terser |
+| `js/sviewer.js` | `static/js/sviewer.min.js` | terser |
+| `css/sviewer.css` | `static/css/sviewer.min.css` | postcss + cssnano |
 
 La configuration cssnano est dans `postcss.config.js` (preset `default`).
 
@@ -1206,7 +1243,7 @@ La configuration cssnano est dans `postcss.config.js` (preset `default`).
 
 4. Committer les artefacts générés (`embed.js` stampé, fichiers `.min.*`) :
    ```bash
-   git add js/embed.js js/embed.min.js js/sviewer.min.js css/sviewer.min.css
+   git add js/embed.js static/js/embed.min.js static/js/sviewer.min.js static/css/sviewer.min.css
    git commit -m "chore: stamp vX.Y.Z + minify"
    ```
 

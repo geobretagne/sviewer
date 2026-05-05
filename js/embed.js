@@ -3,7 +3,7 @@
  *
  * Usage in host page:
  * <div id="sviewer-container"></div>
- * <script src="https://example.com/sviewer/js/embed.js"></script>
+ * <script src="https://example.com/sviewer/static/js/embed.min.js"></script>
  * <script>
  *   SViewer.init('#sviewer-container', { center: [2.3, 48.8], zoom: 12 });
  * </script>
@@ -11,8 +11,8 @@
 
 (function() {
 
-    var SVIEWER_VERSION='0.7.2';
-    var SVIEWER_COMMIT='52703cb';
+    var SVIEWER_VERSION='0.8.0';
+    var SVIEWER_COMMIT='00a5ba0';
 
     // Internal event bus — shared with sviewer.js via window._SViewerInternals.
     // Frozen after creation to prevent host-page collision or tampering.
@@ -228,16 +228,18 @@
         </div>
     `;
 
-    // Base URL detection - find this script's src
-    var scriptSrc = '';
-    var scripts = document.getElementsByTagName('script');
-    for (var i = 0; i < scripts.length; i++) {
-        if (scripts[i].src && scripts[i].src.indexOf('embed.js') !== -1) {
-            scriptSrc = scripts[i].src;
-            break;
+    // Base URL detection — currentScript is reliable for sync scripts
+    var scriptSrc = (document.currentScript && document.currentScript.src) || '';
+    if (!scriptSrc) {
+        var scripts = document.getElementsByTagName('script');
+        for (var i = 0; i < scripts.length; i++) {
+            if (scripts[i].src && scripts[i].src.indexOf('embed') !== -1) {
+                scriptSrc = scripts[i].src;
+                break;
+            }
         }
     }
-    var baseUrl = scriptSrc.replace(/js\/embed\.js.*$/, '');
+    var baseUrl = scriptSrc.replace(/static\/js\/embed\..*$/, '');
     window.SViewerBaseUrl = baseUrl;
 
     var config = {
@@ -275,31 +277,31 @@
         // (sviewer.css: flex:1 on .sv-framemap, bootstrap-scoped: form controls)
         var container = document.querySelector(config.container);
         var cssPromises = [
-            loadResource(baseUrl + 'build/ol.css', 'css'),
-            loadResource(baseUrl + 'lib/bootstrap/bootstrap-scoped.min.css', 'css'),
-            loadResource(baseUrl + 'build/bootstrap-icons.subset.css', 'css'),
-            loadResource(baseUrl + (debug ? 'css/sviewer.css' : 'css/sviewer.min.css'), 'css')
+            loadResource(baseUrl + 'static/lib/ol/ol.css', 'css'),
+            loadResource(baseUrl + 'static/lib/bootstrap/bootstrap-scoped.min.css', 'css'),
+            loadResource(baseUrl + 'static/fonts/bootstrap-icons.subset.css', 'css'),
+            loadResource(baseUrl + (debug ? 'static/css/sviewer.css' : 'static/css/sviewer.min.css'), 'css')
         ];
         Promise.all(cssPromises).then(function() {
             if (container) container.style.visibility = 'visible';
         });
 
         // Bootstrap is only needed for modals — load in parallel, not blocking the map init chain
-        var bootstrapPromise = loadResource(baseUrl + 'lib/bootstrap/bootstrap.bundle.min.js', 'js');
+        var bootstrapPromise = loadResource(baseUrl + 'static/lib/bootstrap/bootstrap.bundle.min.js', 'js');
 
         // jQuery and proj4 are independent — load in parallel, then OL after both
         return Promise.all([
-            loadResource(baseUrl + 'lib/jquery/jquery-4.0.0.min.js', 'js'),
-            loadResource(baseUrl + 'build/proj4.js', 'js')
+            loadResource(baseUrl + 'static/lib/jquery/jquery-4.0.0.min.js', 'js'),
+            loadResource(baseUrl + 'static/lib/ol/proj4.js', 'js')
         ])
-            .then(function() { return loadResource(baseUrl + 'build/ol-new.js', 'js'); })
+            .then(function() { return loadResource(baseUrl + 'static/lib/ol/ol.js', 'js'); })
             .then(function() { return loadResource(baseUrl + 'etc/customConfig.js', 'js'); })
             .then(function() {
                 var adapterPromises = ((window.customConfig && window.customConfig.adapters) || [])
                     .map(function(name) { return loadResource(baseUrl + 'connectors/' + name + '/adapter.js', 'js'); });
                 return Promise.all([
                     Promise.all(adapterPromises),
-                    loadResource(baseUrl + 'lib/mustache/mustache.min.js', 'js'),
+                    loadResource(baseUrl + 'static/lib/mustache/mustache.min.js', 'js'),
                     Promise.all(cssPromises),
                     bootstrapPromise,
                     loadTemplates(baseUrl)
@@ -312,7 +314,7 @@
         var names = ['layer-panel', 'iso-table', 'query-header', 'search-item', 'search-header', 'share-modal'];
         window.svTemplates = {};
         return Promise.all(names.map(function(name) {
-            return fetch(baseUrl + 'templates/' + name + '.html')
+            return fetch(baseUrl + 'static/templates/' + name + '.html')
                 .then(function(r) { return r.text(); })
                 .then(function(t) { window.svTemplates[name] = t; });
         }));
@@ -358,7 +360,7 @@
     function loadSViewerScript() {
         return new Promise(function(resolve, reject) {
             var script = document.createElement('script');
-            script.src = config.baseUrl + (debug ? 'js/sviewer.js' : 'js/sviewer.min.js');
+            script.src = config.baseUrl + (debug ? 'static/js/sviewer.js' : 'static/js/sviewer.min.js');
             script.onload = function() {
                 // Wait a tick to ensure DOM is ready and init completes
                 setTimeout(resolve, 100);

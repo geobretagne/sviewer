@@ -119,7 +119,7 @@ window.SViewerApp = (function() {
         }
         return new Promise(function(resolve, reject) {
             var script = document.createElement('script');
-            script.src = (window.SViewerBaseUrl || '') + 'lib/qrcode/qrcode.min.js';
+            script.src = (window.SViewerBaseUrl || '') + 'static/lib/qrcode/qrcode.min.js';
             script.async = true;
             script.onload = function() {
                 qrcodeLoaded = true;
@@ -833,7 +833,7 @@ window.SViewerApp = (function() {
         }
         var baseUrl = window.SViewerBaseUrl || config.baseUrl || window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
         var code = '<div id="sviewer-map" style="width: 100%; height: 500px;"></div>\n' +
-                   '<script src="' + baseUrl + 'js/embed.js"></script>\n' +
+                   '<script src="' + baseUrl + 'static/js/embed.min.js"></script>\n' +
                    '<script>\n' +
                    '  SViewer.init("#sviewer-map", ' + JSON.stringify(embedParams, null, 2).split('\n').join('\n    ') + ');\n' +
                    '</script>';
