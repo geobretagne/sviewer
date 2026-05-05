@@ -1,5 +1,7 @@
 FROM nginx:1.26-alpine
 
+COPY deploy/docker/nginx-default.conf /etc/nginx/conf.d/default.conf
+
 COPY index.html       /usr/share/nginx/html/sviewer/index.html
 COPY manifest.json    /usr/share/nginx/html/sviewer/manifest.json
 COPY sw.js            /usr/share/nginx/html/sviewer/sw.js

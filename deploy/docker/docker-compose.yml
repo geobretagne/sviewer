@@ -7,11 +7,14 @@ services:
     ports:
       - "8080:80"
     volumes:
-      # Optional: mount your local/ directory for config, named profiles, sample data.
-      # The container works without it — built-in defaults apply.
-      # - ./local:/usr/share/nginx/html/sviewer/local:ro
-      # Optional: custom nginx server block
-      # - ./nginx-server.conf:/etc/nginx/conf.d/default.conf:ro
+      # Mount local/ for deployer customization:
+      #   - customConfig.js         : main configuration (copy from customConfig.DIST.js)
+      #   - customConfig_xxx.js     : named profiles (?c=xxx)
+      #   - data/, assets/, etc.    : any file served under /sviewer/local/
+      # Container works without this mount — built-in defaults apply.
+      - ../../local:/usr/share/nginx/html/sviewer/local:ro
+      # Optional: override nginx config (e.g. custom path, TLS)
+      # - ./nginx-default.conf:/etc/nginx/conf.d/default.conf:ro
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost/sviewer/"]
       interval: 30s
