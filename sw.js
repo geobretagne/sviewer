@@ -1,5 +1,5 @@
 // CACHE_NAME is patched at build time by `npm run stamp` (commit hash suffix)
-const SVIEWER_COMMIT = '00a5ba0';
+const SVIEWER_COMMIT = 'e2e572d';
 const CACHE_NAME = 'sviewer-' + SVIEWER_COMMIT;
 const ASSETS_TO_CACHE = [
   './',
