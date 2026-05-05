@@ -8,7 +8,7 @@ const ASSETS_TO_CACHE = [
   './static/js/embed.min.js',
   './static/js/sviewer.min.js',
   './static/css/sviewer.min.css',
-  './etc/i18n.js'
+  './static/js/i18n.js'
 ];
 
 self.addEventListener('install', event => {

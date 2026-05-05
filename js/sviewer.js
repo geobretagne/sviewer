@@ -25,7 +25,7 @@ window.SViewerApp = (function() {
         title: 'sViewer',
         geOrchestraBaseUrl: 'https://geobretagne.fr/',
         projcode: 'EPSG:3857',
-        initialExtent: [-12880000,-1080000,5890000,7540000],
+        initialExtent: [-567000, 5047000, 1068000, 6639000],
         maxExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
         restrictedExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
         maxFeatures: 10,
@@ -1692,19 +1692,22 @@ window.SViewerApp = (function() {
     function init() {
         var configBase = window.SViewerBaseUrl || '';
         var qsconfig;
-        if (qs.c && qs.c.match(/^[A-Za-z0-9_-]+$/)) {
-            qsconfig = configBase + "etc/customConfig_"+qs.c+".js";
-        }
-        else {
-            qsconfig = configBase + "etc/customConfig.js";
-        }
         function startApp() {
             if (qs.c) { customConfig.customConfigName = qs.c; }
             doConfiguration();
             doMap();
             doGUI();
         }
-        $.getScript(qsconfig).done(startApp).fail(startApp);
+        if (qs.c && qs.c.match(/^[A-Za-z0-9_-]+$/)) {
+            qsconfig = configBase + "etc/customConfig_"+qs.c+".js";
+            $.getScript(qsconfig).done(startApp).fail(startApp);
+        } else if (window.SViewerEmbedded) {
+            // embed.js already loaded customConfig.js — skip redundant fetch
+            startApp();
+        } else {
+            qsconfig = configBase + "etc/customConfig.js";
+            $.getScript(qsconfig).done(startApp).fail(startApp);
+        }
     }
     
     /**

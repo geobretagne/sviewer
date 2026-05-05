@@ -241,6 +241,7 @@
     }
     var baseUrl = scriptSrc.replace(/static\/js\/embed\..*$/, '');
     window.SViewerBaseUrl = baseUrl;
+    window.SViewerEmbedded = true;
 
     var config = {
         baseUrl: baseUrl,
@@ -295,7 +296,7 @@
             loadResource(baseUrl + 'static/lib/ol/proj4.js', 'js')
         ])
             .then(function() { return loadResource(baseUrl + 'static/lib/ol/ol.js', 'js'); })
-            .then(function() { return loadResource(baseUrl + 'etc/customConfig.js', 'js'); })
+            .then(function() { return loadResource(baseUrl + 'etc/customConfig.js', 'js').catch(function() {}); })
             .then(function() {
                 var adapterPromises = ((window.customConfig && window.customConfig.adapters) || [])
                     .map(function(name) { return loadResource(baseUrl + 'connectors/' + name + '/adapter.js', 'js'); });
@@ -349,7 +350,7 @@
         }
         return new Promise(function(resolve, reject) {
             var script = document.createElement('script');
-            script.src = config.baseUrl + 'etc/i18n.js';
+            script.src = config.baseUrl + 'static/js/i18n.js';
             script.onload = resolve;
             script.onerror = reject;
             document.head.appendChild(script);

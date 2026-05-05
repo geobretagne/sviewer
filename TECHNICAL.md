@@ -889,7 +889,7 @@ Bouton **Image** dans le panneau **Configuration** → télécharge la vue coura
 
 ### Fichier i18n.js
 
-Toutes les chaînes traduites sont centralisées dans `etc/i18n.js` :
+Toutes les chaînes traduites sont centralisées dans `static/js/i18n.js` :
 
 ```javascript
 $.extend(hardConfig, {
@@ -912,7 +912,7 @@ $.extend(hardConfig, {
 
 ### Ajout de nouvelles traductions
 
-**Étape 1 :** Ajouter la clé dans `etc/i18n.js`
+**Étape 1 :** Ajouter la clé dans `static/js/i18n.js`
 ```javascript
 $.extend(hardConfig, {
     i18n: {
@@ -992,7 +992,7 @@ sviewer/
 | `js/sviewer.js` | Logique métier : carte, données, requêtes, état |
 | `css/sviewer.css` | Styles sViewer + overrides Bootstrap/OpenLayers |
 | `etc/customConfig.js` | Configuration (obligatoire) |
-| `etc/i18n.js` | Traductions UI |
+| `static/js/i18n.js` | Traductions UI |
 | `index.html` | Point d'entrée mode simple |
 
 ### Dépendances
@@ -1219,7 +1219,7 @@ La configuration cssnano est dans `postcss.config.js` (preset `default`).
 
 **Checklist pré-release**
 - [ ] Toutes les fonctionnalités mergées et testées
-- [ ] `etc/i18n.js` — toutes les clefs présentes dans les 4 langues
+- [ ] `static/js/i18n.js` — toutes les clefs présentes dans les 4 langues
 - [ ] Aucune erreur console en navigation (`?debug=true`)
 - [ ] `CHANGELOG.md` mis à jour pour cette version
 
@@ -1335,7 +1335,7 @@ SViewer.init('#map', { layers: 'geor:commune' });
 
 **Cause :** Clé manquante dans `hardConfig.i18n[lang]`.
 
-**Solution :** Ajouter la traduction manquante dans `etc/i18n.js`.
+**Solution :** Ajouter la traduction manquante dans `static/js/i18n.js`.
 
 ---
 

@@ -1,0 +1,19 @@
+services:
+  sviewer:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    image: sviewer:latest
+    ports:
+      - "8080:80"
+    volumes:
+      # Optional: mount custom config — container works without it (uses built-in defaults)
+      # - ./customConfig.js:/usr/share/nginx/html/sviewer/etc/customConfig.js:ro
+      # Optional: custom nginx server block
+      # - ./nginx-server.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/sviewer/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
