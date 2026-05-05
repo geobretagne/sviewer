@@ -2,7 +2,7 @@
   "name": "sViewer - Visualiseur de cartes",
   "short_name": "sViewer",
   "description": "Visualiseur simple et performant pour consulter rapidement des données en flux WMS",
-  "start_url": "./index.html",
+  "start_url": ".",
   "scope": "/sviewer/",
   "display": "standalone",
   "orientation": "portrait-primary",
