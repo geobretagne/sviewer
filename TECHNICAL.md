@@ -68,7 +68,7 @@ Sélectionne la fond de carte (background layer) par index.
 ?lb=1      # Deuxième fond de carte
 ```
 
-**Configuration :** Les données disponibles sont définies dans `etc/customConfig.js` → `layersBackground[]`. L'index par défaut est 0.
+**Configuration :** Les données disponibles sont définies dans `local/customConfig.js` → `layersBackground[]`. L'index par défaut est 0.
 
 ---
 
@@ -262,7 +262,7 @@ Charge une configuration alternative au lieu de `customConfig.js`.
 ```
 
 **Mécanisme :**
-- Charge dynamiquement `etc/customConfig_ma_config.js`
+- Charge dynamiquement `local/customConfig_ma_config.js`
 - Écrase les paramètres par défaut avec les valeurs de cette configuration
 - Restrictions de nom : `[a-zA-Z0-9_-]+` uniquement
 
@@ -367,7 +367,7 @@ SViewer.init('#ma-carte', {
 
 ### Fichier customConfig.js
 
-La configuration centralisée d'une instance sViewer se fait dans `etc/customConfig.js`. Vous devez être familier avec `OpenLayers` pour la modifier.
+La configuration centralisée d'une instance sViewer se fait dans `local/customConfig.js`. Vous devez être familier avec `OpenLayers` pour la modifier.
 
 **Structure :**
 ```javascript
@@ -565,7 +565,7 @@ allowedDomains: ['geobretagne.fr', 'data.geopf.fr']
 
 Le dossier contient des fichiers non destinés au public : outils de build (`scripts/`), sources OpenLayers (`build/ol-custom-entry.js`), manifestes npm (`package.json`, `package-lock.json`), configuration de postcss, etc. Un serveur configuré en mode "liste les fichiers du dossier" ou sans restriction de chemin expose ces fichiers à tout visiteur.
 
-**Règle : utiliser le snippet nginx fourni** (`etc/nginx-server.conf`), qui applique une liste blanche stricte — seuls les chemins explicitement autorisés sont servis, tout le reste retourne 404.
+**Règle : utiliser le snippet nginx fourni** (`deploy/nginx/nginx-server.conf`), qui applique une liste blanche stricte — seuls les chemins explicitement autorisés sont servis, tout le reste retourne 404.
 
 Chemins bloqués par défaut : `node_modules/`, `scripts/`, `build/ol-custom-entry.js`, `package.json`, `postcss.config.js`, tous les fichiers `.md`, `.sh`, `.py`, `.bak`, `.log` et les dotfiles.
 
@@ -956,9 +956,10 @@ sviewer/
 ├── sw.js                   — Service Worker
 ├── connectors/             — widgets tiers (Grist, CSV…)
 ├── deploy/                 — config infra (nginx, Docker) — non servi
-├── etc/
-│   ├── customConfig.js     — configuration locale (obligatoire)
-│   └── i18n.js             — traductions UI
+├── local/                  — sandbox déployeur (optionnel, monté en volume Docker)
+│   ├── customConfig.js     — configuration locale (optionnel, défauts intégrés)
+│   ├── customConfig_xxx.js — profils nommés (?c=xxx)
+│   └── data/               — données locales, assets, etc.
 ├── js/                     — sources non-minifiées
 │   ├── embed.js
 │   └── sviewer.js
@@ -991,7 +992,7 @@ sviewer/
 | `js/embed.js` | Chargement des dépendances + création du DOM + API SViewer.init() |
 | `js/sviewer.js` | Logique métier : carte, données, requêtes, état |
 | `css/sviewer.css` | Styles sViewer + overrides Bootstrap/OpenLayers |
-| `etc/customConfig.js` | Configuration (obligatoire) |
+| `local/customConfig.js` | Configuration déployeur (optionnel) |
 | `static/js/i18n.js` | Traductions UI |
 | `index.html` | Point d'entrée mode simple |
 
@@ -1028,7 +1029,7 @@ embed.js
 
 Fusionné à partir de, dans cet ordre de priorité :
 1. `hardConfig` (défauts sViewer)
-2. `customConfig` (configuration locale, `etc/customConfig.js`)
+2. `customConfig` (configuration locale, `local/customConfig.js`)
 3. Options embed `_svEmbedOptions` (passées à `SViewer.init()`, écrasent `customConfig`)
 
 ```javascript

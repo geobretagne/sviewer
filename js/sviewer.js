@@ -40,7 +40,7 @@ window.SViewerApp = (function() {
         ]
     });
 
-    // Merge customConfig (loaded from etc/customConfig.js) to override defaults
+    // Merge customConfig (loaded from local/customConfig.js) to override defaults
     $.extend(window.hardConfig, window.customConfig || {});
 
     var hardConfig = window.hardConfig;
@@ -1685,8 +1685,8 @@ window.SViewerApp = (function() {
 
     /**
      * reads optional "c" querystring arg,
-     * loads application profile located in etc/customConfig_[configname].js
-     * ie &c=cadastral& : loads etc/customConfig_cadastral.js instead of customConfig.js
+     * loads application profile located in local/customConfig_[configname].js
+     * ie &c=cadastral& : loads local/customConfig_cadastral.js instead of customConfig.js
      * configname MUST MATCH ^[A-Za-z0-9_-]+$
      */
     function init() {
@@ -1699,13 +1699,13 @@ window.SViewerApp = (function() {
             doGUI();
         }
         if (qs.c && qs.c.match(/^[A-Za-z0-9_-]+$/)) {
-            qsconfig = configBase + "etc/customConfig_"+qs.c+".js";
+            qsconfig = configBase + "local/customConfig_"+qs.c+".js";
             $.getScript(qsconfig).done(startApp).fail(startApp);
         } else if (window.SViewerEmbedded) {
             // embed.js already loaded customConfig.js — skip redundant fetch
             startApp();
         } else {
-            qsconfig = configBase + "etc/customConfig.js";
+            qsconfig = configBase + "local/customConfig.js";
             $.getScript(qsconfig).done(startApp).fail(startApp);
         }
     }

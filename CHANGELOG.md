@@ -4,6 +4,29 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- **Répertoire `etc/` renommé en `local/`** : séparation explicite entre assets applicatifs (`static/`) et sandbox déployeur (`local/`).
+
+  **Motivations :**
+  - `etc/` évoquait une convention Unix système, pas un répertoire déployeur.
+  - `local/` signale clairement "ce répertoire vous appartient" — déployeur y pose `customConfig.js`, profils nommés (`customConfig_xxx.js`), données locales, assets personnalisés.
+  - `i18n.js` déplacé dans `static/js/` — c'est une donnée applicative, pas une config déployeur. Elle est toujours baked dans l'image Docker, jamais montée en volume.
+  - Docker : `local/` monté en volume suffit pour toute la personnalisation. Pas de montage = sViewer démarre avec les défauts intégrés.
+
+- **Image Docker allégée** : `customConfig.js` absent de l'image — 404 tolérée, l'application démarre avec les défauts intégrés (`hardConfig`).
+- **`SViewerEmbedded` flag** : `embed.js` pose `window.SViewerEmbedded = true` avant le chargement de `sviewer.js`, qui saute alors le second fetch de `customConfig.js`.
+- **Étendue initiale par défaut** : France métropolitaine (EPSG:3857).
+- **`manifest.json` `start_url`** : corrigé en `"."` pour éviter l'avertissement PWA scope.
+
+### Migration
+
+- Renommer `etc/` en `local/` dans votre déploiement.
+- Mettre à jour les montages Docker/volumes : `./etc/customConfig.js` → `./local/customConfig.js`.
+- Si vous servez `i18n.js` depuis `etc/`, supprimer — il est maintenant dans `static/js/i18n.js`.
+
 ## [0.8.0] - 2026-05-05
 
 ### Changed
