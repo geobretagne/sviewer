@@ -23,6 +23,10 @@
 - [ ] Grist widget : geometry edit support (draft)
 - [ ] Publish demo site with usecases
 
+## v0.8 — security & connectors
+
+- [ ] Grist connector : vendor grist-plugin-api.js into static/lib/grist/ — remove CDN dependency, update CSP (script-src 'self' only for connectors)
+
 ## v0.8 — connectors & testing
 
 - [ ] Test c= parameter (sviewer configuration profile)
