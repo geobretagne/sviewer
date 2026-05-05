@@ -11,8 +11,8 @@
 
 (function() {
 
-    var SVIEWER_VERSION='0.8.0';
-    var SVIEWER_COMMIT='00a5ba0';
+    var SVIEWER_VERSION='0.8.1';
+    var SVIEWER_COMMIT='e2e572d';
 
     // Internal event bus — shared with sviewer.js via window._SViewerInternals.
     // Frozen after creation to prevent host-page collision or tampering.
@@ -128,7 +128,7 @@
                             </button>
                         </div>
                         <div class="mt-3 text-end" style="font-size:0.7em;opacity:0.4;user-select:none;" aria-hidden="true">
-                            sViewer ` + SVIEWER_VERSION + ` <span style="font-family:monospace">` + SVIEWER_COMMIT + `</span>
+                            <a href="https://github.com/geobretagne/sviewer/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">sViewer ` + SVIEWER_VERSION + `</a> <span style="font-family:monospace">` + SVIEWER_COMMIT + `</span>
                         </div>
                     </div>
                 </div>
@@ -241,6 +241,7 @@
     }
     var baseUrl = scriptSrc.replace(/static\/js\/embed\..*$/, '');
     window.SViewerBaseUrl = baseUrl;
+    window.SViewerEmbedded = true;
 
     var config = {
         baseUrl: baseUrl,
@@ -295,7 +296,7 @@
             loadResource(baseUrl + 'static/lib/ol/proj4.js', 'js')
         ])
             .then(function() { return loadResource(baseUrl + 'static/lib/ol/ol.js', 'js'); })
-            .then(function() { return loadResource(baseUrl + 'etc/customConfig.js', 'js'); })
+            .then(function() { return loadResource(baseUrl + 'local/customConfig.js', 'js').catch(function() {}); })
             .then(function() {
                 var adapterPromises = ((window.customConfig && window.customConfig.adapters) || [])
                     .map(function(name) { return loadResource(baseUrl + 'connectors/' + name + '/adapter.js', 'js'); });
@@ -349,7 +350,7 @@
         }
         return new Promise(function(resolve, reject) {
             var script = document.createElement('script');
-            script.src = config.baseUrl + 'etc/i18n.js';
+            script.src = config.baseUrl + 'static/js/i18n.js';
             script.onload = resolve;
             script.onerror = reject;
             document.head.appendChild(script);
@@ -428,7 +429,7 @@
                         if (versionEl) {
                             var adapterNames = (window.customConfig && window.customConfig.adapters) || [];
                             var adapterStr = adapterNames.length ? ' ' + adapterNames.join(', ') : '';
-                            versionEl.innerHTML = 'sViewer ' + SVIEWER_VERSION + ' <span style="font-family:monospace">' + SVIEWER_COMMIT + '</span>' + adapterStr;
+                            versionEl.innerHTML = '<a href="https://github.com/geobretagne/sviewer/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">sViewer ' + SVIEWER_VERSION + '</a> <span style="font-family:monospace">' + SVIEWER_COMMIT + '</span>' + adapterStr;
                         }
                         return window.SViewerApp;
                     } else {

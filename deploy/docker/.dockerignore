@@ -6,8 +6,6 @@ package-lock.json
 postcss.config.js
 eslint.config.js
 build
-js
-css
 demo
 deploy
 .gitignore

@@ -23,24 +23,76 @@ window.SViewerApp = (function() {
     // Merge default values while preserving i18n and customConfig properties
     $.extend(window.hardConfig, {
         title: 'sViewer',
-        geOrchestraBaseUrl: 'https://geobretagne.fr/',
+        geOrchestraBaseUrl: 'https://georchestra.org',
         projcode: 'EPSG:3857',
-        initialExtent: [-12880000,-1080000,5890000,7540000],
+        initialExtent: [-567000, 5047000, 1068000, 6639000],
         maxExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
         restrictedExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
-        maxFeatures: 10,
+        maxFeatures: 3,
         maxGeocodeResults: 5,
-        maxWfsSearchFeatures: 8,
+        maxWfsSearchFeatures: 3,
         nodata: '<!--nodatadetect-->\n<!--nodatadetect-->',
+        searchPlaceholder: 'adresse, lieu-dit, commune...',
         openLSGeocodeUrl: "https://data.geopf.fr/geocodage/search",
+        geocodeParams: {},
+        geocodeAdapter: function(response) {
+            return (response.features || []).map(function(f) {
+                var zoomByType = { municipality: 13, street: 17, housenumber: 18 };
+                return {
+                    label: f.properties.label,
+                    coords: f.geometry.coordinates,
+                    score: f.properties.score || 0,
+                    zoom: zoomByType[f.properties.type] || 16
+                };
+            });
+        },
         layersBackground: [
             new ol.layer.Tile({
-                  source: new ol.source.OSM()
+                source: new ol.source.WMTS((function() {
+                    var proj = ol.proj.get('EPSG:3857');
+                    var ext = proj.getExtent();
+                    var res = [156543.03392811998,78271.51696419998,39135.758481959984,19567.879241008988,9783.939620504494,4891.969810252247,2445.9849051261233,1222.9924525765016,611.4962262882508,305.74811314412537,152.87405657206268,76.43702828603134,38.21851414301567,19.109257071507836,9.554628535753918,4.777314267876959,2.3886571339384795,1.1943285669692398,0.5971642834846199,0.29858214174231994];
+                    var ids = ['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19'];
+                    return {
+                        attributions: ['IGN-F/Géoportail'],
+                        url: 'https://data.geopf.fr/wmts',
+                        layer: 'ORTHOIMAGERY.ORTHOPHOTOS',
+                        matrixSet: 'PM',
+                        format: 'image/jpeg',
+                        projection: proj,
+                        tileGrid: new ol.tilegrid.WMTS({ origin: ol.extent.getTopLeft(ext), resolutions: res, matrixIds: ids }),
+                        style: 'normal',
+                        crossOrigin: 'anonymous'
+                    };
+                })()),
+                title: 'Photo aérienne (BDORTHO)'
+            }),
+            new ol.layer.Tile({
+                source: new ol.source.OSM(),
+                title: 'OpenStreetMap'
             })
+        ],
+        layersOverlay: [
+            new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    attributions: ['IGN-F/Géoportail'],
+                    url: 'https://data.geopf.fr/tms/1.0.0/GEOGRAPHICALNAMES.NAMES/{z}/{x}/{y}.png',
+                    minZoom: 6,
+                    maxZoom: 18,
+                    crossOrigin: 'anonymous'
+                }),
+                opacity: 1,
+                title: 'Noms de lieux (IGN)'
+            })
+        ],
+        backgroundPresets: [
+            { lb: 0, lo: -1, title: 'Photo aérienne' },
+            { lb: 0, lo: 0,  title: 'Photo aérienne + noms de lieux' },
+            { lb: 1, lo: -1, title: 'OpenStreetMap' }
         ]
     });
 
-    // Merge customConfig (loaded from etc/customConfig.js) to override defaults
+    // Merge customConfig (loaded from local/customConfig.js) to override defaults
     $.extend(window.hardConfig, window.customConfig || {});
 
     var hardConfig = window.hardConfig;
@@ -1685,26 +1737,29 @@ window.SViewerApp = (function() {
 
     /**
      * reads optional "c" querystring arg,
-     * loads application profile located in etc/customConfig_[configname].js
-     * ie &c=cadastral& : loads etc/customConfig_cadastral.js instead of customConfig.js
+     * loads application profile located in local/customConfig_[configname].js
+     * ie &c=cadastral& : loads local/customConfig_cadastral.js instead of customConfig.js
      * configname MUST MATCH ^[A-Za-z0-9_-]+$
      */
     function init() {
         var configBase = window.SViewerBaseUrl || '';
         var qsconfig;
-        if (qs.c && qs.c.match(/^[A-Za-z0-9_-]+$/)) {
-            qsconfig = configBase + "etc/customConfig_"+qs.c+".js";
-        }
-        else {
-            qsconfig = configBase + "etc/customConfig.js";
-        }
         function startApp() {
             if (qs.c) { customConfig.customConfigName = qs.c; }
             doConfiguration();
             doMap();
             doGUI();
         }
-        $.getScript(qsconfig).done(startApp).fail(startApp);
+        if (qs.c && qs.c.match(/^[A-Za-z0-9_-]+$/)) {
+            qsconfig = configBase + "local/customConfig_"+qs.c+".js";
+            $.getScript(qsconfig).done(startApp).fail(startApp);
+        } else if (window.SViewerEmbedded) {
+            // embed.js already loaded customConfig.js — skip redundant fetch
+            startApp();
+        } else {
+            qsconfig = configBase + "local/customConfig.js";
+            $.getScript(qsconfig).done(startApp).fail(startApp);
+        }
     }
     
     /**

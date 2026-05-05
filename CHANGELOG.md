@@ -4,6 +4,42 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **`hardConfig` complet** : sViewer démarre sans aucun `customConfig.js` — fond IGN Géoportail (photo aérienne + noms de lieux) + OpenStreetMap, 3 presets de fond, geocodeur IGN Géoplateforme avec adaptateur intégré, toutes les clés avec valeurs par défaut sensées.
+- **Docker : image non-root** : base `nginxinc/nginx-unprivileged:1.26-alpine` — processus nginx tourne en utilisateur non-privilégié, port 8080. Même taille (~42 MB) que l'image alpine précédente.
+- **Docker : HEALTHCHECK** : `wget` sur `/sviewer/` toutes les 30 s — état du conteneur visible via `docker inspect` et orchestrateurs (Compose, Swarm, K8s).
+- **`customConfig.DIST.js` réécrit** : miroir commenté de `hardConfig` — toutes les clés documentées avec leur valeur par défaut, alternative Nominatim incluse. Déployeur décommente uniquement ce qu'il veut surcharger.
+- **Footer version → lien GitHub** : le numéro de version dans le panneau Partage est cliquable (`https://github.com/geobretagne/sviewer/`).
+
+### Changed
+
+- **CSP simplifiée** : hash `sha256-` retiré des locations nginx `static/`, `static/lib/`, `local/` — hash inutile sur des fichiers sans `<script>` inline. Hash conservé uniquement sur `index.html`, `sw.js`, `manifest.json`.
+- **Cache `static/lib/`** : `max-age=31536000, immutable` → `max-age=3600, must-revalidate` dans les 3 configs nginx. `immutable` était incorrect pour des chemins sans versioning dans l'URL.
+- **`geOrchestraBaseUrl`** : valeur par défaut `'https://georchestra.org'` dans `hardConfig`.
+- **`searchPlaceholder`** : valeur par défaut `'adresse, lieu-dit, commune...'` dans `hardConfig`.
+
+- **Répertoire `etc/` renommé en `local/`** : séparation explicite entre assets applicatifs (`static/`) et sandbox déployeur (`local/`).
+
+  **Motivations :**
+  - `etc/` évoquait une convention Unix système, pas un répertoire déployeur.
+  - `local/` signale clairement "ce répertoire vous appartient" — déployeur y pose `customConfig.js`, profils nommés (`customConfig_xxx.js`), données locales, assets personnalisés.
+  - `i18n.js` déplacé dans `static/js/` — c'est une donnée applicative, pas une config déployeur. Elle est toujours baked dans l'image Docker, jamais montée en volume.
+  - Docker : `local/` monté en volume suffit pour toute la personnalisation. Pas de montage = sViewer démarre avec les défauts intégrés.
+
+- **Image Docker allégée** : `customConfig.js` absent de l'image — 404 tolérée, l'application démarre avec les défauts intégrés (`hardConfig`).
+- **`SViewerEmbedded` flag** : `embed.js` pose `window.SViewerEmbedded = true` avant le chargement de `sviewer.js`, qui saute alors le second fetch de `customConfig.js`.
+- **Étendue initiale par défaut** : France métropolitaine (EPSG:3857).
+- **`manifest.json` `start_url`** : corrigé en `"."` pour éviter l'avertissement PWA scope.
+
+### Migration
+
+- Renommer `etc/` en `local/` dans votre déploiement.
+- Mettre à jour les montages Docker/volumes : `./etc/customConfig.js` → `./local/customConfig.js`.
+- Si vous servez `i18n.js` depuis `etc/`, supprimer — il est maintenant dans `static/js/i18n.js`.
+
 ## [0.8.0] - 2026-05-05
 
 ### Changed
