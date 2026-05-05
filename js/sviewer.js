@@ -20,8 +20,8 @@ window.SViewerApp = (function() {
     // Ensure hardConfig exists (created by embed.js before i18n.js loaded)
     window.hardConfig = window.hardConfig || {};
 
-    // Merge default values while preserving i18n and customConfig properties
-    $.extend(window.hardConfig, {
+    // Fill in defaults — existing keys (from customConfig via embed.js) are preserved
+    window.hardConfig = $.extend({
         title: 'sViewer',
         geOrchestraBaseUrl: 'https://georchestra.org',
         projcode: 'EPSG:3857',
@@ -90,10 +90,7 @@ window.SViewerApp = (function() {
             { lb: 0, lo: 0,  title: 'Photo aérienne + noms de lieux' },
             { lb: 1, lo: -1, title: 'OpenStreetMap' }
         ]
-    });
-
-    // Merge customConfig (loaded from local/customConfig.js) to override defaults
-    $.extend(window.hardConfig, window.customConfig || {});
+    }, window.hardConfig, window.customConfig || {});
 
     var hardConfig = window.hardConfig;
 
