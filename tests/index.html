@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sViewer Test Suite</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: monospace; font-size: 13px; background: #1a1a1a; color: #ccc; display: flex; flex-direction: column; height: 100vh; }
+
+#sv-toolbar { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #111; border-bottom: 1px solid #333; flex-shrink: 0; }
+#sv-toolbar h1 { font-size: 13px; margin: 0; color: #fff; flex: 1; }
+#sv-toolbar button { font-family: monospace; font-size: 12px; padding: 3px 10px; background: #333; color: #ccc; border: 1px solid #555; cursor: pointer; border-radius: 2px; }
+#sv-toolbar button:hover { background: #444; }
+#sv-toolbar button.active { background: #0066cc; color: #fff; border-color: #0066cc; }
+
+#sv-main { display: flex; flex: 1; overflow: hidden; }
+
+#sv-panel { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid #333; overflow-y: auto; }
+
+.sv-group-header { padding: 4px 10px; background: #222; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #2a2a2a; position: sticky; top: 0; }
+
+.sv-test-row { display: flex; align-items: flex-start; gap: 6px; padding: 5px 10px; border-bottom: 1px solid #222; cursor: pointer; }
+.sv-test-row:hover { background: #222; }
+.sv-test-row.active { background: #1a2a3a; }
+.sv-test-status { width: 14px; flex-shrink: 0; text-align: center; color: #555; margin-top: 1px; }
+.sv-test-status.pass { color: #4caf50; }
+.sv-test-status.fail { color: #f44336; }
+.sv-test-status.running { color: #ff9800; }
+.sv-test-label { flex: 1; color: #bbb; line-height: 1.4; }
+.sv-test-detail { font-size: 11px; color: #666; margin-top: 2px; }
+.sv-test-detail.pass { color: #4a7a4c; }
+.sv-test-detail.fail { color: #a03030; }
+.sv-test-num { color: #555; font-size: 11px; min-width: 2ch; display: inline-block; }
+
+#sv-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+#sv-test-frame { width: 100%; flex: 1; border: none; background: #111; display: none; }
+
+#sv-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: #444; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div id="sv-toolbar">
+  <h1>sViewer Test Suite</h1>
+  <button id="btn-run-all">Run all</button>
+  <button id="btn-run-group">Run group</button>
+  <span id="sv-summary" style="color:#666;font-size:11px;margin-left:8px;"></span>
+</div>
+
+<div id="sv-main">
+  <div id="sv-panel"><!-- populated by JS --></div>
+  <div id="sv-content">
+    <iframe id="sv-test-frame" title="sViewer visual test"></iframe>
+    <div id="sv-empty">← select a test</div>
+  </div>
+</div>
+
+<!-- Runner core -->
+<script src="runner.js"></script>
+
+<!-- Test suites — add new suite files here -->
+<script src="suites/01-params.js"></script>
+<script src="suites/02-config-merge.js"></script>
+<script src="suites/03-i18n.js"></script>
+<script src="suites/04-wms-services.js"></script>
+
+<script src="ui.js"></script>
+</body>
+</html>

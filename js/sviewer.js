@@ -188,6 +188,7 @@ window.SViewerApp = (function() {
     var view;
     var marker;
     var vectorLayer;
+    var _onReadyCallbacks = [];
 
     // ----- pseudoclasses ------------------------------------------------------------------------------------
 
@@ -248,19 +249,23 @@ window.SViewerApp = (function() {
             self.options.cql_filter  = layerParts.length > 2 ? layerParts[2] : '';
 
             self.options.namespace = (self.options.nslayername.indexOf(":")>0) ? self.options.nslayername.split(':',2)[0]:''; // namespace
-            self.options.layername = (self.options.nslayername.indexOf(':')>0) ? self.options.nslayername.split(':',2)[1]:''; // layername
+            self.options.layername = (self.options.nslayername.indexOf(':')>0) ? self.options.nslayername.split(':',2)[1] : self.options.nslayername; // layername
 
             if (customWmsUrl) {
                 if (!isDomainAllowed(customWmsUrl)) {
                     console.warn('sViewer: blocked WMS URL not in allowedDomains:', customWmsUrl);
                     return;
                 }
-                // Use custom WMS endpoint
+                // Use custom WMS endpoint — namespace not required for alien WMS
                 self.options.wmsurl_global = customWmsUrl;
                 self.options.wmsurl_ns = customWmsUrl;
                 self.options.wmsurl_layer = customWmsUrl;
             } else {
-                // Use default geOrchestra endpoints
+                // Use default geOrchestra endpoints — namespace required
+                if (!self.options.namespace) {
+                    console.warn('Layer parameter format error: namespace required for geOrchestra layers, expected "namespace:layername", got "' + s + '"');
+                    return;
+                }
                 var ns = encodeURIComponent(self.options.namespace);
                 var ln = encodeURIComponent(self.options.layername);
                 self.options.wmsurl_global = hardConfig.geOrchestraBaseUrl + '/geoserver/wms'; // global getcap
@@ -276,10 +281,6 @@ window.SViewerApp = (function() {
                 customWmsUrl: customWmsUrl,
                 wmsurl_layer: self.options.wmsurl_layer
             });
-
-            if (!self.options.namespace || !self.options.layername) {
-                console.warn('Layer parameter format error: expected "namespace:layername[*style][*cql_filter][@wms-endpoint]" format, got "' + s + '"');
-            }
         }
 
         /**
@@ -2386,6 +2387,23 @@ if (!hitVector) { queryMap(e.coordinate); }
             _bus.on('sv:selectFeature', function(d) { selectFeatureById(d && d.id); });
         }
 
+        // Notify parent frame (test runner or embedder) that sViewer is ready.
+        // Only serialize cloneable keys — functions and OL layer objects can't cross postMessage.
+        if (window.parent !== window) {
+            var hc = window.hardConfig;
+            var serializable = {};
+            Object.keys(hc).forEach(function(k) {
+                var v = hc[k];
+                if (typeof v === 'function') { return; }
+                if (k === 'layersBackground' || k === 'layersOverlay') { return; }
+                serializable[k] = v;
+            });
+            window.parent.postMessage({ type: 'sv:ready', hardConfig: serializable }, '*');
+        }
+        // Notify onReady callbacks registered by embed callers.
+        _onReadyCallbacks.forEach(function(fn) { try { fn(); } catch(e) {} });
+        _onReadyCallbacks = [];
+
     }
 
 
@@ -2414,6 +2432,8 @@ if (!hitVector) { queryMap(e.coordinate); }
     // changes the title via the share panel. Not called for programmatic
     // setTitle() calls (init, md/WFS auto-title). Null by default.
     this.onTitleChange = null;
+    // Register a callback to fire once after sViewer init completes.
+    this.onReady = function(fn) { _onReadyCallbacks.push(fn); };
     }
 
     // Create instance
