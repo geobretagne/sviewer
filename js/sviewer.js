@@ -2388,8 +2388,17 @@ if (!hitVector) { queryMap(e.coordinate); }
         }
 
         // Notify parent frame (test runner or embedder) that sViewer is ready.
+        // Only serialize cloneable keys — functions and OL layer objects can't cross postMessage.
         if (window.parent !== window) {
-            window.parent.postMessage({ type: 'sv:ready', hardConfig: window.hardConfig }, '*');
+            var hc = window.hardConfig;
+            var serializable = {};
+            Object.keys(hc).forEach(function(k) {
+                var v = hc[k];
+                if (typeof v === 'function') { return; }
+                if (k === 'layersBackground' || k === 'layersOverlay') { return; }
+                serializable[k] = v;
+            });
+            window.parent.postMessage({ type: 'sv:ready', hardConfig: serializable }, '*');
         }
         // Notify onReady callbacks registered by embed callers.
         _onReadyCallbacks.forEach(function(fn) { try { fn(); } catch(e) {} });
