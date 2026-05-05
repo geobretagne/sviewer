@@ -5,7 +5,7 @@ services:
       dockerfile: deploy/docker/Dockerfile
     image: sviewer:latest
     ports:
-      - "8080:80"
+      - "8080:8080"
     volumes:
       # Mount local/ for deployer customization.
       # Container works without this mount — built-in defaults apply.
@@ -17,7 +17,7 @@ services:
       # Template: https://github.com/geobretagne/sviewer/blob/master/deploy/docker/nginx-default.conf
       # - ./nginx-default.conf:/etc/nginx/conf.d/default.conf:ro
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost/sviewer/"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/sviewer/"]
       interval: 30s
       timeout: 3s
       retries: 3
