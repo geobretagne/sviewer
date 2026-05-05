@@ -17,7 +17,7 @@
   **Status sViewer :** CDN `docs.getgrist.com` conservé, aucune action possible côté sViewer.
 
 - [ ] CI : GitHub Actions workflow — build + healthcheck verify on tag push (no registry push)
-- [ ] Test c= parameter (sviewer configuration profile)
+- [x] Test c= parameter (sviewer configuration profile) — fixed two bugs: embed.js ignored ?c=, customConfig keys were stomped by hardConfig defaults ($.extend order wrong)
 - [ ] Grist widget : real-world user testing
 - [ ] CSV connector : real-world user testing
 - [ ] Publish demo site with usecases
