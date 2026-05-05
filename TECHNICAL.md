@@ -17,6 +17,7 @@ Guide technique complet pour développeurs et intégrateurs..
 9. [Internationalization (i18n)](#internationalization-i18n)
 10. [Architecture et API Interne](#architecture-et-api-interne)
     - [Embed SDK — bus d'événements](#embed-sdk--bus-dévénements)
+    - [Suite de tests navigateur](#suite-de-tests-navigateur)
 11. [Dépannage](#dépannage)
 
 ---
@@ -1263,6 +1264,30 @@ La version et le hash de commit apparaissent :
 - En bas du panneau **Configuration** (discret, opacity 0.4)
 - Dans la console du navigateur au démarrage : `sViewer X.Y.Z (abcd123)`
 - Via l'API publique : `SViewer.version`, `SViewer.commit`
+
+### Suite de tests navigateur
+
+La suite de tests est accessible à `/sviewer/tests/` — aucune installation requise.
+
+**Lancer les tests :**
+- Ouvrir `/sviewer/tests/` dans le navigateur
+- Cliquer sur un test dans le panneau gauche → la carte se charge dans le panneau droit, résultat affiché (✓/✗ + durée)
+- **Run all** : lance tous les tests en séquence
+- **Run group** : lance uniquement le groupe du test sélectionné
+- `?autorun=1` : lance tous les tests au chargement (usage CI headless)
+
+**Groupes de tests :**
+
+| Groupe | Description | CI |
+|--------|-------------|-----|
+| Params | Paramètres KVP URL (?x= ?y= ?z= ?c= ?lang= ?lb=) | ✓ |
+| Config | Fusion hardConfig / customConfig (via `?c=test`) | ✓ |
+| i18n | Couverture des clefs, 4 langues | ✓ |
+| Live | Endpoints WMS réels (GeoBretagne, IGN GPF) | manuel |
+
+Les tests du groupe **Live** font appel à des services externes — les exclure en CI.
+
+**Ajouter un test WMS** — copier un bloc dans `tests/suites/04-wms-services.js`, changer `id`, `label` et les arguments de `makeWmsTest()`. Format du paramètre `layers` : `nom_couche@https://url/wms`.
 
 ### Scoping CSS
 
