@@ -6,6 +6,21 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-05-06
+
+### Added
+
+- **Paramètre `md=` multi-métadonnées** : plusieurs identifiants CSW séparés par des virgules chargent autant de données WMS en parallèle (`?md=id1,id2,id3`). Chaque fiche produit un panneau légende indépendant. Titre automatique conservé pour `md=` unique ; avec plusieurs identifiants, utiliser `&title=` explicitement.
+- **Grist widget : support WKT** : les colonnes de type WKT (`POINT`, `LINESTRING`, `POLYGON`, etc.) sont auto-détectées sans configuration manuelle. `ol/format/WKT` ajouté au build OpenLayers personnalisé.
+- **Suite de tests navigateur** : runner visuel à `/sviewer/tests/` — 27 tests (paramètres URL, fusion config, i18n, WMS live), exécution via iframe + postMessage, `?autorun=1` pour CI.
+
+### Fixed
+
+- **Panneau `md=`** : utilise désormais le template `layer-panel` (même structure que `layers=`) — titre, légende, résumé, liens fiche catalogue, tableau ISO.
+- **Grist widget : zoom extrême à la configuration** : `onRecord` ne déclenchait pas de zoom sur l'étendue d'un point avant que la couche soit construite — corrigé.
+
+## [0.8.1] - 2026-05-05
+
 ### Added
 
 - **`hardConfig` complet** : sViewer démarre sans aucun `customConfig.js` — fond IGN Géoportail (photo aérienne + noms de lieux) + OpenStreetMap, 3 presets de fond, geocodeur IGN Géoplateforme avec adaptateur intégré, toutes les clés avec valeurs par défaut sensées.
@@ -181,7 +196,7 @@ sed -i 's|BACKEND_URL|http://your-backend:8080|g' deploy/nginx/nginx-server-prox
 
 ### Fixed
 - Lien de partage sViewer depuis le widget Grist : le mode géométrie et la colonne sélectionnés sont désormais encodés comme paramètres hint dans l'URL de l'API Grist (`_geommode`, `_geomcol`, `_collat`, `_collon`, `_labelcol`) — l'auto-détection ne surcharge plus le choix manuel
-- Clic successif sur des entités GeoJSON : le panneau de résultats s'ouvre correctement à chaque clic au lieu de se fermer (comportement identique aux couches WMS)
+- Clic successif sur des entités GeoJSON : le panneau de résultats s'ouvre correctement à chaque clic au lieu de se fermer (comportement identique aux données WMS)
 
 ## [0.4.0] - 2026-05-03
 
@@ -196,7 +211,7 @@ sed -i 's|BACKEND_URL|http://your-backend:8080|g' deploy/nginx/nginx-server-prox
 - Bordures du tableau de propriétés allégées (`border-color: #ddd`, `border-width: 1px`)
 
 ### Fixed
-- Toast "aucune entité" affiché à tort lors du clic sur une entité vectorielle en présence de couches WMS — `forEachFeatureAtPixel` intercepte le clic avant `queryMap()`
+- Toast "aucune entité" affiché à tort lors du clic sur une entité vectorielle en présence de données WMS — `forEachFeatureAtPixel` intercepte le clic avant `queryMap()`
 - Changement de colonne géométrie sans effet — l'empreinte de reconstruction inclut désormais `colGeom` + `colLabel` (pas seulement les données)
 - `ol.style.Text is not a constructor` — `Text` absent du bundle OL, bundle reconstruit
 

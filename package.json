@@ -1,7 +1,7 @@
 {
   "name": "sviewer",
-  "version": "0.8.2",
-  "description": "geOrchestra simple mobile map viewer",
+  "version": "0.8.3",
+  "description": "simple mobile map viewer",
   "scripts": {
     "build:ol": "esbuild build/ol-custom-entry.js --bundle --minify --format=iife --outfile=static/lib/ol/ol.js",
     "minify": "npm run minify:js && npm run minify:embed && npm run minify:css",
