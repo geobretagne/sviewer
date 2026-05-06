@@ -140,6 +140,10 @@
 <body>
 
 <div id="sv-toolbar">
+    <button id="sv-btn-edit" disabled style="display:none" data-i18n="edit.start"></button>
+    <button id="sv-btn-edit-confirm" style="display:none" data-i18n="edit.confirm"></button>
+    <button id="sv-btn-edit-cancel"  style="display:none" data-i18n="edit.cancel"></button>
+    <span   id="sv-edit-instruction" style="display:none;font-size:12px" data-i18n="edit.instruction"></span>
     <!-- role=status + aria-live : annonce les mises à jour aux lecteurs d'écran (WCAG 4.1.3) -->
     <span id="sv-status" role="status" aria-live="polite" data-i18n="loading"></span>
     <!-- data-i18n-aria : aria-label traduit, plus fiable que title pour les lecteurs d'écran -->

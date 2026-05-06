@@ -67,7 +67,13 @@ var I18N = {
         'settings.import.placeholder': 'Coller le JSON exporté ici…',
         'settings.export.done':        'Paramètres copiés dans le presse-papiers',
         'settings.import.error':       'JSON invalide ou incompatible',
-        'settings.save.reminder':      '⚠ Cliquez sur Enregistrer dans la barre Grist pour conserver les paramètres'
+        'settings.save.reminder':      '⚠ Cliquez sur Enregistrer dans la barre Grist pour conserver les paramètres',
+        'edit.start':                  '✏ Modifier géométrie',
+        'edit.instruction':            'Cliquez sur la carte pour déplacer le point.',
+        'edit.confirm':                '✓ Valider',
+        'edit.cancel':                 '✗ Annuler',
+        'edit.error':                  '⚠ Erreur — modifications non enregistrées',
+        'edit.noaccess':               '⚠ Accès complet requis pour modifier — changez le niveau d\'accès dans les paramètres du widget Grist'
     },
     en: {
         'loading':            'Loading…',
@@ -131,7 +137,13 @@ var I18N = {
         'settings.import.placeholder': 'Paste exported JSON here…',
         'settings.export.done':        'Settings copied to clipboard',
         'settings.import.error':       'Invalid or incompatible JSON',
-        'settings.save.reminder':      '⚠ Click Save in the Grist bar to persist settings'
+        'settings.save.reminder':      '⚠ Click Save in the Grist bar to persist settings',
+        'edit.start':                  '✏ Edit',
+        'edit.instruction':            'Click on the map to move the point.',
+        'edit.confirm':                '✓ Save',
+        'edit.cancel':                 '✗ Cancel',
+        'edit.error':                  '⚠ Error — changes not saved',
+        'edit.noaccess':               '⚠ Full access required to edit — change the access level in Grist widget settings'
     },
     es: {
         'loading':            'Cargando…',
@@ -195,7 +207,13 @@ var I18N = {
         'settings.import.placeholder': 'Pegar JSON exportado aquí…',
         'settings.export.done':        'Configuración copiada al portapapeles',
         'settings.import.error':       'JSON inválido o incompatible',
-        'settings.save.reminder':      '⚠ Haga clic en Guardar en la barra Grist para conservar los ajustes'
+        'settings.save.reminder':      '⚠ Haga clic en Guardar en la barra Grist para conservar los ajustes',
+        'edit.start':                  '✏ Modificar',
+        'edit.instruction':            'Haga clic en el mapa para mover el punto.',
+        'edit.confirm':                '✓ Guardar',
+        'edit.cancel':                 '✗ Cancelar',
+        'edit.error':                  '⚠ Error — cambios no guardados',
+        'edit.noaccess':               '⚠ Se requiere acceso completo para editar — cambie el nivel de acceso en los ajustes del widget Grist'
     },
     de: {
         'loading':            'Laden…',
@@ -259,7 +277,13 @@ var I18N = {
         'settings.import.placeholder': 'Exportiertes JSON hier einfügen…',
         'settings.export.done':        'Einstellungen in Zwischenablage kopiert',
         'settings.import.error':       'Ungültiges oder inkompatibles JSON',
-        'settings.save.reminder':      '⚠ Klicken Sie in der Grist-Leiste auf Speichern, um die Einstellungen zu behalten'
+        'settings.save.reminder':      '⚠ Klicken Sie in der Grist-Leiste auf Speichern, um die Einstellungen zu behalten',
+        'edit.start':                  '✏ Bearbeiten',
+        'edit.instruction':            'Klicken Sie auf die Karte, um den Punkt zu verschieben.',
+        'edit.confirm':                '✓ Speichern',
+        'edit.cancel':                 '✗ Abbrechen',
+        'edit.error':                  '⚠ Fehler — Änderungen nicht gespeichert',
+        'edit.noaccess':               '⚠ Vollzugriff erforderlich — Zugriffsebene in den Grist-Widget-Einstellungen ändern'
     }
 };
 
@@ -313,6 +337,11 @@ var selectedRowId = null;          // id de la ligne Grist sélectionnée (pour 
 var lastRecordsFingerprint = null; // empreinte JSON pour éviter un rebuild si seule la sélection a changé
 var viewFitted = false;            // vrai une fois le premier fit de vue effectué
 var layerBuilt = false;            // vrai une fois les données OL passées à SViewer via loadFeatureObjects
+var editMode = false;              // vrai pendant l'édition de géométrie point
+var editRowId = null;              // id de la ligne en cours d'édition
+var editOrigCoords = null;         // coordonnées EPSG:3857 originales (pour annulation)
+var editNewCoords = null;          // coordonnées EPSG:3857 après clic sur la carte
+var gristAccessLevel = 'full';     // niveau d'accès accordé par Grist ('none'|'read table'|'full') — optimistic default, corrected by onOptions
 
 // ---------------------------------------------------------------------------
 // Utilitaires
@@ -351,10 +380,12 @@ function detectColumns(columns, firstRow) {
         var geomVal = firstRow[geom];
         if (parseGeom(geomVal)) {
             mode = 'geojson';
-        } else {
+        } else if (typeof ol !== 'undefined') {
             // Value is not GeoJSON — try WKT before committing
             var wktProbe = new ol.format.WKT();
             try { wktProbe.readGeometry(geomVal); mode = 'wkt'; } catch(e) { geom = null; }
+        } else {
+            geom = null;
         }
     } else if (geom) {
         mode = 'geojson'; // no firstRow to probe, assume GeoJSON
@@ -367,7 +398,7 @@ function detectColumns(columns, firstRow) {
         if (lat && lon) { mode = 'latlon'; }
     }
     // Fallback : chercher une colonne WKT
-    if (!geom && !lat && firstRow) {
+    if (!geom && !lat && firstRow && typeof ol !== 'undefined') {
         var wktParser = new ol.format.WKT();
         columns.forEach(function(c) {
             if (geom || lat) { return; }
@@ -565,6 +596,106 @@ function applySelectionStyle(selectedFeat) {
         var f = featureByRowId[id];
         f.setStyle((f === selectedFeat ? selStyleFn : baseStyleFn)(f));
     });
+}
+
+// ---------------------------------------------------------------------------
+// Édition de géométrie point
+// ---------------------------------------------------------------------------
+
+function syncEditButton() {
+    var btn = document.getElementById('sv-btn-edit');
+    if (!btn) { return; }
+    if (gristAccessLevel !== 'full') { btn.style.display = 'none'; return; }
+    btn.style.display = '';
+    var feat = selectedRowId ? featureByRowId[selectedRowId] : null;
+    var isPoint = feat && feat.getGeometry() && feat.getGeometry().getType() === 'Point';
+    btn.disabled = !isPoint;
+}
+
+function setDragPan(enabled) {
+    var map = SViewer.getMap();
+    if (!map) { return; }
+    map.getInteractions().forEach(function(interaction) {
+        if (interaction instanceof ol.interaction.DragPan) {
+            interaction.setActive(enabled);
+        }
+    });
+}
+
+function exitEdit() {
+    var map = SViewer.getMap();
+    if (map) { map.un('click', onEditClick); }
+    setDragPan(true);
+    editMode = false;
+    editRowId = null;
+    editOrigCoords = null;
+    editNewCoords = null;
+    document.getElementById('sv-btn-edit').style.display = '';
+    document.getElementById('sv-btn-edit-confirm').style.display = 'none';
+    document.getElementById('sv-btn-edit-cancel').style.display = 'none';
+    document.getElementById('sv-edit-instruction').style.display = 'none';
+    syncEditButton();
+}
+
+function onEditClick(evt) {
+    editNewCoords = evt.coordinate;
+    var feat = featureByRowId[editRowId];
+    if (feat) { feat.getGeometry().setCoordinates(editNewCoords); }
+    var map = SViewer.getMap();
+    if (map) { map.once('click', onEditClick); }
+}
+
+function startEdit() {
+    if (gristAccessLevel !== 'full') { setStatus(tr('edit.noaccess')); return; }
+    if (!selectedRowId || !featureByRowId[selectedRowId]) { return; }
+    var feat = featureByRowId[selectedRowId];
+    var geomType = feat.getGeometry() ? feat.getGeometry().getType() : '';
+    if (geomType !== 'Point') { return; }
+    editMode = true;
+    editRowId = selectedRowId;
+    editOrigCoords = feat.getGeometry().getCoordinates().slice();
+    editNewCoords = editOrigCoords.slice();
+    setDragPan(false);
+    document.getElementById('sv-btn-edit').style.display = 'none';
+    document.getElementById('sv-btn-edit-confirm').style.display = '';
+    document.getElementById('sv-btn-edit-cancel').style.display = '';
+    document.getElementById('sv-edit-instruction').style.display = '';
+    setStatus(tr('edit.instruction'));
+    var map = SViewer.getMap();
+    if (map) { map.once('click', onEditClick); }
+}
+
+function confirmEdit() {
+    if (!editNewCoords || !editRowId) { exitEdit(); return; }
+    var coord4326 = ol.proj.transform(editNewCoords, 'EPSG:3857', 'EPSG:4326');
+    var lon = coord4326[0], lat = coord4326[1];
+    var fields = {};
+    if (colGeomMode === 'latlon') {
+        fields[colLat] = lat;
+        fields[colLon] = lon;
+    } else if (colGeomMode === 'geojson') {
+        fields[colGeom] = JSON.stringify({ type: 'Point', coordinates: [lon, lat] });
+    } else if (colGeomMode === 'wkt') {
+        fields[colGeom] = 'POINT(' + lon + ' ' + lat + ')';
+    } else if (colGeomMode === 'latlon_str') {
+        fields[colGeom] = lat + ',' + lon;
+    } else if (colGeomMode === 'lonlat_str') {
+        fields[colGeom] = lon + ',' + lat;
+    } else {
+        fields[colGeom] = JSON.stringify({ type: 'Point', coordinates: [lon, lat] });
+    }
+    var rowId = editRowId;
+    exitEdit();
+    grist.selectedTable.update({ id: rowId, fields: fields }).catch(function(e) {
+        console.error('[sviewer] geometry update failed:', e);
+        setStatus(tr('edit.error'));
+    });
+}
+
+function cancelEdit() {
+    var feat = editRowId ? featureByRowId[editRowId] : null;
+    if (feat && editOrigCoords) { feat.getGeometry().setCoordinates(editOrigCoords); }
+    exitEdit();
 }
 
 // ---------------------------------------------------------------------------
@@ -886,6 +1017,7 @@ function rebuildLayer() {
     if (selectedRowId !== null && featureByRowId[selectedRowId]) {
         applySelectionStyle(featureByRowId[selectedRowId]);
     }
+    syncEditButton();
 }
 
 // Réagit au clic sur une entité de la carte (émis par sViewer via sv:featureClick).
@@ -895,6 +1027,7 @@ function onMapFeatureClick(e) {
     if (rowId === undefined) { return; }
     selectedRowId = rowId;
     applySelectionStyle(e.feature);
+    syncEditButton();
 }
 
 // Valide une couleur CSS. Retourne la couleur ou le fallback.
@@ -962,6 +1095,16 @@ function initMap() {
         SViewer.onFeatureClick(onMapFeatureClick);
         var geojsonUrl = buildGristGeojsonUrl();
         if (geojsonUrl) { SViewer.setGeojsonUrl(geojsonUrl); }
+        // Re-run column detection if onRecords fired before OL was loaded (WKT probing skipped then)
+        if (!colGeom && !colLat && !colLon && allRecords.length) {
+            var savedMode = svConfig.geom_mode;
+            var canAutoDetect = !optionsLoaded || !savedMode || savedMode === 'auto';
+            if (canAutoDetect) {
+                var det = detectColumns(allColumns, allRecords[0]);
+                if (det.geom) { colGeom = det.geom; colGeomMode = det.mode; colLabel = colLabel || det.label; }
+                else if (det.lat && det.lon) { colLat = det.lat; colLon = det.lon; colGeomMode = 'latlon'; colLabel = colLabel || det.label; }
+            }
+        }
         rebuildLayer();
     }).catch(function(e) {
         console.error('[sviewer] init failed:', e);
@@ -972,6 +1115,10 @@ function initMap() {
 // ---------------------------------------------------------------------------
 // Événements barre d'outils
 // ---------------------------------------------------------------------------
+
+document.getElementById('sv-btn-edit').addEventListener('click', function() { startEdit(); });
+document.getElementById('sv-btn-edit-confirm').addEventListener('click', function() { confirmEdit(); });
+document.getElementById('sv-btn-edit-cancel').addEventListener('click', function() { cancelEdit(); });
 
 document.getElementById('sv-btn-cfg-save').addEventListener('click', function() { closeSettings(true); });
 document.getElementById('sv-btn-cfg-cancel').addEventListener('click', function() { closeSettings(false); });
@@ -1082,6 +1229,15 @@ if (typeof grist.onThemeChange === 'function') {
     });
 }
 
+if (typeof grist.onOptions === 'function') {
+    grist.onOptions(function(_opts, interactionOptions) {
+        if (interactionOptions && interactionOptions.accessLevel) {
+            gristAccessLevel = interactionOptions.accessLevel;
+            syncEditButton();
+        }
+    });
+}
+
 if (grist.widgetApi && typeof grist.widgetApi.onOptions === 'function') {
     grist.widgetApi.onOptions(function(opts) {
         applyOptions(opts);
@@ -1101,6 +1257,7 @@ if (grist.widgetApi && typeof grist.widgetApi.onOptions === 'function') {
 // Enregistré immédiatement après ready() — Grist envoie le premier onRecords
 // dès réception de Ready ; un enregistrement tardif (dans une Promise) le manquerait.
 grist.onRecords(function(records) {
+    if (editMode) { return; }
     allRecords = records;
 
     if (records.length) {
@@ -1134,7 +1291,7 @@ grist.onRecords(function(records) {
 
 // Ligne sélectionnée dans la grille → pan/zoom carte sur l'entité et surlignage
 grist.onRecord(function(record) {
-    if (!mapReady || !record) { return; }
+    if (editMode || !mapReady || !record) { return; }
     var geomVal;
     if (colGeomMode === 'latlon') {
         var lat = parseFloat(record[colLat]);
@@ -1170,6 +1327,7 @@ grist.onRecord(function(record) {
                 }
             } catch(e) { /* invalid WKT */ }
         }
+        syncEditButton();
         return;
     } else {
         if (colGeom) { geomVal = parseGeom(record[colGeom]); }
@@ -1191,6 +1349,7 @@ grist.onRecord(function(record) {
         view.fit(ext, { padding: [60, 60, 60, 60], maxZoom: 17, duration: 400 });
         applySelectionStyle(feat);
     }
+    syncEditButton();
 });
 
 // ---------------------------------------------------------------------------

@@ -10,7 +10,7 @@ Widget cartographique interactif pour [Grist](https://www.getgrist.com), propuls
    ```
    https://votre-serveur/sviewer/connectors/grist/
    ```
-4. Dans **Accès**, choisissez **Complet** (requis pour lire et écrire les options du widget).
+4. Dans **Accès**, choisissez **Lire la table** (lecture seule) ou **Complet** (requis pour l'édition de géométrie).
 5. Dans **Données**, sélectionnez la table contenant vos géométries.
 6. Cliquez sur **Confirmer**.
 
