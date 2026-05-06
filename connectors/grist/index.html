@@ -211,6 +211,9 @@
                 <span class="sv-inline-label" data-i18n="settings.inline.opacity"></span>
                 <input id="sv-cfg-sel-fill-opacity" type="number" min="0" max="1" step="0.05" value="0.5" placeholder="0–1" data-i18n-title="settings.sel.fill.opacity">
             </div>
+            <hr class="sv-cfg-sep">
+            <label for="sv-cfg-autozoom" data-i18n="settings.autozoom"></label>
+            <input  id="sv-cfg-autozoom" type="checkbox" checked style="width:14px;height:14px;cursor:pointer;margin:auto 0;">
         </div>
     </div>
 
@@ -218,10 +221,10 @@
     <!-- Avancé -->
     <div class="sv-tab-panel" data-tab="advanced">
         <div class="sv-cfg-grid">
+            <label for="sv-cfg-md"     data-i18n="settings.md"></label>
+            <input  id="sv-cfg-md"     type="text" placeholder="identifiant métadonnée">
             <label for="sv-cfg-layers" data-i18n="settings.layers"></label>
             <input  id="sv-cfg-layers" type="text" placeholder="layer1,layer2">
-            <label for="sv-cfg-md"     data-i18n="settings.md"></label>
-            <input  id="sv-cfg-md"     type="text" placeholder="fr-geobretagne-...">
             <hr class="sv-cfg-sep">
             <label for="sv-cfg-svbase"      data-i18n="settings.svbase"></label>
             <input  id="sv-cfg-svbase"      type="url" placeholder="https://example.org/sviewer/">

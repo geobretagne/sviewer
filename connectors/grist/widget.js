@@ -32,6 +32,7 @@ var I18N = {
         'settings.lat':       'Colonne latitude',
         'settings.lon':       'Colonne longitude',
         'settings.label':     'Colonne étiquette',
+        'settings.autozoom':  'Zoom automatique sur sélection d\'une ligne',
         'settings.features':         'Données',
         'settings.selection':        'Ligne sélectionnée',
         'settings.fill':             'Couleur',
@@ -43,7 +44,7 @@ var I18N = {
         'settings.inline.opacity':   'opacité',
         'settings.inline.width':     'épaisseur',
         'settings.title':     'Titre (title=)',
-        'settings.layers':    'Donnée via WMS',
+        'settings.layers':      'Donnée via WMS',
         'settings.md':        'Donnée via catalogue',
 
         'settings.svbase':    'URL de base sViewer',
@@ -105,6 +106,7 @@ var I18N = {
         'settings.lat':       'Latitude column',
         'settings.lon':       'Longitude column',
         'settings.label':     'Label column',
+        'settings.autozoom':  'Auto-zoom on row selection',
         'settings.features':         'Data',
         'settings.selection':        'Selected row',
         'settings.fill':             'Color',
@@ -116,7 +118,7 @@ var I18N = {
         'settings.inline.opacity':   'opacity',
         'settings.inline.width':     'width',
         'settings.title':     'Title (title=)',
-        'settings.layers':    'Data via WMS',
+        'settings.layers':      'Data via WMS',
         'settings.md':        'Data via catalogue',
 
         'settings.svbase':    'sViewer base URL',
@@ -178,6 +180,7 @@ var I18N = {
         'settings.lat':       'Columna de latitud',
         'settings.lon':       'Columna de longitud',
         'settings.label':     'Columna de etiqueta',
+        'settings.autozoom':  'Zoom automático al seleccionar fila',
         'settings.features':         'Datos',
         'settings.selection':        'Fila seleccionada',
         'settings.fill':             'Color',
@@ -189,7 +192,7 @@ var I18N = {
         'settings.inline.opacity':   'opacidad',
         'settings.inline.width':     'grosor',
         'settings.title':     'Título (title=)',
-        'settings.layers':    'Dato via WMS',
+        'settings.layers':      'Dato via WMS',
         'settings.md':        'Dato via catálogo',
 
         'settings.svbase':    'URL base sViewer',
@@ -251,6 +254,7 @@ var I18N = {
         'settings.lat':       'Breitengradpalte',
         'settings.lon':       'Längengradpalte',
         'settings.label':     'Beschriftungsspalte',
+        'settings.autozoom':  'Automatischer Zoom bei Zeilenauswahl',
         'settings.features':         'Daten',
         'settings.selection':        'Ausgewählte Zeile',
         'settings.fill':             'Farbe',
@@ -262,7 +266,7 @@ var I18N = {
         'settings.inline.opacity':   'Deck.',
         'settings.inline.width':     'Stärke',
         'settings.title':     'Titel (title=)',
-        'settings.layers':    'Daten via WMS',
+        'settings.layers':      'Daten via WMS',
         'settings.md':        'Daten via Katalog',
 
         'settings.svbase':    'sViewer Basis-URL',
@@ -847,7 +851,7 @@ function saveOptions() {
     var configKeys = ['fill_color', 'fill_opacity', 'stroke_width',
                       'sel_fill_color', 'sel_fill_opacity', 'sel_stroke_width',
                       'title', 'layers', 'md', 'sviewer_base', 'grist_api_base', 'georchestra_base',
-                      'geom_mode'];
+                      'geom_mode', 'autozoom'];
     configKeys.forEach(function(k) { if (svConfig[k] !== undefined) { opts[k] = svConfig[k]; } });
     grist.widgetApi.setOptions(opts).catch(function(e) { console.warn('[sviewer] setOptions failed:', e); });
 }
@@ -860,7 +864,7 @@ function applyOptions(opts) {
     var configKeys = ['fill_color', 'fill_opacity', 'stroke_width',
                       'sel_fill_color', 'sel_fill_opacity', 'sel_stroke_width',
                       'title', 'layers', 'md', 'sviewer_base', 'grist_api_base', 'georchestra_base',
-                      'geom_mode'];
+                      'geom_mode', 'autozoom'];
     configKeys.forEach(function(k) { if (opts[k] !== undefined) { svConfig[k] = opts[k]; } });
     // migrate legacy keys
     if (opts.feature_color && !opts.fill_color)                 { svConfig.fill_color      = opts.feature_color; }
@@ -912,8 +916,11 @@ function openSettings() {
     document.getElementById('sv-cfg-sel-fill-color').value      = safeColor(svConfig.sel_fill_color,   '#ee7733');
     document.getElementById('sv-cfg-sel-fill-opacity').value    = svConfig.sel_fill_opacity !== undefined ? svConfig.sel_fill_opacity : 1;
     document.getElementById('sv-cfg-sel-stroke-width').value    = svConfig.sel_stroke_width !== undefined ? svConfig.sel_stroke_width : d.strokeWidth + 1;
+    document.getElementById('sv-cfg-md').value       = svConfig.md     || '';
     document.getElementById('sv-cfg-layers').value  = svConfig.layers || '';
-    document.getElementById('sv-cfg-md').value      = svConfig.md     || '';
+    document.getElementById('sv-cfg-md').disabled     = !!svConfig.layers;
+    document.getElementById('sv-cfg-layers').disabled = !!svConfig.md;
+    document.getElementById('sv-cfg-autozoom').checked = svConfig.autozoom !== false;
     var defaultSvBase = svConfig.sviewer_base || (function() {
         var loc = window.location;
         var dir = loc.pathname.replace(/\/[^\/]*$/, '/');
@@ -966,6 +973,7 @@ function closeSettings(save) {
         var apibase = document.getElementById('sv-cfg-apibase').value.trim();
         if (layers)  { svConfig.layers  = layers; } else { delete svConfig.layers; }
         if (md)      { svConfig.md      = md;     } else { delete svConfig.md; }
+        svConfig.autozoom = document.getElementById('sv-cfg-autozoom').checked;
         var svbase  = document.getElementById('sv-cfg-svbase').value.trim();
         if (svbase)  { svConfig.sviewer_base   = svbase;  } else { delete svConfig.sviewer_base; }
         if (apibase) { svConfig.grist_api_base = apibase; } else { delete svConfig.grist_api_base; }
@@ -1204,6 +1212,21 @@ document.getElementById('sv-btn-edit-cancel').addEventListener('click', function
 document.getElementById('sv-btn-cfg-save').addEventListener('click', function() { closeSettings(true); });
 document.getElementById('sv-btn-cfg-cancel').addEventListener('click', function() { closeSettings(false); });
 
+(function() {
+    var elMd     = document.getElementById('sv-cfg-md');
+    var elLayers = document.getElementById('sv-cfg-layers');
+    elMd.addEventListener('input', function() {
+        var has = elMd.value.trim() !== '';
+        elLayers.disabled = has;
+        if (has) { elLayers.value = ''; }
+    });
+    elLayers.addEventListener('input', function() {
+        var has = elLayers.value.trim() !== '';
+        elMd.disabled = has;
+        if (has) { elMd.value = ''; }
+    });
+}());
+
 document.getElementById('sv-btn-cfg-export').addEventListener('click', function() {
     function rf(id) { return document.getElementById(id) ? document.getElementById(id).value : undefined; }
     function rn(id) { var v = parseFloat(rf(id)); return isNaN(v) ? undefined : v; }
@@ -1222,6 +1245,7 @@ document.getElementById('sv-btn-cfg-export').addEventListener('click', function(
     var api = rf('sv-cfg-apibase'); if (api)      { out.grist_api_base = api; }
     var geo = rf('sv-cfg-georchestra'); if (geo)  { out.georchestra_base = geo; }
     var gmode = rf('sv-cfg-geom-mode'); if (gmode && gmode !== 'auto') { out.geom_mode = gmode; }
+    out.autozoom = document.getElementById('sv-cfg-autozoom').checked;
     var json = JSON.stringify(out, null, 2);
     navigator.clipboard.writeText(json).then(function() {
         var btn = document.getElementById('sv-btn-cfg-export');
@@ -1254,6 +1278,7 @@ function applyImportData(data) {
         var modeElAi = document.getElementById('sv-cfg-geom-mode');
         if (modeElAi) { modeElAi.value = data.geom_mode; syncColumnPickerMode(); }
     }
+    if (data.autozoom !== undefined) { document.getElementById('sv-cfg-autozoom').checked = data.autozoom; }
 }
 
 document.getElementById('sv-btn-cfg-import').addEventListener('click', function() {
@@ -1376,8 +1401,10 @@ grist.onRecord(function(record) {
                 var feat = featureByRowId[selectedRowId];
                 var view = SViewer.getView();
                 if (view && feat) {
-                    var ext = wktOlGeomR.getExtent();
-                    view.fit(ext, { padding: [60, 60, 60, 60], maxZoom: 17, duration: 400 });
+                    if (svConfig.autozoom !== false) {
+                        var ext = wktOlGeomR.getExtent();
+                        view.fit(ext, { padding: [60, 60, 60, 60], maxZoom: 17, duration: 400 });
+                    }
                     applySelectionStyle(feat);
                 }
             } catch(e) { /* invalid WKT */ }
@@ -1399,8 +1426,10 @@ grist.onRecord(function(record) {
 
     var view = SViewer.getView();
     if (view && feat) {
-        var ext = feat.getGeometry().getExtent();
-        view.fit(ext, { padding: [60, 60, 60, 60], maxZoom: 17, duration: 400 });
+        if (svConfig.autozoom !== false) {
+            var ext = feat.getGeometry().getExtent();
+            view.fit(ext, { padding: [60, 60, 60, 60], maxZoom: 17, duration: 400 });
+        }
         applySelectionStyle(feat);
     }
     syncEditButton();
