@@ -62,6 +62,7 @@ import MouseWheelZoom from 'ol/interaction/MouseWheelZoom.js';
 import KeyboardZoom from 'ol/interaction/KeyboardZoom.js';
 import KeyboardPan from 'ol/interaction/KeyboardPan.js';
 import * as interactionDefaults from 'ol/interaction/defaults.js';
+import Draw from 'ol/interaction/Draw.js';
 
 // Build the ol namespace hierarchy to match OpenLayers' expected structure
 window.ol = {
@@ -116,6 +117,7 @@ window.ol = {
   interaction: {
     DoubleClickZoom,
     DragPan,
+    Draw,
     PinchZoom,
     MouseWheelZoom,
     KeyboardZoom,
