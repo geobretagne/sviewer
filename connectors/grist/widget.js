@@ -1162,11 +1162,11 @@ grist.onRecord(function(record) {
                 var rowId = record.id;
                 var feat = featureByRowId[rowId];
                 var view = SViewer.getView();
-                if (view) {
+                if (view && feat) {
                     selectedRowId = rowId;
                     var ext = wktOlGeomR.getExtent();
                     view.fit(ext, { padding: [60, 60, 60, 60], maxZoom: 17, duration: 400 });
-                    if (feat) { applySelectionStyle(feat); }
+                    applySelectionStyle(feat);
                 }
             } catch(e) { /* invalid WKT */ }
         }
