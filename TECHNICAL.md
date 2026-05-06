@@ -109,17 +109,19 @@ Ajoute une ou plusieurs données WMS à la carte. Format : liste séparée par d
 
 #### `md` (metadata)
 
-Charge automatiquement une donnée WMS depuis un identifiant de fiche de métadonnées CSW (ISO 19139).
+Charge automatiquement une ou plusieurs données WMS depuis des identifiants de fiches de métadonnées CSW (ISO 19139). Plusieurs identifiants séparés par des virgules chargent autant de données en parallèle.
 
 ```
 ?md=<identifiant-csw>
+?md=<id1>,<id2>,<id3>
 ```
 
 **Comportement :**
-- Interroge le CSW (`geOrchestraBaseUrl/geonetwork/srv/eng/csw`) pour résoudre l'URL WMS et le nom de la donnée
-- Affiche titre, résumé et légende depuis la fiche
+- Interroge le CSW (`geOrchestraBaseUrl/geonetwork/srv/eng/csw`) pour résoudre l'URL WMS et le nom de chaque donnée
+- Affiche titre, résumé et légende depuis chaque fiche (un panneau par métadonnée)
+- Titre automatique de la carte : uniquement si un seul `md=` — ambigu avec plusieurs, utiliser `&title=` explicitement
 - Ignoré si `layers=` est aussi présent (`layers=` est prioritaire)
-- Inclus dans le permalien si `layers=` est absent
+- Inclus dans le permalien si `layers=` est absent (identifiants rejoints par virgule)
 
 → Voir [Services OGC — CSW](#catalogue-service-for-the-web-csw--paramètre-md) pour le détail.
 
@@ -183,7 +185,7 @@ Persistant dans le permalien si ≠ light.
 
 #### `opacity`
 
-Opacité initiale de toutes les couches de données (hors fonds de carte). Plage : `0`–`1`. Défaut : `1` (valeur `layerOpacity` de `customConfig`).
+Opacité initiale de toutes les données (hors fonds de carte). Plage : `0`–`1`. Défaut : `1` (valeur `layerOpacity` de `customConfig`).
 
 ```
 ?opacity=0.6
@@ -227,7 +229,7 @@ Charge un fichier GeoJSON distant comme couche vectorielle interactive.
 - Supporte points, lignes et polygones (collections mixtes comprises)
 - Clic sur un objet → affiche ses propriétés dans le panneau d'info
 - CORS requis sur le serveur source
-- Composable avec `?layers=` : superpose les données GeoJSON à des couches WMS
+- Composable avec `?layers=` : superpose les données GeoJSON à des données WMS
 - Compatible embed : `SViewer.init('#map', { geojson: 'https://...' })`
 - Si une entité possède une propriété `_label`, celle-ci est affichée comme étiquette texte sur la carte
 - Si l'URL source n'est pas un GeoJSON natif, les adaptateurs déclarés dans `customConfig.adapters` sont essayés dans l'ordre pour normaliser la réponse (voir [Adaptateurs JSON](#adaptateurs-json-adapters))
@@ -322,7 +324,7 @@ Les options passées à `SViewer.init()` utilisent **exactement les mêmes noms*
 | `layers` | `string` | `?layers=` | Données à afficher (séparées par virgules) |
 | `c` | `string` | `?c=` | Nom du profil de configuration alternatif |
 | `theme` | `string` | `?theme=` | Thème d'affichage : `light` (défaut) ou `dark`. Sans paramètre : suit `prefers-color-scheme` |
-| `opacity` | `number` | `?opacity=` | Opacité des couches (0–1, défaut : 1) |
+| `opacity` | `number` | `?opacity=` | Opacité des données (0–1, défaut : 1) |
 | `position` | `1` | `?position=1` | Active le suivi GPS au chargement |
 | `geojson` | `string` | `?geojson=` | URL d'un fichier GeoJSON à charger comme couche vectorielle (CORS requis) |
 
@@ -387,7 +389,7 @@ customConfig = {
     nodata: '<!--nodatadetect-->\n<!--nodatadetect-->',
     openLSGeocodeUrl: "https://data.geopf.fr/geocodage/search",
     allowedDomains: [],              // optionnel — [] = tous les domaines autorisés
-    geojsonStyle: {                  // style des couches GeoJSON (?geojson=)
+    geojsonStyle: {                  // style des données GeoJSON (?geojson=)
         color: '#ff6600',
         fillOpacity: 0.35,
         strokeWidth: 2.5
@@ -460,8 +462,8 @@ layersBackground: [
 ```
 
 **Notes :**
-- Chaque couche doit avoir un attribut `title`
-- Toutes les couches doivent être en EPSG:3857
+- Chaque donnée doit avoir un attribut `title`
+- Toutes les donnée doivent être en EPSG:3857
 - `crossOrigin: 'anonymous'` requis sur toutes les sources pour que la fonction snapshot fonctionne
 - WMTS Géoplateforme : utiliser un IIFE (`(function(){ ... })()`) pour éviter les variables globales
 - Services TMS geopf (`data.geopf.fr/tms`) : Y-axis = XYZ standard (`{y}`), malgré le profil TMS déclaré
@@ -480,9 +482,9 @@ Le service doit :
 - Accepter les requêtes GET/POST JSON
 - Supporter CORS
 
-### Style des couches GeoJSON
+### Style des données GeoJSON
 
-La clé `geojsonStyle` contrôle l'apparence des couches vectorielles chargées via `?geojson=`.
+La clé `geojsonStyle` contrôle l'apparence des données vectorielles chargées via `?geojson=`.
 
 ```javascript
 geojsonStyle: {
@@ -622,15 +624,16 @@ Chaque donnée WMS doit :
 
 ### Catalogue Service for the Web (CSW) — paramètre `md=`
 
-Quand `md=<identifiant>` est passé dans l'URL (sans `layers=`), sViewer interroge le CSW pour charger automatiquement une donnée WMS depuis une fiche de métadonnées ISO 19139.
+Quand `md=<identifiant>` est passé dans l'URL (sans `layers=`), sViewer interroge le CSW pour charger automatiquement une ou plusieurs données WMS depuis des fiches de métadonnées ISO 19139. Plusieurs identifiants séparés par des virgules déclenchent autant de requêtes CSW en parallèle.
 
-#### Flux d'exécution
+#### Flux d'exécution (par identifiant)
 
 ```
-URL ?md=<id>
+URL ?md=<id1>,<id2>
      │
-     ▼
-fetchCSWRecord()
+     ├─ fetchCSWRecord(<id1>) ──────────────────────┐
+     └─ fetchCSWRecord(<id2>) (parallèle)           │
+                                                    ▼
   GET ${geOrchestraBaseUrl}/geonetwork/srv/eng/csw
       ?SERVICE=CSW&VERSION=2.0.2&REQUEST=GetRecordById
       &Id=<id>&ElementSetName=full
@@ -649,11 +652,16 @@ LayerQueryable({ skipMetadataPanel: true })
   → map.addLayer()
      │
      ▼
-Panneau Documentation
+Panneau Documentation (un par métadonnée)
   titre + résumé (XPath gmd:identificationInfo)
   image légende (GetLegendGraphic)
+  lien fiche catalogue (CI_OnlineResource WWW:LINK)
   tableau : date, producteur, contact, licence
 ```
+
+#### Titre automatique
+
+Avec un seul `md=` : le titre de la carte est initialisé depuis la fiche. Avec plusieurs `md=` : aucun titre automatique — utiliser `&title=` explicitement.
 
 #### Priorité
 
@@ -661,12 +669,12 @@ Panneau Documentation
 
 #### Persistance
 
-`md=` est inclus dans le permalink et le code d'intégration généré, à condition que `layers=` soit absent.
+`md=` est inclus dans le permalink et le code d'intégration généré, à condition que `layers=` soit absent. Plusieurs identifiants sont rejoints par virgule.
 
 #### Prérequis
 
 - GeoNetwork doit exposer un endpoint CSW à `${geOrchestraBaseUrl}/geonetwork/srv/eng/csw`
-- La fiche doit contenir un `CI_OnlineResource` avec `protocol = OGC:WMS`
+- Chaque fiche doit contenir un `CI_OnlineResource` avec `protocol = OGC:WMS`
 - Le serveur WMS doit supporter CORS
 
 ---
@@ -872,7 +880,7 @@ Bouton **Image** dans le panneau **Configuration** → télécharge la vue coura
 - `canvas.toBlob()` → `URL.createObjectURL()` → `<a>.download` → clic programmatique
 - Entièrement côté client, zéro backend
 
-**Contrainte cross-origin :** les sources WMS sViewer ont `crossOrigin: 'anonymous'`. Les couches de fond/superposition définies dans `customConfig.js` doivent aussi avoir `crossOrigin: 'anonymous'` sur leur source OL, sinon le canvas est « tainted » et `toBlob()` lève une `SecurityError` (silencieuse, log console uniquement). Les services IGN Géoplateforme supportent CORS.
+**Contrainte cross-origin :** les sources WMS sViewer ont `crossOrigin: 'anonymous'`. Les données de fond/superposition définies dans `customConfig.js` doivent aussi avoir `crossOrigin: 'anonymous'` sur leur source OL, sinon le canvas est « tainted » et `toBlob()` lève une `SecurityError` (silencieuse, log console uniquement). Les services IGN Géoplateforme supportent CORS.
 
 ---
 

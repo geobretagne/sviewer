@@ -441,65 +441,6 @@ window.SViewerApp = (function() {
             });
         }
 
-        function parseISOMetadata(xmlDoc) {
-            var root = xmlDoc.documentElement;
-            var xt = function(node, xpath) { return isoXt(xmlDoc, node, xpath); };
-            var xr = function(node, xpath) {
-                return xmlDoc.evaluate(xpath, node, isoNsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            };
-
-            // date de mise à jour : dateStamp peut contenir DateTime ou Date
-            var dateRaw = xt(root, '//gmd:dateStamp/gco:DateTime') ||
-                          xt(root, '//gmd:dateStamp/gco:Date');
-            var dateFormatted = null;
-            if (dateRaw) {
-                var d = new Date(dateRaw);
-                dateFormatted = isNaN(d.getTime()) ? dateRaw : d.toLocaleDateString(config.lang);
-            }
-
-            // producteur et email : premier pointOfContact dans identificationInfo
-            var idInfo = xr(root, '//gmd:identificationInfo');
-            var producer = idInfo ? xt(idInfo, './/gmd:pointOfContact//gmd:organisationName/gco:CharacterString') : null;
-            var email = idInfo ? xt(idInfo, './/gmd:pointOfContact//gmd:electronicMailAddress/gco:CharacterString') : null;
-
-            // licence : préférer un gmx:Anchor avec href, sinon premier useLimitation
-            var licenceText = null;
-            var licenceUrl = null;
-            var anchorNode = xr(root, '//gmd:resourceConstraints//gmd:otherConstraints/gmx:Anchor');
-            if (anchorNode) {
-                licenceUrl = anchorNode.getAttributeNS(ISO_NS.xlink, 'href') || null;
-                licenceText = anchorNode.textContent.trim() || licenceUrl;
-            }
-            if (!licenceText) {
-                var limits = xmlDoc.evaluate(
-                    '//gmd:resourceConstraints//gmd:useLimitation/gco:CharacterString',
-                    root, isoNsResolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null
-                );
-                for (var i = 0; i < limits.snapshotLength; i++) {
-                    var t = limits.snapshotItem(i).textContent.trim();
-                    if (t) { licenceText = t; break; }
-                }
-            }
-
-            if (!dateFormatted && !producer && !email && !licenceText) { return null; }
-            return { date: dateFormatted, producer: producer, email: email,
-                     licenceText: licenceText, licenceUrl: licenceUrl };
-        }
-
-        function buildISOTable(meta) {
-            return $(Mustache.render(window.svTemplates['iso-table'], {
-                dateLabel:     tr('msg.meta_date'),
-                producerLabel: tr('msg.meta_producer'),
-                contactLabel:  tr('msg.meta_contact'),
-                licenceLabel:  tr('msg.meta_licence'),
-                date:          meta.date,
-                producer:      meta.producer,
-                email:         meta.email,
-                licenceText:   meta.licenceText,
-                licenceUrl:    meta.licenceUrl ? safeURL(meta.licenceUrl) : null
-            }));
-        }
-
         /**
          * constructor
          */
@@ -674,6 +615,58 @@ window.SViewerApp = (function() {
         return null;
     }
 
+    function parseISOMetadata(xmlDoc) {
+        var root = xmlDoc.documentElement;
+        var xt = function(node, xpath) { return isoXt(xmlDoc, node, xpath); };
+        var xr = function(node, xpath) {
+            return xmlDoc.evaluate(xpath, node, isoNsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        };
+        var dateRaw = xt(root, '//gmd:dateStamp/gco:DateTime') ||
+                      xt(root, '//gmd:dateStamp/gco:Date');
+        var dateFormatted = null;
+        if (dateRaw) {
+            var d = new Date(dateRaw);
+            dateFormatted = isNaN(d.getTime()) ? dateRaw : d.toLocaleDateString(config.lang);
+        }
+        var idInfo = xr(root, '//gmd:identificationInfo');
+        var producer = idInfo ? xt(idInfo, './/gmd:pointOfContact//gmd:organisationName/gco:CharacterString') : null;
+        var email = idInfo ? xt(idInfo, './/gmd:pointOfContact//gmd:electronicMailAddress/gco:CharacterString') : null;
+        var licenceText = null;
+        var licenceUrl = null;
+        var anchorNode = xr(root, '//gmd:resourceConstraints//gmd:otherConstraints/gmx:Anchor');
+        if (anchorNode) {
+            licenceUrl = anchorNode.getAttributeNS(ISO_NS.xlink, 'href') || null;
+            licenceText = anchorNode.textContent.trim() || licenceUrl;
+        }
+        if (!licenceText) {
+            var limits = xmlDoc.evaluate(
+                '//gmd:resourceConstraints//gmd:useLimitation/gco:CharacterString',
+                root, isoNsResolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null
+            );
+            for (var i = 0; i < limits.snapshotLength; i++) {
+                var t = limits.snapshotItem(i).textContent.trim();
+                if (t) { licenceText = t; break; }
+            }
+        }
+        if (!dateFormatted && !producer && !email && !licenceText) { return null; }
+        return { date: dateFormatted, producer: producer, email: email,
+                 licenceText: licenceText, licenceUrl: licenceUrl };
+    }
+
+    function buildISOTable(meta) {
+        return $(Mustache.render(window.svTemplates['iso-table'], {
+            dateLabel:     tr('msg.meta_date'),
+            producerLabel: tr('msg.meta_producer'),
+            contactLabel:  tr('msg.meta_contact'),
+            licenceLabel:  tr('msg.meta_licence'),
+            date:          meta.date,
+            producer:      meta.producer,
+            email:         meta.email,
+            licenceText:   meta.licenceText,
+            licenceUrl:    meta.licenceUrl ? safeURL(meta.licenceUrl) : null
+        }));
+    }
+
     /**
      * Translates strings
      * @param {String} s input string
@@ -816,7 +809,7 @@ window.SViewerApp = (function() {
             if (config.customConfigName) { linkParams.c = config.customConfigName; }
             if (state.search) { linkParams.s = '1'; }
             if (config.layersQueryString) { linkParams.layers = config.layersQueryString; }
-            if (config.metadataId && !config.layersQueryString) { linkParams.md = config.metadataId; }
+            if (config.metadataIds && config.metadataIds.length && !config.layersQueryString) { linkParams.md = config.metadataIds.join(','); }
             if (state.theme && state.theme !== 'light') { linkParams.theme = state.theme; }
             if (state.position) { linkParams.position = '1'; }
             if (state.opacity !== null && state.opacity !== 1) { linkParams.opacity = state.opacity; }
@@ -860,8 +853,8 @@ window.SViewerApp = (function() {
         if (config.layersQueryString) {
             embedParams.layers = config.layersQueryString;
         }
-        if (config.metadataId && !config.layersQueryString) {
-            embedParams.md = config.metadataId;
+        if (config.metadataIds && config.metadataIds.length && !config.layersQueryString) {
+            embedParams.md = config.metadataIds.join(',');
         }
         if (config.title) {
             embedParams.title = config.title;
@@ -1855,36 +1848,61 @@ window.SViewerApp = (function() {
             });
         }
         
-        // querystring param: md (metadata identifier)
-        // fetches ISO19139 record from CSW, extracts OGC:WMS endpoint and layername
+        // querystring param: md (metadata identifier, comma-separated for multiple layers)
+        // fetches ISO19139 record(s) from CSW, extracts OGC:WMS endpoint and layername
         if (qs.md && !qs.layers) {
-            config.metadataId = qs.md;
-            fetchCSWRecord(qs.md, function(wmsUrl, layername, xmlDoc) {
-                var root = xmlDoc.documentElement;
-                var title    = isoXt(xmlDoc, root, '//gmd:identificationInfo//gmd:citation//gmd:title/gco:CharacterString') || layername;
-                var abstract = isoXt(xmlDoc, root, '//gmd:identificationInfo//gmd:abstract/gco:CharacterString') || '';
-                var nsPart   = layername.indexOf(':') > 0 ? layername.split(':')[0] : '';
-                var lq = new LayerQueryable({
-                    nslayername: layername, layername: layername, namespace: nsPart,
-                    stylename: '', cql_filter: '',
-                    wmsurl_global: wmsUrl, wmsurl_ns: wmsUrl, wmsurl_layer: wmsUrl,
-                    sldurl: null, format: 'image/png', opacity: 1, skipMetadataPanel: true
+            var mdIds = qs.md.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+            config.metadataIds = mdIds;
+            mdIds.forEach(function(mdId) {
+                fetchCSWRecord(mdId, function(wmsUrl, layername, xmlDoc) {
+                    var root     = xmlDoc.documentElement;
+                    var title    = isoXt(xmlDoc, root, '//gmd:identificationInfo//gmd:citation//gmd:title/gco:CharacterString') || layername;
+                    var abstract = isoXt(xmlDoc, root, '//gmd:identificationInfo//gmd:abstract/gco:CharacterString') || '';
+                    var nsPart   = layername.indexOf(':') > 0 ? layername.split(':')[0] : '';
+                    var lq = new LayerQueryable({
+                        nslayername: layername, layername: layername, namespace: nsPart,
+                        stylename: '', cql_filter: '',
+                        wmsurl_global: wmsUrl, wmsurl_ns: wmsUrl, wmsurl_layer: wmsUrl,
+                        sldurl: null, format: 'image/png', opacity: 1, skipMetadataPanel: true
+                    });
+                    config.layersQueryable.push(lq);
+                    map.addLayer(lq.wmslayer);
+                    lq.md.title = title;
+                    // Auto-title only when a single metadata is loaded — ambiguous with multiple.
+                    // Use &title= explicitly for multi-md views.
+                    if (mdIds.length === 1) { setTitle(title, true); }
+                    var legendUrl = wmsUrl + '?' + $.param({
+                        SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetLegendGraphic',
+                        FORMAT: 'image/png', LAYER: layername
+                    });
+                    // Extract HTML catalog links from CSW distributionInfo
+                    var metadataLinks = [];
+                    try {
+                        var linkNodes = xmlDoc.evaluate(
+                            '//gmd:distributionInfo//gmd:CI_OnlineResource',
+                            root, isoNsResolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null
+                        );
+                        for (var li = 0; li < linkNodes.snapshotLength; li++) {
+                            var ln = linkNodes.snapshotItem(li);
+                            var lproto = isoXt(xmlDoc, ln, 'gmd:protocol/gco:CharacterString');
+                            var lurl   = isoXt(xmlDoc, ln, 'gmd:linkage/gmd:URL');
+                            if (lproto === 'WWW:LINK-1.0-http--link' && lurl) {
+                                metadataLinks.push({ url: safeURL(lurl), label: tr('msg.full_record'), newTab: tr('msg.new_tab') });
+                            }
+                        }
+                    } catch(e) { /* XPath unsupported — skip links */ }
+                    var $panel = $(Mustache.render(window.svTemplates['layer-panel'], {
+                        title:         title,
+                        abstract:      abstract,
+                        legendUrl:     legendUrl,
+                        legendAlt:     tr('msg.legend_of') + ' ' + title,
+                        attribution:   null,
+                        metadataLinks: metadataLinks
+                    }));
+                    var meta = parseISOMetadata(xmlDoc);
+                    if (meta) { $panel.find('.sv-md-doclink').before(buildISOTable(meta)); }
+                    $('#legend').append($panel);
                 });
-                config.layersQueryable.push(lq);
-                map.addLayer(lq.wmslayer);
-                lq.md.title = title;
-                setTitle(title, true);
-                var legendUrl = wmsUrl + '?' + $.param({
-                    SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetLegendGraphic',
-                    FORMAT: 'image/png', LAYER: layername
-                });
-                var $panel = $('<div class="sv-md p-2">');
-                $panel.append($('<div class="fw-bold mb-1">').text(title));
-                if (abstract) { $panel.append($('<div class="text-muted small mb-2">').text(abstract)); }
-                $panel.append($('<img class="img-fluid mb-2">').attr('src', legendUrl).attr('alt', tr('msg.legend_of') + ' ' + title));
-                var meta = parseISOMetadata(xmlDoc);
-                if (meta) { $panel.append(buildISOTable(meta)); }
-                $('#legend').append($panel);
             });
         } else if (qs.md && qs.layers) {
             log('md= ignored: layers= takes precedence');
