@@ -219,7 +219,7 @@ Non-persistant (absent du permalien).
 
 #### `geojson`
 
-Charge un fichier GeoJSON distant comme couche vectorielle interactive.
+Charge un fichier GeoJSON distant comme données vectorielles interactives.
 
 ```
 ?geojson=https://raw.githubusercontent.com/user/repo/main/data.geojson
@@ -326,7 +326,7 @@ Les options passées à `SViewer.init()` utilisent **exactement les mêmes noms*
 | `theme` | `string` | `?theme=` | Thème d'affichage : `light` (défaut) ou `dark`. Sans paramètre : suit `prefers-color-scheme` |
 | `opacity` | `number` | `?opacity=` | Opacité des données (0–1, défaut : 1) |
 | `position` | `1` | `?position=1` | Active le suivi GPS au chargement |
-| `geojson` | `string` | `?geojson=` | URL d'un fichier GeoJSON à charger comme couche vectorielle (CORS requis) |
+| `geojson` | `string` | `?geojson=` | URL d'un fichier GeoJSON à charger comme données vectorielles (CORS requis) |
 
 Le bouton **HTML** du panneau de partage génère automatiquement un fragment `SViewer.init()` pour la vue courante.
 
@@ -1082,16 +1082,16 @@ state = {
 | `app.getView()` | `ol.View` | Identique à `SViewer.getView()` |
 | `app.getConfig()` | `object` | Configuration fusionnée (lecture seule) |
 | `app.getState()` | `object` | État interne courant (lecture seule) |
-| `SViewer.setGeojsonUrl(url)` | — | Met à jour l'URL GeoJSON dans l'état (permalien/partage) sans recharger la couche |
+| `SViewer.setGeojsonUrl(url)` | — | Met à jour l'URL GeoJSON dans l'état (permalien/partage) sans recharger les données |
 | `SViewer.onTitleChange` | callback | Fonction appelée quand l'utilisateur modifie le titre via le panneau de partage. `null` par défaut. Non appelée lors des modifications programmatiques (init, chargement md). Exemple : `SViewer.onTitleChange = function(title) { /* persister */ };` |
-| `SViewer.loadFeatures(geojson)` | — | Charge un GeoJSON FeatureCollection (objet JS) comme couche vectorielle. Équivalent à `?geojson=` mais avec données déjà parsées. |
+| `SViewer.loadFeatures(geojson)` | — | Charge un GeoJSON FeatureCollection (objet JS) comme données vectorielles. Équivalent à `?geojson=` mais avec données déjà parsées. |
 | `SViewer.loadFeatureObjects(features, options)` | — | Charge un tableau d'entités OpenLayers (`ol.Feature[]`) déjà en EPSG:3857. Zéro reprojection, zéro sérialisation — chemin haute performance pour les widgets. Voir options ci-dessous. |
 | `SViewer.selectFeature(id)` | — | Sélectionne une entité par son id OL (`feature.getId()`), zoome dessus, affiche ses propriétés dans le panneau. |
 | `SViewer.clearSelection()` | — | Efface la sélection courante et ferme le panneau de propriétés. |
 | `SViewer.onMapReady(fn)` | — | Enregistre un callback appelé une fois la carte initialisée. Argument : `{ map, view }`. |
 | `SViewer.onFeatureClick(fn)` | — | Enregistre un callback appelé à chaque clic sur une entité vectorielle. Argument : `{ feature, coordinate, properties }`. |
 | `SViewer.onFeatureSelect(fn)` | — | Enregistre un callback appelé à chaque changement de sélection (clic ou `selectFeature`/`clearSelection`). Argument : `{ feature, properties }` — `null` si désélection. |
-| `SViewer.onFeaturesLoaded(fn)` | — | Enregistre un callback appelé après chaque chargement de couche vectorielle. Argument : `{ features, count }`. |
+| `SViewer.onFeaturesLoaded(fn)` | — | Enregistre un callback appelé après chaque chargement de données vectorielles. Argument : `{ features, count }`. |
 
 **Contrôle de la vue :**
 ```javascript
@@ -1112,7 +1112,7 @@ SViewer.init('#ma-carte', { x: -390192, y: 6122108, z: 10 })
     });
 ```
 
-**Ajouter une couche OL sur la carte :**
+**Ajouter des données OL sur la carte :**
 ```javascript
 SViewer.init('#ma-carte', {}).then(function(app) {
     var map = app.getMap();
@@ -1295,7 +1295,7 @@ La suite de tests est accessible à `/sviewer/tests/` — aucune installation re
 
 Les tests du groupe **Live** font appel à des services externes — les exclure en CI.
 
-**Ajouter un test WMS** — copier un bloc dans `tests/suites/04-wms-services.js`, changer `id`, `label` et les arguments de `makeWmsTest()`. Format du paramètre `layers` : `nom_couche@https://url/wms`.
+**Ajouter un test WMS** — copier un bloc dans `tests/suites/04-wms-services.js`, changer `id`, `label` et les arguments de `makeWmsTest()`. Format du paramètre `layers` : `nom_donnee@https://url/wms`.
 
 ### Scoping CSS
 

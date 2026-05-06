@@ -52,8 +52,8 @@ Configure la géométrie et le style des entités affichées.
 | Champ | Rôle |
 |-------|------|
 | Fond de carte | Sélectionne le fond de carte initial (index dans `backgroundPresets` ou `layersBackground`) |
-| Données WMS | Couche(s) WMS à afficher (identifiant Grist : `couche1,couche2`) |
-| Métadonnée CSW | Identifiant CSW/ISO 19139 pour charger une couche depuis GeoNetwork (`md=`) |
+| Données WMS | Données WMS à afficher (identifiant Grist : `donnee1,donnee2`) |
+| Métadonnée CSW | Identifiant CSW/ISO 19139 pour charger des données depuis GeoNetwork (`md=`) |
 | Centre X / Y | Centre de la carte en EPSG:3857 |
 | Zoom | Niveau de zoom initial (0–22) |
 | Ajuster à l'étendue | Recadre automatiquement la carte sur les données à chaque chargement |
@@ -140,4 +140,4 @@ La table `_sviewer_customConfig` n'est plus utilisée. La configuration est dés
 
 - Grist (cloud ou auto-hébergé)
 - sViewer ≥ 0.5.0
-- Les couches WMS doivent supporter CORS et HTTPS
+- Les données WMS doivent supporter CORS et HTTPS

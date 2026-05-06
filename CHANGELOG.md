@@ -17,7 +17,7 @@ Versioning: [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Panneau `md=`** : utilise désormais le template `layer-panel` (même structure que `layers=`) — titre, légende, résumé, liens fiche catalogue, tableau ISO.
-- **Grist widget : zoom extrême à la configuration** : `onRecord` ne déclenchait pas de zoom sur l'étendue d'un point avant que la couche soit construite — corrigé.
+- **Grist widget : zoom extrême à la configuration** : `onRecord` ne déclenchait pas de zoom sur l'étendue d'un point avant que les données soient construites — corrigé.
 
 ## [0.8.1] - 2026-05-05
 
@@ -302,7 +302,7 @@ sed -i 's|BACKEND_URL|http://your-backend:8080|g' deploy/nginx/nginx-server-prox
 
 ### Fixed
 - sViewer casing (`Sviewer` → `sViewer`) in README
-- fr `msg.top_layer`: banned word "couche" → "donnée"
+- fr `msg.top_layer`: avoid french jargon "couche" → "donnée"
 
 ### Removed
 - Unused i18n keys `btn.qrcode` and `panel.share_modal.title` (vestigial)

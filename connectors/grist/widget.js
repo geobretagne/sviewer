@@ -312,7 +312,7 @@ var debounceTimer = null;
 var selectedRowId = null;          // id de la ligne Grist sélectionnée (pour le surlignage post-rebuild)
 var lastRecordsFingerprint = null; // empreinte JSON pour éviter un rebuild si seule la sélection a changé
 var viewFitted = false;            // vrai une fois le premier fit de vue effectué
-var layerBuilt = false;            // vrai une fois la couche OL passée à SViewer via loadFeatureObjects
+var layerBuilt = false;            // vrai une fois les données OL passées à SViewer via loadFeatureObjects
 
 // ---------------------------------------------------------------------------
 // Utilitaires
@@ -778,7 +778,7 @@ function scheduleRebuildLayer() {
     debounceTimer = setTimeout(rebuildLayer, 300);
 }
 
-// Reconstruit la couche OL vecteur depuis allRecords et la passe à SViewer via loadFeatureObjects.
+// Reconstruit les données OL vecteur depuis allRecords et les passe à SViewer via loadFeatureObjects.
 // Reprojette EPSG:4326 → EPSG:3857. Fit de vue au premier chargement uniquement.
 // Court-circuite le rebuild si les données n'ont pas changé (empreinte identique).
 function rebuildLayer() {
@@ -933,7 +933,7 @@ var gristBase = (safeHttpUrl(svConfig.grist_api_base) || 'https://docs.getgrist.
 }
 
 // Initialise la carte sViewer. Les clés de config correspondent aux paramètres d'URL sViewer.
-// geojson n'est pas passé à init pour éviter qu'sViewer rende une couche en double ;
+// geojson n'est pas passé à init pour éviter qu'sViewer rende des données en double ;
 // il est injecté après via setGeojsonUrl() pour que le panneau de partage l'inclue correctement.
 function initMap() {
     var opts = {
