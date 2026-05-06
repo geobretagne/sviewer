@@ -115,9 +115,17 @@
         #sv-settings-footer #sv-btn-cfg-save { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
         #sv-settings-footer #sv-btn-cfg-save:hover { background: var(--accent-hov); }
         #sv-settings-footer button:not(#sv-btn-cfg-save):hover { background: var(--bg-hover); }
+        #sv-impexp {
+            display: flex; gap: 8px; margin: 4px 12px 4px 0;
+        }
+        #sv-impexp button {
+            padding: 4px 12px; font-size: 12px; border: 1px solid var(--border-in);
+            border-radius: 3px; background: var(--bg); color: var(--text); cursor: pointer;
+        }
+        #sv-impexp button:hover { background: var(--bg-hover); }
         #sv-import-area {
             display: none; flex-direction: column; gap: 6px;
-            padding: 8px 16px; border-top: 1px solid var(--border); background: var(--bg-panel); flex-shrink: 0;
+            padding: 4px 12px 8px;
         }
         #sv-import-area textarea {
             width: 100%; height: 100px; font-family: monospace; font-size: 11px;
@@ -132,6 +140,8 @@
         #sv-help { padding: 14px 16px; font-size: 13px; color: var(--text); line-height: 1.6; }
         #sv-help h3 { font-size: 12px; font-weight: 600; margin: 10px 0 3px; color: var(--text-label); text-transform: uppercase; letter-spacing: 0.04em; }
         #sv-help h3:first-child { margin-top: 0; }
+        #sv-help-credit { margin-top: 16px; font-size: 11px; color: var(--text-muted); }
+        #sv-help-credit a { color: var(--text-muted); }
         #sv-help p { margin-bottom: 4px; }
         #sv-help a { color: var(--accent); }
 
@@ -159,10 +169,9 @@
     <h2 data-i18n="settings"></h2>
 
     <div id="sv-tab-bar">
-        <button class="sv-tab-btn sv-tab-active" data-tab="data"  data-i18n="settings.section.data"></button>
-        <button class="sv-tab-btn"               data-tab="map"   data-i18n="settings.section.map"></button>
-        <button class="sv-tab-btn"               data-tab="share" data-i18n="settings.section.share"></button>
-        <button class="sv-tab-btn"               data-tab="help"  data-i18n="settings.section.help"></button>
+        <button class="sv-tab-btn sv-tab-active" data-tab="data"     data-i18n="settings.section.data"></button>
+        <button class="sv-tab-btn"               data-tab="advanced" data-i18n="settings.section.advanced"></button>
+        <button class="sv-tab-btn"               data-tab="help"     data-i18n="settings.section.help"></button>
     </div>
 
     <!-- Données -->
@@ -186,99 +195,71 @@
             <label for="sv-cfg-label" data-i18n="settings.label"></label>
             <select id="sv-cfg-label"></select>
             <hr class="sv-cfg-sep">
-            <label for="sv-cfg-stroke-color" data-i18n="settings.stroke"></label>
+            <label for="sv-cfg-fill-color" data-i18n="settings.features"></label>
             <div class="sv-cfg-style-row">
-                <input id="sv-cfg-stroke-color"   type="color"  value="#ff6600" data-i18n-title="settings.stroke">
-                <span class="sv-inline-label" data-i18n="settings.inline.opacity"></span>
-                <input id="sv-cfg-stroke-opacity" type="number" min="0" max="1" step="0.05" value="1"   placeholder="0–1" data-i18n-title="settings.stroke.opacity">
+                <input id="sv-cfg-fill-color"   type="color"  value="#0077bb" data-i18n-title="settings.fill">
                 <span class="sv-inline-label" data-i18n="settings.inline.width"></span>
-                <input id="sv-cfg-stroke-width"   type="number" min="0" max="20" step="0.5" value="2.5" placeholder="px"  data-i18n-title="settings.stroke.width">
-            </div>
-            <label for="sv-cfg-fill-color"   data-i18n="settings.fill"></label>
-            <div class="sv-cfg-style-row">
-                <input id="sv-cfg-fill-color"     type="color"  value="#ff6600" data-i18n-title="settings.fill">
+                <input id="sv-cfg-stroke-width" type="number" min="0" max="20" step="0.5" value="2.5" placeholder="px" data-i18n-title="settings.stroke.width">
                 <span class="sv-inline-label" data-i18n="settings.inline.opacity"></span>
-                <input id="sv-cfg-fill-opacity"   type="number" min="0" max="1" step="0.05" value="0.35" placeholder="0–1" data-i18n-title="settings.fill.opacity">
+                <input id="sv-cfg-fill-opacity" type="number" min="0" max="1" step="0.05" value="0.5" placeholder="0–1" data-i18n-title="settings.fill.opacity">
             </div>
-            <hr class="sv-cfg-sep">
-            <label for="sv-cfg-sel-stroke-color" data-i18n="settings.sel.stroke"></label>
+            <label for="sv-cfg-sel-fill-color" data-i18n="settings.selection"></label>
             <div class="sv-cfg-style-row">
-                <input id="sv-cfg-sel-stroke-color"   type="color"  value="#ffffff" data-i18n-title="settings.sel.stroke">
-                <span class="sv-inline-label" data-i18n="settings.inline.opacity"></span>
-                <input id="sv-cfg-sel-stroke-opacity" type="number" min="0" max="1" step="0.05" value="1"   placeholder="0–1" data-i18n-title="settings.sel.stroke.opacity">
+                <input id="sv-cfg-sel-fill-color"   type="color"  value="#ee7733" data-i18n-title="settings.sel.fill">
                 <span class="sv-inline-label" data-i18n="settings.inline.width"></span>
-                <input id="sv-cfg-sel-stroke-width"   type="number" min="0" max="20" step="0.5" value="2.5" placeholder="px"  data-i18n-title="settings.sel.stroke.width">
-            </div>
-            <label for="sv-cfg-sel-fill-color"   data-i18n="settings.sel.fill"></label>
-            <div class="sv-cfg-style-row">
-                <input id="sv-cfg-sel-fill-color"     type="color"  value="#e74c3c" data-i18n-title="settings.sel.fill">
+                <input id="sv-cfg-sel-stroke-width" type="number" min="0" max="20" step="0.5" value="2.5" placeholder="px" data-i18n-title="settings.sel.stroke.width">
                 <span class="sv-inline-label" data-i18n="settings.inline.opacity"></span>
-                <input id="sv-cfg-sel-fill-opacity"   type="number" min="0" max="1" step="0.05" value="1"   placeholder="0–1" data-i18n-title="settings.sel.fill.opacity">
+                <input id="sv-cfg-sel-fill-opacity" type="number" min="0" max="1" step="0.05" value="0.5" placeholder="0–1" data-i18n-title="settings.sel.fill.opacity">
             </div>
         </div>
     </div>
 
     <!-- Carte -->
-    <div class="sv-tab-panel" data-tab="map">
+    <!-- Avancé -->
+    <div class="sv-tab-panel" data-tab="advanced">
         <div class="sv-cfg-grid">
-            <label for="sv-cfg-lb"     data-i18n="settings.lb"></label>
-            <select id="sv-cfg-lb-sel" style="display:none"></select>
-            <input  id="sv-cfg-lb"     type="number" min="0" placeholder="0">
             <label for="sv-cfg-layers" data-i18n="settings.layers"></label>
-            <input  id="sv-cfg-layers" type="text"   placeholder="layer1,layer2">
+            <input  id="sv-cfg-layers" type="text" placeholder="layer1,layer2">
             <label for="sv-cfg-md"     data-i18n="settings.md"></label>
-            <input  id="sv-cfg-md"     type="text"   placeholder="fr-geobretagne-...">
-            <label for="sv-cfg-x"     data-i18n="settings.x"></label>
-            <input  id="sv-cfg-x"     type="number" placeholder="0">
-            <label for="sv-cfg-y"     data-i18n="settings.y"></label>
-            <input  id="sv-cfg-y"     type="number" placeholder="6000000">
-            <label for="sv-cfg-z"     data-i18n="settings.z"></label>
-            <input  id="sv-cfg-z"     type="number" min="0" max="22" placeholder="5">
-            <label for="sv-cfg-fit"   data-i18n="settings.fit"></label>
-            <input  id="sv-cfg-fit"   type="checkbox" style="width:14px;height:14px;cursor:pointer;margin:auto 0;">
-        </div>
-    </div>
-
-    <!-- Partage -->
-    <div class="sv-tab-panel" data-tab="share">
-        <div class="sv-cfg-grid">
-            <label for="sv-cfg-svbase"     data-i18n="settings.svbase"></label>
-            <input  id="sv-cfg-svbase"     type="url"  placeholder="https://example.org/sviewer/">
-            <label for="sv-cfg-apibase"    data-i18n="settings.apibase"></label>
-            <input  id="sv-cfg-apibase"    type="url"  placeholder="https://docs.getgrist.com">
+            <input  id="sv-cfg-md"     type="text" placeholder="fr-geobretagne-...">
+            <hr class="sv-cfg-sep">
+            <label for="sv-cfg-svbase"      data-i18n="settings.svbase"></label>
+            <input  id="sv-cfg-svbase"      type="url" placeholder="https://example.org/sviewer/">
+            <label for="sv-cfg-apibase"     data-i18n="settings.apibase"></label>
+            <input  id="sv-cfg-apibase"     type="url" placeholder="https://docs.getgrist.com">
             <label for="sv-cfg-georchestra" data-i18n="settings.georchestra"></label>
-            <input  id="sv-cfg-georchestra" type="url"  placeholder="https://geobretagne.fr">
+            <input  id="sv-cfg-georchestra" type="url" placeholder="https://geobretagne.fr">
+            <hr class="sv-cfg-sep">
+            <label data-i18n="settings.json"></label>
+            <div id="sv-impexp">
+                <button id="sv-btn-cfg-export" data-i18n="settings.export"></button>
+                <button id="sv-btn-cfg-import" data-i18n="settings.import"></button>
+            </div>
+        </div>
+        <div id="sv-import-area">
+            <textarea id="sv-import-json" spellcheck="false" data-i18n-placeholder="settings.import.placeholder"></textarea>
+            <button id="sv-btn-cfg-apply" data-i18n="settings.import.apply"></button>
         </div>
     </div>
 
     <!-- Aide -->
     <div class="sv-tab-panel" data-tab="help">
         <div id="sv-help">
-            <h3>Synchronisation tableau → carte</h3>
-            <p>Configurez <strong>Sélectionner par</strong> (panneau latéral Grist → Données) sur le widget carte en choisissant le tableau de données. Clic sur une ligne → la carte zoome sur l'entité.</p>
-            <p>⚠ La direction inverse (clic carte → sélection dans le tableau) n'est pas supportée par l'API Grist. Clic carte = surbrillance visuelle sur la carte uniquement.</p>
-            <h3>Données</h3>
-            <p>Colonne géométrie (GeoJSON) ou paire latitude/longitude utilisée pour afficher les entités. Colonne étiquette affichée au survol. Couleurs et opacités des entités normales et sélectionnées.</p>
-            <h3>Carte</h3>
-            <p>Fond de carte, données WMS additionnelles, centre et zoom par défaut. <em>Ajuster à l'étendue</em> : la carte se recadre automatiquement sur les données à chaque chargement.</p>
-            <h3>Partage</h3>
-            <p>URL de base sViewer (pour le lien de partage), URL de l'API Grist (instances auto-hébergées), intégration geOrchestra (catalogue CSW, proxy WMS).</p>
-            <h3>Appliquer / Annuler</h3>
-            <p><strong>Appliquer</strong> reconstruit la carte avec les nouveaux paramètres. Pour les conserver au rechargement, cliquez ensuite sur <strong>Enregistrer</strong> dans la barre Grist (en dehors du widget). <strong>Annuler</strong> ferme sans modifier.</p>
-            <h3>Exporter / Importer</h3>
-            <p><strong>Exporter</strong> copie la configuration dans le presse-papiers (JSON). <strong>Importer</strong> charge un JSON précédemment exporté pour dupliquer la configuration sur un autre widget.</p>
+            <h3>Configurer ce widget</h3>
+            <p>Sélectionnez <strong>Complet</strong> dans <em>Accès</em> pour pouvoir modifier les géométries depuis la carte. En lecture seule, les boutons de saisie sont masqués.</p>
+            <p>Cliquez sur une ligne du tableau pour centrer la carte sur l'entité correspondante.</p>
+            <p>Le bouton <strong>Partager</strong> de sViewer génère un lien autonome vers la carte — le document Grist doit être accessible publiquement.</p>
+            <h3>Onglet Données</h3>
+            <p>Définit comment la colonne géométrie est lue (GeoJSON, WKT, coordonnées…) et l'apparence des données sur la carte.</p>
+            <h3>Onglet Avancé</h3>
+            <p>Données WMS et catalogue : identifiants à saisir tels que configurés dans sViewer. URLs : à renseigner uniquement pour une instance auto-hébergée de Grist ou geOrchestra. Configuration JSON : permet de copier la configuration d'un widget vers un autre.</p>
+            <p id="sv-help-credit"><a href="https://github.com/geobretagne/sviewer" target="_blank" rel="noopener">geobretagne/sviewer</a></p>
         </div>
     </div>
 
     <div id="sv-settings-footer">
         <button id="sv-btn-cfg-save"   data-i18n="settings.save"></button>
         <button id="sv-btn-cfg-cancel" data-i18n="settings.cancel"></button>
-        <button id="sv-btn-cfg-export" data-i18n="settings.export" style="margin-left:auto"></button>
-        <button id="sv-btn-cfg-import" data-i18n="settings.import"></button>
-    </div>
-    <div id="sv-import-area">
-        <textarea id="sv-import-json" spellcheck="false" data-i18n-placeholder="settings.import.placeholder"></textarea>
-        <button id="sv-btn-cfg-apply" data-i18n="settings.import.apply"></button>
     </div>
 </div>
 

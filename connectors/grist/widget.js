@@ -32,35 +32,29 @@ var I18N = {
         'settings.lat':       'Colonne latitude',
         'settings.lon':       'Colonne longitude',
         'settings.label':     'Colonne étiquette',
-        'settings.fill':          'Remplissage entités',
-        'settings.fill.opacity':  'Opacité remplissage',
-        'settings.stroke':        'Contour entités',
-        'settings.stroke.opacity':'Opacité contour',
-        'settings.stroke.width':  'Épaisseur contour (px)',
-        'settings.inline.opacity': 'opacité',
-        'settings.inline.width':   'épais.',
-        'settings.sel.fill':          'Remplissage sélection',
-        'settings.sel.fill.opacity':  'Opacité remplissage',
-        'settings.sel.stroke':        'Contour sélection',
-        'settings.sel.stroke.opacity':'Opacité contour',
-        'settings.sel.stroke.width':  'Épaisseur contour (px)',
+        'settings.features':         'Données',
+        'settings.selection':        'Ligne sélectionnée',
+        'settings.fill':             'Couleur',
+        'settings.fill.opacity':     'Opacité remplissage',
+        'settings.sel.fill':         'Couleur',
+        'settings.sel.fill.opacity': 'Opacité remplissage',
+        'settings.stroke.width':     'Épaisseur contour (px)',
+        'settings.sel.stroke.width': 'Épaisseur contour (px)',
+        'settings.inline.opacity':   'opacité',
+        'settings.inline.width':     'épaisseur',
         'settings.title':     'Titre (title=)',
-        'settings.layers':    'Données WMS (layers=)',
-        'settings.md':        'Métadonnée CSW (md=)',
-        'settings.lb':        'Fond de carte (lb=)',
-        'settings.x':         'Centre X (x=)',
-        'settings.y':         'Centre Y (y=)',
-        'settings.z':         'Zoom (z=)',
+        'settings.layers':    'Donnée via WMS',
+        'settings.md':        'Donnée via catalogue',
+
         'settings.svbase':    'URL de base sViewer',
         'settings.apibase':   'URL de base API Grist',
         'settings.georchestra':    'URL de base geOrchestra',
-        'settings.fit':            'Ajuster à l\'étendue des données',
-        'settings.section.map':    'Carte',
-        'settings.section.data':   'Données',
-        'settings.section.share':  'Partage',
-        'settings.section.help':   'Aide',
+        'settings.section.data':     'Données',
+        'settings.section.advanced': 'Avancé',
+        'settings.section.help':     'Aide',
         'settings.save':           'Appliquer',
         'settings.cancel':         'Annuler',
+        'settings.json':               'Configuration JSON',
         'settings.export':             'Exporter',
         'settings.import':             'Importer',
         'settings.import.apply':       'Appliquer',
@@ -111,35 +105,29 @@ var I18N = {
         'settings.lat':       'Latitude column',
         'settings.lon':       'Longitude column',
         'settings.label':     'Label column',
-        'settings.fill':          'Feature fill',
-        'settings.fill.opacity':  'Fill opacity',
-        'settings.stroke':        'Feature stroke',
-        'settings.stroke.opacity':'Stroke opacity',
-        'settings.stroke.width':  'Stroke width (px)',
-        'settings.inline.opacity': 'opacity',
-        'settings.inline.width':   'width',
-        'settings.sel.fill':          'Selection fill',
-        'settings.sel.fill.opacity':  'Fill opacity',
-        'settings.sel.stroke':        'Selection stroke',
-        'settings.sel.stroke.opacity':'Stroke opacity',
-        'settings.sel.stroke.width':  'Stroke width (px)',
+        'settings.features':         'Data',
+        'settings.selection':        'Selected row',
+        'settings.fill':             'Color',
+        'settings.fill.opacity':     'Fill opacity',
+        'settings.sel.fill':         'Color',
+        'settings.sel.fill.opacity': 'Fill opacity',
+        'settings.stroke.width':     'Stroke width (px)',
+        'settings.sel.stroke.width': 'Stroke width (px)',
+        'settings.inline.opacity':   'opacity',
+        'settings.inline.width':     'width',
         'settings.title':     'Title (title=)',
-        'settings.layers':    'WMS data (layers=)',
-        'settings.md':        'CSW metadata (md=)',
-        'settings.lb':        'Background (lb=)',
-        'settings.x':         'Center X (x=)',
-        'settings.y':         'Center Y (y=)',
-        'settings.z':         'Zoom (z=)',
+        'settings.layers':    'Data via WMS',
+        'settings.md':        'Data via catalogue',
+
         'settings.svbase':    'sViewer base URL',
         'settings.apibase':   'Grist API base URL',
         'settings.georchestra':    'geOrchestra base URL',
-        'settings.fit':            'Fit map to data extent',
-        'settings.section.map':    'Map',
-        'settings.section.data':   'Data',
-        'settings.section.share':  'Sharing',
-        'settings.section.help':   'Help',
+        'settings.section.data':     'Data',
+        'settings.section.advanced': 'Advanced',
+        'settings.section.help':     'Help',
         'settings.save':           'Apply',
         'settings.cancel':         'Cancel',
+        'settings.json':               'JSON config',
         'settings.export':             'Export',
         'settings.import':             'Import',
         'settings.import.apply':       'Apply',
@@ -190,35 +178,29 @@ var I18N = {
         'settings.lat':       'Columna de latitud',
         'settings.lon':       'Columna de longitud',
         'settings.label':     'Columna de etiqueta',
-        'settings.fill':          'Relleno entidades',
-        'settings.fill.opacity':  'Opacidad relleno',
-        'settings.stroke':        'Contorno entidades',
-        'settings.stroke.opacity':'Opacidad contorno',
-        'settings.stroke.width':  'Grosor contorno (px)',
-        'settings.inline.opacity': 'opacidad',
-        'settings.inline.width':   'grosor',
-        'settings.sel.fill':          'Relleno selección',
-        'settings.sel.fill.opacity':  'Opacidad relleno',
-        'settings.sel.stroke':        'Contorno selección',
-        'settings.sel.stroke.opacity':'Opacidad contorno',
-        'settings.sel.stroke.width':  'Grosor contorno (px)',
+        'settings.features':         'Datos',
+        'settings.selection':        'Fila seleccionada',
+        'settings.fill':             'Color',
+        'settings.fill.opacity':     'Opacidad relleno',
+        'settings.sel.fill':         'Color',
+        'settings.sel.fill.opacity': 'Opacidad relleno',
+        'settings.stroke.width':     'Grosor contorno (px)',
+        'settings.sel.stroke.width': 'Grosor contorno (px)',
+        'settings.inline.opacity':   'opacidad',
+        'settings.inline.width':     'grosor',
         'settings.title':     'Título (title=)',
-        'settings.layers':    'Datos WMS (layers=)',
-        'settings.md':        'Metadato CSW (md=)',
-        'settings.lb':        'Mapa base (lb=)',
-        'settings.x':         'Centro X (x=)',
-        'settings.y':         'Centro Y (y=)',
-        'settings.z':         'Zoom (z=)',
+        'settings.layers':    'Dato via WMS',
+        'settings.md':        'Dato via catálogo',
+
         'settings.svbase':    'URL base sViewer',
         'settings.apibase':   'URL base API Grist',
         'settings.georchestra':    'URL base geOrchestra',
-        'settings.fit':            'Ajustar mapa a la extensión de datos',
-        'settings.section.map':    'Mapa',
-        'settings.section.data':   'Datos',
-        'settings.section.share':  'Compartir',
-        'settings.section.help':   'Ayuda',
+        'settings.section.data':     'Datos',
+        'settings.section.advanced': 'Avanzado',
+        'settings.section.help':     'Ayuda',
         'settings.save':           'Aplicar',
         'settings.cancel':         'Cancelar',
+        'settings.json':               'Configuración JSON',
         'settings.export':             'Exportar',
         'settings.import':             'Importar',
         'settings.import.apply':       'Aplicar',
@@ -269,35 +251,29 @@ var I18N = {
         'settings.lat':       'Breitengradpalte',
         'settings.lon':       'Längengradpalte',
         'settings.label':     'Beschriftungsspalte',
-        'settings.fill':          'Füllung Objekte',
-        'settings.fill.opacity':  'Fülldeckkraft',
-        'settings.stroke':        'Kontur Objekte',
-        'settings.stroke.opacity':'Konturdeckkraft',
-        'settings.stroke.width':  'Konturstärke (px)',
-        'settings.inline.opacity': 'Deck.',
-        'settings.inline.width':   'Stärke',
-        'settings.sel.fill':          'Füllung Auswahl',
-        'settings.sel.fill.opacity':  'Fülldeckkraft',
-        'settings.sel.stroke':        'Kontur Auswahl',
-        'settings.sel.stroke.opacity':'Konturdeckkraft',
-        'settings.sel.stroke.width':  'Konturstärke (px)',
+        'settings.features':         'Daten',
+        'settings.selection':        'Ausgewählte Zeile',
+        'settings.fill':             'Farbe',
+        'settings.fill.opacity':     'Fülldeckkraft',
+        'settings.sel.fill':         'Farbe',
+        'settings.sel.fill.opacity': 'Fülldeckkraft',
+        'settings.stroke.width':     'Konturstärke (px)',
+        'settings.sel.stroke.width': 'Konturstärke (px)',
+        'settings.inline.opacity':   'Deck.',
+        'settings.inline.width':     'Stärke',
         'settings.title':     'Titel (title=)',
-        'settings.layers':    'WMS-Daten (layers=)',
-        'settings.md':        'CSW-Metadaten (md=)',
-        'settings.lb':        'Hintergrund (lb=)',
-        'settings.x':         'Mittelpunkt X (x=)',
-        'settings.y':         'Mittelpunkt Y (y=)',
-        'settings.z':         'Zoom (z=)',
+        'settings.layers':    'Daten via WMS',
+        'settings.md':        'Daten via Katalog',
+
         'settings.svbase':    'sViewer Basis-URL',
         'settings.apibase':   'Grist API Basis-URL',
         'settings.georchestra':    'geOrchestra Basis-URL',
-        'settings.fit':            'Karte an Datenausdehnung anpassen',
-        'settings.section.map':    'Karte',
-        'settings.section.data':   'Daten',
-        'settings.section.share':  'Teilen',
-        'settings.section.help':   'Hilfe',
+        'settings.section.data':     'Daten',
+        'settings.section.advanced': 'Erweitert',
+        'settings.section.help':     'Hilfe',
         'settings.save':           'Anwenden',
         'settings.cancel':         'Abbrechen',
+        'settings.json':               'JSON-Konfiguration',
         'settings.export':             'Exportieren',
         'settings.import':             'Importieren',
         'settings.import.apply':       'Anwenden',
@@ -567,8 +543,8 @@ function colorWithOpacity(color, opacity) {
 // Retourne une fonction de style OL : cercle pour Point/MultiPoint, fill+stroke pour les autres.
 // Lit la propriété _label posée sur chaque feature dans rebuildLayer.
 function makeFeatureStyle(cfg, selected) {
-    var fillColor   = colorWithOpacity(cfg.fillColor,   cfg.fillOpacity);
-    var strokeColor = colorWithOpacity(cfg.strokeColor, cfg.strokeOpacity);
+    var fillColor   = colorWithOpacity(cfg.fillColor, cfg.fillOpacity);
+    var strokeColor = cfg.strokeColor;
     var radius      = selected ? 10 : 7;
     return function(feature) {
         var geomType = feature.getGeometry() ? feature.getGeometry().getType() : '';
@@ -596,8 +572,8 @@ function geojsonStyleDefaults() {
     var gs = (window.customConfig && window.customConfig.geojsonStyle) ||
              (window.hardConfig   && window.hardConfig.geojsonStyle)   || {};
     return {
-        color:       safeColor(gs.color, '#ff6600'),
-        fillOpacity: gs.fillOpacity  !== undefined ? gs.fillOpacity  : 0.35,
+        color:       safeColor(gs.color, '#0077bb'),
+        fillOpacity: gs.fillOpacity  !== undefined ? gs.fillOpacity  : 0.5,
         strokeWidth: gs.strokeWidth  !== undefined ? gs.strokeWidth  : 2.5
     };
 }
@@ -607,19 +583,17 @@ function getStyleCfg(selected) {
     var d = geojsonStyleDefaults();
     if (selected) {
         return {
-            fillColor:     safeColor(svConfig.sel_fill_color,   '#e74c3c'),
-            fillOpacity:   svConfig.sel_fill_opacity   !== undefined ? parseFloat(svConfig.sel_fill_opacity)   : 1,
-            strokeColor:   safeColor(svConfig.sel_stroke_color, '#c0392b'),
-            strokeOpacity: svConfig.sel_stroke_opacity !== undefined ? parseFloat(svConfig.sel_stroke_opacity) : 1,
-            strokeWidth:   svConfig.sel_stroke_width   !== undefined ? parseFloat(svConfig.sel_stroke_width)   : d.strokeWidth + 1
+            fillColor:   safeColor(svConfig.sel_fill_color, '#ee7733'),
+            fillOpacity: svConfig.sel_fill_opacity !== undefined ? parseFloat(svConfig.sel_fill_opacity) : 0.5,
+            strokeColor: safeColor(svConfig.sel_fill_color, '#ee7733'),
+            strokeWidth: svConfig.sel_stroke_width !== undefined ? parseFloat(svConfig.sel_stroke_width) : d.strokeWidth + 1
         };
     }
     return {
-        fillColor:     safeColor(svConfig.fill_color,   d.color),
-        fillOpacity:   svConfig.fill_opacity   !== undefined ? parseFloat(svConfig.fill_opacity)   : d.fillOpacity,
-        strokeColor:   safeColor(svConfig.stroke_color, d.color),
-        strokeOpacity: svConfig.stroke_opacity !== undefined ? parseFloat(svConfig.stroke_opacity) : 1,
-        strokeWidth:   svConfig.stroke_width   !== undefined ? parseFloat(svConfig.stroke_width)   : d.strokeWidth
+        fillColor:   safeColor(svConfig.fill_color, d.color),
+        fillOpacity: svConfig.fill_opacity !== undefined ? parseFloat(svConfig.fill_opacity) : d.fillOpacity,
+        strokeColor: safeColor(svConfig.fill_color, d.color),
+        strokeWidth: svConfig.stroke_width !== undefined ? parseFloat(svConfig.stroke_width) : d.strokeWidth
     };
 }
 
@@ -870,9 +844,9 @@ function saveOptions() {
     if (colLat)   { opts._colLat   = colLat; }
     if (colLon)   { opts._colLon   = colLon; }
     if (colLabel) { opts._colLabel = colLabel; }
-    var configKeys = ['fill_color', 'fill_opacity', 'stroke_color', 'stroke_opacity', 'stroke_width',
-                      'sel_fill_color', 'sel_fill_opacity', 'sel_stroke_color', 'sel_stroke_opacity', 'sel_stroke_width',
-                      'title', 'layers', 'md', 'lb', 'x', 'y', 'z', 'sviewer_base', 'grist_api_base', 'georchestra_base', 'fit_on_load',
+    var configKeys = ['fill_color', 'fill_opacity', 'stroke_width',
+                      'sel_fill_color', 'sel_fill_opacity', 'sel_stroke_width',
+                      'title', 'layers', 'md', 'sviewer_base', 'grist_api_base', 'georchestra_base',
                       'geom_mode'];
     configKeys.forEach(function(k) { if (svConfig[k] !== undefined) { opts[k] = svConfig[k]; } });
     grist.widgetApi.setOptions(opts).catch(function(e) { console.warn('[sviewer] setOptions failed:', e); });
@@ -883,9 +857,9 @@ function applyOptions(opts) {
     if (!opts) { return; }
     widgetOptions = opts;
     optionsLoaded = true;
-    var configKeys = ['fill_color', 'fill_opacity', 'stroke_color', 'stroke_opacity', 'stroke_width',
-                      'sel_fill_color', 'sel_fill_opacity', 'sel_stroke_color', 'sel_stroke_opacity', 'sel_stroke_width',
-                      'title', 'layers', 'md', 'lb', 'x', 'y', 'z', 'sviewer_base', 'grist_api_base', 'georchestra_base', 'fit_on_load',
+    var configKeys = ['fill_color', 'fill_opacity', 'stroke_width',
+                      'sel_fill_color', 'sel_fill_opacity', 'sel_stroke_width',
+                      'title', 'layers', 'md', 'sviewer_base', 'grist_api_base', 'georchestra_base',
                       'geom_mode'];
     configKeys.forEach(function(k) { if (opts[k] !== undefined) { svConfig[k] = opts[k]; } });
     // migrate legacy keys
@@ -933,47 +907,13 @@ function openSettings() {
     syncColumnPickerMode();
     var d = geojsonStyleDefaults();
     document.getElementById('sv-cfg-fill-color').value          = safeColor(svConfig.fill_color,       d.color);
-    document.getElementById('sv-cfg-fill-opacity').value        = svConfig.fill_opacity    !== undefined ? svConfig.fill_opacity    : d.fillOpacity;
-    document.getElementById('sv-cfg-stroke-color').value        = safeColor(svConfig.stroke_color,     d.color);
-    document.getElementById('sv-cfg-stroke-opacity').value      = svConfig.stroke_opacity  !== undefined ? svConfig.stroke_opacity  : 1;
-    document.getElementById('sv-cfg-stroke-width').value        = svConfig.stroke_width    !== undefined ? svConfig.stroke_width    : d.strokeWidth;
-    document.getElementById('sv-cfg-sel-fill-color').value      = safeColor(svConfig.sel_fill_color,   '#e74c3c');
-    document.getElementById('sv-cfg-sel-fill-opacity').value    = svConfig.sel_fill_opacity   !== undefined ? svConfig.sel_fill_opacity   : 1;
-    document.getElementById('sv-cfg-sel-stroke-color').value    = safeColor(svConfig.sel_stroke_color, '#ffffff');
-    document.getElementById('sv-cfg-sel-stroke-opacity').value  = svConfig.sel_stroke_opacity !== undefined ? svConfig.sel_stroke_opacity : 1;
-    document.getElementById('sv-cfg-sel-stroke-width').value    = svConfig.sel_stroke_width   !== undefined ? svConfig.sel_stroke_width   : d.strokeWidth + 1;
+    document.getElementById('sv-cfg-fill-opacity').value        = svConfig.fill_opacity !== undefined ? svConfig.fill_opacity : d.fillOpacity;
+    document.getElementById('sv-cfg-stroke-width').value        = svConfig.stroke_width !== undefined ? svConfig.stroke_width : d.strokeWidth;
+    document.getElementById('sv-cfg-sel-fill-color').value      = safeColor(svConfig.sel_fill_color,   '#ee7733');
+    document.getElementById('sv-cfg-sel-fill-opacity').value    = svConfig.sel_fill_opacity !== undefined ? svConfig.sel_fill_opacity : 1;
+    document.getElementById('sv-cfg-sel-stroke-width').value    = svConfig.sel_stroke_width !== undefined ? svConfig.sel_stroke_width : d.strokeWidth + 1;
     document.getElementById('sv-cfg-layers').value  = svConfig.layers || '';
     document.getElementById('sv-cfg-md').value      = svConfig.md     || '';
-    var hc     = window.hardConfig || {};
-var bgLayers  = hc.layersBackground  || [];
-    var loLayers  = hc.layersOverlay     || [];
-    var presets   = hc.backgroundPresets && hc.backgroundPresets.length ? hc.backgroundPresets : null;
-    var lbSel = document.getElementById('sv-cfg-lb-sel');
-    var lbNum = document.getElementById('sv-cfg-lb');
-    var pool = presets || bgLayers;
-    if (pool.length) {
-        lbSel.options.length = 0;
-        var noneOpt = document.createElement('option');
-        noneOpt.value = ''; noneOpt.textContent = lang === 'fr' ? '(défaut)' : lang === 'de' ? '(Standard)' : lang === 'es' ? '(defecto)' : '(default)';
-        lbSel.appendChild(noneOpt);
-        pool.forEach(function(item, idx) {
-            var opt = document.createElement('option');
-            opt.value = idx;
-var label = presets ? (item.title || idx) : layerLabel(item);
-            opt.textContent = label || idx;
-            lbSel.appendChild(opt);
-        });
-        lbSel.value = svConfig.lb !== undefined ? svConfig.lb : '';
-        lbSel.style.display = '';
-        lbNum.style.display = 'none';
-    } else {
-        lbSel.style.display = 'none';
-        lbNum.style.display = '';
-        lbNum.value = svConfig.lb !== undefined ? svConfig.lb : '';
-    }
-    document.getElementById('sv-cfg-x').value       = svConfig.x  !== undefined ? svConfig.x  : '';
-    document.getElementById('sv-cfg-y').value       = svConfig.y  !== undefined ? svConfig.y  : '';
-    document.getElementById('sv-cfg-z').value       = svConfig.z  !== undefined ? svConfig.z  : '';
     var defaultSvBase = svConfig.sviewer_base || (function() {
         var loc = window.location;
         var dir = loc.pathname.replace(/\/[^\/]*$/, '/');
@@ -987,9 +927,6 @@ var label = presets ? (item.title || idx) : layerLabel(item);
     document.getElementById('sv-cfg-georchestra').value = svConfig.georchestra_base ||
         (window.hardConfig && window.hardConfig.geOrchestraBaseUrl) ||
         (window.customConfig && window.customConfig.geOrchestraBaseUrl) || '';
-    // fit_on_load: true = always fit; false = never fit; undefined = fit only when no x/y saved
-    document.getElementById('sv-cfg-fit').checked = svConfig.fit_on_load === true ||
-        (svConfig.fit_on_load === undefined && !svConfig.x && !svConfig.y);
     panel.style.display = 'flex';
     document.getElementById('sv-map').style.display    = 'none';
     document.getElementById('sv-toolbar').style.display = 'none';
@@ -1017,37 +954,23 @@ function closeSettings(save) {
 
         var dcs = geojsonStyleDefaults();
         function readFloat(id, fallback) { var v = parseFloat(document.getElementById(id).value); return isNaN(v) ? fallback : v; }
-        svConfig.fill_color          = document.getElementById('sv-cfg-fill-color').value;
-        svConfig.fill_opacity        = readFloat('sv-cfg-fill-opacity',       dcs.fillOpacity);
-        svConfig.stroke_color        = document.getElementById('sv-cfg-stroke-color').value;
-        svConfig.stroke_opacity      = readFloat('sv-cfg-stroke-opacity',     1);
-        svConfig.stroke_width        = readFloat('sv-cfg-stroke-width',       dcs.strokeWidth);
-        svConfig.sel_fill_color      = document.getElementById('sv-cfg-sel-fill-color').value;
-        svConfig.sel_fill_opacity    = readFloat('sv-cfg-sel-fill-opacity',   1);
-        svConfig.sel_stroke_color    = document.getElementById('sv-cfg-sel-stroke-color').value;
-        svConfig.sel_stroke_opacity  = readFloat('sv-cfg-sel-stroke-opacity', 1);
-        svConfig.sel_stroke_width    = readFloat('sv-cfg-sel-stroke-width',   dcs.strokeWidth + 1);
+        svConfig.fill_color       = document.getElementById('sv-cfg-fill-color').value;
+        svConfig.fill_opacity     = readFloat('sv-cfg-fill-opacity',     dcs.fillOpacity);
+        svConfig.stroke_width     = readFloat('sv-cfg-stroke-width',     dcs.strokeWidth);
+        svConfig.sel_fill_color   = document.getElementById('sv-cfg-sel-fill-color').value;
+        svConfig.sel_fill_opacity = readFloat('sv-cfg-sel-fill-opacity', 1);
+        svConfig.sel_stroke_width = readFloat('sv-cfg-sel-stroke-width', dcs.strokeWidth + 1);
 
         var layers  = document.getElementById('sv-cfg-layers').value.trim();
         var md      = document.getElementById('sv-cfg-md').value.trim();
-        var lbSelEl = document.getElementById('sv-cfg-lb-sel');
-        var lb = (lbSelEl.style.display !== 'none') ? lbSelEl.value.trim() : document.getElementById('sv-cfg-lb').value.trim();
-        var x       = document.getElementById('sv-cfg-x').value.trim();
-        var y       = document.getElementById('sv-cfg-y').value.trim();
-        var z       = document.getElementById('sv-cfg-z').value.trim();
         var apibase = document.getElementById('sv-cfg-apibase').value.trim();
         if (layers)  { svConfig.layers  = layers; } else { delete svConfig.layers; }
         if (md)      { svConfig.md      = md;     } else { delete svConfig.md; }
-        if (lb !== '')      { svConfig.lb = parseInt(lb, 10);   } else { delete svConfig.lb; }
-        if (x !== '')       { svConfig.x  = parseFloat(x);     } else { delete svConfig.x; }
-        if (y !== '')       { svConfig.y  = parseFloat(y);     } else { delete svConfig.y; }
-        if (z !== '')       { svConfig.z  = parseInt(z, 10);   } else { delete svConfig.z; }
         var svbase  = document.getElementById('sv-cfg-svbase').value.trim();
         if (svbase)  { svConfig.sviewer_base   = svbase;  } else { delete svConfig.sviewer_base; }
         if (apibase) { svConfig.grist_api_base = apibase; } else { delete svConfig.grist_api_base; }
         var georchestra = document.getElementById('sv-cfg-georchestra').value.trim();
         if (georchestra) { svConfig.georchestra_base = georchestra; } else { delete svConfig.georchestra_base; }
-        svConfig.fit_on_load = document.getElementById('sv-cfg-fit').checked;
         saveOptions();
         if ((svConfig.layers || null) !== initialLayers || (svConfig.md || null) !== initialMd) { window.location.reload(); return; }
         viewFitted = false;
@@ -1158,15 +1081,12 @@ function rebuildLayer() {
         features.push(feat);
     });
 
-    var shouldFit = svConfig.fit_on_load === true ||
-        (svConfig.fit_on_load !== false && !svConfig.x && !svConfig.y);
-
     SViewer.loadFeatureObjects(features, {
         styleOverride: makeFeatureStyle(getStyleCfg(false), false),
-        fitExtent: features.length > 0 && !viewFitted && shouldFit
+        fitExtent: features.length > 0 && !viewFitted
     });
     layerBuilt = true;
-    if (shouldFit && features.length) { viewFitted = true; }
+    if (features.length) { viewFitted = true; }
 
     // Refresh share URL with current column hints after each rebuild
     var geojsonUrl = buildGristGeojsonUrl();
@@ -1239,7 +1159,6 @@ function initMap() {
     if (svConfig.md && !svConfig.layers) { opts.md = svConfig.md; }
     initialLayers = svConfig.layers || null;
     initialMd = svConfig.md || null;
-    if (svConfig.lb !== undefined) { opts.lb = parseInt(svConfig.lb, 10); }
     var georchestraBase = safeHttpUrl(svConfig.georchestra_base);
     if (georchestraBase && window.hardConfig) { window.hardConfig.geOrchestraBaseUrl = georchestraBase; }
 
@@ -1288,29 +1207,17 @@ document.getElementById('sv-btn-cfg-cancel').addEventListener('click', function(
 document.getElementById('sv-btn-cfg-export').addEventListener('click', function() {
     function rf(id) { return document.getElementById(id) ? document.getElementById(id).value : undefined; }
     function rn(id) { var v = parseFloat(rf(id)); return isNaN(v) ? undefined : v; }
-    var lbSel = document.getElementById('sv-cfg-lb-sel');
-    var lbNum = document.getElementById('sv-cfg-lb');
-    var lbVal = (lbSel.style.display !== 'none') ? lbSel.value : lbNum.value;
     var out = {
-        stroke_color:        rf('sv-cfg-stroke-color'),
-        stroke_opacity:      rn('sv-cfg-stroke-opacity'),
-        stroke_width:        rn('sv-cfg-stroke-width'),
-        fill_color:          rf('sv-cfg-fill-color'),
-        fill_opacity:        rn('sv-cfg-fill-opacity'),
-        sel_stroke_color:    rf('sv-cfg-sel-stroke-color'),
-        sel_stroke_opacity:  rn('sv-cfg-sel-stroke-opacity'),
-        sel_stroke_width:    rn('sv-cfg-sel-stroke-width'),
-        sel_fill_color:      rf('sv-cfg-sel-fill-color'),
-        sel_fill_opacity:    rn('sv-cfg-sel-fill-opacity'),
-        fit_on_load:         document.getElementById('sv-cfg-fit').checked
+        stroke_width:     rn('sv-cfg-stroke-width'),
+        fill_color:       rf('sv-cfg-fill-color'),
+        fill_opacity:     rn('sv-cfg-fill-opacity'),
+        sel_stroke_width: rn('sv-cfg-sel-stroke-width'),
+        sel_fill_color:   rf('sv-cfg-sel-fill-color'),
+        sel_fill_opacity: rn('sv-cfg-sel-fill-opacity'),
     };
     if (svConfig.title)                            { out.title          = svConfig.title; }
     var layers = rf('sv-cfg-layers'); if (layers) { out.layers         = layers; }
     var md = rf('sv-cfg-md'); if (md)             { out.md             = md; }
-    if (lbVal !== '')                             { out.lb             = parseInt(lbVal, 10); }
-    var x = rf('sv-cfg-x'); if (x !== '')        { out.x              = parseFloat(x); }
-    var y = rf('sv-cfg-y'); if (y !== '')        { out.y              = parseFloat(y); }
-    var z = rf('sv-cfg-z'); if (z !== '')        { out.z              = parseInt(z, 10); }
     var svbase = rf('sv-cfg-svbase'); if (svbase) { out.sviewer_base   = svbase; }
     var api = rf('sv-cfg-apibase'); if (api)      { out.grist_api_base = api; }
     var geo = rf('sv-cfg-georchestra'); if (geo)  { out.georchestra_base = geo; }
@@ -1325,37 +1232,24 @@ document.getElementById('sv-btn-cfg-export').addEventListener('click', function(
 });
 
 function applyImportData(data) {
-    var lbSel = document.getElementById('sv-cfg-lb-sel');
-    var lbNum = document.getElementById('sv-cfg-lb');
     var dai = geojsonStyleDefaults();
-    if (data.fill_color !== undefined)          { document.getElementById('sv-cfg-fill-color').value         = safeColor(data.fill_color, dai.color); }
-    if (data.fill_opacity !== undefined)        { document.getElementById('sv-cfg-fill-opacity').value       = data.fill_opacity; }
-    if (data.stroke_color !== undefined)        { document.getElementById('sv-cfg-stroke-color').value       = safeColor(data.stroke_color, dai.color); }
-    if (data.stroke_opacity !== undefined)      { document.getElementById('sv-cfg-stroke-opacity').value     = data.stroke_opacity; }
-    if (data.stroke_width !== undefined)        { document.getElementById('sv-cfg-stroke-width').value       = data.stroke_width; }
-    if (data.sel_fill_color !== undefined)      { document.getElementById('sv-cfg-sel-fill-color').value     = safeColor(data.sel_fill_color, '#e74c3c'); }
-    if (data.sel_fill_opacity !== undefined)    { document.getElementById('sv-cfg-sel-fill-opacity').value   = data.sel_fill_opacity; }
-    if (data.sel_stroke_color !== undefined)    { document.getElementById('sv-cfg-sel-stroke-color').value   = safeColor(data.sel_stroke_color, '#ffffff'); }
-    if (data.sel_stroke_opacity !== undefined)  { document.getElementById('sv-cfg-sel-stroke-opacity').value = data.sel_stroke_opacity; }
-    if (data.sel_stroke_width !== undefined)    { document.getElementById('sv-cfg-sel-stroke-width').value   = data.sel_stroke_width; }
+    if (data.fill_color !== undefined)       { document.getElementById('sv-cfg-fill-color').value       = safeColor(data.fill_color, dai.color); }
+    if (data.fill_opacity !== undefined)     { document.getElementById('sv-cfg-fill-opacity').value     = data.fill_opacity; }
+    if (data.stroke_width !== undefined)     { document.getElementById('sv-cfg-stroke-width').value     = data.stroke_width; }
+    if (data.sel_fill_color !== undefined)   { document.getElementById('sv-cfg-sel-fill-color').value   = safeColor(data.sel_fill_color, '#ee7733'); }
+    if (data.sel_fill_opacity !== undefined) { document.getElementById('sv-cfg-sel-fill-opacity').value = data.sel_fill_opacity; }
+    if (data.sel_stroke_width !== undefined) { document.getElementById('sv-cfg-sel-stroke-width').value = data.sel_stroke_width; }
     if (data.title !== undefined) {
         svConfig.title = data.title;
         // Update share panel field directly — bypass onTitleChange (import is not a user edit)
         var sf = document.getElementById('shareSetTitle');
         if (sf) { sf.value = data.title; }
     }
-    if (data.layers !== undefined)              { document.getElementById('sv-cfg-layers').value             = data.layers; }
-    if (data.md !== undefined)                  { document.getElementById('sv-cfg-md').value                 = data.md; }
-    if (data.lb !== undefined) {
-        if (lbSel.style.display !== 'none') { lbSel.value = data.lb; } else { lbNum.value = data.lb; }
-    }
-    if (data.x !== undefined)                   { document.getElementById('sv-cfg-x').value      = data.x; }
-    if (data.y !== undefined)                   { document.getElementById('sv-cfg-y').value      = data.y; }
-    if (data.z !== undefined)                   { document.getElementById('sv-cfg-z').value      = data.z; }
+    if (data.layers !== undefined) { document.getElementById('sv-cfg-layers').value = data.layers; }
+    if (data.md !== undefined)     { document.getElementById('sv-cfg-md').value     = data.md; }
     if (data.sviewer_base !== undefined)        { document.getElementById('sv-cfg-svbase').value = safeHttpUrl(data.sviewer_base) || ''; }
     if (data.grist_api_base !== undefined)      { document.getElementById('sv-cfg-apibase').value = safeHttpUrl(data.grist_api_base) || ''; }
     if (data.georchestra_base !== undefined)    { document.getElementById('sv-cfg-georchestra').value = safeHttpUrl(data.georchestra_base) || ''; }
-    if (data.fit_on_load !== undefined)         { document.getElementById('sv-cfg-fit').checked  = data.fit_on_load; }
     if (data.geom_mode !== undefined) {
         var modeElAi = document.getElementById('sv-cfg-geom-mode');
         if (modeElAi) { modeElAi.value = data.geom_mode; syncColumnPickerMode(); }
