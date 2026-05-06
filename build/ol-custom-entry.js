@@ -41,6 +41,7 @@ import * as proj4 from 'ol/proj/proj4.js';
 // Import formats
 import GeoJSON from 'ol/format/GeoJSON.js';
 import WMSCapabilities from 'ol/format/WMSCapabilities.js';
+import WKT from 'ol/format/WKT.js';
 
 // Import utilities
 import * as color from 'ol/color.js';
@@ -99,6 +100,7 @@ window.ol = {
   format: {
     GeoJSON,
     WMSCapabilities,
+    WKT,
   },
   color,
   extent,

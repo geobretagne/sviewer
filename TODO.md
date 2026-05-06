@@ -17,6 +17,7 @@
   **Status sViewer :** CDN `docs.getgrist.com` conservé, aucune action possible côté sViewer.
 
 - [x] Test suite : browser-based visual runner at /sviewer/tests/ — 27 tests (params, config merge, i18n, live WMS), iframe + postMessage, ?autorun=1 for CI
+- [x] Grist widget : WKT geometry auto-detection — ol/format/WKT added to OL custom build; adapter.js + widget.js auto-detect WKT columns (no manual mode required)
 - [ ] CI : GitHub Actions workflow — build + healthcheck verify on tag push (no registry push)
 - [x] Test c= parameter (sviewer configuration profile) — fixed two bugs: embed.js ignored ?c=, customConfig keys were stomped by hardConfig defaults ($.extend order wrong)
 - [ ] Grist widget : real-world user testing

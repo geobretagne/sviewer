@@ -346,7 +346,19 @@ function detectColumns(columns, firstRow) {
             if (!geom && parseGeom(firstRow[c])) { geom = c; }
         });
     }
-    if (geom) { mode = 'geojson'; }
+    if (geom && firstRow) {
+        // Name matched — check actual value to distinguish GeoJSON vs WKT
+        var geomVal = firstRow[geom];
+        if (parseGeom(geomVal)) {
+            mode = 'geojson';
+        } else {
+            // Value is not GeoJSON — try WKT before committing
+            var wktProbe = new ol.format.WKT();
+            try { wktProbe.readGeometry(geomVal); mode = 'wkt'; } catch(e) { geom = null; }
+        }
+    } else if (geom) {
+        mode = 'geojson'; // no firstRow to probe, assume GeoJSON
+    }
     // Si pas de colonne géométrie, chercher une paire lat/lon
     if (!geom) {
         LAT_CANDIDATES.forEach(function(c) { if (!lat && names.indexOf(c) !== -1) { lat = columns[names.indexOf(c)]; } });

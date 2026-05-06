@@ -39,8 +39,21 @@
         return null;
     }
 
-    // Find the first column in `row` that looks like a GeoJSON geometry.
-    // Tries GEOM_CANDIDATES by name first (case-insensitive), then scans values.
+    var WKT_RE = /^\s*(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON|GEOMETRYCOLLECTION)\s*[Z(M]/i;
+
+    // Parse a WKT string into a GeoJSON geometry. Returns null on failure.
+    function parseWkt(val) {
+        if (typeof val !== 'string' || !WKT_RE.test(val)) { return null; }
+        try {
+            var wktFmt = new ol.format.WKT();
+            var gjFmt  = new ol.format.GeoJSON();
+            var olGeom = wktFmt.readGeometry(val, { dataProjection: 'EPSG:4326', featureProjection: 'EPSG:4326' });
+            return JSON.parse(gjFmt.writeGeometry(olGeom));
+        } catch(e) { return null; }
+    }
+
+    // Find the first column in `row` that looks like a GeoJSON or WKT geometry.
+    // Returns { key, isWkt } or null.
     function detectGeomKey(row) {
         var keys = Object.keys(row);
         var lower = keys.map(function(k) { return k.toLowerCase(); });
@@ -48,10 +61,15 @@
         GEOM_CANDIDATES.forEach(function(c) {
             if (!found && lower.indexOf(c) !== -1) { found = keys[lower.indexOf(c)]; }
         });
-        if (found) { return found; }
-        // Fallback: scan field values for parseable GeoJSON geometry objects.
+        if (found) {
+            var v = row[found];
+            return { key: found, isWkt: (typeof v === 'string' && WKT_RE.test(v)) };
+        }
+        // Fallback: scan field values for parseable GeoJSON or WKT.
         for (var i = 0; i < keys.length; i++) {
-            if (parseGeom(row[keys[i]])) { return keys[i]; }
+            var val = row[keys[i]];
+            if (parseGeom(val)) { return { key: keys[i], isWkt: false }; }
+            if (parseWkt(val))  { return { key: keys[i], isWkt: true  }; }
         }
         return null;
     }
@@ -149,11 +167,11 @@
             } else {
                 // No usable hints — auto-detect from the first row's column names and values.
                 // Detection runs on rows[0] (not f) so every row uses the same column choice.
-                var geomKey = detectGeomKey(rows[0]);
-                var latlon  = geomKey ? null : detectLatLon(rows[0]);
-                if (geomKey) {
-                    geom = parseGeom(f[geomKey]);
-                    excludeKeys[geomKey] = true;
+                var geomInfo = detectGeomKey(rows[0]);
+                var latlon   = geomInfo ? null : detectLatLon(rows[0]);
+                if (geomInfo) {
+                    geom = geomInfo.isWkt ? parseWkt(f[geomInfo.key]) : parseGeom(f[geomInfo.key]);
+                    excludeKeys[geomInfo.key] = true;
                 } else if (latlon) {
                     var lat2 = parseFloat(f[latlon.latKey]);
                     var lon2 = parseFloat(f[latlon.lonKey]);
