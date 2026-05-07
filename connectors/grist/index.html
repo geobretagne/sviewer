@@ -86,7 +86,7 @@
             display: grid; grid-template-columns: 160px 1fr;
             gap: 0; padding: 4px 0;
         }
-        .sv-cfg-grid label {
+        .sv-cfg-grid label, .sv-cfg-grid .sv-cfg-grid-label {
             font-size: 12px; color: var(--text-label); padding: 6px 12px 6px 12px;
             display: flex; align-items: center;
         }
@@ -168,14 +168,14 @@
 <div id="sv-settings">
     <h2 data-i18n="settings"></h2>
 
-    <div id="sv-tab-bar">
-        <button class="sv-tab-btn sv-tab-active" data-tab="data"     data-i18n="settings.section.data"></button>
-        <button class="sv-tab-btn"               data-tab="advanced" data-i18n="settings.section.advanced"></button>
-        <button class="sv-tab-btn"               data-tab="help"     data-i18n="settings.section.help"></button>
+    <div id="sv-tab-bar" role="tablist">
+        <button class="sv-tab-btn sv-tab-active" role="tab" aria-selected="true"  aria-controls="sv-tab-data"     id="sv-tab-btn-data"     data-tab="data"     data-i18n="settings.section.data"></button>
+        <button class="sv-tab-btn"               role="tab" aria-selected="false" aria-controls="sv-tab-advanced" id="sv-tab-btn-advanced" data-tab="advanced" data-i18n="settings.section.advanced"></button>
+        <button class="sv-tab-btn"               role="tab" aria-selected="false" aria-controls="sv-tab-help"     id="sv-tab-btn-help"     data-tab="help"     data-i18n="settings.section.help"></button>
     </div>
 
     <!-- Données -->
-    <div class="sv-tab-panel sv-tab-visible" data-tab="data">
+    <div class="sv-tab-panel sv-tab-visible" role="tabpanel" id="sv-tab-data"     aria-labelledby="sv-tab-btn-data"     data-tab="data">
         <div class="sv-cfg-grid">
             <label for="sv-cfg-geom-mode" data-i18n="settings.geom.mode"></label>
             <select id="sv-cfg-geom-mode">
@@ -197,19 +197,19 @@
             <hr class="sv-cfg-sep">
             <label for="sv-cfg-fill-color" data-i18n="settings.features"></label>
             <div class="sv-cfg-style-row">
-                <input id="sv-cfg-fill-color"   type="color"  value="#0077bb" data-i18n-title="settings.fill">
+                <input id="sv-cfg-fill-color"   type="color"  value="#0077bb" data-i18n-title="settings.fill"         data-i18n-aria="settings.fill">
                 <span class="sv-inline-label" data-i18n="settings.inline.width"></span>
-                <input id="sv-cfg-stroke-width" type="number" min="0" max="20" step="0.5" value="2.5" placeholder="px" data-i18n-title="settings.stroke.width">
+                <input id="sv-cfg-stroke-width" type="number" min="0" max="20" step="0.5" value="2.5" placeholder="px" data-i18n-title="settings.stroke.width"     data-i18n-aria="settings.stroke.width">
                 <span class="sv-inline-label" data-i18n="settings.inline.opacity"></span>
-                <input id="sv-cfg-fill-opacity" type="number" min="0" max="1" step="0.05" value="0.5" placeholder="0–1" data-i18n-title="settings.fill.opacity">
+                <input id="sv-cfg-fill-opacity" type="number" min="0" max="1" step="0.05" value="0.5" placeholder="0–1" data-i18n-title="settings.fill.opacity"   data-i18n-aria="settings.fill.opacity">
             </div>
             <label for="sv-cfg-sel-fill-color" data-i18n="settings.selection"></label>
             <div class="sv-cfg-style-row">
-                <input id="sv-cfg-sel-fill-color"   type="color"  value="#ee7733" data-i18n-title="settings.sel.fill">
+                <input id="sv-cfg-sel-fill-color"   type="color"  value="#ee7733" data-i18n-title="settings.sel.fill"     data-i18n-aria="settings.sel.fill">
                 <span class="sv-inline-label" data-i18n="settings.inline.width"></span>
-                <input id="sv-cfg-sel-stroke-width" type="number" min="0" max="20" step="0.5" value="2.5" placeholder="px" data-i18n-title="settings.sel.stroke.width">
+                <input id="sv-cfg-sel-stroke-width" type="number" min="0" max="20" step="0.5" value="2.5" placeholder="px" data-i18n-title="settings.sel.stroke.width" data-i18n-aria="settings.sel.stroke.width">
                 <span class="sv-inline-label" data-i18n="settings.inline.opacity"></span>
-                <input id="sv-cfg-sel-fill-opacity" type="number" min="0" max="1" step="0.05" value="0.5" placeholder="0–1" data-i18n-title="settings.sel.fill.opacity">
+                <input id="sv-cfg-sel-fill-opacity" type="number" min="0" max="1" step="0.05" value="0.5" placeholder="0–1" data-i18n-title="settings.sel.fill.opacity" data-i18n-aria="settings.sel.fill.opacity">
             </div>
             <hr class="sv-cfg-sep">
             <label for="sv-cfg-autozoom" data-i18n="settings.autozoom"></label>
@@ -217,9 +217,8 @@
         </div>
     </div>
 
-    <!-- Carte -->
     <!-- Avancé -->
-    <div class="sv-tab-panel" data-tab="advanced">
+    <div class="sv-tab-panel" role="tabpanel" id="sv-tab-advanced" aria-labelledby="sv-tab-btn-advanced" aria-hidden="true" data-tab="advanced">
         <div class="sv-cfg-grid">
             <label for="sv-cfg-md"     data-i18n="settings.md"></label>
             <input  id="sv-cfg-md"     type="text" placeholder="identifiant métadonnée">
@@ -233,7 +232,7 @@
             <label for="sv-cfg-georchestra" data-i18n="settings.georchestra"></label>
             <input  id="sv-cfg-georchestra" type="url" placeholder="https://geobretagne.fr">
             <hr class="sv-cfg-sep">
-            <label data-i18n="settings.json"></label>
+            <span class="sv-cfg-grid-label" data-i18n="settings.json"></span>
             <div id="sv-impexp">
                 <button id="sv-btn-cfg-export" data-i18n="settings.export"></button>
                 <button id="sv-btn-cfg-import" data-i18n="settings.import"></button>
@@ -246,7 +245,7 @@
     </div>
 
     <!-- Aide -->
-    <div class="sv-tab-panel" data-tab="help">
+    <div class="sv-tab-panel" role="tabpanel" id="sv-tab-help" aria-labelledby="sv-tab-btn-help" aria-hidden="true" data-tab="help">
         <div id="sv-help">
             <h3>Configurer ce widget</h3>
             <p>Sélectionnez <strong>Complet</strong> dans <em>Accès</em> pour pouvoir modifier les géométries depuis la carte. En lecture seule, les boutons de saisie sont masqués.</p>

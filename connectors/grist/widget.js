@@ -900,12 +900,12 @@ function layerLabel(layer) {
 function openSettings() {
     var panel = document.getElementById('sv-settings');
     if (!panel) { return; }
-    document.querySelectorAll('.sv-tab-btn').forEach(function(b) { b.classList.remove('sv-tab-active'); });
-    document.querySelectorAll('.sv-tab-panel[data-tab]').forEach(function(fs) { fs.classList.remove('sv-tab-visible'); });
+    document.querySelectorAll('.sv-tab-btn').forEach(function(b) { b.classList.remove('sv-tab-active'); b.setAttribute('aria-selected', 'false'); });
+    document.querySelectorAll('.sv-tab-panel[data-tab]').forEach(function(fs) { fs.classList.remove('sv-tab-visible'); fs.setAttribute('aria-hidden', 'true'); });
     var firstBtn = document.querySelector('.sv-tab-btn[data-tab="data"]');
     var firstFs  = document.querySelector('.sv-tab-panel[data-tab="data"]');
-    if (firstBtn) { firstBtn.classList.add('sv-tab-active'); }
-    if (firstFs)  { firstFs.classList.add('sv-tab-visible'); }
+    if (firstBtn) { firstBtn.classList.add('sv-tab-active'); firstBtn.setAttribute('aria-selected', 'true'); }
+    if (firstFs)  { firstFs.classList.add('sv-tab-visible'); firstFs.setAttribute('aria-hidden', 'false'); }
     var modeElOs = document.getElementById('sv-cfg-geom-mode');
     if (modeElOs) { modeElOs.value = colGeomMode; }
     syncColumnPickerMode();
@@ -937,6 +937,8 @@ function openSettings() {
     panel.style.display = 'flex';
     document.getElementById('sv-map').style.display    = 'none';
     document.getElementById('sv-toolbar').style.display = 'none';
+    var firstFocus = document.getElementById('sv-cfg-geom-mode');
+    if (firstFocus) { firstFocus.focus(); }
 }
 
 function closeSettings(save) {
@@ -992,6 +994,8 @@ function closeSettings(save) {
     document.getElementById('sv-import-json').value         = '';
     document.getElementById('sv-map').style.display         = '';
     document.getElementById('sv-toolbar').style.display     = '';
+    var restoreFocus = document.getElementById('sv-status');
+    if (restoreFocus) { restoreFocus.focus(); }
 }
 
 // onRecords se déclenche aussi à chaque changement de sélection — le debounce évite les rebuilds inutiles.
@@ -1449,11 +1453,18 @@ document.getElementById('sv-tab-bar').addEventListener('click', function(e) {
     var btn = e.target.closest('.sv-tab-btn');
     if (!btn) { return; }
     var tab = btn.getAttribute('data-tab');
-    document.querySelectorAll('.sv-tab-btn').forEach(function(b) { b.classList.remove('sv-tab-active'); });
-    document.querySelectorAll('.sv-tab-panel[data-tab]').forEach(function(fs) { fs.classList.remove('sv-tab-visible'); });
+    document.querySelectorAll('.sv-tab-btn').forEach(function(b) {
+        b.classList.remove('sv-tab-active');
+        b.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.sv-tab-panel[data-tab]').forEach(function(fs) {
+        fs.classList.remove('sv-tab-visible');
+        fs.setAttribute('aria-hidden', 'true');
+    });
     btn.classList.add('sv-tab-active');
+    btn.setAttribute('aria-selected', 'true');
     var target = document.querySelector('.sv-tab-panel[data-tab="' + tab + '"]');
-    if (target) { target.classList.add('sv-tab-visible'); }
+    if (target) { target.classList.add('sv-tab-visible'); target.setAttribute('aria-hidden', 'false'); }
 });
 
 // Chaîne de démarrage : options widget + IDs doc/table → init carte.
