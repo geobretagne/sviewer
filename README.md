@@ -67,7 +67,7 @@ sViewer récupère automatiquement l'URL WMS et les métadonnées (titre, résum
 
 sViewer affiche des flux WMS — pas les fichiers directement. Deux alternatives :
 
-- **Grist** — si vos données sont dans un document Grist avec une colonne géométrie, utilisez le [widget Grist intégré](connectors/grist/) : il synchronise la sélection entre la table et la carte en temps réel. La carte générée est aussi partageable et intégrable hors de Grist — lien direct, QR code, `<iframe>` ou API JavaScript — exactement comme n'importe quelle carte sViewer.
+- **Grist** — si vos données sont dans un document Grist avec une colonne géométrie, utilisez le [widget Grist intégré](connectors/grist/) : carte interactive synchronisée avec le tableau, édition de géométries depuis la carte, lien de partage autonome. → [Documentation complète du widget Grist](connectors/grist/README.md)
 - **Autres formats** — parlez à votre service SIG ou utilisez un outil comme [uMap](https://umap.openstreetmap.fr/) qui accepte les imports directs.
 
 

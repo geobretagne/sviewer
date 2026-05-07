@@ -6,6 +6,20 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-05-07
+
+### Added
+
+- **Grist widget : édition de géométrie** : dessin et correction de points, lignes et surfaces directement sur la carte — les modifications sont écrites dans Grist via `selectedTable.update`. Accès complet requis. Modes GeoJSON, WKT, lat/lon et texte coordonnées supportés ; lignes et surfaces indisponibles en mode point-only (lat/lon, texte).
+- **Grist widget : zoom automatique sur sélection** : option persistante (activée par défaut) — centrage et zoom sur l'entité à chaque sélection d'une ligne dans le tableau. Débrayable dans le panneau de configuration.
+- **Grist widget : exclusion mutuelle md= / layers=** : saisir un identifiant dans l'un des champs désactive et vide l'autre.
+- **Grist widget : refonte panneau de configuration** : 3 onglets (Données, Avancé, Aide), séparateurs hr, 2 lignes de style (Données / Ligne sélectionnée), palette couleur-sûre Wong (`#0077bb` / `#ee7733`), opacité remplissage 0,5 par défaut, suppression des contrôles x/y/z/lb redondants, export/import JSON déplacé dans l'onglet Avancé.
+- **Grist widget : accessibilité WCAG 2.1 AA** : `role=tablist/tab/tabpanel`, `aria-selected`, `aria-controls`, `aria-hidden` sur les panneaux inactifs, `aria-label` sur les saisies couleur et numériques, gestion du focus à l'ouverture/fermeture du panneau.
+
+### Changed
+
+- **Grist widget : documentation** : README connecteur réécrit pour un public non-SIG — installation, édition de géométrie pas à pas, référence des 5 champs avancés (objectif, syntaxe, exemple).
+
 ## [0.8.3] - 2026-05-06
 
 ### Added
