@@ -1107,6 +1107,36 @@ window.SViewerApp = (function() {
         log('loadFeatureObjects: loaded', features.length, 'features');
     }
 
+    // Auto-simplify vector features when total vertex count exceeds device threshold.
+    // Runs once on load; skips Point/MultiPoint (no vertices to remove).
+    var _SIMPLIFY_POINT_TYPES = { 'Point': true, 'MultiPoint': true };
+    function _simplifyFeatures(features) {
+        var isMobile = window.innerWidth < 768 || window.devicePixelRatio > 1.5;
+        var threshold = isMobile ? 25000 : 100000;
+        var tolerance  = isMobile ? 10    : 20;    // meters, EPSG:3857
+        var t0 = Date.now();
+        var totalBefore = 0;
+        features.forEach(function(f) {
+            var g = f.getGeometry();
+            if (!g || _SIMPLIFY_POINT_TYPES[g.getType()]) { return; }
+            totalBefore += g.getFlatCoordinates().length / 2;
+        });
+        if (totalBefore <= threshold) {
+            log('_simplifyFeatures: skip (', totalBefore, 'vertices <=', threshold, ')');
+            return features;
+        }
+        var totalAfter = 0;
+        features.forEach(function(f) {
+            var g = f.getGeometry();
+            if (!g || _SIMPLIFY_POINT_TYPES[g.getType()]) { return; }
+            var simplified = g.simplify(tolerance);
+            f.setGeometry(simplified);
+            totalAfter += simplified.getFlatCoordinates().length / 2;
+        });
+        log('_simplifyFeatures:', totalBefore, '->', totalAfter, 'vertices | tolerance=', tolerance, 'm | device=', isMobile ? 'mobile' : 'desktop', '|', (Date.now() - t0), 'ms');
+        return features;
+    }
+
     /**
      * Loads an external GeoJSON URL as a vector layer.
      * Points, lines and polygons all supported. Features are clickable — properties
@@ -1127,6 +1157,7 @@ window.SViewerApp = (function() {
             catch(_e) { return false; }
         });
         log('_applyGeoJSON: OL features after reprojection filter=', features.length);
+        features = _simplifyFeatures(features);
         _buildVectorLayer(features, {});
         _bindVectorClick();
         _renderGeoJSONInfoPanel(features.length, sourceUrl || state.geojson, adapter);

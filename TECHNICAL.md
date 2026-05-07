@@ -233,6 +233,7 @@ Charge un fichier GeoJSON distant comme données vectorielles interactives.
 - Compatible embed : `SViewer.init('#map', { geojson: 'https://...' })`
 - Si une entité possède une propriété `_label`, celle-ci est affichée comme étiquette texte sur la carte
 - Si l'URL source n'est pas un GeoJSON natif, les adaptateurs déclarés dans `customConfig.adapters` sont essayés dans l'ordre pour normaliser la réponse (voir [Adaptateurs JSON](#adaptateurs-json-adapters))
+- Simplification géométrique automatique : si le nombre total de sommets dépasse le seuil (25 000 sur mobile, 100 000 sur desktop), les géométries lignes et polygones sont simplifiées à la volée (tolérance 10 m mobile / 20 m desktop). Les points ne sont pas affectés. Transparent pour l'utilisateur.
 
 Persistant dans le permalien et le code embed.
 
