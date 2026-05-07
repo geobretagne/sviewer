@@ -19,7 +19,7 @@ SV_TESTS.push({
     params: {
         geojson: WFS_EU,
         label: 'numero',
-        z: 13,
+        z: 15,
         x: 161413,
         y: 6462744
     },
