@@ -952,10 +952,11 @@ function openSettings() {
         (window.customConfig && window.customConfig.geOrchestraBaseUrl) || '';
     (function() {
         var opVal = svConfig.wms_opacity !== undefined ? svConfig.wms_opacity : 1;
+        var opPct = Math.round(opVal * 100) + '%';
         var sl = document.getElementById('sv-cfg-wms-opacity');
         var lb = document.getElementById('sv-cfg-wms-opacity-val');
-        if (sl) { sl.value = opVal; }
-        if (lb) { lb.textContent = Math.round(opVal * 100) + '%'; }
+        if (sl) { sl.value = opVal; sl.setAttribute('aria-valuetext', opPct); }
+        if (lb) { lb.textContent = opPct; }
     }());
     // Background selector — populate from backgroundPresets if available
     (function() {
@@ -1286,8 +1287,10 @@ document.getElementById('sv-btn-cfg-cancel').addEventListener('click', function(
 }());
 
 document.getElementById('sv-cfg-wms-opacity').addEventListener('input', function() {
+    var pct = Math.round(parseFloat(this.value) * 100) + '%';
     var lbl = document.getElementById('sv-cfg-wms-opacity-val');
-    if (lbl) { lbl.textContent = Math.round(parseFloat(this.value) * 100) + '%'; }
+    if (lbl) { lbl.textContent = pct; }
+    this.setAttribute('aria-valuetext', pct);
 });
 
 document.getElementById('sv-btn-cfg-export').addEventListener('click', function() {

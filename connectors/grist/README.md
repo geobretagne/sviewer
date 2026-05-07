@@ -75,6 +75,16 @@ Cliquez sur **...** au-dessus pour ouvrir le panneau de configuration.
 
 ### Onglet Avancé
 
+#### Fond de carte
+
+Sélectionne le fond de carte affiché derrière les données. La liste reprend les fonds configurés dans `customConfig.js` (titre de chaque preset). Le choix est persisté par widget et restauré à chaque rechargement.
+
+> Visible uniquement si plusieurs fonds de carte sont configurés.
+
+#### Opacité WMS
+
+Règle l'opacité de la donnée WMS ou catalogue chargée dans le widget (curseur de 0 à 100 %). La valeur est persistée et incluse dans le lien de partage.
+
 #### Donnée via catalogue
 
 Charge une donnée WMS à partir de son identifiant dans un catalogue de métadonnées GeoNetwork (CSW). sViewer récupère automatiquement l'URL WMS, le titre, le résumé et la licence qui sont affichés dans le panneau "info" de la carte.
