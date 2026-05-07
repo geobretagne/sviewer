@@ -71,10 +71,11 @@
             }).join('&');
             var url = BASE_URL + 'index.html' + (qs ? '?' + qs : '');
 
+            var ms = test.timeout || TIMEOUT_MS;
             var timer = setTimeout(function() {
                 window.removeEventListener('message', onMessage);
-                reject(new Error('Timeout — no sv:ready after ' + TIMEOUT_MS + 'ms'));
-            }, TIMEOUT_MS);
+                reject(new Error('Timeout — no sv:ready after ' + ms + 'ms'));
+            }, ms);
 
             function onMessage(event) {
                 if (!event.data || event.data.type !== 'sv:ready') return;
