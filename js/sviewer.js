@@ -1054,6 +1054,17 @@ window.SViewerApp = (function() {
 
     var _selectedVectorFeature = null;
 
+    function _buildPropertiesTable(props) {
+        var $tbody = $('<tbody>');
+        $.each(props, function(key, val) {
+            if (key === 'geometry' || typeof val === 'object') { return; }
+            if (key.charAt(0) === '_') { return; }
+            if (val === null || val === undefined || val === '') { return; }
+            $tbody.append($('<tr>').append($('<th scope="row">').text(key).attr('title', key)).append($('<td>').text(val)));
+        });
+        return $('<table class="table table-sm table-bordered sv-feature-props" role="table">').append($tbody);
+    }
+
     function _buildSelectionStyle(feature) {
         var gs = config.geojsonStyle || {};
         var selColor = gs.selectionColor || '#ee7733';
@@ -1101,14 +1112,7 @@ window.SViewerApp = (function() {
                 _selectedVectorFeature = feature;
                 feature.setStyle(_buildSelectionStyle(feature));
                 var props = feature.getProperties();
-                var $table = $('<table class="table table-sm table-bordered sv-feature-props">');
-                $.each(props, function(key, val) {
-                    if (key === 'geometry' || typeof val === 'object') { return; }
-                    if (key.charAt(0) === '_') { return; } /* skip internal keys (_label, _gristRowId, …) */
-                    if (val === null || val === undefined || val === '') { return; }
-                    $table.append($('<tr>').append($('<th>').text(key).attr('title', key)).append($('<td>').text(val)));
-                });
-                $('#queryContent').html('').append($table);
+                $('#queryContent').html('').append(_buildPropertiesTable(props));
                 marker.setPosition(e.coordinate);
                 $('#marker').show();
                 closePanel();
@@ -1134,12 +1138,7 @@ window.SViewerApp = (function() {
         var geom = feature.getGeometry();
         if (geom) { view.fit(geom.getExtent(), { maxZoom: 16, duration: 400, padding: [40,40,40,40] }); }
         var props = feature.getProperties();
-        var $table = $('<table class="table table-sm table-bordered sv-feature-props">');
-        $.each(props, function(key, val) {
-            if (key === 'geometry' || typeof val === 'object') { return; }
-            $table.append($('<tr>').append($('<th>').text(key).attr('title', key)).append($('<td>').text(val)));
-        });
-        $('#queryContent').html('').append($table);
+        $('#queryContent').html('').append(_buildPropertiesTable(props));
         closePanel();
         togglePanel('query');
         _emit('sv:featureSelect', { feature: feature, properties: props });
@@ -1582,6 +1581,12 @@ window.SViewerApp = (function() {
     function abortSearchXhrs() {
         $.each(searchXhrs, function() { this.abort(); });
         searchXhrs = [];
+    }
+
+    function clearSearchResults() {
+        abortSearchXhrs();
+        $('#searchResults').html('');
+        $('#searchInput').attr('aria-expanded', 'false').attr('aria-activedescendant', '');
     }
 
     function pruneSearchXhrs() {
@@ -2277,8 +2282,7 @@ if (!hitVector) { queryMap(e.coordinate); }
                     return;
                 }
                 if (key === 'Escape') {
-                    $("#searchResults").html("");
-                    $('#searchInput').attr('aria-expanded', 'false').attr('aria-activedescendant', '');
+                    clearSearchResults();
                     return;
                 }
             }
@@ -2287,9 +2291,7 @@ if (!hitVector) { queryMap(e.coordinate); }
                 $('#locateMsg').text('');
                 searchDebounceTimer = setTimeout(searchPlace, 350);
             } else {
-                abortSearchXhrs();
-                $("#searchResults").html("");
-                $('#searchInput').attr('aria-expanded', 'false').attr('aria-activedescendant', '');
+                clearSearchResults();
                 $('#locateMsg').text(tr('msg.search_hint'));
             }
         });
