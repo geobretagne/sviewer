@@ -12,12 +12,13 @@ var WFS_EU = 'https://data.geopf.fr/wfs/ows'
 
 SV_TESTS.push({
     id: 'geojson-wfs-eu-parcels',
-    label: 'GeoJSON WFS — Eu area bbox, ~8K parcels ~104K vertices — triggers desktop simplify (IGN Géoplateforme)',
+    label: 'GeoJSON WFS — Eu parcels ~104K vertices, labels=numero, triggers desktop simplify (IGN Géoplateforme)',
     group: 'Live',
     type: 'visual',
     timeout: 30000,
     params: {
         geojson: WFS_EU,
+        label: 'numero',
         z: 13,
         x: 161413,
         y: 6462744

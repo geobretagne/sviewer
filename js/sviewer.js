@@ -820,6 +820,7 @@ window.SViewerApp = (function() {
             if (state.position) { linkParams.position = '1'; }
             if (state.opacity !== null && state.opacity !== 1) { linkParams.opacity = state.opacity; }
             if (state.geojson) { linkParams.geojson = state.geojson; }
+            if (state.label) { linkParams.label = state.label; }
             if (config.title) { linkParams.title = config.title; }
             // In embed mode, permalink must point to the standalone sViewer, not the host page
             var standaloneBase = window.SViewerBaseUrl
@@ -1163,6 +1164,9 @@ window.SViewerApp = (function() {
             catch(_e) { return false; }
         });
         log('_applyGeoJSON: OL features after reprojection filter=', features.length);
+        if (state.label) {
+            features.forEach(function(f) { f.set('_label', f.get(state.label)); });
+        }
         features = _simplifyFeatures(features);
         _buildVectorLayer(features, {});
         _bindVectorClick();
@@ -1857,7 +1861,8 @@ window.SViewerApp = (function() {
             position: 0,
             opacity: config.layerOpacity !== undefined ? config.layerOpacity : 1,
             address: null,
-            geojson: null
+            geojson: null,
+            label: null
         };
 
         // querystring param: theme (light | dark), else OS preference
@@ -1994,6 +1999,11 @@ window.SViewerApp = (function() {
         // querystring param: load external GeoJSON layer (?geojson=URL)
         if (qs.geojson) {
             state.geojson = qs.geojson;
+        }
+
+        // querystring param: property to use as label (?label=propertyName)
+        if (qs.label) {
+            state.label = qs.label;
         }
 
         // querystring param: activate WFS feature search alongside geocoding

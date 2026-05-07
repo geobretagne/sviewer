@@ -238,6 +238,19 @@ Charge un fichier GeoJSON distant comme données vectorielles interactives.
 
 Persistant dans le permalien et le code embed.
 
+#### `label`
+
+Désigne la propriété GeoJSON à afficher comme étiquette sur chaque entité. Utile quand la source ne contient pas de propriété `_label`.
+
+```
+?geojson=https://…&label=nom
+?geojson=https://…&label=numero
+```
+
+- Copie la valeur de la propriété nommée vers `_label` sur chaque entité après chargement
+- Sans effet si la propriété n'existe pas sur une entité donnée
+- Persistant dans le permalien
+
 #### `debug` (debug mode)
 
 | Valeur | Effet |
