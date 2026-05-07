@@ -3,6 +3,23 @@
  * group Live: network-dependent tests (IGN Géoplateforme WFS)
  */
 
+// Fixture: empty FeatureCollection — sViewer must return silently, no crash.
+SV_TESTS.push({
+    id: 'geojson-empty',
+    label: 'GeoJSON empty FeatureCollection — silent return, no crash',
+    group: 'GeoJSON',
+    type: 'visual',
+    params: {
+        geojson: SVRunner.getBaseUrl() + 'tests/fixtures/empty.geojson',
+        z: 12,
+        x: 2.3488,
+        y: 48.8534
+    },
+    assert: function(hardConfig) {
+        if (!hardConfig) throw new Error('hardConfig not received — sViewer crashed on empty GeoJSON');
+    }
+});
+
 // Fixture: 1 valid Point + 1 null-geometry feature.
 // sViewer must filter the null silently and load without crash.
 SV_TESTS.push({
