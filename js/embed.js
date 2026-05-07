@@ -174,6 +174,7 @@
                             <div class="mb-3">
                                 <input type="search" name="searchInput" id="searchInput" class="form-control i18n" value="" title="Search place" data-i18n-title="lbl.search_place" placeholder="ex: 10 rue Maurice Fabre, Rennes" data-i18n-placeholder="inp.search_placeholder" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list" aria-activedescendant="">
                             </div>
+                            <button type="submit" class="visually-hidden i18n" data-i18n="lbl.search_place">Search</button>
                         </form>
                         <div>
                             <ul id="searchResults" class="list-group" role="listbox" aria-label="Search results"></ul>
