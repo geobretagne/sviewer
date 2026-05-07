@@ -92,7 +92,7 @@ fb5861f1-1b20-417f-abb6-9fc316c0307d
 
 Affiche une ou plusieurs données via OGC:WMS directement, sans passer par le catalogue. La syntaxe complète permet d'ajouter une donnée provenant d'un service quelconque. La syntaxe abrégée permet d'ajouter une donnée provenant du serveur configuré pour le widget : l'adresse du service est alors fabriquée automatiquement.
 
-Pour une compatibilité complète avec sViewer, le service WMS doit supporter le profil WMS:SLD et donc les opérations `getCapabilities`, `getMap`, `getLegendGraphic`, `DescribeLayer`, `getFeatureInfo` et doit proposer un CORS valide.
+Pour une compatibilité complète avec sViewer le service WMS doit proposer le profil WMS:SLD et donc les opérations `getCapabilities`, `getMap`, `getLegendGraphic`, `DescribeLayer`, `getFeatureInfo`, doit être `https://`  et doit proposer un CORS valide.
 
 **Syntaxe :** 
 
