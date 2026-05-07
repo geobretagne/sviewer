@@ -38,17 +38,15 @@ Les paramètres sont traités comme des chaînes de caractères. Les URL doivent
 
 Positionne la carte et définit le niveau de zoom.
 
-- **`x`, `y`** : Coordonnées en EPSG:3857 (Web Mercator), format numérique
+- **`x`, `y`** : Coordonnées en EPSG:3857 (Web Mercator) **ou** EPSG:4326 (longitude/latitude) — détection automatique
 - **`z`** : Niveau de zoom (0-18), entier
 
 ```
 ?x=-366959&y=2951352&z=5
+?x=-3.36&y=48.11&z=5
 ```
 
-**Notes:**
-- `x` = longitude projetée, `y` = latitude projetée en Web Mercator
-- Utilisez des outils de conversion pour EPSG:4326 → EPSG:3857
-- Exemple: lon=–3.36, lat=48.11 → x=-366959, y=2951352
+**Détection automatique EPSG:4326 / EPSG:3857 :** si `|x| ≤ 180` et `|y| ≤ 180`, les coordonnées sont interprétées comme longitude/latitude (EPSG:4326) et reprojetées automatiquement. Sinon, interprétées comme EPSG:3857. Les deux formats sont donc acceptés sans paramètre supplémentaire.
 
 #### `title`
 
@@ -331,8 +329,8 @@ Les options passées à `SViewer.init()` utilisent **exactement les mêmes noms*
 
 | Option | Type | Équivalent KVP | Description |
 |--------|------|----------------|-------------|
-| `x` | `number` | `?x=` | Longitude initiale (EPSG:3857) |
-| `y` | `number` | `?y=` | Latitude initiale (EPSG:3857) |
+| `x` | `number` | `?x=` | Longitude initiale (EPSG:3857 ou 4326 — détection auto) |
+| `y` | `number` | `?y=` | Latitude initiale (EPSG:3857 ou 4326 — détection auto) |
 | `z` | `number` | `?z=` | Niveau de zoom (0-18) |
 | `title` | `string` | `?title=` | Titre de la carte |
 | `lb` | `number` | `?lb=` | Index du fond de carte |
