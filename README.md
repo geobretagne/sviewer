@@ -48,7 +48,7 @@ sViewer affiche des données publiées via un **service WMS** (Web Map Service) 
 Vos données sont déjà publiées. Copiez l'URL de partage depuis le panneau de partage de votre catalogue, ou construisez l'URL manuellement :
 
 ```
-https://geobretagne.fr/sviewer/?layers=mon_espace:ma_donnee
+https://my-sviewer.example.org/sviewer/?layers=mon_espace:ma_donnee
 ```
 
 Remplacez `mon_espace:ma_donnee` par le nom de votre couche WMS.
@@ -58,7 +58,7 @@ Remplacez `mon_espace:ma_donnee` par le nom de votre couche WMS.
 Utilisez l'identifiant de la fiche directement :
 
 ```
-https://geobretagne.fr/sviewer/?md=fb5861f1-1b20-417f-abb6-9fc316c0307d
+https://my-sviewer.example.org/sviewer/?md=fb5861f1-1b20-417f-abb6-9fc316c0307d
 ```
 
 sViewer récupère automatiquement l'URL WMS et les métadonnées (titre, résumé, licence, producteur). Pour un catalogue différent de celui configuré par défaut, utilisez la syntaxe `identifiant@https://csw-endpoint`.
@@ -92,7 +92,7 @@ Intégrer dans une page web
 Copiez le code depuis le panneau de partage → onglet **HTML** :
 
 ```html
-<iframe src="https://geobretagne.fr/sviewer/?layers=mon_espace:ma_donnee&x=-390192&y=6122108&z=10"
+<iframe src="https://my-sviewer.example.org/sviewer/?layers=mon_espace:ma_donnee&x=-390192&y=6122108&z=10"
         width="100%" height="500" frameborder="0" allowfullscreen></iframe>
 ```
 
@@ -104,7 +104,7 @@ Fonctionne dans tout CMS (WordPress, Drupal, Joomla, Typo3…) sans aucune comp�
 
 ```html
 <div id="ma-carte" style="height:500px"></div>
-<script src="https://geobretagne.fr/sviewer/static/js/embed.min.js"></script>
+<script src="https://my-sviewer.example.org/sviewer/static/js/embed.min.js"></script>
 <script>
   SViewer.init('#ma-carte', {
     x: -390192, y: 6122108, z: 10,

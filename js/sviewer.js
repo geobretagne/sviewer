@@ -1005,38 +1005,82 @@ window.SViewerApp = (function() {
             var gsColor = gs.color || '#ff6600';
             var gsFill = ol.color.asArray(gsColor).slice();
             gsFill[3] = gs.fillOpacity !== undefined ? gs.fillOpacity : 0.35;
-            var gsBaseStyle = new ol.style.Style({
-                fill:   new ol.style.Fill({ color: gsFill }),
-                stroke: new ol.style.Stroke({ color: gsColor, width: gs.strokeWidth || 2.5 }),
-                image:  new ol.style.Circle({
-                    radius: 7,
+            var gsStrokeWidth = gs.strokeWidth || 4;
+            // Per-type styles: lines and polygon strokes get a white halo underneath for contrast.
+            var gsStylePoint = new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 9,
                     fill:   new ol.style.Fill({ color: gsColor }),
                     stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 })
                 })
             });
+            var gsStylePolyHalo  = new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#fff', width: gsStrokeWidth + 2 }) });
+            var gsStylePoly      = new ol.style.Style({ fill: new ol.style.Fill({ color: gsFill }), stroke: new ol.style.Stroke({ color: gsColor, width: gsStrokeWidth }) });
+            var gsStyleLineHalo  = new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#fff', width: gsStrokeWidth + 2 }) });
+            var gsStyleLine      = new ol.style.Style({ stroke: new ol.style.Stroke({ color: gsColor, width: gsStrokeWidth }) });
             vectorLayer = new ol.layer.Vector({
                 source: vectorSource,
                 style: function(feature, resolution) {
                     var lbl = feature.get('_label');
-                    if (!lbl && lbl !== 0) { return gsBaseStyle; }
-                    var showLabel = resolution <= 19.11;
-                    return new ol.style.Style({
-                        fill:   gsBaseStyle.getFill(),
-                        stroke: gsBaseStyle.getStroke(),
-                        image:  gsBaseStyle.getImage(),
-                        text:   showLabel ? new ol.style.Text({
+                    var showLabel = lbl !== undefined && lbl !== null && lbl !== '' && resolution <= 19.11;
+                    var type = feature.getGeometry() ? feature.getGeometry().getType() : '';
+                    var isLine = type === 'LineString' || type === 'MultiLineString';
+                    var isPoly = type === 'Polygon' || type === 'MultiPolygon';
+                    var base;
+                    if (isLine) {
+                        base = [gsStyleLineHalo, gsStyleLine];
+                    } else if (isPoly) {
+                        base = [gsStylePolyHalo, gsStylePoly];
+                    } else {
+                        base = [gsStylePoint];
+                    }
+                    if (!showLabel) { return base; }
+                    var labelStyle = new ol.style.Style({
+                        text: new ol.style.Text({
                             text: String(lbl),
-                            font: 'bold 12px sans-serif',
+                            font: 'bold 13px sans-serif',
                             fill: new ol.style.Fill({ color: '#222' }),
                             stroke: new ol.style.Stroke({ color: '#fff', width: 3 }),
-                            offsetY: -14
-                        }) : null
+                            offsetY: isLine || isPoly ? 0 : -14
+                        })
                     });
+                    return base.concat([labelStyle]);
                 }
             });
         }
         map.addLayer(vectorLayer);
         return vectorLayer;
+    }
+
+    var _selectedVectorFeature = null;
+
+    function _buildSelectionStyle(feature) {
+        var gs = config.geojsonStyle || {};
+        var selColor = gs.selectionColor || '#ee7733';
+        var sw = (gs.strokeWidth || 4) + 1;
+        var type = feature.getGeometry() ? feature.getGeometry().getType() : '';
+        var isLine = type === 'LineString' || type === 'MultiLineString';
+        var isPoly = type === 'Polygon' || type === 'MultiPolygon';
+        var fillArr = ol.color.asArray(selColor).slice();
+        fillArr[3] = gs.fillOpacity !== undefined ? gs.fillOpacity : 0.35;
+        var haloStyle = new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#fff', width: sw + 2 }) });
+        var colorStyle = new ol.style.Style({
+            fill:   (isLine) ? null : new ol.style.Fill({ color: isLine ? null : 'rgba(' + fillArr.join(',') + ')' }),
+            stroke: new ol.style.Stroke({ color: selColor, width: sw }),
+            image:  (!isLine && !isPoly) ? new ol.style.Circle({
+                radius: 11,
+                fill:   new ol.style.Fill({ color: selColor }),
+                stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 })
+            }) : null
+        });
+        return isLine || isPoly ? [haloStyle, colorStyle] : colorStyle;
+    }
+
+    function _clearVectorSelection() {
+        if (_selectedVectorFeature) {
+            _selectedVectorFeature.setStyle(null);
+            _selectedVectorFeature = null;
+        }
     }
 
     // Wire the singleclick handler on the current vectorLayer.
@@ -1053,6 +1097,9 @@ window.SViewerApp = (function() {
             map.forEachFeatureAtPixel(e.pixel, function(feature) {
                 if (hit) { return; }
                 hit = true;
+                _clearVectorSelection();
+                _selectedVectorFeature = feature;
+                feature.setStyle(_buildSelectionStyle(feature));
                 var props = feature.getProperties();
                 var $table = $('<table class="table table-sm table-bordered sv-feature-props">');
                 $.each(props, function(key, val) {
@@ -1069,6 +1116,7 @@ window.SViewerApp = (function() {
                 _emit('sv:featureClick', { feature: feature, coordinate: e.coordinate, properties: props });
                 _emit('sv:featureSelect', { feature: feature, properties: props });
             }, { layerFilter: function(l) { return l === vectorLayer; }, hitTolerance: 8 });
+            if (!hit) { _clearVectorSelection(); }
         });
     }
 

@@ -27,7 +27,7 @@ Guide technique complet pour développeurs et intégrateurs..
 ### Syntaxe générale
 
 ```
-https://geobretagne.fr/sviewer/?param1=valeur1&param2=valeur2
+https://my-sviewer.example.org/sviewer/?param1=valeur1&param2=valeur2
 ```
 
 Les paramètres sont traités comme des chaînes de caractères. Les URL doivent être encodées (ex: espace = `%20`).
@@ -94,7 +94,7 @@ Ajoute une ou plusieurs données WMS à la carte. Format : liste séparée par d
 
 **Exemples :**
 ```
-?layers=geor:commune_bretagne
+?layers=geor:ma_donnee
 ?layers=geor:commune*orange
 ?layers=geor:commune*orange*population>50000
 ```
@@ -160,10 +160,10 @@ Active la barre de recherche au démarrage.
 Applique des filtres CQL aux données déjà chargées via `layers=`, sans les réencoder dans la chaîne `layers`. Format : liste séparée par des **points-virgules**, un filtre par donnée dans l'ordre de `layers=`.
 
 ```
-?layers=ns:a,ns:b&qcl_filters=population>50000;commune='Rennes'
+?layers=ns:a,ns:b&qcl_filters=population>50000;commune='Strasbourg'
 ```
 
-Filtre vide possible : `qcl_filters=;commune='Rennes'` (pas de filtre sur la première donnée).
+Filtre vide possible : `qcl_filters=;commune='Strasbourg'` (pas de filtre sur la première donnée).
 
 Non-persistant (absent du permalien).
 
@@ -207,12 +207,12 @@ Persistant dans le permalien si GPS actif.
 Géocode silencieusement une adresse au chargement et recentre la carte.
 
 ```
-?address=1+place+de+la+R%C3%A9publique%2C+Brest
+?address=4+rue+du+D%C3%B4me%2C+Strasbourg
 ```
 
 - Score IGN ≥ 0.8 → recentrage silencieux + marqueur
 - Score < 0.8 → ouvre le panneau de recherche avec les résultats pour sélection manuelle
-- Compatible embed : `SViewer.init('#map', { address: 'Brest' })`
+- Compatible embed : `SViewer.init('#map', { address: 'Strasbourg' })`
 
 Non-persistant (absent du permalien).
 
@@ -317,7 +317,7 @@ Le paramètre `debug` n'est **pas** persistant.
 ```html
 <div id="ma-carte"></div>
 
-<script src="https://geobretagne.fr/sviewer/static/js/embed.min.js"></script>
+<script src="https://my-sviewer.example.org/sviewer/static/js/embed.min.js"></script>
 <script>
   SViewer.init('#ma-carte', options);
 </script>
@@ -388,9 +388,9 @@ La configuration centralisée d'une instance sViewer se fait dans `local/customC
 **Structure :**
 ```javascript
 customConfig = {
-    title: 'GeoBretagne sViewer',
+    title: 'sViewer',
     lang: 'fr',
-    geOrchestraBaseUrl: 'https://geobretagne.fr',
+    geOrchestraBaseUrl: 'https://my-georchestra.example.org',
     initialExtent: [-600000, 6090000, -100000, 6100000],
     maxExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
     restrictedExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
@@ -405,7 +405,8 @@ customConfig = {
     geojsonStyle: {                  // style des données GeoJSON (?geojson=)
         color: '#ff6600',
         fillOpacity: 0.35,
-        strokeWidth: 2.5
+        strokeWidth: 4,
+        selectionColor: '#ee7733'
     },
     adapters: ['grist'],
     layersBackground: [ /* ... */ ]
@@ -465,7 +466,7 @@ layersBackground: [
     new ol.layer.Tile({
         source: new ol.source.XYZ({
             attributions: ['Contributeurs OpenStreetmap'],
-            url: 'https://tile.geobretagne.fr/osm/tms/osm:grey/EPSG3857/{z}/{x}/{-y}.png',
+            url: 'https://my-tileserver.example.org/osm/tms/osm:grey/EPSG3857/{z}/{x}/{-y}.png',
             maxResolution: 78271.51696402048,
             crossOrigin: 'anonymous'
         }),
@@ -480,7 +481,7 @@ layersBackground: [
 - `crossOrigin: 'anonymous'` requis sur toutes les sources pour que la fonction snapshot fonctionne
 - WMTS Géoplateforme : utiliser un IIFE (`(function(){ ... })()`) pour éviter les variables globales
 - Services TMS geopf (`data.geopf.fr/tms`) : Y-axis = XYZ standard (`{y}`), malgré le profil TMS déclaré
-- Services MapProxy geobretagne (`tile.geobretagne.fr/osm/tms`) : Y-axis = TMS inversé (`{-y}`), `maxResolution` requis car la grille démarre à zoom 0 = 78271 m/px (décalage d'un niveau vs grille OL standard)
+- Services TMS MapProxy : Y-axis = TMS inversé (`{-y}`), `maxResolution` requis car la grille démarre à zoom 0 = 78271 m/px (décalage d'un niveau vs grille OL standard)
 
 ### Service de géocodage
 
@@ -501,14 +502,17 @@ La clé `geojsonStyle` contrôle l'apparence des données vectorielles chargées
 
 ```javascript
 geojsonStyle: {
-    color: '#ff6600',      // couleur contour + remplissage des points (CSS color)
-    fillOpacity: 0.35,     // opacité du remplissage polygone (0–1)
-    strokeWidth: 2.5       // épaisseur du trait en pixels
+    color: '#ff6600',           // couleur contour + remplissage des points (CSS color)
+    fillOpacity: 0.35,          // opacité du remplissage polygone (0–1)
+    strokeWidth: 4,             // épaisseur du trait lignes/polygones en pixels
+    selectionColor: '#ee7733'   // couleur de l'entité sélectionnée au clic
 }
 ```
 
 - `color` s'applique au trait **et** au remplissage des points — les polygones utilisent `color` + `fillOpacity` pour le fond
-- Valeurs par défaut : orange `#ff6600`, opacité `0.35`, trait `2.5 px` — choix colorblind-friendly, visible sur orthophoto et fond de carte
+- Lignes et polygones ont un liseré blanc automatique pour la lisibilité sur tout fond de carte
+- Cliquer sur une entité l'affiche en `selectionColor` ; cliquer ailleurs désélectionne
+- Valeurs par défaut : orange `#ff6600`, opacité `0.35`, trait `4 px`, sélection `#ee7733`
 - Si une entité possède une propriété `_label`, elle est affichée comme étiquette texte au-dessus de l'entité
 
 ### Adaptateurs JSON (`adapters`)
@@ -567,11 +571,11 @@ En l'absence de hints, l'adaptateur Grist auto-détecte la géométrie (candidat
 Par défaut, sViewer accepte toute URL HTTPS comme endpoint OGC (WMS, WFS, CSW). Pour restreindre les domaines autorisés :
 
 ```javascript
-allowedDomains: ['geobretagne.fr', 'data.geopf.fr']
+allowedDomains: ['my-georchestra.example.org', 'data.geopf.fr']
 ```
 
 - Absent ou `[]` : tous les domaines autorisés (comportement par défaut, compatible avec les configs existantes)
-- La correspondance est exacte **ou par sous-domaine** : `'geobretagne.fr'` autorise aussi `tiles.geobretagne.fr`
+- La correspondance est exacte **ou par sous-domaine** : `'example.org'` autorise aussi `tiles.example.org`
 - S'applique aux trois points d'entrée : URL WMS personnalisée (`?layers=ns:layer@url`), URL WMS extraite d'un enregistrement CSW, URL WFS découverte via DescribeLayer
 - En cas de blocage, un avertissement est émis en console (`sViewer: blocked … not in allowedDomains`)
 
@@ -1132,7 +1136,7 @@ SViewer.init('#ma-carte', {}).then(function(app) {
 
     var overlay = new ol.layer.Tile({
         source: new ol.source.TileWMS({
-            url: 'https://geobretagne.fr/geoserver/wms',
+            url: 'https://my-geoserver.example.org/geoserver/wms',
             params: { LAYERS: 'geor:commune', VERSION: '1.3.0' },
             crossOrigin: 'anonymous'
         })

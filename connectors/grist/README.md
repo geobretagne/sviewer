@@ -96,7 +96,7 @@ Charge une donnée WMS à partir de son identifiant dans un catalogue de métado
 fb5861f1-1b20-417f-abb6-9fc316c0307d
 ```
 ```
-fb5861f1-1b20-417f-abb6-9fc316c0307d@https://geobretagne.fr/geonetwork/srv/eng/csw
+fb5861f1-1b20-417f-abb6-9fc316c0307d@https://my-geonetwork.example.org/geonetwork/srv/eng/csw
 ```
 
 > La syntaxe `id@https://csw-endpoint` permet d'utiliser n'importe quel catalogue CSW, pas seulement celui configuré par défaut.
@@ -131,7 +131,7 @@ Racine du déploiement sViewer utilisée pour construire le lien de partage auto
 
 **Exemple :**
 ```
-https://geobretagne.fr/sviewer/
+https://my-sviewer.example.org/sviewer/
 ```
 
 #### URL de base API Grist

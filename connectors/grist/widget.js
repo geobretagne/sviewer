@@ -540,7 +540,7 @@ function makeTextStyle(text, bold, resolution) {
     if (resolution !== undefined && resolution > LABEL_MAX_RESOLUTION) { return null; }
     return new ol.style.Text({
         text: String(text),
-        font: (bold ? 'bold ' : '') + '12px sans-serif',
+        font: (bold ? 'bold ' : '') + '13px sans-serif',
         fill: new ol.style.Fill({ color: '#222' }),
         stroke: new ol.style.Stroke({ color: '#fff', width: 3 }),
         offsetY: -14
@@ -557,27 +557,45 @@ function colorWithOpacity(color, opacity) {
 // Retourne une fonction de style OL : cercle pour Point/MultiPoint, fill+stroke pour les autres.
 // Lit la propriété _label posée sur chaque feature dans rebuildLayer.
 function makeFeatureStyle(cfg, selected) {
-    var fillColor   = colorWithOpacity(cfg.fillColor, cfg.fillOpacity);
+    var fillColorSolid = colorWithOpacity(cfg.fillColor, 1);
+    var fillColorPoly  = colorWithOpacity(cfg.fillColor, cfg.fillOpacity);
     var strokeColor = cfg.strokeColor;
-    var radius      = selected ? 10 : 7;
+    var radius      = selected ? 10 : 9;
+    var sw          = cfg.strokeWidth;
+    var haloWidth   = sw + 2;
     return function(feature, resolution) {
         var geomType = feature.getGeometry() ? feature.getGeometry().getType() : '';
+        var isPoint  = geomType === 'Point' || geomType === 'MultiPoint';
+        var isLine   = geomType === 'LineString' || geomType === 'MultiLineString';
         var text = makeTextStyle(feature.get('_label'), true, resolution);
-        if (geomType === 'Point' || geomType === 'MultiPoint') {
-            return new ol.style.Style({
+        if (isPoint) {
+            var pointStyle = new ol.style.Style({
                 image: new ol.style.Circle({
                     radius: radius,
-                    fill: new ol.style.Fill({ color: fillColor }),
-                    stroke: new ol.style.Stroke({ color: strokeColor, width: cfg.strokeWidth })
+                    fill: new ol.style.Fill({ color: fillColorSolid }),
+                    stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 })
                 }),
                 text: text
             });
+            var haloPoint = new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: radius + 2,
+                    fill: new ol.style.Fill({ color: 'rgba(0,0,0,0)' }),
+                    stroke: new ol.style.Stroke({ color: strokeColor, width: 2 })
+                })
+            });
+            return selected ? [pointStyle, haloPoint] : pointStyle;
         }
-        return new ol.style.Style({
-            fill: new ol.style.Fill({ color: fillColor }),
-            stroke: new ol.style.Stroke({ color: strokeColor, width: cfg.strokeWidth }),
-            text: text
+        var colorStyle = new ol.style.Style({
+            fill:   isLine ? null : new ol.style.Fill({ color: fillColorPoly }),
+            stroke: new ol.style.Stroke({ color: strokeColor, width: sw }),
+            text:   text
         });
+        if (haloWidth <= 0) { return colorStyle; }
+        return [
+            new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#fff', width: haloWidth }) }),
+            colorStyle
+        ];
     };
 }
 
@@ -587,8 +605,8 @@ function geojsonStyleDefaults() {
              (window.hardConfig   && window.hardConfig.geojsonStyle)   || {};
     return {
         color:       safeColor(gs.color, '#0077bb'),
-        fillOpacity: gs.fillOpacity  !== undefined ? gs.fillOpacity  : 0.5,
-        strokeWidth: gs.strokeWidth  !== undefined ? gs.strokeWidth  : 2.5
+        fillOpacity: gs.fillOpacity  !== undefined ? gs.fillOpacity  : 0.35,
+        strokeWidth: gs.strokeWidth  !== undefined ? gs.strokeWidth  : 4
     };
 }
 
@@ -734,9 +752,9 @@ function startDraw(olType) {
     editVertexCount = 0;
     var minPoints = olType === 'Point' ? 1 : olType === 'LineString' ? 2 : 3;
 
-    // Hide existing feature while drawing to avoid visual confusion
+    // Keep existing feature visible during draw — user sees original position for reference
     var feat = featureByRowId[editRowId];
-    if (feat && feat.getGeometry()) { feat.setStyle(new ol.style.Style({})); }
+    if (feat) { feat.setStyle(null); } // null = revert to layer style
 
     var drawSketchStyle = new ol.style.Style({
         fill: new ol.style.Fill({ color: 'rgba(255,215,0,0.3)' }),
@@ -885,6 +903,8 @@ function applyOptions(opts) {
     // migrate legacy keys
     if (opts.feature_color && !opts.fill_color)                 { svConfig.fill_color      = opts.feature_color; }
     if (opts.feature_highlight_color && !opts.sel_fill_color)   { svConfig.sel_fill_color  = opts.feature_highlight_color; }
+    // migrate sel_fill_opacity=1 (old default) → 0.5
+    if (svConfig.sel_fill_opacity === 1)                        { svConfig.sel_fill_opacity = 0.5; }
     if (opts.geom_mode) { colGeomMode = opts.geom_mode; }
     if (opts._colGeom)  { colGeom  = opts._colGeom;  colLat = null; colLon = null; }
     if (opts._colLat)   { colLat   = opts._colLat;   colGeom = null; }
@@ -930,7 +950,7 @@ function openSettings() {
     document.getElementById('sv-cfg-fill-opacity').value        = svConfig.fill_opacity !== undefined ? svConfig.fill_opacity : d.fillOpacity;
     document.getElementById('sv-cfg-stroke-width').value        = svConfig.stroke_width !== undefined ? svConfig.stroke_width : d.strokeWidth;
     document.getElementById('sv-cfg-sel-fill-color').value      = safeColor(svConfig.sel_fill_color,   '#ee7733');
-    document.getElementById('sv-cfg-sel-fill-opacity').value    = svConfig.sel_fill_opacity !== undefined ? svConfig.sel_fill_opacity : 1;
+    document.getElementById('sv-cfg-sel-fill-opacity').value    = svConfig.sel_fill_opacity !== undefined ? svConfig.sel_fill_opacity : 0.5;
     document.getElementById('sv-cfg-sel-stroke-width').value    = svConfig.sel_stroke_width !== undefined ? svConfig.sel_stroke_width : d.strokeWidth + 1;
     document.getElementById('sv-cfg-md').value       = svConfig.md     || '';
     document.getElementById('sv-cfg-layers').value  = svConfig.layers || '';

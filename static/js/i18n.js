@@ -108,7 +108,7 @@ $.extend(hardConfig, {
             'lbl.geocode_results':   'Lieux',
             'msg.search_hint':       'Tapez au moins 3 caractères',
 
-            'inp.search_placeholder': 'ex: 10 rue Maurice Fabre, Rennes',
+            'inp.search_placeholder': 'ex: 4 rue du Dôme, Strasbourg',
 
             'msg.source':               'source',
             'msg.feature_count':        'Entités',

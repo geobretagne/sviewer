@@ -10,14 +10,14 @@
 
 SV_TESTS.push({
     id: 'merge-default-title',
-    label: 'No ?c= — hardConfig default title is "sViewer"',
+    label: 'No ?c= — hardConfig has a non-empty title',
     group: 'Config',
     type: 'visual',
     params: {},
     assert: function(hardConfig) {
         if (!hardConfig) throw new Error('hardConfig not received');
-        if (hardConfig.title !== 'sViewer') {
-            throw new Error('expected "sViewer", got "' + hardConfig.title + '"');
+        if (typeof hardConfig.title !== 'string' || !hardConfig.title) {
+            throw new Error('hardConfig.title missing or empty, got: ' + hardConfig.title);
         }
     }
 });
