@@ -23,7 +23,7 @@ window.SViewerApp = (function() {
     // Fill in defaults — existing keys (from customConfig via embed.js) are preserved
     window.hardConfig = $.extend({
         title: 'sViewer',
-        geOrchestraBaseUrl: 'https://georchestra.org',
+        geOrchestraBaseUrl: 'https://demo.georchestra.org',
         projcode: 'EPSG:3857',
         initialExtent: [-567000, 5047000, 1068000, 6639000],
         maxExtent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
@@ -564,7 +564,13 @@ window.SViewerApp = (function() {
     }
 
     function fetchCSWRecord(metadataId, callback) {
-        var url = hardConfig.geOrchestraBaseUrl + '/geonetwork/srv/eng/csw?' + $.param({
+        var cswBase = hardConfig.geOrchestraBaseUrl + '/geonetwork/srv/eng/csw';
+        var atIdx = metadataId.indexOf('@http');
+        if (atIdx !== -1) {
+            cswBase = metadataId.slice(atIdx + 1);
+            metadataId = metadataId.slice(0, atIdx);
+        }
+        var url = cswBase + '?' + $.param({
             SERVICE: 'CSW',
             VERSION: '2.0.2',
             REQUEST: 'GetRecordById',
@@ -1002,28 +1008,28 @@ window.SViewerApp = (function() {
                 fill:   new ol.style.Fill({ color: gsFill }),
                 stroke: new ol.style.Stroke({ color: gsColor, width: gs.strokeWidth || 2.5 }),
                 image:  new ol.style.Circle({
-                    radius: 6,
+                    radius: 7,
                     fill:   new ol.style.Fill({ color: gsColor }),
                     stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 })
                 })
             });
             vectorLayer = new ol.layer.Vector({
                 source: vectorSource,
-                style: function(feature) {
+                style: function(feature, resolution) {
                     var lbl = feature.get('_label');
                     if (!lbl && lbl !== 0) { return gsBaseStyle; }
+                    var showLabel = resolution <= 19.11;
                     return new ol.style.Style({
                         fill:   gsBaseStyle.getFill(),
                         stroke: gsBaseStyle.getStroke(),
                         image:  gsBaseStyle.getImage(),
-                        text:   new ol.style.Text({
+                        text:   showLabel ? new ol.style.Text({
                             text: String(lbl),
-                            font: '12px sans-serif',
+                            font: 'bold 12px sans-serif',
                             fill: new ol.style.Fill({ color: '#222' }),
                             stroke: new ol.style.Stroke({ color: '#fff', width: 3 }),
-                            overflow: true,
                             offsetY: -14
-                        })
+                        }) : null
                     });
                 }
             });
@@ -2477,6 +2483,10 @@ if (!hitVector) { queryMap(e.coordinate); }
     this.loadGeoJSON = function(geojson) { loadGeoJSON(null, geojson); };
     // Select feature by OL feature id (feature.setId()). null clears selection.
     this.selectFeatureById = function(id) { selectFeatureById(id); };
+    // Switch background/preset by index. No-op if index out of range.
+    this.switchBackground = function(idx) { switchBackground(idx); };
+    // Trigger a vector layer redraw without replacing the style (preserves declutter).
+    this.refreshVector = function() { if (vectorLayer) { vectorLayer.changed(); map.renderSync(); } };
     // Optional callback — set by embedders to be notified when the user
     // changes the title via the share panel. Not called for programmatic
     // setTitle() calls (init, md/WFS auto-title). Null by default.

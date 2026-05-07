@@ -114,10 +114,11 @@ Charge automatiquement une ou plusieurs données WMS depuis des identifiants de 
 ```
 ?md=<identifiant-csw>
 ?md=<id1>,<id2>,<id3>
+?md=<id>@<csw-endpoint>
 ```
 
 **Comportement :**
-- Interroge le CSW (`geOrchestraBaseUrl/geonetwork/srv/eng/csw`) pour résoudre l'URL WMS et le nom de chaque donnée
+- Interroge le CSW (`geOrchestraBaseUrl/geonetwork/srv/eng/csw` par défaut, ou l'endpoint précisé via `id@url`) pour résoudre l'URL WMS et le nom de chaque donnée
 - Affiche titre, résumé et légende depuis chaque fiche (un panneau par métadonnée)
 - Titre automatique de la carte : uniquement si un seul `md=` — ambigu avec plusieurs, utiliser `&title=` explicitement
 - Ignoré si `layers=` est aussi présent (`layers=` est prioritaire)
@@ -674,7 +675,7 @@ Avec un seul `md=` : le titre de la carte est initialisé depuis la fiche. Avec 
 
 #### Prérequis
 
-- GeoNetwork doit exposer un endpoint CSW à `${geOrchestraBaseUrl}/geonetwork/srv/eng/csw`
+- Par défaut, le CSW est interrogé à `${geOrchestraBaseUrl}/geonetwork/srv/eng/csw` ; la syntaxe `id@https://csw-endpoint` permet d'utiliser n'importe quel catalogue CSW
 - Chaque fiche doit contenir un `CI_OnlineResource` avec `protocol = OGC:WMS`
 - Le serveur WMS doit supporter CORS
 

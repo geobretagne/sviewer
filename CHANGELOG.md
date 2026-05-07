@@ -6,6 +6,22 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-05-07
+
+### Added
+
+- **Grist widget : sélecteur de fond de carte** : choisissez le fond de carte (aerial, plan…) depuis l'onglet Avancé du panneau de configuration. Le choix est persisté par widget et restauré à chaque rechargement. Visible uniquement si plusieurs fonds sont configurés.
+- **Grist widget : opacité WMS** : curseur d'opacité (0–100 %) pour la donnée WMS ou catalogue chargée dans le widget. Valeur persistée et incluse dans le lien de partage.
+- **`md=` : syntaxe `id@https://csw-endpoint`** : charge une fiche depuis n'importe quel catalogue CSW, pas seulement celui configuré par défaut. Compatible widget Grist et sViewer standalone.
+
+### Changed
+
+- **Points** : rayon 6 → 7 px — parité visuelle widget Grist / sViewer standalone.
+- **Étiquettes** : police en gras dans le widget Grist et sViewer standalone.
+- **Étiquettes** : masquées en dessous du zoom 13 pour éviter la surcharge à petite échelle.
+- **Sélection** : highlight via fonction de style au niveau de la couche (non plus `feature.setStyle`) — compatibilité OL declutter préservée.
+- **`geOrchestraBaseUrl` par défaut** : `https://georchestra.org` → `https://demo.georchestra.org`.
+
 ## [0.9.0] - 2026-05-07
 
 ### Added
