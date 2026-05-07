@@ -1,8 +1,25 @@
-/* Suite 05 — GeoJSON auto-simplify (live WFS load test)
- * Fetches real cadastral parcels from IGN Géoplateforme WFS (public, CORS-enabled).
- * BBOX over Eu (Seine-Maritime) — ~2200 parcels, MultiPolygon geometries.
- * group: 'Live' — network-dependent, run manually.
+/* Suite 05 — GeoJSON load tests
+ * group GeoJSON: offline edge-case tests (static fixtures)
+ * group Live: network-dependent tests (IGN Géoplateforme WFS)
  */
+
+// Fixture: 1 valid Point + 1 null-geometry feature.
+// sViewer must filter the null silently and load without crash.
+SV_TESTS.push({
+    id: 'geojson-null-geometry',
+    label: 'GeoJSON null geometry — filtered silently, no crash',
+    group: 'GeoJSON',
+    type: 'visual',
+    params: {
+        geojson: SVRunner.getBaseUrl() + 'tests/fixtures/null-geometry.geojson',
+        z: 12,
+        x: 2.3488,
+        y: 48.8534
+    },
+    assert: function(hardConfig) {
+        if (!hardConfig) throw new Error('hardConfig not received — sViewer crashed on null geometry');
+    }
+});
 
 var WFS_EU = 'https://data.geopf.fr/wfs/ows'
     + '?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature'
