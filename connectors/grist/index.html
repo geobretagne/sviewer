@@ -220,10 +220,18 @@
     <!-- Avancé -->
     <div class="sv-tab-panel" role="tabpanel" id="sv-tab-advanced" aria-labelledby="sv-tab-btn-advanced" aria-hidden="true" data-tab="advanced">
         <div class="sv-cfg-grid">
+            <label for="sv-cfg-lb" id="sv-cfg-lb-label" data-i18n="settings.lb" style="display:none"></label>
+            <select id="sv-cfg-lb" style="display:none" data-i18n-aria="settings.lb"></select>
+            <hr class="sv-cfg-sep" id="sv-cfg-lb-sep" style="display:none">
             <label for="sv-cfg-md"     data-i18n="settings.md"></label>
             <input  id="sv-cfg-md"     type="text" placeholder="identifiant métadonnée">
             <label for="sv-cfg-layers" data-i18n="settings.layers"></label>
-            <input  id="sv-cfg-layers" type="text" placeholder="layer1,layer2">
+            <input  id="sv-cfg-layers" type="text" placeholder="ex: CP.CadastralParcel@https://data.geopf.fr/wms-r">
+            <label for="sv-cfg-wms-opacity" data-i18n="settings.wms.opacity"></label>
+            <div class="sv-cfg-style-row">
+                <input id="sv-cfg-wms-opacity" type="range" min="0" max="1" step="0.05" value="1" style="flex:1;min-width:80px" data-i18n-aria="settings.wms.opacity">
+                <span  id="sv-cfg-wms-opacity-val" class="sv-inline-label">100%</span>
+            </div>
             <hr class="sv-cfg-sep">
             <label for="sv-cfg-svbase"      data-i18n="settings.svbase"></label>
             <input  id="sv-cfg-svbase"      type="url" placeholder="https://example.org/sviewer/">

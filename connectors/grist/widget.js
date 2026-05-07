@@ -46,6 +46,8 @@ var I18N = {
         'settings.title':     'Titre (title=)',
         'settings.layers':      'Donnée via WMS',
         'settings.md':        'Donnée via catalogue',
+        'settings.lb':          'Fond de carte',
+        'settings.wms.opacity': 'Opacité données WMS',
 
         'settings.svbase':    'URL de base sViewer',
         'settings.apibase':   'URL de base API Grist',
@@ -120,6 +122,8 @@ var I18N = {
         'settings.title':     'Title (title=)',
         'settings.layers':      'Data via WMS',
         'settings.md':        'Data via catalogue',
+        'settings.lb':          'Background map',
+        'settings.wms.opacity': 'WMS layer opacity',
 
         'settings.svbase':    'sViewer base URL',
         'settings.apibase':   'Grist API base URL',
@@ -194,6 +198,8 @@ var I18N = {
         'settings.title':     'Título (title=)',
         'settings.layers':      'Dato via WMS',
         'settings.md':        'Dato via catálogo',
+        'settings.lb':          'Mapa de fondo',
+        'settings.wms.opacity': 'Opacidad capa WMS',
 
         'settings.svbase':    'URL base sViewer',
         'settings.apibase':   'URL base API Grist',
@@ -268,6 +274,8 @@ var I18N = {
         'settings.title':     'Titel (title=)',
         'settings.layers':      'Daten via WMS',
         'settings.md':        'Daten via Katalog',
+        'settings.lb':          'Hintergrundkarte',
+        'settings.wms.opacity': 'WMS-Ebene Deckkraft',
 
         'settings.svbase':    'sViewer Basis-URL',
         'settings.apibase':   'Grist API Basis-URL',
@@ -525,14 +533,16 @@ function syncColumnPickerMode() {
 
 // Retourne un ol.style.Text pour une valeur d'étiquette (null-safe).
 // text !== 0 : autorise la valeur zéro comme étiquette valide.
-function makeTextStyle(text, bold) {
+var LABEL_MAX_RESOLUTION = 19.11; // ~zoom 13 in EPSG:3857
+
+function makeTextStyle(text, bold, resolution) {
     if (!text && text !== 0) { return null; }
+    if (resolution !== undefined && resolution > LABEL_MAX_RESOLUTION) { return null; }
     return new ol.style.Text({
         text: String(text),
         font: (bold ? 'bold ' : '') + '12px sans-serif',
         fill: new ol.style.Fill({ color: '#222' }),
         stroke: new ol.style.Stroke({ color: '#fff', width: 3 }),
-        overflow: true,
         offsetY: -14
     });
 }
@@ -550,9 +560,9 @@ function makeFeatureStyle(cfg, selected) {
     var fillColor   = colorWithOpacity(cfg.fillColor, cfg.fillOpacity);
     var strokeColor = cfg.strokeColor;
     var radius      = selected ? 10 : 7;
-    return function(feature) {
+    return function(feature, resolution) {
         var geomType = feature.getGeometry() ? feature.getGeometry().getType() : '';
-        var text = makeTextStyle(feature.get('_label'), selected);
+        var text = makeTextStyle(feature.get('_label'), true, resolution);
         if (geomType === 'Point' || geomType === 'MultiPoint') {
             return new ol.style.Style({
                 image: new ol.style.Circle({
@@ -601,18 +611,24 @@ function getStyleCfg(selected) {
     };
 }
 
-// Surligne selectedFeat ; remet toutes les autres au style de base.
-// Passer null réinitialise toutes les entités au style de base.
-function applySelectionStyle(selectedFeat) {
-    if (!layerBuilt) { return; }
-    var baseCfg = getStyleCfg(false);
-    var selCfg  = getStyleCfg(true);
+// Builds a layer-level style function that renders selected feature differently.
+// Uses selectedRowId + featureByRowId at render time — no per-feature setStyle().
+function makeLayerStyleFn() {
+    var baseCfg    = getStyleCfg(false);
+    var selCfg     = getStyleCfg(true);
     var baseStyleFn = makeFeatureStyle(baseCfg, false);
     var selStyleFn  = makeFeatureStyle(selCfg,  true);
-    Object.keys(featureByRowId).forEach(function(id) {
-        var f = featureByRowId[id];
-        f.setStyle((f === selectedFeat ? selStyleFn : baseStyleFn)(f));
-    });
+    return function(feature, resolution) {
+        return (selectedRowId !== null && featureByRowId[selectedRowId] === feature)
+            ? selStyleFn(feature, resolution)
+            : baseStyleFn(feature, resolution);
+    };
+}
+
+// Trigger redraw — style fn reads selectedRowId at render time, declutter preserved.
+function applySelectionStyle() {
+    if (!layerBuilt || !mapReady) { return; }
+    SViewer.refreshVector();
 }
 
 // ---------------------------------------------------------------------------
@@ -700,7 +716,7 @@ function onDrawEnd(olGeom) {
     var feat = featureByRowId[editRowId];
     if (feat) {
         feat.setGeometry(olGeom);
-        applySelectionStyle(feat);
+        applySelectionStyle();
     }
     var finishBtn = document.getElementById('sv-btn-edit-finish');
     finishBtn.disabled = false;
@@ -831,7 +847,7 @@ function cancelEdit() {
         } else {
             feat.setGeometry(null);
         }
-        applySelectionStyle(feat);
+        applySelectionStyle();
     }
     exitEdit();
 }
@@ -851,7 +867,7 @@ function saveOptions() {
     var configKeys = ['fill_color', 'fill_opacity', 'stroke_width',
                       'sel_fill_color', 'sel_fill_opacity', 'sel_stroke_width',
                       'title', 'layers', 'md', 'sviewer_base', 'grist_api_base', 'georchestra_base',
-                      'geom_mode', 'autozoom'];
+                      'geom_mode', 'autozoom', 'lb', 'wms_opacity'];
     configKeys.forEach(function(k) { if (svConfig[k] !== undefined) { opts[k] = svConfig[k]; } });
     grist.widgetApi.setOptions(opts).catch(function(e) { console.warn('[sviewer] setOptions failed:', e); });
 }
@@ -864,7 +880,7 @@ function applyOptions(opts) {
     var configKeys = ['fill_color', 'fill_opacity', 'stroke_width',
                       'sel_fill_color', 'sel_fill_opacity', 'sel_stroke_width',
                       'title', 'layers', 'md', 'sviewer_base', 'grist_api_base', 'georchestra_base',
-                      'geom_mode', 'autozoom'];
+                      'geom_mode', 'autozoom', 'lb', 'wms_opacity'];
     configKeys.forEach(function(k) { if (opts[k] !== undefined) { svConfig[k] = opts[k]; } });
     // migrate legacy keys
     if (opts.feature_color && !opts.fill_color)                 { svConfig.fill_color      = opts.feature_color; }
@@ -934,6 +950,33 @@ function openSettings() {
     document.getElementById('sv-cfg-georchestra').value = svConfig.georchestra_base ||
         (window.hardConfig && window.hardConfig.geOrchestraBaseUrl) ||
         (window.customConfig && window.customConfig.geOrchestraBaseUrl) || '';
+    (function() {
+        var opVal = svConfig.wms_opacity !== undefined ? svConfig.wms_opacity : 1;
+        var sl = document.getElementById('sv-cfg-wms-opacity');
+        var lb = document.getElementById('sv-cfg-wms-opacity-val');
+        if (sl) { sl.value = opVal; }
+        if (lb) { lb.textContent = Math.round(opVal * 100) + '%'; }
+    }());
+    // Background selector — populate from backgroundPresets if available
+    (function() {
+        var presets = (window.customConfig && window.customConfig.backgroundPresets) ||
+                      (window.hardConfig   && window.hardConfig.backgroundPresets)   || [];
+        var sel    = document.getElementById('sv-cfg-lb');
+        var lbl    = document.getElementById('sv-cfg-lb-label');
+        var sep    = document.getElementById('sv-cfg-lb-sep');
+        var show   = presets.length > 1;
+        sel.style.display = lbl.style.display = sep.style.display = show ? '' : 'none';
+        if (show) {
+            sel.innerHTML = '';
+            presets.forEach(function(p, i) {
+                var opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = p.title || ('Fond ' + i);
+                sel.appendChild(opt);
+            });
+            sel.value = svConfig.lb !== undefined ? svConfig.lb : 0;
+        }
+    }());
     panel.style.display = 'flex';
     document.getElementById('sv-map').style.display    = 'none';
     document.getElementById('sv-toolbar').style.display = 'none';
@@ -981,6 +1024,19 @@ function closeSettings(save) {
         if (apibase) { svConfig.grist_api_base = apibase; } else { delete svConfig.grist_api_base; }
         var georchestra = document.getElementById('sv-cfg-georchestra').value.trim();
         if (georchestra) { svConfig.georchestra_base = georchestra; } else { delete svConfig.georchestra_base; }
+        var opSlider = document.getElementById('sv-cfg-wms-opacity');
+        if (opSlider) {
+            var opVal = parseFloat(opSlider.value);
+            svConfig.wms_opacity = isNaN(opVal) ? 1 : opVal;
+        }
+        var lbSel = document.getElementById('sv-cfg-lb');
+        if (lbSel && lbSel.style.display !== 'none') {
+            var lbVal = parseInt(lbSel.value, 10);
+            if (!isNaN(lbVal)) {
+                svConfig.lb = lbVal;
+                if (mapReady) { SViewer.switchBackground(lbVal); }
+            } else { delete svConfig.lb; }
+        }
         saveOptions();
         if ((svConfig.layers || null) !== initialLayers || (svConfig.md || null) !== initialMd) { window.location.reload(); return; }
         viewFitted = false;
@@ -1014,7 +1070,7 @@ function rebuildLayer() {
     // colonnes actives dans l'empreinte : force le rebuild si la colonne change sans que les données bougent
     var fingerprint = JSON.stringify(allRecords) + '|' + colGeom + '|' + colLat + '|' + colLon + '|' + colLabel + '|' + colGeomMode;
     if (layerBuilt && fingerprint === lastRecordsFingerprint) {
-        applySelectionStyle(selectedRowId !== null ? featureByRowId[selectedRowId] : null);
+        applySelectionStyle();
         return;
     }
     lastRecordsFingerprint = fingerprint;
@@ -1094,7 +1150,7 @@ function rebuildLayer() {
     });
 
     SViewer.loadFeatureObjects(features, {
-        styleOverride: makeFeatureStyle(getStyleCfg(false), false),
+        styleOverride: makeLayerStyleFn(),
         fitExtent: features.length > 0 && !viewFitted
     });
     layerBuilt = true;
@@ -1105,10 +1161,6 @@ function rebuildLayer() {
     if (geojsonUrl) { SViewer.setGeojsonUrl(geojsonUrl); }
 
     setStatus(allRecords.length + tr('features') + (skipped ? ' (' + skipped + tr('skipped') + ')' : ''));
-
-    if (selectedRowId !== null && featureByRowId[selectedRowId]) {
-        applySelectionStyle(featureByRowId[selectedRowId]);
-    }
     syncEditButton();
 }
 
@@ -1118,7 +1170,7 @@ function onMapFeatureClick(e) {
     var rowId = e.feature.get('_gristRowId');
     if (rowId === undefined) { return; }
     selectedRowId = rowId;
-    applySelectionStyle(e.feature);
+    applySelectionStyle();
     syncEditButton();
 }
 
@@ -1169,6 +1221,8 @@ function initMap() {
     };
     if (svConfig.layers) { opts.layers = svConfig.layers; }
     if (svConfig.md && !svConfig.layers) { opts.md = svConfig.md; }
+    if (svConfig.lb !== undefined) { opts.lb = svConfig.lb; }
+    if (svConfig.wms_opacity !== undefined && svConfig.wms_opacity !== 1) { opts.opacity = svConfig.wms_opacity; }
     initialLayers = svConfig.layers || null;
     initialMd = svConfig.md || null;
     var georchestraBase = safeHttpUrl(svConfig.georchestra_base);
@@ -1231,6 +1285,11 @@ document.getElementById('sv-btn-cfg-cancel').addEventListener('click', function(
     });
 }());
 
+document.getElementById('sv-cfg-wms-opacity').addEventListener('input', function() {
+    var lbl = document.getElementById('sv-cfg-wms-opacity-val');
+    if (lbl) { lbl.textContent = Math.round(parseFloat(this.value) * 100) + '%'; }
+});
+
 document.getElementById('sv-btn-cfg-export').addEventListener('click', function() {
     function rf(id) { return document.getElementById(id) ? document.getElementById(id).value : undefined; }
     function rn(id) { var v = parseFloat(rf(id)); return isNaN(v) ? undefined : v; }
@@ -1250,6 +1309,10 @@ document.getElementById('sv-btn-cfg-export').addEventListener('click', function(
     var geo = rf('sv-cfg-georchestra'); if (geo)  { out.georchestra_base = geo; }
     var gmode = rf('sv-cfg-geom-mode'); if (gmode && gmode !== 'auto') { out.geom_mode = gmode; }
     out.autozoom = document.getElementById('sv-cfg-autozoom').checked;
+    var lbSelExp = document.getElementById('sv-cfg-lb');
+    if (lbSelExp && lbSelExp.style.display !== 'none') { out.lb = parseInt(lbSelExp.value, 10); }
+    var opSliderExp = document.getElementById('sv-cfg-wms-opacity');
+    if (opSliderExp) { out.wms_opacity = parseFloat(opSliderExp.value); }
     var json = JSON.stringify(out, null, 2);
     navigator.clipboard.writeText(json).then(function() {
         var btn = document.getElementById('sv-btn-cfg-export');
@@ -1283,6 +1346,16 @@ function applyImportData(data) {
         if (modeElAi) { modeElAi.value = data.geom_mode; syncColumnPickerMode(); }
     }
     if (data.autozoom !== undefined) { document.getElementById('sv-cfg-autozoom').checked = data.autozoom; }
+    if (data.lb !== undefined) {
+        var lbSelAi = document.getElementById('sv-cfg-lb');
+        if (lbSelAi && lbSelAi.style.display !== 'none') { lbSelAi.value = data.lb; }
+    }
+    if (data.wms_opacity !== undefined) {
+        var opSliderAi = document.getElementById('sv-cfg-wms-opacity');
+        var opLblAi    = document.getElementById('sv-cfg-wms-opacity-val');
+        if (opSliderAi) { opSliderAi.value = data.wms_opacity; }
+        if (opLblAi)    { opLblAi.textContent = Math.round(data.wms_opacity * 100) + '%'; }
+    }
 }
 
 document.getElementById('sv-btn-cfg-import').addEventListener('click', function() {
@@ -1409,7 +1482,7 @@ grist.onRecord(function(record) {
                         var ext = wktOlGeomR.getExtent();
                         view.fit(ext, { padding: [60, 60, 60, 60], maxZoom: 17, duration: 400 });
                     }
-                    applySelectionStyle(feat);
+                    applySelectionStyle();
                 }
             } catch(e) { /* invalid WKT */ }
         }
@@ -1434,7 +1507,7 @@ grist.onRecord(function(record) {
             var ext = feat.getGeometry().getExtent();
             view.fit(ext, { padding: [60, 60, 60, 60], maxZoom: 17, duration: 400 });
         }
-        applySelectionStyle(feat);
+        applySelectionStyle();
     }
     syncEditButton();
 });

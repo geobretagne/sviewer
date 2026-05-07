@@ -79,12 +79,17 @@ Cliquez sur **...** au-dessus pour ouvrir le panneau de configuration.
 
 Charge une donnée WMS à partir de son identifiant dans un catalogue de métadonnées GeoNetwork (CSW). sViewer récupère automatiquement l'URL WMS, le titre, le résumé et la licence qui sont affichés dans le panneau "info" de la carte.
 
-**Syntaxe :** identifiant UUID de la fiche de métadonnées.
+**Syntaxe :** identifiant UUID seul, ou `uuid@https://csw-endpoint` pour un catalogue différent de celui configuré par défaut.
 
-**Exemple :**
+**Exemples :**
 ```
 fb5861f1-1b20-417f-abb6-9fc316c0307d
 ```
+```
+fb5861f1-1b20-417f-abb6-9fc316c0307d@https://geobretagne.fr/geonetwork/srv/eng/csw
+```
+
+> La syntaxe `id@https://csw-endpoint` permet d'utiliser n'importe quel catalogue CSW, pas seulement celui configuré par défaut.
 
 > Exclusif avec **Donnée via WMS** : renseigner l'un vide l'autre.
 
@@ -96,15 +101,12 @@ Pour une compatibilité complète avec sViewer le service WMS doit proposer le p
 
 **Syntaxe :** 
 
-* `layername@wmsendpointurl`
-* `ns:mylayer1,ns:mylayer2...` 
+* `layername@wmsendpointurl` — service quelconque
+* `ns:mylayer` — service configuré pour le widget (URL déduite automatiquement)
 
-**Exemples :**
+**Exemple — BD Parcellaire IGN (Géoplateforme) :**
 ```
-cadastre:CP.CadastralParcel
-```
-```
-CP.CadastralParcel
+CP.CadastralParcel@https://data.geopf.fr/wms-r
 ```
 
 > Exclusif avec **Donnée via catalogue** : renseigner l'un vide l'autre.
@@ -142,7 +144,7 @@ Permet de bénéficier de raccourcis pour WMS et métadonnées.
 
 **Exemple :**
 ```
-https://georchestra.org
+https://demo.georchestra.org
 ```
 
 #### Configuration JSON

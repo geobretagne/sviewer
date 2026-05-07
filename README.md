@@ -61,7 +61,7 @@ Utilisez l'identifiant de la fiche directement :
 https://geobretagne.fr/sviewer/?md=fb5861f1-1b20-417f-abb6-9fc316c0307d
 ```
 
-sViewer récupère automatiquement l'URL WMS et les métadonnées (titre, résumé, licence, producteur).
+sViewer récupère automatiquement l'URL WMS et les métadonnées (titre, résumé, licence, producteur). Pour un catalogue différent de celui configuré par défaut, utilisez la syntaxe `identifiant@https://csw-endpoint`.
 
 ### Vous avez un tableur ([Grist](https://www.getgrist.com), CSV…) ou un shapefile
 

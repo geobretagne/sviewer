@@ -20,7 +20,7 @@ customConfig = {
     // --- geOrchestra integration -------------------------------------------
     // Layers from this SDI get enhanced features (legend, metadata, queryable).
 
-    // geOrchestraBaseUrl: 'https://georchestra.org',
+    // geOrchestraBaseUrl: 'https://demo.georchestra.org',
 
     // --- Map extent (EPSG:3857) --------------------------------------------
     // initialExtent: shown on startup. maxExtent / restrictedExtent: pan/zoom limits.

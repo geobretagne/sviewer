@@ -507,7 +507,21 @@
 
         // Register callback fired after loadFeatures completes and layer is on map.
         // fn({ features, count })
-        onFeaturesLoaded: function(fn) { _svBus.on('sv:featuresLoaded', fn); }
+        onFeaturesLoaded: function(fn) { _svBus.on('sv:featuresLoaded', fn); },
+
+        // Switch background preset by index (0-based). No-op if map not ready.
+        switchBackground: function(idx) {
+            if (window.SViewerApp && window.SViewerApp.switchBackground) {
+                window.SViewerApp.switchBackground(idx);
+            }
+        },
+
+        // Trigger vector layer redraw (style function re-evaluated per feature).
+        refreshVector: function() {
+            if (window.SViewerApp && window.SViewerApp.refreshVector) {
+                window.SViewerApp.refreshVector();
+            }
+        }
     };
 
     console.log('SViewer: Embed script loaded');
