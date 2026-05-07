@@ -1,6 +1,6 @@
 # Backlog
 
-## v0.8 — en cours
+## En cours — v0.9.x
 
 - [~] Grist connector : dépendance CDN docs.getgrist.com — investigué, impossible à supprimer côté sViewer.
 
@@ -16,10 +16,7 @@
 
   **Status sViewer :** CDN `docs.getgrist.com` conservé, aucune action possible côté sViewer.
 
-- [x] Test suite : browser-based visual runner at /sviewer/tests/ — 27 tests (params, config merge, i18n, live WMS), iframe + postMessage, ?autorun=1 for CI
-- [x] Grist widget : WKT geometry auto-detection — ol/format/WKT added to OL custom build; adapter.js + widget.js auto-detect WKT columns (no manual mode required)
 - [ ] CI : GitHub Actions workflow — build + healthcheck verify on tag push (no registry push)
-- [x] Test c= parameter (sviewer configuration profile) — fixed two bugs: embed.js ignored ?c=, customConfig keys were stomped by hardConfig defaults ($.extend order wrong)
 - [ ] Grist widget : real-world user testing
 - [ ] CSV connector : real-world user testing
 - [ ] Publish demo site with usecases
@@ -41,6 +38,26 @@ Design notes:
 - [ ] Demo with GeoServer SLD param layer
 
 ## Archivé — livré
+
+### v0.9.1
+- [x] GeoJSON : styles par type de géométrie (point cercle 9px, ligne 4px + liseré blanc, polygone 4px + liseré blanc + fond semi-transparent)
+- [x] GeoJSON : highlight au clic sur entité (couleur sélection configurable via geojsonStyle.selectionColor)
+- [x] GeoJSON : paramètre ?label=nomColonne — affiche une propriété comme étiquette sur la carte
+- [x] GeoJSON : auto-simplification des jeux de données lourds (Douglas-Peucker, seuil adaptatif mobile/desktop)
+- [x] GeoJSON : gestion silencieuse des géométries nulles et FeatureCollection vides
+- [x] GeoJSON : détection automatique coordonnées WGS84 (x/y en degrés décimaux)
+- [x] Widget Grist : styles non-sélectionnés alignés avec sviewer core (rayon, épaisseur, opacité, liseré)
+- [x] Widget Grist : opacité polygone sélectionné corrigée (était toujours 1, migration automatique)
+- [x] Widget Grist : point édité reste visible pendant le dessin
+- [x] Tableau propriétés GeoJSON : scope="row", tbody, role="table" (WCAG 1.3.1)
+- [x] i18n : placeholder recherche Rennes → Strasbourg
+- [x] Docs : dé-bretagnisation des URLs et valeurs d'exemple
+- [x] Test suite : test WGS84 Paris, test FeatureCollection vide, test géométrie nulle, test WFS parcelles IGN
+
+### v0.9.0
+- [x] Test suite : browser-based visual runner at /sviewer/tests/ — 27 tests (params, config merge, i18n, live WMS), iframe + postMessage, ?autorun=1 for CI
+- [x] Grist widget : WKT geometry auto-detection — ol/format/WKT added to OL custom build; adapter.js + widget.js auto-detect WKT columns (no manual mode required)
+- [x] Test c= parameter (sviewer configuration profile) — fixed two bugs: embed.js ignored ?c=, customConfig keys were stomped by hardConfig defaults ($.extend order wrong)
 
 ### v0.8.1
 - [x] Docker : switch to nginxinc/nginx-unprivileged (non-root process, port 8080) + HEALTHCHECK
