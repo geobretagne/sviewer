@@ -19,8 +19,8 @@ SV_TESTS.push({
     params: {
         geojson: WFS_EU,
         z: 13,
-        x: 161300,
-        y: 6482000
+        x: 161413,
+        y: 6462744
     },
     assert: function(hardConfig) {
         if (!hardConfig) throw new Error('hardConfig not received — sViewer did not start');
