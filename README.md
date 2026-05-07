@@ -140,7 +140,7 @@ Notes techniques
 -----------------
 
 * **Technologie** : OpenLayers 10, jQuery, Bootstrap 5
-* **Projection** : EPSG:3857 (Web Mercator uniquement)
+* **Projection** : EPSG:3857 (Web Mercator) — les paramètres `x`/`y` acceptent aussi la longitude/latitude (EPSG:4326), détection automatique
 * **Langues** : français, anglais, espagnol, allemand
 * **Aucune dépendance externe** : toutes les librairies sont auto-hébergées (pas de CDN)
 * **Géocodage** : [IGN Géoplateforme](https://geoplateforme.ign.fr) par défaut (France), remplaçable par [Nominatim](https://nominatim.openstreetmap.org) (OpenStreetMap, mondial) ou tout service compatible
