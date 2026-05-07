@@ -7,12 +7,12 @@
 var WFS_EU = 'https://data.geopf.fr/wfs/ows'
     + '?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature'
     + '&TYPENAMES=CADASTRALPARCELS.PARCELLAIRE_EXPRESS:parcelle'
-    + '&BBOX=1.380000,50.060000,1.520000,50.130000,EPSG:4326'
+    + '&BBOX=1.395000,50.068000,1.505000,50.122000,EPSG:4326'
     + '&OUTPUTFORMAT=application/json';
 
 SV_TESTS.push({
     id: 'geojson-wfs-eu-parcels',
-    label: 'GeoJSON WFS — Eu area bbox, ~13K parcels ~130K vertices — triggers desktop simplify (IGN Géoplateforme)',
+    label: 'GeoJSON WFS — Eu area bbox, ~8K parcels ~104K vertices — triggers desktop simplify (IGN Géoplateforme)',
     group: 'Live',
     type: 'visual',
     timeout: 30000,
