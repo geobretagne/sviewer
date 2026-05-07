@@ -2463,7 +2463,7 @@ if (!hitVector) { queryMap(e.coordinate); }
                 if (k === 'layersBackground' || k === 'layersOverlay') { return; }
                 serializable[k] = v;
             });
-            window.parent.postMessage({ type: 'sv:ready', hardConfig: serializable }, '*');
+            window.parent.postMessage({ type: 'sv:ready', hardConfig: serializable, center: [config.x, config.y], zoom: config.z }, '*');
         }
         // Notify onReady callbacks registered by embed callers.
         _onReadyCallbacks.forEach(function(fn) { try { fn(); } catch(e) {} });

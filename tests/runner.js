@@ -82,7 +82,7 @@
                 clearTimeout(timer);
                 window.removeEventListener('message', onMessage);
                 try {
-                    var result = test.assert ? test.assert(event.data.hardConfig) : undefined;
+                    var result = test.assert ? test.assert(event.data.hardConfig, event) : undefined;
                     // assert may return a Promise (for fetch-based checks)
                     if (result && typeof result.then === 'function') {
                         result.then(function() { resolve('ok'); }).catch(reject);

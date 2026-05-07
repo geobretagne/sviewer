@@ -110,3 +110,23 @@ SV_TESTS.push({
         if (!hardConfig.initialExtent) throw new Error('initialExtent missing after missing ?c= profile');
     }
 });
+
+// Paris in WGS84 — tests auto-detection of EPSG:4326 coords
+// Expected center in EPSG:3857: x≈261484, y≈6218718
+SV_TESTS.push({
+    id: 'param-xy-wgs84-paris',
+    label: '?x=lon&y=lat (WGS84) — auto-detected, map centered on Paris',
+    group: 'Params',
+    type: 'visual',
+    params: { x: 2.3488, y: 48.8534, z: 12 },
+    assert: function(hardConfig, event) {
+        if (!hardConfig) throw new Error('hardConfig not received');
+        var msg = event && event.data ? event.data : {};
+        var center = msg.center;
+        if (!center) throw new Error('center not in sv:ready payload');
+        var dx = center[0] - 261484;
+        var dy = center[1] - 6218718;
+        var dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist > 2000) throw new Error('Center too far from Paris: ' + Math.round(dist) + 'm off');
+    }
+});
