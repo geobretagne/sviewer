@@ -97,14 +97,19 @@ window.SViewerApp = (function() {
     // Spinner for the impatients
     var svSpinner = {
         show: function() {
-            $('#sv-spinner').addClass('show');
+            document.getElementById('sv-spinner').classList.add('show');
             loadingBar.start();
         },
         hide: function() {
-            $('#sv-spinner').removeClass('show');
+            document.getElementById('sv-spinner').classList.remove('show');
             loadingBar.end();
         }
     };
+
+    // Parse an HTML string into a DocumentFragment (no script execution).
+    function _htmlFragment(html) {
+        return document.createRange().createContextualFragment(html);
+    }
 
     var loadingBar = (function() {
         var count = 0;
@@ -374,7 +379,7 @@ window.SViewerApp = (function() {
                         self.md.Abstract = mdLayer.Abstract;
 
                         var panel = buildLayerPanel(mdLayer, legendUrl);
-                        $('#sv-legend-content').append(panel);
+                        document.getElementById('sv-legend-content').appendChild(panel);
                         log('Legend appended to DOM');
 
                         var xmlMetaUrl = null;
@@ -417,7 +422,7 @@ window.SViewerApp = (function() {
                 .map(function(m) {
                     return { url: safeURL(m.OnlineResource), label: tr('msg.full_record'), newTab: tr('msg.new_tab') };
                 });
-            return $(Mustache.render(window.SViewerTemplates['sv-layer-panel'], {
+            return _htmlFragment(Mustache.render(window.SViewerTemplates['sv-layer-panel'], {
                 title:         mdLayer.Title,
                 abstract:      mdLayer.Abstract,
                 legendUrl:     legendUrl,
@@ -591,12 +596,18 @@ window.SViewerApp = (function() {
                 if (result) {
                     callback(result.wmsUrl, result.layername, xmlDoc);
                 } else {
-                    $('#sv-legend-content').append($('<div class="alert alert-warning mt-2">').text(tr('msg.csw_no_wms')));
+                    var _noWms = document.createElement('div');
+                    _noWms.className = 'alert alert-warning mt-2';
+                    _noWms.textContent = tr('msg.csw_no_wms');
+                    document.getElementById('sv-legend-content').appendChild(_noWms);
                 }
             },
             error: function(xhr, status, error) {
                 log('CSW GetRecordById failed:', status, error);
-                $('#sv-legend-content').append($('<div class="alert alert-warning mt-2">').text(tr('msg.csw_error')));
+                var _cswErr = document.createElement('div');
+                _cswErr.className = 'alert alert-warning mt-2';
+                _cswErr.textContent = tr('msg.csw_error');
+                document.getElementById('sv-legend-content').appendChild(_cswErr);
             },
             complete: function() { loadingBar.end(); }
         });
@@ -663,7 +674,7 @@ window.SViewerApp = (function() {
     }
 
     function buildISOTable(meta) {
-        return $(Mustache.render(window.SViewerTemplates['sv-iso-table'], {
+        return _htmlFragment(Mustache.render(window.SViewerTemplates['sv-iso-table'], {
             dateLabel:     tr('msg.meta_date'),
             producerLabel: tr('msg.meta_producer'),
             contactLabel:  tr('msg.meta_contact'),
@@ -696,14 +707,13 @@ window.SViewerApp = (function() {
      * @param propnames {Array} array of property names
      */
     function translateDOM(selector) {
-        $.each($(selector), function(i, e) {
-            var $e = $(e);
-            var textKey        = $e.attr('data-i18n');
-            var titleKey       = $e.attr('data-i18n-title');
-            var placeholderKey = $e.attr('data-i18n-placeholder');
-            if (textKey)        $e.text(tr(textKey));
-            if (titleKey)       $e.prop('title', tr(titleKey));
-            if (placeholderKey) $e.prop('placeholder', tr(placeholderKey));
+        document.querySelectorAll(selector).forEach(function(e) {
+            var textKey        = e.getAttribute('data-i18n');
+            var titleKey       = e.getAttribute('data-i18n-title');
+            var placeholderKey = e.getAttribute('data-i18n-placeholder');
+            if (textKey)        { e.textContent = tr(textKey); }
+            if (titleKey)       { e.title = tr(titleKey); }
+            if (placeholderKey) { e.placeholder = tr(placeholderKey); }
         });
     }
 
@@ -832,11 +842,11 @@ window.SViewerApp = (function() {
                 : window.location.origin + window.location.pathname;
             permalinkQuery = standaloneBase + "?" + new URLSearchParams(linkParams);
 
-            $('#sv-permalink-url')
-                .prop('href', permalinkQuery)
-                .prop('target', '_blank')
-                .prop('rel', 'noopener')
-                .text(permalinkQuery);
+            var _purl = document.getElementById('sv-permalink-url');
+            _purl.href = permalinkQuery;
+            _purl.target = '_blank';
+            _purl.rel = 'noopener';
+            _purl.textContent = permalinkQuery;
         }
     }
 
@@ -926,13 +936,13 @@ window.SViewerApp = (function() {
                         .prepend(Mustache.render(window.SViewerTemplates['sv-search-header'], { label: tr('lbl.geocode_results') }));
                 }
             } catch(_err) {
-                $('#sv-locate-msg').text(tr('msg.geolocation_failed'));
+                document.getElementById('sv-locate-msg').textContent = tr('msg.geolocation_failed');
             }
         }
 
         function onGeocodeFailure(xhr) {
             if (xhr.statusText === 'abort') { return; }
-            $('#sv-locate-msg').text(tr('msg.geolocation_failed'));
+            document.getElementById('sv-locate-msg').textContent = tr('msg.geolocation_failed');
             svSpinner.hide();
         }
 
@@ -985,10 +995,10 @@ window.SViewerApp = (function() {
                     marker.setPosition(coords);
                     view.setCenter(coords);
                     view.setZoom(best.zoom);
-                    $('#sv-marker').show();
+                    document.getElementById('sv-marker').style.display = '';
                 } else {
                     // Ambiguous — fall back to interactive search panel
-                    $('#sv-search-input').val(text);
+                    document.getElementById('sv-search-input').value = text;
                     togglePanel('locate');
                     openLsRequest(text);
                 }
@@ -1059,14 +1069,28 @@ window.SViewerApp = (function() {
     var _selectedVectorFeature = null;
 
     function _buildPropertiesTable(props) {
-        var $tbody = $('<tbody>');
-        $.each(props, function(key, val) {
+        var tbody = document.createElement('tbody');
+        Object.keys(props).forEach(function(key) {
+            var val = props[key];
             if (key === 'geometry' || typeof val === 'object') { return; }
             if (key.charAt(0) === '_') { return; }
             if (val === null || val === undefined || val === '') { return; }
-            $tbody.append($('<tr>').append($('<th scope="row">').text(key).attr('title', key)).append($('<td>').text(val)));
+            var th = document.createElement('th');
+            th.scope = 'row';
+            th.textContent = key;
+            th.title = key;
+            var td = document.createElement('td');
+            td.textContent = val;
+            var tr = document.createElement('tr');
+            tr.appendChild(th);
+            tr.appendChild(td);
+            tbody.appendChild(tr);
         });
-        return $('<table class="table table-sm table-bordered sv-feature-props" role="table">').append($tbody);
+        var table = document.createElement('table');
+        table.className = 'table table-sm table-bordered sv-feature-props';
+        table.setAttribute('role', 'table');
+        table.appendChild(tbody);
+        return table;
     }
 
     function _buildSelectionStyle(feature) {
@@ -1116,9 +1140,11 @@ window.SViewerApp = (function() {
                 _selectedVectorFeature = feature;
                 feature.setStyle(_buildSelectionStyle(feature));
                 var props = feature.getProperties();
-                $('#sv-query-content').html('').append(_buildPropertiesTable(props));
+                var _qc = document.getElementById('sv-query-content');
+                _qc.innerHTML = '';
+                _qc.appendChild(_buildPropertiesTable(props));
                 marker.setPosition(e.coordinate);
-                $('#sv-marker').show();
+                document.getElementById('sv-marker').style.display = '';
                 closePanel();
                 togglePanel('query');
                 _emit('sv:featureClick', { feature: feature, coordinate: e.coordinate, properties: props });
@@ -1236,16 +1262,19 @@ window.SViewerApp = (function() {
 
     function _renderGeoJSONInfoPanel(count, sourceUrl, adapter) {
         if (!window.SViewerTemplates || !window.SViewerTemplates['sv-layer-panel']) { return; }
-        var $card = $(Mustache.render(window.SViewerTemplates['sv-layer-panel'], {
+        var frag = _htmlFragment(Mustache.render(window.SViewerTemplates['sv-layer-panel'], {
             title:        _sourceLabel(sourceUrl, adapter),
             featureCount: count,
             labelCount:   tr('msg.feature_count'),
             labelSource:  tr('msg.source_url'),
             sourceUrl:    sourceUrl || null
-        })).attr('id', 'sv-geojson-info');
-        var $existing = $('#sv-geojson-info');
-        if ($existing.length) { $existing.replaceWith($card); }
-        else { $('#sv-legend-content').prepend($card); }
+        }));
+        var card = frag.firstElementChild;
+        card.id = 'sv-geojson-info';
+        var existing = document.getElementById('sv-geojson-info');
+        var legendContent = document.getElementById('sv-legend-content');
+        if (existing) { existing.replaceWith(card); }
+        else { legendContent.insertBefore(card, legendContent.firstChild); }
     }
 
     // url: GeoJSON URL to fetch. geojsonDirect: pre-parsed FeatureCollection (skips fetch).
@@ -1321,10 +1350,10 @@ window.SViewerApp = (function() {
         var viewResolution = view.getResolution();
 
         marker.setPosition(state.gficoord);
-        $('#sv-marker').show();
+        document.getElementById('sv-marker').style.display = '';
         view.animate({center: state.gficoord, duration: 1000});
         closePanel();
-        $('#sv-query-content').html('');
+        document.getElementById('sv-query-content').innerHTML = '';
 
         // WMS getFeatureInfo
         config.layersQueryable.forEach(function(lq) {
@@ -1337,8 +1366,8 @@ window.SViewerApp = (function() {
             );
 
             // response order = layer order
-            var domResponse = $(Mustache.render(window.SViewerTemplates['sv-query-header'], { title: lq.md.title }));
-            $('#sv-query-content').append(domResponse);
+            var domResponse = _htmlFragment(Mustache.render(window.SViewerTemplates['sv-query-header'], { title: lq.md.title }));
+            document.getElementById('sv-query-content').appendChild(domResponse);
             // ajax request
             svSpinner.show();
             $.ajax({
@@ -1377,13 +1406,16 @@ window.SViewerApp = (function() {
      * clear getFeatureInfo
      */
     function setQueryEmptyHint() {
-        $('#sv-query-content').html(
-            $('<p class="sv-noitem">').text(tr('lbl.query_the_map'))
-        );
+        var p = document.createElement('p');
+        p.className = 'sv-noitem';
+        p.textContent = tr('lbl.query_the_map');
+        var qc = document.getElementById('sv-query-content');
+        qc.innerHTML = '';
+        qc.appendChild(p);
     }
 
     function clearQuery() {
-        $('#sv-marker').hide('fast');
+        document.getElementById('sv-marker').style.display = 'none';
         closePanel();
         setQueryEmptyHint();
         state.gficoord = null;
@@ -1493,7 +1525,7 @@ window.SViewerApp = (function() {
             view.setCenter(data.coordinates);
             view.setZoom(data.zoom || 16);
         }
-        $('#sv-marker').show();
+        document.getElementById('sv-marker').style.display = '';
         if (data.queryGFI) {
             queryMap(data.coordinates);
         }
@@ -1589,8 +1621,10 @@ window.SViewerApp = (function() {
 
     function clearSearchResults() {
         abortSearchXhrs();
-        $('#sv-search-results').html('');
-        $('#sv-search-input').attr('aria-expanded', 'false').attr('aria-activedescendant', '');
+        document.getElementById('sv-search-results').innerHTML = '';
+        var _si = document.getElementById('sv-search-input');
+        _si.setAttribute('aria-expanded', 'false');
+        _si.setAttribute('aria-activedescendant', '');
     }
 
     function pruneSearchXhrs() {
@@ -1604,9 +1638,11 @@ window.SViewerApp = (function() {
     function searchPlace() {
         abortSearchXhrs();
         searchItemIdx = 0;
-        $("#sv-search-results").html("");
-        $('#sv-locate-msg').text('');
-        $('#sv-search-input').attr('aria-expanded', 'true').attr('aria-activedescendant', '');
+        document.getElementById('sv-search-results').innerHTML = '';
+        document.getElementById('sv-locate-msg').textContent = '';
+        var _si2 = document.getElementById('sv-search-input');
+        _si2.setAttribute('aria-expanded', 'true');
+        _si2.setAttribute('aria-activedescendant', '');
         try {
             openLsRequest(document.getElementById('sv-search-input').value);
             if (state.search) {
@@ -1624,8 +1660,8 @@ window.SViewerApp = (function() {
             if (searchXhrs.length === 0 && openLsDone) {
                 clearInterval(poll);
                 if (!document.getElementById('sv-search-results').firstElementChild) {
-                    $('#sv-locate-msg').text(tr('msg.no_item_found'));
-                    $('#sv-search-input').attr('aria-expanded', 'false');
+                    document.getElementById('sv-locate-msg').textContent = tr('msg.no_item_found');
+                    document.getElementById('sv-search-input').setAttribute('aria-expanded', 'false');
                 }
             }
         }, 200);
@@ -1634,35 +1670,38 @@ window.SViewerApp = (function() {
 
     // panel size and placement to fit small screens
     function panelLayout (_e) {
-        var panel = $(this);
-        panel.css('max-width', Math.min($(window).width() - 44, 450) + 'px');
-        panel.css('max-height', $(window).height() - 64 + 'px');
+        var panel = this;
+        panel.style.maxWidth = Math.min(window.innerWidth - 44, 450) + 'px';
+        panel.style.maxHeight = (window.innerHeight - 64) + 'px';
     }
 
     function resetPanel() {
-        var sidepanel = $('#sv-sidepanel');
-        sidepanel.find('.sv-panel-section').hide();
-        sidepanel.removeClass('active');
-        $('#sv-panel-controls .sv-panel-toggle').removeClass('active').attr('aria-pressed', 'false');
-        $('#sv-frame-map').removeClass('sv-panel-open');
+        var sidepanel = document.getElementById('sv-sidepanel');
+        sidepanel.querySelectorAll('.sv-panel-section').forEach(function(s) { s.style.display = 'none'; });
+        sidepanel.classList.remove('active');
+        document.querySelectorAll('#sv-panel-controls .sv-panel-toggle').forEach(function(btn) {
+            btn.classList.remove('active');
+            btn.setAttribute('aria-pressed', 'false');
+        });
+        document.getElementById('sv-frame-map').classList.remove('sv-panel-open');
     }
 
     function togglePanel(panelName) {
-        var sidepanel = $('#sv-sidepanel');
-        var targetSection = sidepanel.find('[data-sv-section="' + panelName + '"]');
-        var button = $('[data-sv-panel="' + panelName + '"]');
-        if (button.hasClass('active') || targetSection.is(':visible')) {
+        var sidepanel = document.getElementById('sv-sidepanel');
+        var targetSection = sidepanel.querySelector('[data-sv-section="' + panelName + '"]');
+        var button = document.querySelector('[data-sv-panel="' + panelName + '"]');
+        if (button && (button.classList.contains('active') || (targetSection && targetSection.style.display !== 'none'))) {
             resetPanel();
             return;
         }
         resetPanel();
-        targetSection.show();
-        button.addClass('active').attr('aria-pressed', 'true');
-        sidepanel.addClass('active');
-        $('#sv-frame-map').addClass('sv-panel-open');
+        if (targetSection) { targetSection.style.display = ''; }
+        if (button) { button.classList.add('active'); button.setAttribute('aria-pressed', 'true'); }
+        sidepanel.classList.add('active');
+        document.getElementById('sv-frame-map').classList.add('sv-panel-open');
         if (panelName === 'share') { setPermalink(); }
         if (panelName === 'locate') { setTimeout(function() { document.getElementById('sv-search-input').focus(); }, 50); }
-        if (panelName === 'query' && !$('#sv-query-content').text().trim()) { setQueryEmptyHint(); }
+        if (panelName === 'query' && !document.getElementById('sv-query-content').textContent.trim()) { setQueryEmptyHint(); }
     }
 
     function closePanel() { resetPanel(); }
@@ -1681,10 +1720,11 @@ window.SViewerApp = (function() {
         config.title = title;
         document.title = config.title;
        if (config.title!=='') {
-            $('#sv-panel-share-title').text(config.title);
+            document.getElementById('sv-panel-share-title').textContent = config.title;
        }
-        if ($("#sv-share-title").val()==='') {
-            $("#sv-share-title").val(config.title);
+        var _shareTitle = document.getElementById('sv-share-title');
+        if (_shareTitle && _shareTitle.value === '') {
+            _shareTitle.value = config.title;
         }
         if (!silent && typeof SViewer.onTitleChange === 'function') {
             SViewer.onTitleChange(title);
@@ -1739,7 +1779,9 @@ window.SViewerApp = (function() {
         } else {
             gpsAccuracyFeature.setGeometry(null);
         }
-        $('#sv-gps-accuracy').text(acc ? Math.round(acc) + 'm' : '').toggle(!!acc);
+        var _gpsAcc = document.getElementById('sv-gps-accuracy');
+        _gpsAcc.textContent = acc ? Math.round(acc) + 'm' : '';
+        _gpsAcc.style.display = acc ? '' : 'none';
     }
 
     function gpsOnError() {
@@ -1761,8 +1803,12 @@ window.SViewerApp = (function() {
             gpsLayer = null;
             gpsAccuracyFeature = null;
         }
-        $('#sv-btn-locate').attr('aria-pressed', 'false').removeClass('active');
-        $('#sv-gps-accuracy').hide().text('');
+        var _btnLocate = document.getElementById('sv-btn-locate');
+        _btnLocate.setAttribute('aria-pressed', 'false');
+        _btnLocate.classList.remove('active');
+        var _gpsAccEl = document.getElementById('sv-gps-accuracy');
+        _gpsAccEl.style.display = 'none';
+        _gpsAccEl.textContent = '';
         state.position = 0;
         setPermalink();
         messagePopup(tr('msg.gps_tracking_off'));
@@ -1781,7 +1827,9 @@ window.SViewerApp = (function() {
             gpsOnError,
             { maximumAge: interval, enableHighAccuracy: true, timeout: 30000 }
         );
-        $('#sv-btn-locate').attr('aria-pressed', 'true').addClass('active');
+        var _btnLocateStart = document.getElementById('sv-btn-locate');
+        _btnLocateStart.setAttribute('aria-pressed', 'true');
+        _btnLocateStart.classList.add('active');
         state.position = 1;
         setPermalink();
         messagePopup(tr('msg.gps_tracking_on'));
@@ -1976,7 +2024,7 @@ window.SViewerApp = (function() {
                             }
                         }
                     } catch(_e) { /* XPath unsupported — skip links */ }
-                    var $panel = $(Mustache.render(window.SViewerTemplates['sv-layer-panel'], {
+                    var panelFrag = _htmlFragment(Mustache.render(window.SViewerTemplates['sv-layer-panel'], {
                         title:         title,
                         abstract:      abstract,
                         legendUrl:     legendUrl,
@@ -1984,9 +2032,13 @@ window.SViewerApp = (function() {
                         attribution:   null,
                         metadataLinks: metadataLinks
                     }));
+                    var panelEl = panelFrag.firstElementChild;
                     var meta = parseISOMetadata(xmlDoc);
-                    if (meta) { $panel.find('.sv-md-doclink').before(buildISOTable(meta)); }
-                    $('#sv-legend-content').append($panel);
+                    if (meta) {
+                        var doclink = panelEl.querySelector('.sv-md-doclink');
+                        if (doclink) { doclink.before(buildISOTable(meta)); }
+                    }
+                    document.getElementById('sv-legend-content').appendChild(panelEl);
                 });
             });
         } else if (qs.md && qs.layers) {
@@ -2182,8 +2234,10 @@ window.SViewerApp = (function() {
         var fsContainer = document.querySelector('.sv-scope') || document.documentElement;
         function updateFsButton() {
             var active = !!(document.fullscreenElement || document.webkitFullscreenElement);
-            $('#sv-btn-fullscreen').attr('aria-pressed', String(active)).toggleClass('active', active)
-                .find('i').attr('class', active ? 'bi bi-fullscreen-exit' : 'bi bi-fullscreen');
+            var _fsBtn = document.getElementById('sv-btn-fullscreen');
+            _fsBtn.setAttribute('aria-pressed', String(active));
+            _fsBtn.classList.toggle('active', active);
+            _fsBtn.querySelector('i').className = active ? 'bi bi-fullscreen-exit' : 'bi bi-fullscreen';
         }
         $('#sv-btn-fullscreen').on('click', function() {
             if (document.fullscreenElement || document.webkitFullscreenElement) {
@@ -2198,23 +2252,27 @@ window.SViewerApp = (function() {
         // desktop browsers so checking the API alone won't filter desktop — coarse is the right signal.
         var isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
         if (!document.fullscreenEnabled && !document.webkitFullscreenEnabled) {
-            $('#sv-btn-fullscreen').hide();
+            document.getElementById('sv-btn-fullscreen').style.display = 'none';
         }
         // GPS useful on mobile (hardware GPS); desktop users never need it in this context
         if (!navigator.geolocation || !isCoarsePointer) {
-            $('#sv-btn-locate').hide();
+            document.getElementById('sv-btn-locate').style.display = 'none';
         }
 
         // layer opacity slider — only relevant when WMS layers are loaded
-        if (config.layersQueryable.length === 0) { $('.sv-opacity-bar').hide(); }
+        if (config.layersQueryable.length === 0) {
+            document.querySelectorAll('.sv-opacity-bar').forEach(function(el) { el.style.display = 'none'; });
+        }
 
         function applyLayerOpacity(val) {
             state.opacity = val;
             config.layersQueryable.forEach(function(lq) {
                 lq.wmslayer.setOpacity(val);
             });
-            $('#sv-opacity-value').text(Math.round(val * 100) + '%');
-            $('#sv-opacity-slider').val(Math.round(val * 100)).attr('aria-valuenow', Math.round(val * 100));
+            document.getElementById('sv-opacity-value').textContent = Math.round(val * 100) + '%';
+            var _slider = document.getElementById('sv-opacity-slider');
+            _slider.value = Math.round(val * 100);
+            _slider.setAttribute('aria-valuenow', Math.round(val * 100));
             setPermalink();
         }
         $('#sv-opacity-slider').on('input', function() {
@@ -2270,11 +2328,11 @@ window.SViewerApp = (function() {
             }
             clearTimeout(searchDebounceTimer);
             if (query.length >= 3) {
-                $('#sv-locate-msg').text('');
+                document.getElementById('sv-locate-msg').textContent = '';
                 searchDebounceTimer = setTimeout(searchPlace, 350);
             } else {
                 clearSearchResults();
-                $('#sv-locate-msg').text(tr('msg.search_hint'));
+                document.getElementById('sv-locate-msg').textContent = tr('msg.search_hint');
             }
         });
 
@@ -2283,20 +2341,20 @@ window.SViewerApp = (function() {
         $('#sv-share-title').on('blur', setPermalink);
 
         // theme switch
-        $('#sv-theme-switch')
-            .prop('checked', state.theme === 'dark')
-            .attr('aria-checked', String(state.theme === 'dark'))
-            .on('change', function() {
-                state.theme = this.checked ? 'dark' : 'light';
-                $(this).attr('aria-checked', String(this.checked));
-                applyTheme(state.theme);
-                setPermalink();
-            });
+        var _themeSwitch = document.getElementById('sv-theme-switch');
+        _themeSwitch.checked = (state.theme === 'dark');
+        _themeSwitch.setAttribute('aria-checked', String(state.theme === 'dark'));
+        _themeSwitch.addEventListener('change', function() {
+            state.theme = this.checked ? 'dark' : 'light';
+            this.setAttribute('aria-checked', String(this.checked));
+            applyTheme(state.theme);
+            setPermalink();
+        });
 
         // WebComponent button (can appear in side panel or modal)
         $(document).on('click', '.sv-embed-btn', function() {
-            $('#sv-embed-iframe-code').val(generateIframeCode());
-            $('#sv-embed-js-code').val(generateEmbedCode());
+            document.getElementById('sv-embed-iframe-code').value = generateIframeCode();
+            document.getElementById('sv-embed-js-code').value = generateEmbedCode();
             closePanel();
             svModal.open('#sv-modal-embed');
         });
@@ -2336,7 +2394,7 @@ window.SViewerApp = (function() {
             // Generate QR code for the permalink
             if (!href) {
                 console.warn('No permalink available for QR code');
-                $('#sv-qrcode-display').html('<div class="alert alert-warning" role="alert">No link available</div>');
+                document.getElementById('sv-qrcode-display').innerHTML = '<div class="alert alert-warning" role="alert">No link available</div>';
                 return;
             }
 
@@ -2451,7 +2509,7 @@ window.SViewerApp = (function() {
 
         // optional: override search placeholder from customConfig
         if (config.searchPlaceholder) {
-            $('#sv-search-input').prop('placeholder', config.searchPlaceholder);
+            document.getElementById('sv-search-input').placeholder = config.searchPlaceholder;
         }
 
         // Auto-open legend panel when a layer is loaded and screen is wide enough.
@@ -2580,31 +2638,52 @@ window.SViewerApp = (function() {
             var panelId = 'sv-panel-skill-' + name;
             var btnId   = 'sv-btn-panel-skill-' + name;
             if (!document.getElementById(panelId)) {
-                var $btn = $('<button type="button" class="btn btn-dark sv-map-btn sv-panel-toggle" aria-pressed="false">')
-                    .attr('id', btnId)
-                    .attr('data-sv-panel', 'skill-' + name)
-                    .attr('aria-label', title)
-                    .text(title);
-                $('#sv-panel-controls').append($btn);
-                var $section = $('<div class="sv-panel-section" role="region" style="display:none;">')
-                    .attr('id', panelId)
-                    .attr('data-sv-section', 'skill-' + name)
-                    .attr('aria-label', title);
-                var $header = $('<div class="sv-panel-header">').append(
-                    $('<h3 class="sv-panel-title">').text(title),
-                    $('<button type="button" class="sv-sidepanel-close" aria-label="Close panel"><i class="bi bi-x-lg" aria-hidden="true"></i></button>')
-                );
-                var $content = $('<div class="sv-panel-content">').html(html || '');
-                $section.append($header, $content);
-                $('#sv-sidepanel').append($section);
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-dark sv-map-btn sv-panel-toggle';
+                btn.setAttribute('aria-pressed', 'false');
+                btn.id = btnId;
+                btn.setAttribute('data-sv-panel', 'skill-' + name);
+                btn.setAttribute('aria-label', title);
+                btn.textContent = title;
+                document.getElementById('sv-panel-controls').appendChild(btn);
+
+                var section = document.createElement('div');
+                section.className = 'sv-panel-section';
+                section.setAttribute('role', 'region');
+                section.style.display = 'none';
+                section.id = panelId;
+                section.setAttribute('data-sv-section', 'skill-' + name);
+                section.setAttribute('aria-label', title);
+
+                var h3 = document.createElement('h3');
+                h3.className = 'sv-panel-title';
+                h3.textContent = title;
+                var closeBtn = document.createElement('button');
+                closeBtn.type = 'button';
+                closeBtn.className = 'sv-sidepanel-close';
+                closeBtn.setAttribute('aria-label', 'Close panel');
+                closeBtn.innerHTML = '<i class="bi bi-x-lg" aria-hidden="true"></i>';
+                var header = document.createElement('div');
+                header.className = 'sv-panel-header';
+                header.appendChild(h3);
+                header.appendChild(closeBtn);
+
+                var content = document.createElement('div');
+                content.className = 'sv-panel-content';
+                content.innerHTML = html || '';
+
+                section.appendChild(header);
+                section.appendChild(content);
+                document.getElementById('sv-sidepanel').appendChild(section);
             } else {
-                $('#sv-panel-skill-' + name + ' .sv-panel-content').html(html || '');
+                document.querySelector('#sv-panel-skill-' + name + ' .sv-panel-content').innerHTML = html || '';
             }
             togglePanel('skill-' + name);
         },
         close:  function() { togglePanel(null); },
         update: function(name, html) {
-            $('#sv-panel-skill-' + name + ' .sv-panel-content').html(html || '');
+            document.querySelector('#sv-panel-skill-' + name + ' .sv-panel-content').innerHTML = html || '';
         }
     };
     }
