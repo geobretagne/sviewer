@@ -501,6 +501,10 @@
             _svBus.emit('sv:selectFeature', { id: null });
         },
 
+        // Generic event subscription — preferred over named onX helpers.
+        on: function(event, fn) { _svBus.on(event, fn); },
+        off: function(event, fn) { _svBus.off(event, fn); },
+
         // Register callback fired once the OL map is ready.
         // fn({ map, view })
         onMapReady: function(fn) { _svBus.on('sv:mapReady', fn); },

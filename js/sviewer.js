@@ -333,74 +333,58 @@ window.SViewerApp = (function() {
             }));
             log('Loading capabilities from:', capabilitiesUrl, 'for layer:', self.options.nslayername);
 
-            $.ajax({
-                url: capabilitiesUrl,
-                type: 'GET',
-                dataType: 'xml',
-                success: function(response) {
-                    var capabilities, mdLayer, legendArgs;
-                    capabilities = parser.read(response);
-                    log('Capabilities loaded, version:', capabilities.version);
-
-                    // searching for the layer in the capabilities
-                    // Layer virtual service (/geoserver/<ns>/<layer>/wms) scopes the response to this single layer.
-                    // Name may appear with or without namespace prefix depending on GeoServer config; match either form.
-                    if (capabilities.Capability && capabilities.Capability.Layer && capabilities.Capability.Layer.Layer) {
-                        capabilities.Capability.Layer.Layer.forEach(function(lyr) {
-                            log('Found layer in capabilities:', lyr.Name);
-                            if (lyr.Name === self.options.nslayername || lyr.Name === self.options.layername) {
-                                mdLayer = lyr;
-                                log('Matched layer:', this.Name);
-                            }
-                        });
-                    } else {
-                        console.warn('No layers found in capabilities structure');
-                    }
-
-                    if (mdLayer) {
-                        legendArgs = {
-                            'SERVICE' : 'WMS',
-                            'VERSION' : capabilities.version,
-                            'REQUEST' : 'GetLegendGraphic',
-                            'FORMAT' : 'image/png',
-                            'LAYER': mdLayer.Name,
-                            'STYLE': self.options.stylename
-                        };
-                        if (self.options.sldurl) {
-                            legendArgs.SLD = self.options.sldurl;
+            fetch(capabilitiesUrl)
+            .then(function(res) {
+                if (!res.ok) { throw new Error('HTTP ' + res.status); }
+                return res.text();
+            })
+            .then(function(text) {
+                var xmlDoc = new DOMParser().parseFromString(text, 'text/xml');
+                var capabilities = parser.read(xmlDoc);
+                log('Capabilities loaded, version:', capabilities.version);
+                var mdLayer;
+                if (capabilities.Capability && capabilities.Capability.Layer && capabilities.Capability.Layer.Layer) {
+                    capabilities.Capability.Layer.Layer.forEach(function(lyr) {
+                        log('Found layer in capabilities:', lyr.Name);
+                        if (lyr.Name === self.options.nslayername || lyr.Name === self.options.layername) {
+                            mdLayer = lyr;
+                            log('Matched layer:', lyr.Name);
                         }
-                        var legendUrl = self.options.wmsurl_ns + '?' + new URLSearchParams(legendArgs);
-                        log('Legend URL:', legendUrl);
-
-                        self.md.title = mdLayer.Title;
-                        if (state.search) {
-                            state.searchparams.title = self.md.title;
-                        }
-                        self.md.Abstract = mdLayer.Abstract;
-
-                        var panel = buildLayerPanel(mdLayer, legendUrl);
-                        document.getElementById('sv-legend-content').appendChild(panel);
-                        log('Legend appended to DOM');
-
-                        var xmlMetaUrl = null;
-                        if (Object.prototype.hasOwnProperty.call(mdLayer, 'MetadataURL')) {
-                            mdLayer.MetadataURL.forEach(function(mu) {
-                                if (mu.Format === "text/xml" && !xmlMetaUrl) {
-                                    xmlMetaUrl = mu.OnlineResource;
-                                }
-                            });
-                        }
-                        if (xmlMetaUrl) {
-                            fetchISOMetadata(xmlMetaUrl, panel);
-                        }
-                    } else {
-                        console.warn('Layer not found in capabilities:', self.options.nslayername);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('GetCapabilities failed:', status, error, xhr.status);
-                    console.error('URL was:', capabilitiesUrl);
+                    });
+                } else {
+                    console.warn('No layers found in capabilities structure');
                 }
+                if (mdLayer) {
+                    var legendArgs = {
+                        'SERVICE' : 'WMS',
+                        'VERSION' : capabilities.version,
+                        'REQUEST' : 'GetLegendGraphic',
+                        'FORMAT' : 'image/png',
+                        'LAYER': mdLayer.Name,
+                        'STYLE': self.options.stylename
+                    };
+                    if (self.options.sldurl) { legendArgs.SLD = self.options.sldurl; }
+                    var legendUrl = self.options.wmsurl_ns + '?' + new URLSearchParams(legendArgs);
+                    log('Legend URL:', legendUrl);
+                    self.md.title = mdLayer.Title;
+                    if (state.search) { state.searchparams.title = self.md.title; }
+                    self.md.Abstract = mdLayer.Abstract;
+                    var panel = buildLayerPanel(mdLayer, legendUrl);
+                    document.getElementById('sv-legend-content').appendChild(panel);
+                    log('Legend appended to DOM');
+                    var xmlMetaUrl = null;
+                    if (Object.prototype.hasOwnProperty.call(mdLayer, 'MetadataURL')) {
+                        mdLayer.MetadataURL.forEach(function(mu) {
+                            if (mu.Format === 'text/xml' && !xmlMetaUrl) { xmlMetaUrl = mu.OnlineResource; }
+                        });
+                    }
+                    if (xmlMetaUrl) { fetchISOMetadata(xmlMetaUrl, panel); }
+                } else {
+                    console.warn('Layer not found in capabilities:', self.options.nslayername);
+                }
+            })
+            .catch(function(err) {
+                console.error('GetCapabilities failed:', err, capabilitiesUrl);
             });
         }
 
@@ -433,20 +417,17 @@ window.SViewerApp = (function() {
         }
 
         function fetchISOMetadata(url, panel) {
-            $.ajax({
-                url: ajaxURL(url),
-                type: 'GET',
-                dataType: 'xml',
-                success: function(xmlDoc) {
-                    var meta = parseISOMetadata(xmlDoc);
-                    if (meta) {
-                        panel.find('.sv-md-doclink').before(buildISOTable(meta));
-                    }
-                },
-                error: function() {
-                    log('ISO metadata fetch failed for:', url);
+            fetch(ajaxURL(url))
+            .then(function(res) { return res.text(); })
+            .then(function(text) {
+                var xmlDoc = new DOMParser().parseFromString(text, 'text/xml');
+                var meta = parseISOMetadata(xmlDoc);
+                if (meta) {
+                    var anchor = panel.querySelector('.sv-md-doclink');
+                    if (anchor) { anchor.parentNode.insertBefore(buildISOTable(meta), anchor); }
                 }
-            });
+            })
+            .catch(function() { log('ISO metadata fetch failed for:', url); });
         }
 
         /**
@@ -482,45 +463,50 @@ window.SViewerApp = (function() {
             REQUEST: 'DescribeLayer',
             LAYERS: self.options.layername
         }));
-        $.ajax({ url: describeLayerUrl, type: 'GET', dataType: 'xml' })
-        .then(function(r1) {
-            var wfsUrl = $(r1).find('LayerDescription').attr('wfs');
-            var typeName = $(r1).find('Query').attr('typeName');
-            if (!wfsUrl) { return $.Deferred().reject('no wfs url').promise(); }
+        fetch(describeLayerUrl)
+        .then(function(res) { return res.text(); })
+        .then(function(text) {
+            var r1 = new DOMParser().parseFromString(text, 'text/xml');
+            var layerDesc = r1.getElementsByTagName('LayerDescription')[0];
+            var queryEl   = r1.getElementsByTagName('Query')[0];
+            var wfsUrl  = layerDesc ? layerDesc.getAttribute('wfs') : null;
+            var typeName = queryEl  ? queryEl.getAttribute('typeName') : null;
+            if (!wfsUrl) { throw new Error('no wfs url'); }
             self.wfs.url = wfsUrl;
             self.wfs.typeName = typeName;
             var sep = wfsUrl.indexOf('?') >= 0 ? '&' : '?';
-            return $.ajax({
-                url: ajaxURL(wfsUrl + sep + new URLSearchParams({
-                    SERVICE: 'WFS',
-                    VERSION: '1.0.0',
-                    REQUEST: 'DescribeFeatureType',
-                    TYPENAME: typeName
-                })),
-                type: 'GET',
-                dataType: 'xml'
-            });
+            return fetch(ajaxURL(wfsUrl + sep + new URLSearchParams({
+                SERVICE: 'WFS',
+                VERSION: '1.0.0',
+                REQUEST: 'DescribeFeatureType',
+                TYPENAME: typeName
+            })));
         })
-        .then(function(r2) {
-            var fields = [], searchFields = [];
-            $(r2.getElementsByTagNameNS('*', 'sequence')).find('[type]')
-                .each(function() {
-                    var type = $(this).attr('type');
-                    var name = $(this).attr('name');
+        .then(function(res) { return res.text(); })
+        .then(function(text) {
+            var r2 = new DOMParser().parseFromString(text, 'text/xml');
+            var fields = [], searchFields = [], geomField = null;
+            var seqEls = r2.getElementsByTagNameNS('*', 'sequence');
+            for (var s = 0; s < seqEls.length; s++) {
+                var elements = seqEls[s].getElementsByTagName('*');
+                for (var i = 0; i < elements.length; i++) {
+                    var el = elements[i];
+                    var type = el.getAttribute('type');
+                    var name = el.getAttribute('name');
+                    if (!type || !name) { continue; }
                     if (/^xsd:(string|date|dateTime|int|integer|long|short|decimal|double|float|boolean)$/.test(type)) {
                         fields.push(name);
                     }
-                    if (type === 'xsd:string') {
-                        searchFields.push(name);
-                    }
-                });
-            self.wfs.geomField = $(r2.getElementsByTagNameNS('*', 'sequence'))
-                .find('[type*="gml\\:"]').attr('name');
+                    if (type === 'xsd:string') { searchFields.push(name); }
+                    if (!geomField && type.indexOf('gml:') !== -1) { geomField = name; }
+                }
+            }
+            self.wfs.geomField = geomField;
             self.wfs.fields = fields;
             self.wfs.searchFields = searchFields;
             log('WFS discovered for', self.options.nslayername, ':', self.wfs.url, fields);
         })
-        .fail(function() {
+        .catch(function() {
             self.wfs.url = null;
             log('discoverWFS failed for', self.options.nslayername, '(no WFS or CORS)');
         });
@@ -587,30 +573,31 @@ window.SViewerApp = (function() {
             OutputSchema: 'http://www.isotc211.org/2005/gmd'
         });
         loadingBar.start();
-        $.ajax({
-            url: ajaxURL(url),
-            type: 'GET',
-            dataType: 'xml',
-            success: function(xmlDoc) {
-                var result = parseCSWForWMS(xmlDoc);
-                if (result) {
-                    callback(result.wmsUrl, result.layername, xmlDoc);
-                } else {
-                    var _noWms = document.createElement('div');
-                    _noWms.className = 'alert alert-warning mt-2';
-                    _noWms.textContent = tr('msg.csw_no_wms');
-                    document.getElementById('sv-legend-content').appendChild(_noWms);
-                }
-            },
-            error: function(xhr, status, error) {
-                log('CSW GetRecordById failed:', status, error);
-                var _cswErr = document.createElement('div');
-                _cswErr.className = 'alert alert-warning mt-2';
-                _cswErr.textContent = tr('msg.csw_error');
-                document.getElementById('sv-legend-content').appendChild(_cswErr);
-            },
-            complete: function() { loadingBar.end(); }
-        });
+        fetch(ajaxURL(url))
+        .then(function(res) {
+            if (!res.ok) { throw new Error('HTTP ' + res.status); }
+            return res.text();
+        })
+        .then(function(text) {
+            var xmlDoc = new DOMParser().parseFromString(text, 'text/xml');
+            var result = parseCSWForWMS(xmlDoc);
+            if (result) {
+                callback(result.wmsUrl, result.layername, xmlDoc);
+            } else {
+                var _noWms = document.createElement('div');
+                _noWms.className = 'alert alert-warning mt-2';
+                _noWms.textContent = tr('msg.csw_no_wms');
+                document.getElementById('sv-legend-content').appendChild(_noWms);
+            }
+        })
+        .catch(function(err) {
+            log('CSW GetRecordById failed:', err);
+            var _cswErr = document.createElement('div');
+            _cswErr.className = 'alert alert-warning mt-2';
+            _cswErr.textContent = tr('msg.csw_error');
+            document.getElementById('sv-legend-content').appendChild(_cswErr);
+        })
+        .finally(function() { loadingBar.end(); });
     }
 
     function parseCSWForWMS(xmlDoc) {
@@ -908,41 +895,13 @@ window.SViewerApp = (function() {
      * API docs: https://geoservices.ign.fr/documentation/services/api-et-services-ogc/geocodage
      * @param text {String} free-text address query
      */
-    var openLsXhr = null;
+    var openLsAbortCtrl = null;
 
     function openLsRequest(text) {
 
-        if (openLsXhr) {
-            openLsXhr.abort();
-            openLsXhr = null;
-        }
-
-        function onGeocodeSuccess(response) {
-            svSpinner.hide();
-            try {
-                var results = config.geocodeAdapter(response);
-                if (results.length > 0) {
-                    var searchResults = document.getElementById('sv-search-results');
-                    var header = _htmlFragment(Mustache.render(window.SViewerTemplates['sv-search-header'], { label: tr('lbl.geocode_results') }));
-                    searchResults.insertBefore(header, searchResults.firstChild);
-                    results.slice().reverse().forEach(function(r) {
-                        var coords = ol.proj.transform(r.coords, 'EPSG:4326', config.projcode);
-                        var li = renderSearchItem(
-                            { label: r.label, icon: 'bi-geo-alt-fill' },
-                            { extent: [], coordinates: coords, zoom: r.zoom }
-                        );
-                        searchResults.insertBefore(li, searchResults.children[1] || null);
-                    });
-                }
-            } catch(_err) {
-                document.getElementById('sv-locate-msg').textContent = tr('msg.geolocation_failed');
-            }
-        }
-
-        function onGeocodeFailure(xhr) {
-            if (xhr.statusText === 'abort') { return; }
-            document.getElementById('sv-locate-msg').textContent = tr('msg.geolocation_failed');
-            svSpinner.hide();
+        if (openLsAbortCtrl) {
+            openLsAbortCtrl.abort();
+            openLsAbortCtrl = null;
         }
 
         try {
@@ -953,15 +912,40 @@ window.SViewerApp = (function() {
                     map.getView().getProjection().getCode(),
                     'EPSG:4326'
                 );
-                openLsXhr = $.ajax({
-                    url: config.openLSGeocodeUrl,
-                    type: 'GET',
-                    dataType: 'json',
-                    data: Object.assign({ q: q, limit: config.maxGeocodeResults, bbox: bbox.join(',') }, config.geocodeParams || {}),
-                    success: onGeocodeSuccess,
-                    error: onGeocodeFailure
-                });
+                var params = Object.assign({ q: q, limit: config.maxGeocodeResults, bbox: bbox.join(',') }, config.geocodeParams || {});
+                var geocodeUrl = config.openLSGeocodeUrl + '?' + new URLSearchParams(params);
+                openLsAbortCtrl = new AbortController();
                 svSpinner.show();
+                fetch(geocodeUrl, { signal: openLsAbortCtrl.signal })
+                .then(function(res) { return res.json(); })
+                .then(function(response) {
+                    openLsAbortCtrl = null;
+                    svSpinner.hide();
+                    try {
+                        var results = config.geocodeAdapter(response);
+                        if (results.length > 0) {
+                            var searchResults = document.getElementById('sv-search-results');
+                            var header = _htmlFragment(Mustache.render(window.SViewerTemplates['sv-search-header'], { label: tr('lbl.geocode_results') }));
+                            searchResults.insertBefore(header, searchResults.firstChild);
+                            results.slice().reverse().forEach(function(r) {
+                                var coords = ol.proj.transform(r.coords, 'EPSG:4326', config.projcode);
+                                var li = renderSearchItem(
+                                    { label: r.label, icon: 'bi-geo-alt-fill' },
+                                    { extent: [], coordinates: coords, zoom: r.zoom }
+                                );
+                                searchResults.insertBefore(li, searchResults.children[1] || null);
+                            });
+                        }
+                    } catch(_err) {
+                        document.getElementById('sv-locate-msg').textContent = tr('msg.geolocation_failed');
+                    }
+                })
+                .catch(function(err) {
+                    openLsAbortCtrl = null;
+                    if (err && err.name === 'AbortError') { return; }
+                    document.getElementById('sv-locate-msg').textContent = tr('msg.geolocation_failed');
+                    svSpinner.hide();
+                });
             }
         } catch(_err) {
             messagePopup(tr('msg.geolocation_failed'));
@@ -980,29 +964,27 @@ window.SViewerApp = (function() {
             map.getView().getProjection().getCode(),
             'EPSG:4326'
         );
-        $.ajax({
-            url: config.openLSGeocodeUrl,
-            type: 'GET',
-            dataType: 'json',
-            data: Object.assign({ q: text.trim(), limit: config.maxGeocodeResults, bbox: bbox.join(',') }, config.geocodeParams || {}),
-            success: function(response) {
-                var results = config.geocodeAdapter(response);
-                if (!results.length) { return; }
-                var best = results[0];
-                if (best.score >= 0.8) {
-                    var coords = ol.proj.transform(best.coords, 'EPSG:4326', config.projcode);
-                    marker.setPosition(coords);
-                    view.setCenter(coords);
-                    view.setZoom(best.zoom);
-                    document.getElementById('sv-marker').style.display = '';
-                } else {
-                    // Ambiguous — fall back to interactive search panel
-                    document.getElementById('sv-search-input').value = text;
-                    togglePanel('locate');
-                    openLsRequest(text);
-                }
+        var params = Object.assign({ q: text.trim(), limit: config.maxGeocodeResults, bbox: bbox.join(',') }, config.geocodeParams || {});
+        fetch(config.openLSGeocodeUrl + '?' + new URLSearchParams(params))
+        .then(function(res) { return res.json(); })
+        .then(function(response) {
+            var results = config.geocodeAdapter(response);
+            if (!results.length) { return; }
+            var best = results[0];
+            if (best.score >= 0.8) {
+                var coords = ol.proj.transform(best.coords, 'EPSG:4326', config.projcode);
+                marker.setPosition(coords);
+                view.setCenter(coords);
+                view.setZoom(best.zoom);
+                document.getElementById('sv-marker').style.display = '';
+            } else {
+                // Ambiguous — fall back to interactive search panel
+                document.getElementById('sv-search-input').value = text;
+                togglePanel('locate');
+                openLsRequest(text);
             }
-        });
+        })
+        .catch(function() { /* silent — auto-geocode is best-effort */ });
     }
 
     // Build an OL vector layer from a feature array using geojsonStyle config.
@@ -1167,7 +1149,9 @@ window.SViewerApp = (function() {
         var geom = feature.getGeometry();
         if (geom) { view.fit(geom.getExtent(), { maxZoom: 16, duration: 400, padding: [40,40,40,40] }); }
         var props = feature.getProperties();
-        $('#sv-query-content').html('').append(_buildPropertiesTable(props));
+        var _qc = document.getElementById('sv-query-content');
+        _qc.innerHTML = '';
+        _qc.appendChild(_buildPropertiesTable(props));
         closePanel();
         togglePanel('query');
         _emit('sv:featureSelect', { feature: feature, properties: props });
@@ -1306,37 +1290,31 @@ window.SViewerApp = (function() {
             }
         }
         log('loadGeoJSON:', url, '| textAdapter:', textAdapter ? 'yes' : 'no', '| adapters loaded:', Object.keys(adapters).join(',') || 'none');
-        $.ajax({
-            url: url,
-            type: 'GET',
-            dataType: textAdapter ? 'text' : 'json',
-            success: function(data) {
-                // Text adapters (e.g. CSV) receive raw string; dispatch directly.
-                var geojson = textAdapter ? textAdapter.convert(data, url) : (
-                // Non-GeoJSON response → normalize via registered adapters (customConfig.adapters)
-                (data && data.type === 'FeatureCollection') ? data : (function() {
-                    var jsonAdapters = window.SViewerAdapters || {};
-                    for (var name in jsonAdapters) {
-                        var a = jsonAdapters[name];
-                        if (a.wantsText) { continue; } // text adapters already handled above
-                        if (a.match && !a.match(url)) { continue; }
-                        var result = a.convert(data, url);
-                        if (result) { matchedAdapter = a; return result; }
-                    }
-                    // Legacy: single-function adapter in customConfig
-                    return (typeof config.jsonLayerAdapter === 'function') ? config.jsonLayerAdapter(data, url) : null;
-                }()));
-                log('loadGeoJSON: geojson features=', geojson ? geojson.features.length : 'null (no adapter matched or conversion failed)');
-                if (!geojson) {
-                    messagePopup(tr('msg.query_failed'));
-                    return;
+        fetch(url)
+        .then(function(res) {
+            if (!res.ok) { throw new Error('HTTP ' + res.status); }
+            return textAdapter ? res.text() : res.json();
+        })
+        .then(function(data) {
+            // Text adapters (e.g. CSV) receive raw string; dispatch directly.
+            var geojson = textAdapter ? textAdapter.convert(data, url) : (
+            // Non-GeoJSON response → normalize via registered adapters (customConfig.adapters)
+            (data && data.type === 'FeatureCollection') ? data : (function() {
+                var jsonAdapters = window.SViewerAdapters || {};
+                for (var name in jsonAdapters) {
+                    var a = jsonAdapters[name];
+                    if (a.wantsText) { continue; }
+                    if (a.match && !a.match(url)) { continue; }
+                    var result = a.convert(data, url);
+                    if (result) { matchedAdapter = a; return result; }
                 }
-                _applyGeoJSON(geojson, url, matchedAdapter);
-            },
-            error: function() {
-                messagePopup(tr('msg.query_failed'));
-            }
-        });
+                return (typeof config.jsonLayerAdapter === 'function') ? config.jsonLayerAdapter(data, url) : null;
+            }()));
+            log('loadGeoJSON: geojson features=', geojson ? geojson.features.length : 'null (no adapter matched or conversion failed)');
+            if (!geojson) { messagePopup(tr('msg.query_failed')); return; }
+            _applyGeoJSON(geojson, url, matchedAdapter);
+        })
+        .catch(function() { messagePopup(tr('msg.query_failed')); });
     }
 
     /**
@@ -1365,39 +1343,41 @@ window.SViewerApp = (function() {
             );
 
             // response order = layer order
-            var domResponse = _htmlFragment(Mustache.render(window.SViewerTemplates['sv-query-header'], { title: lq.md.title }));
-            document.getElementById('sv-query-content').appendChild(domResponse);
+            var headerFrag = _htmlFragment(Mustache.render(window.SViewerTemplates['sv-query-header'], { title: lq.md.title }));
+            var headerEl = headerFrag.firstElementChild;
+            document.getElementById('sv-query-content').appendChild(headerEl);
             // ajax request
             svSpinner.show();
-            $.ajax({
-                url: ajaxURL(url),
-                type: 'GET',
-                dataType: 'html',
-                context: domResponse,
-                success: function(response) {
-                    // nonempty reponse detection
-                    if (response.search(config.nodata)<0) {
+            (function(container) {
+                fetch(ajaxURL(url))
+                .then(function(res) { return res.text(); })
+                .then(function(response) {
+                    if (response.search(config.nodata) < 0) {
                         closePanel();
-                        /* parseHTML(html, ctx, false) parses without executing scripts — prevents XSS
+                        /* DOMParser without script execution prevents XSS
                            from attacker-controlled WMS servers returning malicious GetFeatureInfo HTML */
-                        $(this).append($.parseHTML(response, document, false));
+                        var parsed = new DOMParser().parseFromString(response, 'text/html');
+                        Array.prototype.forEach.call(parsed.body.childNodes, function(node) {
+                            container.appendChild(document.importNode(node, true));
+                        });
                         state.gfiok = true;
-                        $('#panelQuery a').attr("rel","external");
+                        document.querySelectorAll('#panelQuery a').forEach(function(a) { a.setAttribute('rel', 'external'); });
                         togglePanel('query');
-                    }
-                    else {
-                        // empty response: keep panel closed, notify via toast
-                        $(this).remove();
+                    } else {
+                        container.parentNode && container.parentNode.removeChild(container);
                         messagePopup(tr('msg.no_item_found'));
                         state.gfiok = false;
                     }
                     svSpinner.hide();
-                },
-                error: function() {
+                })
+                .catch(function() {
                     svSpinner.hide();
-                    $(this).append($('<p class="sv-noitem">').text(tr('msg.query_failed')));
-                }
-            });
+                    var p = document.createElement('p');
+                    p.className = 'sv-noitem';
+                    p.textContent = tr('msg.query_failed');
+                    container.appendChild(p);
+                });
+            }(headerEl));
         });
     }
 
@@ -1484,28 +1464,26 @@ window.SViewerApp = (function() {
 
             (function(lyr, term) {
                 loadingBar.start();
-                var xhr = $.ajax({
-                    type: 'POST',
-                    url: ajaxURL(lyr.wfs.url),
-                    data: getFeatureRequest,
-                    dataType: 'json',
-                    contentType: 'application/xml',
-                    success: function(response) {
-                        pruneSearchXhrs();
-                        var f = new ol.format.GeoJSON().readFeatures(response);
-                        if (f.length > 0) {
-                            featuresToList(f, lyr.md.title || lyr.options.nslayername, term);
-                        }
-                    },
-                    error: function(jqXHR) {
-                        pruneSearchXhrs();
-                        if (jqXHR.statusText !== 'abort') {
-                            log('WFS search error for', lyr.options.nslayername);
-                        }
-                    },
-                    complete: function() { loadingBar.end(); }
-                });
-                searchXhrs.push(xhr);
+                searchPending++;
+                var ctrl = new AbortController();
+                searchAbortCtrls.push(ctrl);
+                fetch(ajaxURL(lyr.wfs.url), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/xml' },
+                    body: getFeatureRequest,
+                    signal: ctrl.signal
+                })
+                .then(function(res) { return res.json(); })
+                .then(function(response) {
+                    searchPending--;
+                    var f = new ol.format.GeoJSON().readFeatures(response);
+                    if (f.length > 0) { featuresToList(f, lyr.md.title || lyr.options.nslayername, term); }
+                })
+                .catch(function(err) {
+                    searchPending--;
+                    if (err && err.name !== 'AbortError') { log('WFS search error for', lyr.options.nslayername); }
+                })
+                .finally(function() { loadingBar.end(); });
             }(layer, value));
         });
     }
@@ -1614,11 +1592,13 @@ window.SViewerApp = (function() {
         });
     }
 
-    var searchXhrs = [];
+    var searchAbortCtrls = [];
+    var searchPending = 0;
 
     function abortSearchXhrs() {
-        searchXhrs.forEach(function(xhr) { xhr.abort(); });
-        searchXhrs = [];
+        searchAbortCtrls.forEach(function(c) { c.abort(); });
+        searchAbortCtrls = [];
+        searchPending = 0;
     }
 
     function clearSearchResults() {
@@ -1629,9 +1609,6 @@ window.SViewerApp = (function() {
         _si.setAttribute('aria-activedescendant', '');
     }
 
-    function pruneSearchXhrs() {
-        searchXhrs = searchXhrs.filter(function(xhr) { return xhr.readyState !== 4; });
-    }
 
     /**
      * method: searchPlace
@@ -1657,9 +1634,8 @@ window.SViewerApp = (function() {
         }
         // after all in-flight searches settle, show "no results" if list still empty
         var poll = setInterval(function() {
-            pruneSearchXhrs();
-            var openLsDone = !openLsXhr || openLsXhr.readyState === 4;
-            if (searchXhrs.length === 0 && openLsDone) {
+            var openLsDone = !openLsAbortCtrl;
+            if (searchPending === 0 && openLsDone) {
                 clearInterval(poll);
                 if (!document.getElementById('sv-search-results').firstElementChild) {
                     document.getElementById('sv-locate-msg').textContent = tr('msg.no_item_found');
@@ -1671,11 +1647,7 @@ window.SViewerApp = (function() {
     }
 
     // panel size and placement to fit small screens
-    function panelLayout (_e) {
-        var panel = this;
-        panel.style.maxWidth = Math.min(window.innerWidth - 44, 450) + 'px';
-        panel.style.maxHeight = (window.innerHeight - 64) + 'px';
-    }
+    function panelLayout () { /* resize hook — reserved for future responsive panel sizing */ }
 
     function resetPanel() {
         var sidepanel = document.getElementById('sv-sidepanel');
@@ -1883,15 +1855,22 @@ window.SViewerApp = (function() {
             doMap();
             doGUI();
         }
+        function loadScript(src, cb) {
+            var s = document.createElement('script');
+            s.src = src;
+            s.onload = cb;
+            s.onerror = cb;
+            document.head.appendChild(s);
+        }
         if (qs.c && qs.c.match(/^[A-Za-z0-9_-]+$/)) {
             qsconfig = configBase + "local/customConfig_"+qs.c+".js";
-            $.getScript(qsconfig).done(startApp).fail(startApp);
+            loadScript(qsconfig, startApp);
         } else if (window.SViewerEmbedded) {
             // embed.js already loaded customConfig.js — skip redundant fetch
             startApp();
         } else {
             qsconfig = configBase + "local/customConfig.js";
-            $.getScript(qsconfig).done(startApp).fail(startApp);
+            loadScript(qsconfig, startApp);
         }
     }
     
@@ -2489,9 +2468,11 @@ window.SViewerApp = (function() {
         window.addEventListener('resize', panelLayout);
         window.addEventListener('pageshow', panelLayout);
 
-        // Side panel toggles
-        document.querySelectorAll('#sv-panel-controls button').forEach(function(btn) { btn.addEventListener('click', panelButton); });
-        document.querySelectorAll('.sv-sidepanel-close').forEach(function(btn) { btn.addEventListener('click', closePanel); });
+        // Side panel toggles — delegated: buttons are added dynamically after doGUI runs
+        document.getElementById('sv-panel-controls').addEventListener('click', panelButton);
+        document.getElementById('sv-sidepanel').addEventListener('click', function(e) {
+            if (e.target.closest('.sv-sidepanel-close')) { closePanel(); }
+        });
 
         // Close panel when clicking on backdrop (small screens)
         document.getElementById('sv-frame-map').addEventListener('click', function(e) {
