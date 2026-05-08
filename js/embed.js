@@ -118,7 +118,7 @@
                                 <i class="bi bi-link" aria-hidden="true"></i>
                                 <span class="i18n" data-i18n="btn.permalink_label">Link</span>
                             </button>
-                            <button type="button" class="webcomponent-btn i18n btn btn-info" title="Embed" data-i18n-title="btn.embed">
+                            <button type="button" class="sv-embed-btn i18n btn btn-info" title="Embed" data-i18n-title="btn.embed">
                                 <i class="bi bi-code" aria-hidden="true"></i>
                                 <span class="i18n" data-i18n="btn.embed_label">Embed</span>
                             </button>

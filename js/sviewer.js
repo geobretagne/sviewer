@@ -1642,7 +1642,7 @@ window.SViewerApp = (function() {
         sidepanel.find('.sv-panel-section').hide();
         sidepanel.removeClass('active');
         $('#sv-panel-controls .sv-panel-toggle').removeClass('active').attr('aria-pressed', 'false');
-        $('#sv-frame-map').removeClass('panel-open');
+        $('#sv-frame-map').removeClass('sv-panel-open');
     }
 
     function togglePanel(panelName) {
@@ -1657,7 +1657,7 @@ window.SViewerApp = (function() {
         targetSection.show();
         button.addClass('active').attr('aria-pressed', 'true');
         sidepanel.addClass('active');
-        $('#sv-frame-map').addClass('panel-open');
+        $('#sv-frame-map').addClass('sv-panel-open');
         if (panelName === 'share') { setPermalink(); }
         if (panelName === 'locate') { setTimeout(function() { $('#sv-search-input').focus(); }, 50); }
         if (panelName === 'query' && !$('#sv-query-content').text().trim()) { setQueryEmptyHint(); }
@@ -2314,7 +2314,7 @@ if (!hitVector) { queryMap(e.coordinate); }
             });
 
         // WebComponent button (can appear in side panel or modal)
-        $(document).on('click', '.webcomponent-btn', function() {
+        $(document).on('click', '.sv-embed-btn', function() {
             $('#sv-embed-iframe-code').val(generateIframeCode());
             $('#sv-embed-js-code').val(generateEmbedCode());
             closePanel();
@@ -2443,7 +2443,7 @@ if (!hitVector) { queryMap(e.coordinate); }
 
         // Close panel when clicking on backdrop (small screens)
         $('#sv-frame-map').on('click', function(e) {
-            if ($(this).hasClass('panel-open') && window.innerWidth <= 600) {
+            if ($(this).hasClass('sv-panel-open') && window.innerWidth <= 600) {
                 // On small screens, close panel if clicking backdrop area (left 15%)
                 if (e.target === this && e.clientX < window.innerWidth * 0.15) {
                     closePanel();

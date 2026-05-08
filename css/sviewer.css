@@ -243,7 +243,7 @@
 }
 
 .sv-map-btn svg,
-.sv-map-btn .icon-svg {
+.sv-map-btn .sv-icon-svg {
     width: 20px;
     height: 20px;
     display: inline;
@@ -365,7 +365,7 @@
         transition: background-color var(--transition);
         z-index: 4999;
     }
-    .sv-framemap.panel-open::after {
+    .sv-framemap.sv-panel-open::after {
         background-color: var(--sv-overlay-bg);
         pointer-events: auto;
     }
@@ -642,7 +642,7 @@
 /* Secondary buttons — light surface (panel-content only) */
 .sv-panel-content .btn-secondary,
 .sv-panel-content .btn-info,
-.sv-panel-content .webcomponent-btn {
+.sv-panel-content .sv-embed-btn {
     background-color: var(--sv-surface);
     border-color: var(--sv-border);
     color: var(--sv-fg);
@@ -650,7 +650,7 @@
 
 .sv-panel-content .btn-secondary:hover,
 .sv-panel-content .btn-info:hover,
-.sv-panel-content .webcomponent-btn:hover {
+.sv-panel-content .sv-embed-btn:hover {
     background-color: var(--sv-surface-muted);
     border-color: var(--sv-fg-muted);
     color: var(--sv-fg);
@@ -659,7 +659,7 @@
 /* Secondary buttons — dark surface (sidepanel and modals) */
 .sv-sidepanel .btn-secondary,
 .sv-sidepanel .btn-info,
-.sv-sidepanel .webcomponent-btn,
+.sv-sidepanel .sv-embed-btn,
 .sv-scope .modal .btn-secondary {
     background-color: var(--sv-panel-btn-bg);
     border-color: var(--sv-panel-border);
@@ -668,7 +668,7 @@
 
 .sv-sidepanel .btn-secondary:hover,
 .sv-sidepanel .btn-info:hover,
-.sv-sidepanel .webcomponent-btn:hover,
+.sv-sidepanel .sv-embed-btn:hover,
 .sv-scope .modal .btn-secondary:hover {
     background-color: var(--sv-panel-btn-bg-hover);
     border-color: var(--sv-panel-btn-border-hover);
