@@ -804,7 +804,8 @@ window.SViewerApp = (function() {
      */
     function setPermalink () {
         // permalink, social links & QR code update only if share panel is visible
-        if ($('#sv-panel-share').is(':visible')) {
+        var _sharePanel = document.getElementById('sv-panel-share');
+        if (_sharePanel && _sharePanel.style.display !== 'none') {
             var permalinkQuery;
             var c = view.getCenter();
             var linkParams = {};
@@ -847,7 +848,7 @@ window.SViewerApp = (function() {
      * Includes all relevant URL parameters (x, y, z, layers, lb, title, etc.)
      */
     function generateIframeCode() {
-        var href = $('#sv-permalink-url').prop('href');
+        var href = document.getElementById('sv-permalink-url').href;
         return '<iframe src="' + href + '" width="100%" height="500" frameborder="0" allowfullscreen></iframe>';
     }
 
@@ -1607,9 +1608,9 @@ window.SViewerApp = (function() {
         $('#sv-locate-msg').text('');
         $('#sv-search-input').attr('aria-expanded', 'true').attr('aria-activedescendant', '');
         try {
-            openLsRequest($("#sv-search-input").val());
+            openLsRequest(document.getElementById('sv-search-input').value);
             if (state.search) {
-                searchAllWFSLayers($("#sv-search-input").val());
+                searchAllWFSLayers(document.getElementById('sv-search-input').value);
             }
         }
         catch(_err) {
@@ -1622,7 +1623,7 @@ window.SViewerApp = (function() {
             var openLsDone = !openLsXhr || openLsXhr.readyState === 4;
             if (searchXhrs.length === 0 && openLsDone) {
                 clearInterval(poll);
-                if ($("#sv-search-results").is(':empty')) {
+                if (!document.getElementById('sv-search-results').firstElementChild) {
                     $('#sv-locate-msg').text(tr('msg.no_item_found'));
                     $('#sv-search-input').attr('aria-expanded', 'false');
                 }
@@ -1660,7 +1661,7 @@ window.SViewerApp = (function() {
         sidepanel.addClass('active');
         $('#sv-frame-map').addClass('sv-panel-open');
         if (panelName === 'share') { setPermalink(); }
-        if (panelName === 'locate') { setTimeout(function() { $('#sv-search-input').focus(); }, 50); }
+        if (panelName === 'locate') { setTimeout(function() { document.getElementById('sv-search-input').focus(); }, 50); }
         if (panelName === 'query' && !$('#sv-query-content').text().trim()) { setQueryEmptyHint(); }
     }
 
@@ -2122,7 +2123,7 @@ window.SViewerApp = (function() {
 
         // marker overlay for geoloc and queries
         marker =  new ol.Overlay({
-            element: $('#sv-marker')[0],
+            element: document.getElementById('sv-marker'),
             positioning: 'bottom-left',
             stopEvent: false
         });
@@ -2325,8 +2326,10 @@ window.SViewerApp = (function() {
 
         // Permalink button — close share panel and show link in modal
         $(document).on('click', '#sv-btn-permalink', function() {
-            var href = $('#sv-permalink-url').prop('href');
-            $('#sv-permalink-url').prop('href', href).text(href);
+            var _permalinkEl = document.getElementById('sv-permalink-url');
+            var href = _permalinkEl.href;
+            _permalinkEl.href = href;
+            _permalinkEl.textContent = href;
             closePanel();
             svModal.open('#sv-modal-permalink');
 
@@ -2395,7 +2398,7 @@ window.SViewerApp = (function() {
         }
 
         $(document).on('click', '#sv-permalink-copy-btn', function() {
-            var url = $('#sv-permalink-url').prop('href');
+            var url = document.getElementById('sv-permalink-url').href;
             copyToClipboard(url, $(this), function() { window.prompt('', url); });
         });
 
@@ -2432,7 +2435,7 @@ window.SViewerApp = (function() {
 
         // Handle sidepanel layout and permalink updates
         var observer = new MutationObserver(function() {
-            if ($('#sv-sidepanel').hasClass('active')) {
+            if (document.getElementById('sv-sidepanel').classList.contains('active')) {
                 setPermalink();
             }
         });
