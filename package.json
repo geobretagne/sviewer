@@ -9,7 +9,10 @@
     "minify:embed": "terser js/embed.js -o static/js/embed.min.js -c -m",
     "minify:css": "postcss css/sviewer.css -o static/css/sviewer.min.css",
     "build": "npm run build:ol && npm run minify",
-    "stamp": "node scripts/stamp.js"
+    "stamp": "node scripts/stamp.js",
+    "lint:js": "eslint js/ static/js/",
+    "lint:css": "stylelint css/sviewer.css",
+    "lint": "npm run lint:js && npm run lint:css"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
@@ -22,6 +25,8 @@
     "globals": "^17.5.0",
     "ol": "^9.1.0",
     "postcss-cli": "^11.0.1",
+    "stylelint": "^17.11.0",
+    "stylelint-config-standard": "^40.0.0",
     "terser": "^5.31.0"
   },
   "keywords": [
