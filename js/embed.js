@@ -79,23 +79,23 @@
             </div>
 
             <div id="sv-panel-controls" class="sv-map-panels" role="group" aria-label="Side panels">
-                <button type="button" accesskey="m" id="sv-btn-panel-share" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-panel="share" title="Map" data-i18n-title="btn.panel_map" aria-label="Map panel" aria-pressed="false">
+                <button type="button" accesskey="m" id="sv-btn-panel-share" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-sv-panel="share" title="Map" data-i18n-title="btn.panel_map" aria-label="Map panel" aria-pressed="false">
                     <span id="sv-panel-share-title">Map</span><span class="d-none">&nbsp;</span>
                     <i class="bi bi-gear" aria-hidden="true"></i>
                 </button>
-                <button type="button" accesskey="i" id="sv-btn-panel-legend" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-panel="legend" title="Legend" data-i18n-title="btn.panel_legend" aria-label="Legend panel" aria-pressed="false">
+                <button type="button" accesskey="i" id="sv-btn-panel-legend" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-sv-panel="legend" title="Legend" data-i18n-title="btn.panel_legend" aria-label="Legend panel" aria-pressed="false">
                     <i class="bi bi-info-square" aria-hidden="true"></i>
                 </button>
-                <button type="button" accesskey="q" id="sv-btn-panel-query" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-panel="query" title="Query" data-i18n-title="btn.panel_query" aria-label="Query panel" aria-pressed="false">
+                <button type="button" accesskey="q" id="sv-btn-panel-query" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-sv-panel="query" title="Query" data-i18n-title="btn.panel_query" aria-label="Query panel" aria-pressed="false">
                     <i class="bi bi-geo-fill" aria-hidden="true"></i>
                 </button>
-                <button type="button" accesskey="r" id="sv-btn-panel-locate" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-panel="locate" title="Locate" data-i18n-title="btn.panel_locate" aria-label="Locate panel" aria-pressed="false">
+                <button type="button" accesskey="r" id="sv-btn-panel-locate" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-sv-panel="locate" title="Locate" data-i18n-title="btn.panel_locate" aria-label="Locate panel" aria-pressed="false">
                     <i class="bi bi-search" aria-hidden="true"></i>
                 </button>
             </div>
 
             <div id="sv-sidepanel" class="sv-sidepanel" role="complementary" aria-label="Information panel">
-                <div id="sv-panel-share" class="sv-panel-section" role="region" data-section="share" aria-label="Map sharing panel" style="display: none;">
+                <div id="sv-panel-share" class="sv-panel-section" role="region" data-sv-section="share" aria-label="Map sharing panel" style="display: none;">
                     <div class="sv-panel-header">
                         <h3 class="sv-panel-title i18n" data-i18n="panel.config.title">Configuration</h3>
                         <button type="button" class="sv-sidepanel-close" aria-label="Close panel">
@@ -133,7 +133,7 @@
                     </div>
                 </div>
 
-                <div id="sv-panel-legend" class="sv-panel-section" data-section="legend" aria-label="Map legend" style="display: none;">
+                <div id="sv-panel-legend" class="sv-panel-section" data-sv-section="legend" aria-label="Map legend" style="display: none;">
                     <div class="sv-panel-header">
                         <h3 class="sv-panel-title i18n" data-i18n="panel.legend.title">Documentation</h3>
                         <button type="button" class="sv-sidepanel-close" aria-label="Close panel">
@@ -150,7 +150,7 @@
                     </div>
                 </div>
 
-                <div id="sv-panel-query" class="sv-panel-section" data-section="query" aria-label="Map query results" style="display: none;">
+                <div id="sv-panel-query" class="sv-panel-section" data-sv-section="query" aria-label="Map query results" style="display: none;">
                     <div class="sv-panel-header">
                         <h3 class="sv-panel-title i18n" data-i18n="panel.query.title">Query results</h3>
                         <button type="button" class="sv-sidepanel-close" aria-label="Close panel">
@@ -162,7 +162,7 @@
                     </div>
                 </div>
 
-                <div id="sv-panel-locate" class="sv-panel-section" data-section="locate" aria-label="Location search panel" style="display: none;">
+                <div id="sv-panel-locate" class="sv-panel-section" data-sv-section="locate" aria-label="Location search panel" style="display: none;">
                     <div class="sv-panel-header">
                         <h3 class="sv-panel-title i18n" data-i18n="panel.locate.title">Location</h3>
                         <button type="button" class="sv-sidepanel-close" aria-label="Close panel">

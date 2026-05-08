@@ -1647,8 +1647,8 @@ window.SViewerApp = (function() {
 
     function togglePanel(panelName) {
         var sidepanel = $('#sv-sidepanel');
-        var targetSection = sidepanel.find('[data-section="' + panelName + '"]');
-        var button = $('[data-panel="' + panelName + '"]');
+        var targetSection = sidepanel.find('[data-sv-section="' + panelName + '"]');
+        var button = $('[data-sv-panel="' + panelName + '"]');
         if (button.hasClass('active') || targetSection.is(':visible')) {
             resetPanel();
             return;
