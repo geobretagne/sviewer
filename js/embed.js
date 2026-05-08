@@ -341,7 +341,6 @@
                     var tempDiv = document.createElement('div');
                     tempDiv.innerHTML = window.SViewerTemplates['sv-share-modal'];
                     var modal = tempDiv.firstElementChild;
-                    modal.id = 'permalinkModal';
                     scope.appendChild(modal);
                 }
                 resolve();
