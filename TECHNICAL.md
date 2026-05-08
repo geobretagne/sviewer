@@ -957,7 +957,7 @@ $.extend(hardConfig, {
 
 **Étape 3 :** Pour du texte JavaScript
 ```javascript
-var msg = hardConfig.i18n[window.config.lang]['ma clé'];
+var msg = hardConfig.i18n[window.SViewerConfig.lang]['ma clé'];
 alert(msg);
 ```
 
@@ -980,7 +980,10 @@ sviewer/
 ├── index.html              — point d'entrée mode simple
 ├── manifest.json           — PWA manifest
 ├── sw.js                   — Service Worker
-├── skill/             — widgets tiers (Grist, CSV…)
+├── skill/                  — skills tiers (Grist, CSV…)
+│   ├── grist/              — widget Grist (index.html, widget.js, adapter.js)
+│   ├── csv/                — adaptateur CSV (adapter.js)
+│   └── sample/             — adaptateur de référence commenté
 ├── deploy/                 — config infra (nginx, Docker) — non servi
 ├── local/                  — sandbox déployeur (optionnel, monté en volume Docker)
 │   ├── customConfig.js     — configuration locale (optionnel, défauts intégrés)
@@ -1008,7 +1011,7 @@ sviewer/
     │   ├── mustache/
     │   ├── ol/             — OpenLayers + proj4
     │   └── qrcode/
-    └── templates/          — templates Mustache
+    └── templates/          — templates Mustache (sv-*.html)
 ```
 
 ### Fichiers clés
