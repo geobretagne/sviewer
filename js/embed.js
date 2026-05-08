@@ -320,7 +320,7 @@
 
     // Fetch all Mustache templates and store them in window.svTemplates
     function loadTemplates(baseUrl) {
-        var names = ['layer-panel', 'iso-table', 'query-header', 'search-item', 'search-header', 'share-modal'];
+        var names = ['sv-layer-panel', 'sv-iso-table', 'sv-query-header', 'sv-search-item', 'sv-search-header', 'sv-share-modal'];
         window.svTemplates = {};
         return Promise.all(names.map(function(name) {
             return fetch(baseUrl + 'static/templates/' + name + '.html')
@@ -333,11 +333,11 @@
     function insertShareModal() {
         return new Promise(function(resolve) {
             // Wait for templates to be loaded
-            if (window.svTemplates && window.svTemplates['share-modal']) {
+            if (window.svTemplates && window.svTemplates['sv-share-modal']) {
                 var scope = document.querySelector('.sv-scope');
                 if (scope) {
                     var tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = window.svTemplates['share-modal'];
+                    tempDiv.innerHTML = window.svTemplates['sv-share-modal'];
                     var modal = tempDiv.firstElementChild;
                     modal.id = 'permalinkModal';
                     scope.appendChild(modal);
