@@ -416,7 +416,7 @@ window.SViewerApp = (function() {
                 .map(function(m) {
                     return { url: safeURL(m.OnlineResource), label: tr('msg.full_record'), newTab: tr('msg.new_tab') };
                 });
-            return $(Mustache.render(window.svTemplates['sv-layer-panel'], {
+            return $(Mustache.render(window.SViewerTemplates['sv-layer-panel'], {
                 title:         mdLayer.Title,
                 abstract:      mdLayer.Abstract,
                 legendUrl:     legendUrl,
@@ -662,7 +662,7 @@ window.SViewerApp = (function() {
     }
 
     function buildISOTable(meta) {
-        return $(Mustache.render(window.svTemplates['sv-iso-table'], {
+        return $(Mustache.render(window.SViewerTemplates['sv-iso-table'], {
             dateLabel:     tr('msg.meta_date'),
             producerLabel: tr('msg.meta_producer'),
             contactLabel:  tr('msg.meta_contact'),
@@ -921,7 +921,7 @@ window.SViewerApp = (function() {
                     });
                     $('#sv-search-results')
                         .prepend(items)
-                        .prepend(Mustache.render(window.svTemplates['sv-search-header'], { label: tr('lbl.geocode_results') }));
+                        .prepend(Mustache.render(window.SViewerTemplates['sv-search-header'], { label: tr('lbl.geocode_results') }));
                 }
             } catch(_err) {
                 $('#sv-locate-msg').text(tr('msg.geolocation_failed'));
@@ -1233,8 +1233,8 @@ window.SViewerApp = (function() {
     }
 
     function _renderGeoJSONInfoPanel(count, sourceUrl, adapter) {
-        if (!window.svTemplates || !window.svTemplates['sv-layer-panel']) { return; }
-        var $card = $(Mustache.render(window.svTemplates['sv-layer-panel'], {
+        if (!window.SViewerTemplates || !window.SViewerTemplates['sv-layer-panel']) { return; }
+        var $card = $(Mustache.render(window.SViewerTemplates['sv-layer-panel'], {
             title:        _sourceLabel(sourceUrl, adapter),
             featureCount: count,
             labelCount:   tr('msg.feature_count'),
@@ -1335,7 +1335,7 @@ window.SViewerApp = (function() {
             );
 
             // response order = layer order
-            var domResponse = $(Mustache.render(window.svTemplates['sv-query-header'], { title: this.md.title }));
+            var domResponse = $(Mustache.render(window.SViewerTemplates['sv-query-header'], { title: this.md.title }));
             $('#sv-query-content').append(domResponse);
             // ajax request
             svSpinner.show();
@@ -1513,7 +1513,7 @@ window.SViewerApp = (function() {
             templateData.ariaLabel = templateData.label || '—';
         }
         templateData.idx = searchItemIdx++;
-        return $(Mustache.render(window.svTemplates['sv-search-item'], templateData))
+        return $(Mustache.render(window.SViewerTemplates['sv-search-item'], templateData))
             .find('.sv-search-item-link')
             .on('click', clickData, onSearchItemClick)
             .parent();
@@ -1548,7 +1548,7 @@ window.SViewerApp = (function() {
 
     function featuresToList(features, label) {
         var $results = $("#sv-search-results");
-        $results.append(Mustache.render(window.svTemplates['sv-search-header'], {
+        $results.append(Mustache.render(window.SViewerTemplates['sv-search-header'], {
             label: label || tr('msg.top_layer')
         }));
 
@@ -1988,7 +1988,7 @@ window.SViewerApp = (function() {
                             }
                         }
                     } catch(e) { /* XPath unsupported — skip links */ }
-                    var $panel = $(Mustache.render(window.svTemplates['sv-layer-panel'], {
+                    var $panel = $(Mustache.render(window.SViewerTemplates['sv-layer-panel'], {
                         title:         title,
                         abstract:      abstract,
                         legendUrl:     legendUrl,

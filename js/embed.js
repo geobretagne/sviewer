@@ -318,14 +318,14 @@
             });
     }
 
-    // Fetch all Mustache templates and store them in window.svTemplates
+    // Fetch all Mustache templates and store them in window.SViewerTemplates
     function loadTemplates(baseUrl) {
         var names = ['sv-layer-panel', 'sv-iso-table', 'sv-query-header', 'sv-search-item', 'sv-search-header', 'sv-share-modal'];
-        window.svTemplates = {};
+        window.SViewerTemplates = {};
         return Promise.all(names.map(function(name) {
             return fetch(baseUrl + 'static/templates/' + name + '.html')
                 .then(function(r) { return r.text(); })
-                .then(function(t) { window.svTemplates[name] = t; });
+                .then(function(t) { window.SViewerTemplates[name] = t; });
         }));
     }
 
@@ -333,11 +333,11 @@
     function insertShareModal() {
         return new Promise(function(resolve) {
             // Wait for templates to be loaded
-            if (window.svTemplates && window.svTemplates['sv-share-modal']) {
+            if (window.SViewerTemplates && window.SViewerTemplates['sv-share-modal']) {
                 var scope = document.querySelector('.sv-scope');
                 if (scope) {
                     var tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = window.svTemplates['sv-share-modal'];
+                    tempDiv.innerHTML = window.SViewerTemplates['sv-share-modal'];
                     var modal = tempDiv.firstElementChild;
                     modal.id = 'permalinkModal';
                     scope.appendChild(modal);
