@@ -6,44 +6,44 @@
     --sv-accent:       #2563eb;
 
     /* derived surfaces */
-    --sv-surface:       #ffffff;
+    --sv-surface:       #fff;
     --sv-surface-muted: #ececed;
-    --sv-surface-glass: rgba(255, 255, 255, 0.92);
+    --sv-surface-glass: rgb(255 255 255 / 92%);
     --sv-border:        #e4e4e7;
     --sv-fg-muted:      #52525b;
 
     /* panels — neutral names, light values by default */
-    --sv-panel-bg:               rgba(255, 255, 255, 0.92);
+    --sv-panel-bg:               rgb(255 255 255 / 92%);
     --sv-panel-fg:               #18181b;
     --sv-panel-fg-muted:         #52525b;
     --sv-panel-border:           #e4e4e7;
-    --sv-panel-input-bg:         rgba(0, 0, 0, 0.04);
-    --sv-panel-input-bg-hover:   rgba(0, 0, 0, 0.08);
-    --sv-panel-btn-bg:           rgba(0, 0, 0, 0.04);
-    --sv-panel-btn-bg-hover:     rgba(0, 0, 0, 0.08);
-    --sv-panel-btn-border-hover: rgba(0, 0, 0, 0.18);
-    --sv-panel-section-header-bg: rgba(0, 0, 0, 0.03);
+    --sv-panel-input-bg:         rgb(0 0 0 / 4%);
+    --sv-panel-input-bg-hover:   rgb(0 0 0 / 8%);
+    --sv-panel-btn-bg:           rgb(0 0 0 / 4%);
+    --sv-panel-btn-bg-hover:     rgb(0 0 0 / 8%);
+    --sv-panel-btn-border-hover: rgb(0 0 0 / 18%);
+    --sv-panel-section-header-bg: rgb(0 0 0 / 3%);
     --sv-backdrop: blur(14px) saturate(140%);
 
     /* map buttons (floating over the map) */
     --sv-btn-bg:               #f4f4f5;
     --sv-btn-bg-hover:         #e4e4e7;
-    --sv-btn-bg-glass:         rgba(244, 244, 245, 0.85);
-    --sv-btn-bg-glass-hover:   rgba(228, 228, 231, 0.92);
+    --sv-btn-bg-glass:         rgb(244 244 245 / 85%);
+    --sv-btn-bg-glass-hover:   rgb(228 228 231 / 92%);
     --sv-btn-fg:               #18181b;
-    --sv-btn-border:           rgba(0, 0, 0, 0.12);
-    --sv-btn-box-shadow:       inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.10);
-    --sv-btn-box-shadow-hover: inset 0 0 0 1px rgba(0, 0, 0, 0.10), 0 2px 6px rgba(0, 0, 0, 0.12);
-    --sv-btn-focus-ring:       0 0 0 2px rgba(0, 0, 0, 0.15), 0 0 0 4px var(--sv-accent);
-    --sv-btn-active-bg:        rgba(0, 0, 0, 0.08);
+    --sv-btn-border:           rgb(0 0 0 / 12%);
+    --sv-btn-box-shadow:       inset 0 0 0 1px rgb(0 0 0 / 8%), 0 1px 2px rgb(0 0 0 / 10%);
+    --sv-btn-box-shadow-hover: inset 0 0 0 1px rgb(0 0 0 / 10%), 0 2px 6px rgb(0 0 0 / 12%);
+    --sv-btn-focus-ring:       0 0 0 2px rgb(0 0 0 / 15%), 0 0 0 4px var(--sv-accent);
+    --sv-btn-active-bg:        rgb(0 0 0 / 8%);
 
     /* accent */
-    --sv-accent-ring:  rgba(37, 99, 235, 0.35);
+    --sv-accent-ring:  rgb(37 99 235 / 35%);
     --sv-accent-hover: #1d4ed8;
 
     /* misc */
-    --sv-overlay-bg: rgba(0, 0, 0, 0.2);
-    --sv-legend-bg:  #ffffff;
+    --sv-overlay-bg: rgb(0 0 0 / 20%);
+    --sv-legend-bg:  #fff;
 
     /* radii */
     --sv-radius-sm: 4px;
@@ -51,9 +51,9 @@
     --sv-radius-lg: 12px;
 
     /* shadows */
-    --sv-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-    --sv-shadow:    0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-    --sv-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
+    --sv-shadow-sm: 0 1px 2px rgb(0 0 0 / 6%);
+    --sv-shadow:    0 1px 3px rgb(0 0 0 / 8%), 0 1px 2px rgb(0 0 0 / 4%);
+    --sv-shadow-lg: 0 10px 30px rgb(0 0 0 / 12%);
 
     /* motion */
     --sv-duration: 150ms;
@@ -73,6 +73,7 @@
     flex: 1;
     min-height: 0;
     font-family: Roboto, system-ui, sans-serif;
+
     --transition: var(--sv-transition);
 }
 
@@ -103,7 +104,6 @@
     color: var(--sv-btn-fg);
     background-color: var(--sv-btn-bg-glass);
     backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
     border-radius: var(--sv-radius-sm);
 }
 
@@ -131,7 +131,7 @@
 /* page structure */
 .sv-framemap {
     flex: 1;
-    padding: 0px;
+    padding: 0;
     background-color: var(--sv-surface-muted);
     overflow: hidden;
     position: relative;
@@ -177,7 +177,6 @@
     color: var(--sv-btn-fg);
     background-color: var(--sv-btn-bg-glass);
     backdrop-filter: blur(8px) saturate(140%);
-    -webkit-backdrop-filter: blur(8px) saturate(140%);
     /* Inner edge anchors the silhouette over bright map tiles
        (WCAG 1.4.11 non-text contrast), outer shadow adds lift. */
     box-shadow: var(--sv-btn-box-shadow);
@@ -198,6 +197,7 @@
     --bs-btn-bg:           var(--sv-fg);
     --bs-btn-border-color: var(--sv-fg);
     --bs-btn-color:        var(--sv-bg);
+
     background-color: var(--sv-fg);
     border-color: var(--sv-fg);
     color: var(--sv-bg);
@@ -287,13 +287,13 @@
     pointer-events: none;
 }
 
-#panelShareBtn {
+#sv-btn-panel-share {
     width: auto;
     padding: 0 12px;
     min-width: 44px;
 }
 
-#panelShareBtn span {
+#sv-btn-panel-share span {
     display: inline;
     white-space: nowrap;
 }
@@ -303,40 +303,42 @@
     top: 4px;
     right: 4px;
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-flow: row wrap;
     gap: 4px;
     z-index: 8010;
 }
 
 /* Responsive layout for medium screens */
-@media screen and (max-width: 1200px) {
+@media screen and (width <= 1200px) {
     .sv-sidepanel.active {
         width: 350px;
     }
 }
 
-@media screen and (max-width: 900px) {
+@media screen and (width <= 900px) {
     .sv-sidepanel.active {
         width: 300px;
     }
 }
 
-@media screen and (max-width: 600px) {
+@media screen and (width <= 600px) {
     .sv-map-btn {
         width: clamp(40px, 8vw, 44px);
         height: clamp(40px, 8vw, 44px);
         font-size: clamp(0.75rem, 2vw, 1rem);
     }
-    #panelShareBtn {
+
+    #sv-btn-panel-share {
         width: clamp(40px, 8vw, 44px) !important;
         height: clamp(40px, 8vw, 44px) !important;
         padding: 0 !important;
         min-width: unset !important;
     }
-    #panelShareBtn span {
+
+    #sv-btn-panel-share span {
         display: none;
     }
+
     .sv-sidepanel {
         top: 160px;
         max-height: calc(100% - 160px);
@@ -344,34 +346,34 @@
         right: 0;
         z-index: 9000;
     }
+
     .sv-sidepanel-close {
         z-index: 9001;
     }
+
     .sv-sidepanel.active {
         width: 85vw !important;
         max-width: 85vw;
-        box-shadow: -8px 0 24px rgba(0, 0, 0, 0.2), inset 2px 0 0 rgba(0, 0, 0, 0.05);
+        box-shadow: -8px 0 24px rgb(0 0 0 / 20%), inset 2px 0 0 rgb(0 0 0 / 5%);
     }
     /* Prevent panel from blocking map interaction */
     .sv-framemap::after {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0);
+        inset: 0;
+        background-color: rgb(0 0 0 / 0%);
         pointer-events: none;
         transition: background-color var(--transition);
         z-index: 4999;
     }
+
     .sv-framemap.sv-panel-open::after {
         background-color: var(--sv-overlay-bg);
         pointer-events: auto;
     }
 }
 
-@media screen and (max-width: 600px) {
+@media screen and (width <= 600px) {
     .sv-sidepanel.active {
         width: 100%;
     }
@@ -440,24 +442,20 @@
     background-color: var(--sv-panel-bg);
     color: var(--sv-panel-fg);
     backdrop-filter: var(--sv-backdrop);
-    -webkit-backdrop-filter: var(--sv-backdrop);
     border-left: 1px solid var(--sv-panel-border);
-    box-shadow: -6px 0 18px rgba(0, 0, 0, 0.25);
+    box-shadow: -6px 0 18px rgb(0 0 0 / 25%);
     overflow: hidden;
     transition: width var(--sv-duration) var(--sv-ease),
                 box-shadow var(--sv-duration) var(--sv-ease);
     z-index: 5000;
     display: flex;
     flex-direction: column;
-    border-top-left-radius: var(--sv-radius-lg);
-    border-bottom-left-radius: var(--sv-radius-lg);
-    border-top-right-radius: var(--sv-radius-lg);
-    border-bottom-right-radius: var(--sv-radius-lg);
+    border-radius: var(--sv-radius-lg) var(--sv-radius-lg) var(--sv-radius-lg) var(--sv-radius-lg);
 }
 
 .sv-sidepanel.active {
     width: 460px;
-    box-shadow: -10px 0 32px rgba(0, 0, 0, 0.35);
+    box-shadow: -10px 0 32px rgb(0 0 0 / 35%);
 }
 
 /* Safari < 14 / Firefox without backdrop-filter: fall back to opaque surface */
@@ -678,7 +676,7 @@
 /* Pressed state — subtle inset */
 .sv-panel-content .btn:active,
 .sv-scope .modal .btn:active {
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 8%);
 }
 
 /* Permalink modal link */
@@ -698,12 +696,12 @@
 }
 
 /* Share panel layout — compact so an arbitrary number of share buttons fits */
-#sharePanel .sv-panel-content {
+#sv-panel-share .sv-panel-content {
     gap: 10px;
 }
 
-#sharePanel .sv-panel-content > .mb-3,
-#sharePanel .sv-panel-content > form.mb-3 {
+#sv-panel-share .sv-panel-content > .mb-3,
+#sv-panel-share .sv-panel-content > form.mb-3 {
     margin-bottom: 0 !important;
 }
 
@@ -727,7 +725,7 @@
 }
 
 /* Query panel exception — geoserver HTML rendered in a light card */
-#queryPanel {
+#sv-panel-query {
     color: var(--sv-fg);
     margin: 8px;
     padding: 8px;
@@ -735,11 +733,11 @@
     box-shadow: var(--sv-shadow-sm);
 }
 
-#queryPanel a {
+#sv-panel-query a {
     color: var(--sv-accent);
 }
 
-#queryContent {
+#sv-query-content {
     padding: 8px;
     background-color: var(--sv-surface-glass);
 }
@@ -751,36 +749,39 @@
     color: var(--sv-fg);
     background-color: transparent;
 }
+
 .sv-feature-props th {
     white-space: normal;
-    word-break: break-word;
+    overflow-wrap: break-word;
     width: 40%;
     font-weight: 600;
     font-size: 0.82em;
 }
+
 .sv-feature-props tr:nth-child(odd) td,
 .sv-feature-props tr:nth-child(odd) th {
-    background-color: rgba(0, 0, 0, 0.04);
+    background-color: rgb(0 0 0 / 4%);
 }
+
 .sv-scope[data-theme="dark"] .sv-feature-props tr:nth-child(odd) td,
 .sv-scope[data-theme="dark"] .sv-feature-props tr:nth-child(odd) th,
 :root[data-theme="dark"] .sv-scope .sv-feature-props tr:nth-child(odd) td,
 :root[data-theme="dark"] .sv-scope .sv-feature-props tr:nth-child(odd) th {
-    background-color: rgba(255, 255, 255, 0.06);
+    background-color: rgb(255 255 255 / 6%);
 }
 
-#queryPanel .sv-noitem {
+#sv-panel-query .sv-noitem {
     color: var(--sv-fg-muted);
 }
 
 /* Small "copy" button floating over the embed textarea */
-#embedCodeCopyBtn {
+#sv-embed-copy-iframe, #sv-embed-copy-js {
     padding: 6px 10px;
     border-radius: var(--sv-radius-sm);
 }
 
 
-#marker {
+#sv-marker {
     width: 30px;
     height: 38px;
     background: transparent url('../img/pin-red.png') no-repeat;
@@ -793,7 +794,6 @@
 .sv-map .ol-scale-line {
     background-color: var(--sv-surface-glass);
     backdrop-filter: blur(6px) saturate(140%);
-    -webkit-backdrop-filter: blur(6px) saturate(140%);
     border-radius: var(--sv-radius-sm);
     padding: 2px 4px;
 }
@@ -807,7 +807,6 @@
     color: var(--sv-fg);
     background-color: var(--sv-surface-glass);
     backdrop-filter: blur(8px) saturate(140%);
-    -webkit-backdrop-filter: blur(8px) saturate(140%);
     border-top-left-radius: var(--sv-radius);
     font-size: 11px;
 }
@@ -886,13 +885,16 @@
 .sv-legend a {
     text-decoration: none;
 }
+
 .sv-legend h4,p {
-    padding: 0 0 2px 0 !important;
+    padding: 0 0 2px !important;
     margin: 0;
 }
+
 .sv-legend hr {
     clear: both;
 }
+
 .sv-md {
     border: 1px solid var(--sv-border);
     border-radius: var(--sv-radius);
@@ -900,43 +902,52 @@
     margin-bottom: 8px;
     background-color: var(--sv-surface);
 }
+
 .sv-md-title {
     font-size: 1rem;
     font-weight: 600;
-    margin: 0 0 2px 0;
+    margin: 0 0 2px;
     line-height: 1.3;
-    word-break: break-word;
+    overflow-wrap: break-word;
 }
+
 .sv-md-attrib {
     display: block;
     font-size: 0.75rem;
     color: var(--sv-fg-muted);
     margin-bottom: 8px;
 }
+
 .sv-md-logo {
     max-height: 64px;
     max-width: 64px;
 }
+
 .sv-md-legend {
     padding: 4px;
     max-width: 320px;
     display: block;
     margin: 0 auto;
 }
+
 .sv-md-abstract {
     font-size: 0.8rem;
     margin: 8px 0;
     color: var(--sv-fg-muted);
 }
+
 .sv-sidepanel .sv-md-abstract {
     color: var(--sv-panel-fg-muted);
 }
+
 .sv-md-doclink {
     text-align: center;
     padding: 4px 0;
 }
+
 .sv-md-meta {
     text-decoration: none;
+
     --bs-btn-bg:                 var(--sv-panel-btn-bg);
     --bs-btn-hover-bg:           var(--sv-panel-btn-bg-hover);
     --bs-btn-active-bg:          var(--sv-panel-btn-bg-hover);
@@ -977,27 +988,33 @@
     font-size: x-small;
     margin-top: 6px;
 }
+
 .sv-md-iso th,
 .sv-md-iso td {
     padding: 3px 6px;
     vertical-align: top;
     border-top: 1px solid var(--sv-border);
 }
+
 .sv-md-iso th {
     white-space: nowrap;
     color: var(--sv-fg-muted);
     font-weight: normal;
     width: 30%;
 }
+
 .sv-md-iso td a {
     word-break: break-all;
 }
+
 .sv-sidepanel .sv-md-iso th {
     color: var(--sv-panel-fg-muted);
 }
+
 .sv-sidepanel .sv-md-iso {
     border-top: 1px solid var(--sv-panel-border);
 }
+
 .sv-sidepanel .sv-md-iso th,
 .sv-sidepanel .sv-md-iso td {
     border-top-color: var(--sv-panel-border);
@@ -1083,15 +1100,15 @@
 /* High contrast mode support */
 @media (prefers-contrast: more) {
     :root {
-        --sv-btn-bg:             #000000;
+        --sv-btn-bg:             #000;
         --sv-btn-bg-hover:       #2a2a2a;
-        --sv-btn-bg-glass:       #000000;
+        --sv-btn-bg-glass:       #000;
         --sv-btn-bg-glass-hover: #2a2a2a;
-        --sv-btn-border:         #ffffff;
-        --sv-border:             #000000;
-        --sv-fg-muted:           #000000;
-        --sv-surface-glass:      #ffffff;
-        --sv-panel-fg-muted:     #ffffff;
+        --sv-btn-border:         #fff;
+        --sv-border:             #000;
+        --sv-fg-muted:           #000;
+        --sv-surface-glass:      #fff;
+        --sv-panel-fg-muted:     #fff;
     }
 }
 
@@ -1156,7 +1173,7 @@
 }
 
 .sv-search-item.sv-search-active {
-    background-color: var(--sv-accent-muted, rgba(0,100,200,0.12));
+    background-color: var(--sv-accent-muted, rgb(0 100 200 / 12%));
     outline: 2px solid var(--sv-accent);
     outline-offset: -2px;
 }
@@ -1169,6 +1186,7 @@
     text-decoration: none;
     color: inherit;
 }
+
 .sv-search-item-icon {
     flex-shrink: 0;
     width: 1.1em;
@@ -1176,19 +1194,21 @@
     color: var(--sv-panel-fg-muted);
     font-size: 1em;
 }
+
 .sv-search-item-body {
     flex: 1;
     min-width: 0;
 }
+
 .sv-search-item-fields {
     display: grid;
     grid-template-columns: max-content 1fr;
-    column-gap: 8px;
-    row-gap: 1px;
+    gap: 1px 8px;
     margin: 0;
     font-size: 0.8em;
     color: var(--sv-panel-fg-muted);
 }
+
 .sv-search-item-fields dt {
     font-weight: 600;
     white-space: nowrap;
@@ -1196,6 +1216,7 @@
     text-overflow: ellipsis;
     max-width: 120px;
 }
+
 .sv-search-item-fields dd {
     margin: 0;
     overflow: hidden;
@@ -1210,7 +1231,7 @@
 }
 
 .sv-scope .alert[role="alert"] {
-    outline: 2px solid currentColor;
+    outline: 2px solid currentcolor;
     outline-offset: 2px;
 }
 
@@ -1226,7 +1247,7 @@
 
 .sv-scope .modal-backdrop {
     z-index: 9090 !important;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgb(0 0 0 / 50%);
 }
 
 .sv-scope .modal-dialog {
@@ -1241,7 +1262,6 @@
     border-radius: var(--sv-radius-lg) !important;
     box-shadow: var(--sv-shadow-lg) !important;
     backdrop-filter: var(--sv-backdrop);
-    -webkit-backdrop-filter: var(--sv-backdrop);
 }
 
 .sv-scope .modal-header {
@@ -1310,42 +1330,42 @@
     /* 4 primitives */
     --sv-bg:           #18181b;
     --sv-fg:           #fafafa;
-    --sv-border-color: rgba(255, 255, 255, 0.14);
+    --sv-border-color: rgb(255 255 255 / 14%);
     /* --sv-accent unchanged */
 
     /* derived surfaces */
-    --sv-surface:       #ffffff;
+    --sv-surface:       #fff;
     --sv-surface-muted: #f4f4f5;
-    --sv-surface-glass: rgba(255, 255, 255, 0.78);
+    --sv-surface-glass: rgb(255 255 255 / 78%);
     --sv-border:        #e4e4e7;
     --sv-fg-muted:      #52525b;
 
     /* panels */
-    --sv-panel-bg:               rgba(24, 24, 27, 0.82);
+    --sv-panel-bg:               rgb(24 24 27 / 82%);
     --sv-panel-fg:               #fafafa;
     --sv-panel-fg-muted:         #a1a1aa;
-    --sv-panel-border:           rgba(255, 255, 255, 0.14);
-    --sv-panel-input-bg:         rgba(255, 255, 255, 0.08);
-    --sv-panel-input-bg-hover:   rgba(255, 255, 255, 0.12);
-    --sv-panel-btn-bg:           rgba(255, 255, 255, 0.06);
-    --sv-panel-btn-bg-hover:     rgba(255, 255, 255, 0.12);
-    --sv-panel-btn-border-hover: rgba(255, 255, 255, 0.28);
-    --sv-panel-section-header-bg: rgba(255, 255, 255, 0.04);
+    --sv-panel-border:           rgb(255 255 255 / 14%);
+    --sv-panel-input-bg:         rgb(255 255 255 / 8%);
+    --sv-panel-input-bg-hover:   rgb(255 255 255 / 12%);
+    --sv-panel-btn-bg:           rgb(255 255 255 / 6%);
+    --sv-panel-btn-bg-hover:     rgb(255 255 255 / 12%);
+    --sv-panel-btn-border-hover: rgb(255 255 255 / 28%);
+    --sv-panel-section-header-bg: rgb(255 255 255 / 4%);
 
     /* map buttons (dark glass) */
     --sv-btn-bg:               #18181b;
     --sv-btn-bg-hover:         #27272a;
-    --sv-btn-bg-glass:         rgba(24, 24, 27, 0.85);
-    --sv-btn-bg-glass-hover:   rgba(39, 39, 42, 0.92);
+    --sv-btn-bg-glass:         rgb(24 24 27 / 85%);
+    --sv-btn-bg-glass-hover:   rgb(39 39 42 / 92%);
     --sv-btn-fg:               #fafafa;
-    --sv-btn-border:           rgba(255, 255, 255, 0.22);
-    --sv-btn-box-shadow:       inset 0 0 0 1px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
-    --sv-btn-box-shadow-hover: inset 0 0 0 1px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3);
-    --sv-btn-focus-ring:       0 0 0 2px rgba(255, 255, 255, 0.95), 0 0 0 4px var(--sv-accent);
-    --sv-btn-active-bg:        rgba(255, 255, 255, 0.96);
+    --sv-btn-border:           rgb(255 255 255 / 22%);
+    --sv-btn-box-shadow:       inset 0 0 0 1px rgb(0 0 0 / 35%), 0 1px 2px rgb(0 0 0 / 25%);
+    --sv-btn-box-shadow-hover: inset 0 0 0 1px rgb(0 0 0 / 35%), 0 2px 6px rgb(0 0 0 / 30%);
+    --sv-btn-focus-ring:       0 0 0 2px rgb(255 255 255 / 95%), 0 0 0 4px var(--sv-accent);
+    --sv-btn-active-bg:        rgb(255 255 255 / 96%);
 
     /* misc */
-    --sv-overlay-bg: rgba(0, 0, 0, 0.3);
+    --sv-overlay-bg: rgb(0 0 0 / 30%);
 }
 
 /* btn-close: invert to white X on dark panel */
@@ -1355,10 +1375,11 @@
 }
 
 /* query results: override Bootstrap table defaults for dark theme */
-.sv-scope[data-theme="dark"] #queryContent,
-:root[data-theme="dark"] .sv-scope #queryContent {
+.sv-scope[data-theme="dark"] #sv-query-content,
+:root[data-theme="dark"] .sv-scope #sv-query-content {
     background-color: var(--sv-panel-input-bg);
 }
+
 .sv-scope[data-theme="dark"] .sv-feature-props th,
 .sv-scope[data-theme="dark"] .sv-feature-props td,
 :root[data-theme="dark"] .sv-scope .sv-feature-props th,
