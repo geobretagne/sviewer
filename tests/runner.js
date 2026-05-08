@@ -27,7 +27,8 @@
         renderRunning: renderRunning,
         renderResult: renderResult,
         getBaseUrl: function() { return BASE_URL; },
-        queryDOM: queryDOM
+        queryDOM: queryDOM,
+        clickDOM: clickDOM
     };
 
     // ------ DOM query helpers ------------------------------------------------
@@ -58,6 +59,26 @@
                 resolve(data);
             };
             iframe.contentWindow.postMessage({ type: 'sv:domQuery', id: id, selector: selector, prop: prop || 'textContent' }, '*');
+        });
+    }
+
+    // Click an element inside the sViewer iframe, then wait for a short settle delay.
+    // Returns a Promise resolving to {found} — rejects if element not found or timeout.
+    function clickDOM(selector, settleMs) {
+        return new Promise(function(resolve, reject) {
+            var iframe = document.getElementById('sv-test-frame');
+            if (!iframe || !iframe.contentWindow) { reject(new Error('No iframe')); return; }
+            var id = ++_domQuerySeq;
+            var timer = setTimeout(function() {
+                delete _domQueryPending[id];
+                reject(new Error('sv:domClick timeout for "' + selector + '"'));
+            }, 3000);
+            _domQueryPending[id] = function(data) {
+                clearTimeout(timer);
+                if (!data.found) { reject(new Error('Element not found: ' + selector)); return; }
+                setTimeout(function() { resolve(data); }, settleMs || 100);
+            };
+            iframe.contentWindow.postMessage({ type: 'sv:domClick', id: id, selector: selector }, '*');
         });
     }
 
@@ -114,7 +135,7 @@
                 clearTimeout(timer);
                 window.removeEventListener('message', onMessage);
                 try {
-                    var result = test.assert ? test.assert(event.data.hardConfig, event, queryDOM) : undefined;
+                    var result = test.assert ? test.assert(event.data.hardConfig, event, queryDOM, clickDOM) : undefined;
                     // assert may return a Promise (for fetch-based checks or queryDOM calls)
                     if (result && typeof result.then === 'function') {
                         result.then(function() { resolve('ok'); }).catch(reject);

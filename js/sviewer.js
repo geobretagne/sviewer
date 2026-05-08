@@ -2503,23 +2503,30 @@ window.SViewerApp = (function() {
         _onReadyCallbacks.forEach(function(fn) { try { fn(); } catch(_e) { /* skill onReady errors are silenced */ } });
         _onReadyCallbacks = [];
 
-        // Test runner DOM query protocol — only active when embedded in a parent frame.
-        // Parent sends {type:'sv:domQuery', id, selector, prop} and receives {type:'sv:domResult', id, value}.
+        // Test runner protocol — only active when embedded in a parent frame.
+        // sv:domQuery  {id, selector, prop}  → sv:domResult {id, value, found}
+        // sv:domClick  {id, selector}        → sv:domResult {id, found} (after click)
         // prop: 'textContent'|'innerHTML'|'value'|'checked'|'hidden'|attribute name (getAttribute fallback).
         if (window.parent !== window) {
             window.addEventListener('message', function(e) {
-                if (!e.data || e.data.type !== 'sv:domQuery') { return; }
-                var el = document.querySelector(e.data.selector);
-                var value = null;
-                if (el) {
-                    var prop = e.data.prop || 'textContent';
-                    if (prop in el) {
-                        value = el[prop];
-                    } else {
-                        value = el.getAttribute(prop);
+                if (!e.data) { return; }
+                if (e.data.type === 'sv:domQuery') {
+                    var el = document.querySelector(e.data.selector);
+                    var value = null;
+                    if (el) {
+                        var prop = e.data.prop || 'textContent';
+                        if (prop in el) {
+                            value = el[prop];
+                        } else {
+                            value = el.getAttribute(prop);
+                        }
                     }
+                    window.parent.postMessage({ type: 'sv:domResult', id: e.data.id, value: value, found: !!el }, '*');
+                } else if (e.data.type === 'sv:domClick') {
+                    var target = document.querySelector(e.data.selector);
+                    if (target) { target.click(); }
+                    window.parent.postMessage({ type: 'sv:domResult', id: e.data.id, found: !!target }, '*');
                 }
-                window.parent.postMessage({ type: 'sv:domResult', id: e.data.id, value: value, found: !!el }, '*');
             });
         }
 
