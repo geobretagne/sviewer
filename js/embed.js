@@ -353,8 +353,8 @@
     // Load i18n first (before sviewer.js initializes)
     function loadI18nScript() {
         // Ensure hardConfig exists before i18n.js tries to extend it
-        if (!window.hardConfig) {
-            window.hardConfig = window.customConfig || {};
+        if (!window.SViewerHardConfig) {
+            window.SViewerHardConfig = window.customConfig || {};
         }
         return new Promise(function(resolve, reject) {
             var script = document.createElement('script');

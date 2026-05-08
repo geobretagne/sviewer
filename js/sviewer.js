@@ -18,10 +18,10 @@ window.SViewerApp = (function() {
     var customConfig = window.customConfig || {};
 
     // Ensure hardConfig exists (created by embed.js before i18n.js loaded)
-    window.hardConfig = window.hardConfig || {};
+    window.SViewerHardConfig = window.SViewerHardConfig || {};
 
     // Fill in defaults — existing keys (from customConfig via embed.js) are preserved
-    window.hardConfig = $.extend({
+    window.SViewerHardConfig = $.extend({
         title: 'sViewer',
         geOrchestraBaseUrl: 'https://demo.georchestra.org',
         projcode: 'EPSG:3857',
@@ -90,9 +90,9 @@ window.SViewerApp = (function() {
             { lb: 0, lo: 0,  title: 'Photo aérienne + noms de lieux' },
             { lb: 1, lo: -1, title: 'OpenStreetMap' }
         ]
-    }, window.hardConfig, window.customConfig || {});
+    }, window.SViewerHardConfig, window.customConfig || {});
 
-    var hardConfig = window.hardConfig;
+    var hardConfig = window.SViewerHardConfig;
 
     // Spinner for the impatients
     var svSpinner = {
@@ -2507,7 +2507,7 @@ if (!hitVector) { queryMap(e.coordinate); }
         // Notify parent frame (test runner or embedder) that sViewer is ready.
         // Only serialize cloneable keys — functions and OL layer objects can't cross postMessage.
         if (window.parent !== window) {
-            var hc = window.hardConfig;
+            var hc = window.SViewerHardConfig;
             var serializable = {};
             Object.keys(hc).forEach(function(k) {
                 var v = hc[k];
@@ -2561,9 +2561,9 @@ if (!hitVector) { queryMap(e.coordinate); }
     var instance = new SViewer();
 
     // Expose configuration for external scripts (i18n.js, etc.)
-    window.hardConfig = hardConfig;
-    window.config = config;
-    window.state = state;
+    window.SViewerHardConfig = hardConfig;
+    window.SViewerConfig = config;
+    window.SViewerState = state;
     // Note: do NOT overwrite window.customConfig - it may have been set by embed.js or host page
     // window.customConfig was already set before sviewer.js loaded
 
