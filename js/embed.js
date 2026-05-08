@@ -52,6 +52,8 @@
                 <div id="sv-loading-bar" class="sv-loading-bar" aria-hidden="true" style="display:none;"></div>
             </div>
 
+            <div id="sv-skill-toolbar" class="sv-map-controls" role="group" aria-label="Skill controls"></div>
+
             <div id="sv-map-controls" class="sv-map-controls" role="group" aria-label="Map controls">
                 <div class="sv-map-btn-group" role="group" aria-label="Navigation">
                     <button id="sv-btn-home" type="button" accesskey="w" class="i18n btn btn-dark sv-map-btn" title="initial view" data-i18n-title="btn.initial_view" aria-label="Reset to initial view">
@@ -439,6 +441,12 @@
                             var adapterStr = adapterNames.length ? ' ' + adapterNames.join(', ') : '';
                             versionEl.innerHTML = '<a href="https://github.com/geobretagne/sviewer/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">sViewer ' + SVIEWER_VERSION + '</a> <span style="font-family:monospace">' + SVIEWER_COMMIT + '</span>' + adapterStr;
                         }
+                        // Load skills after map ready — each skill wraps init in SViewer.onReady()
+                        var skillNames = (window.customConfig && window.customConfig.skills) || [];
+                        skillNames.forEach(function(name) {
+                            loadResource(baseUrl + 'skill/' + name + '/skill.js', 'js')
+                                .catch(function(e) { console.warn('SViewer: skill ' + name + ' failed to load', e); });
+                        });
                         return window.SViewerApp;
                     } else {
                         throw new Error('SViewerApp instance not found after loading');

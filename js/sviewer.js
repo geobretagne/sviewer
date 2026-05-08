@@ -308,7 +308,7 @@ window.SViewerApp = (function() {
             }
             var wmsSource = new ol.source.TileWMS(wms_params);
             wmsSource.on('tileloadstart', function() { loadingBar.start(); });
-            wmsSource.on('tileloadend',   function() { loadingBar.end(); });
+            wmsSource.on('tileloadend',   function() { loadingBar.end(); _emit('sv:layerLoad', { layer: self }); });
             wmsSource.on('tileloaderror', function() { loadingBar.end(); });
             self.wmslayer = new ol.layer.Tile({
                 opacity: isNaN(self.options.opacity)?1:self.options.opacity,
@@ -2189,6 +2189,7 @@ window.SViewerApp = (function() {
 if (!hitVector) { queryMap(e.coordinate); }
         });
         map.on('moveend', setPermalink);
+        map.on('moveend', function() { _emit('sv:viewChange', { center: view.getCenter(), zoom: view.getZoom() }); });
         $('#sv-marker').on('click', clearQuery);
 
 
@@ -2555,6 +2556,42 @@ if (!hitVector) { queryMap(e.coordinate); }
     this.onTitleChange = null;
     // Register a callback to fire once after sViewer init completes.
     this.onReady = function(fn) { _onReadyCallbacks.push(fn); };
+    // Subscribe to sViewer events. Use inside onReady() to guarantee bus is wired.
+    // Events: sv:mapReady, sv:featureClick, sv:featureSelect, sv:featuresLoaded,
+    //         sv:viewChange, sv:layerLoad
+    this.on  = function(event, fn) { if (_bus) { _bus.on(event, fn); } };
+    this.off = function(event, fn) { if (_bus) { _bus.off(event, fn); } };
+    // Panel API — open/close a named skill panel in the sidepanel.
+    // open(name, title, html) creates the panel + toggle button if absent.
+    this.panel = {
+        open: function(name, title, html) {
+            var panelId = 'sv-panel-skill-' + name;
+            var btnId   = 'sv-btn-panel-skill-' + name;
+            if (!document.getElementById(panelId)) {
+                var $btn = $('<button type="button" class="btn btn-dark sv-map-btn sv-panel-toggle" aria-pressed="false">')
+                    .attr('id', btnId)
+                    .attr('data-sv-panel', 'skill-' + name)
+                    .attr('aria-label', title)
+                    .text(title);
+                $('#sv-panel-controls').append($btn);
+                var $section = $('<div class="sv-panel-section" role="region" style="display:none;">')
+                    .attr('id', panelId)
+                    .attr('data-sv-section', 'skill-' + name)
+                    .attr('aria-label', title);
+                var $header = $('<div class="sv-panel-header">').append(
+                    $('<h3 class="sv-panel-title">').text(title),
+                    $('<button type="button" class="sv-sidepanel-close" aria-label="Close panel"><i class="bi bi-x-lg" aria-hidden="true"></i></button>')
+                );
+                var $content = $('<div class="sv-panel-content">').html(html || '');
+                $section.append($header, $content);
+                $('#sv-sidepanel').append($section);
+            } else {
+                $('#sv-panel-skill-' + name + ' .sv-panel-content').html(html || '');
+            }
+            togglePanel('skill-' + name);
+        },
+        close: function(name) { togglePanel(null); }
+    };
     }
 
     // Create instance
