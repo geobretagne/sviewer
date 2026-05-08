@@ -44,10 +44,10 @@
             </div>
         </div>
 
-        <a href="#sv-map" class="sv-skip-to-content i18n" data-i18n="btn.skip_to_map">Skip to map</a>
+        <a href="#sv-ol-map" class="sv-skip-to-content i18n" data-i18n="btn.skip_to_map">Skip to map</a>
 
         <div id="sv-frame-map" class="sv-framemap">
-            <div id="sv-map" class="sv-map" tabindex="0" role="region" aria-label="Interactive map">
+            <div id="sv-ol-map" class="sv-map" tabindex="0" role="region" aria-label="Interactive map">
                 <div id="sv-marker"></div>
                 <div id="sv-loading-bar" class="sv-loading-bar" aria-hidden="true" style="display:none;"></div>
             </div>
@@ -293,9 +293,8 @@
         // Bootstrap is only needed for modals — load in parallel, not blocking the map init chain
         var bootstrapPromise = loadResource(baseUrl + 'static/lib/bootstrap/bootstrap.bundle.min.js', 'js');
 
-        // jQuery and proj4 are independent — load in parallel, then OL after both
+        // proj4 must load before OL
         return Promise.all([
-            loadResource(baseUrl + 'static/lib/jquery/jquery-4.0.0.min.js', 'js'),
             loadResource(baseUrl + 'static/lib/ol/proj4.js', 'js')
         ])
             .then(function() { return loadResource(baseUrl + 'static/lib/ol/ol.js', 'js'); })

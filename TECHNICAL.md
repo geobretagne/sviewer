@@ -707,7 +707,7 @@ Le connecteur Grist est un widget personnalisé Grist qui affiche les données d
 ```
 Grist document
   └─ Widget personnalisé → skill/grist/index.html
-       ├─ embed.js        (charge OL, jQuery, Bootstrap, crée le DOM sViewer dans #sv-map)
+       ├─ embed.js        (charge OL, Bootstrap, crée le DOM sViewer dans #sv-map)
        ├─ widget.js       (logique widget : Grist API, colonnes, styles, panneau config)
        └─ grist-plugin-api.js (CDN docs.getgrist.com — obligatoire)
 ```
@@ -1007,7 +1007,6 @@ sviewer/
     ├── lib/                — dépendances vendored
     │   ├── bootstrap/
     │   ├── bootstrap-icons/
-    │   ├── jquery/
     │   ├── mustache/
     │   ├── ol/             — OpenLayers + proj4
     │   └── qrcode/
@@ -1027,7 +1026,6 @@ sviewer/
 
 ### Dépendances
 
-- **jQuery 4.x** : manipulation DOM, requêtes AJAX
 - **Bootstrap 5** : composants UI, responsive
 - **OpenLayers 10** : rendu de carte, interactions OGC
 - **proj4.js** : projections cartographiques
@@ -1043,7 +1041,7 @@ embed.js
   ├── Détecte baseUrl depuis l'URL du script (window.SViewerBaseUrl)
   ├── Stocke les options dans window._svEmbedOptions
   ├── Crée le DOM (.sv-scope container)
-  ├── Charge en parallèle : jQuery + proj4 → OpenLayers → customConfig.js
+  ├── Charge en parallèle : proj4 → OpenLayers → customConfig.js
   │   et en parallèle : Bootstrap JS + CSS sViewer (révèle le container)
   ├── Charge i18n.js
   └── Charge sviewer.js

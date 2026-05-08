@@ -690,7 +690,7 @@ window.SViewerApp = (function() {
 
     /**
      * DOM elements i18n
-     * @param selector {String} jQuery selector
+     * @param selector {String} CSS selector
      * @param propnames {Array} array of property names
      */
     function translateDOM(selector) {
@@ -1514,7 +1514,7 @@ window.SViewerApp = (function() {
      * renders one search result item and binds the click handler
      * @param {Object} templateData  Mustache data ({ label, ariaLabel, fields })
      * @param {Object} clickData     event.data passed to onSearchItemClick
-     * @returns {jQuery} the <li> element
+     * @returns {HTMLLIElement} the <li> element
      */
     var searchItemIdx = 0;
 
@@ -2090,7 +2090,7 @@ window.SViewerApp = (function() {
         // Attribution must stay visible on desktop but fold into the "i" toggle
         // on narrow containers (embed widgets, phones) where it would otherwise
         // overlap the scale line.
-        var mapEl = document.getElementById('sv-map');
+        var mapEl = document.getElementById('sv-ol-map');
         var smallMap = !!(mapEl && mapEl.clientWidth && mapEl.clientWidth < 600);
         map = new ol.Map({
             controls: [
@@ -2110,7 +2110,7 @@ window.SViewerApp = (function() {
             ]),
             layers: [],
             overlays: [],
-            target: 'sv-map',
+            target: 'sv-ol-map',
             view: view
         });
 
