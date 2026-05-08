@@ -88,7 +88,7 @@ customConfig = {
     // },
 
     // --- Adapters ----------------------------------------------------------
-    // Each name maps to connectors/{name}/adapter.js.
+    // Each name maps to skill/{name}/adapter.js.
     // Available: 'grist', 'csv'. Empty = no adapter loaded.
 
     // adapters: [],

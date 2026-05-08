@@ -960,7 +960,7 @@ function openSettings() {
     var defaultSvBase = svConfig.sviewer_base || (function() {
         var loc = window.location;
         var dir = loc.pathname.replace(/\/[^\/]*$/, '/');
-        return loc.origin + dir.replace(/connectors\/grist\/$/, '');
+        return loc.origin + dir.replace(/skill\/grist\/$/, '');
     }());
     document.getElementById('sv-cfg-svbase').value = defaultSvBase;
     var defaultApiBase = svConfig.grist_api_base || (function() {

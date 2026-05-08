@@ -19,7 +19,7 @@
  *   _labelcol  — column used as feature label (_label property)
  *
  * When hints are absent, geometry is auto-detected from column names and values.
- * Same detection logic as connectors/grist/adapter.js — keep in sync.
+ * Same detection logic as skill/grist/adapter.js — keep in sync.
  *
  * CORS required: the CSV file must be served with Access-Control-Allow-Origin.
  * Known compatible sources: data.gouv.fr (static.data.gouv.fr), GitHub raw,

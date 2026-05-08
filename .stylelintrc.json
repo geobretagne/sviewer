@@ -1,0 +1,16 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "rules": {
+    "selector-class-pattern": [
+      "^(sv-[a-z][a-z0-9-]*|ol-[a-z][a-z0-9-]*|btn[a-z-]*|modal[a-z-]*|form-[a-z-]*|list-group[a-z-]*|active|show|center|mb-[0-9]+|alert[a-z-]*)$",
+      { "message": "Expected class to be sv-* (sViewer), ol-* (OpenLayers), or Bootstrap utility" }
+    ],
+    "selector-id-pattern": "^sv-[a-z][a-z0-9-]*$",
+    "no-descending-specificity": null,
+    "comment-empty-line-before": null,
+    "declaration-block-no-duplicate-properties": [true, {
+      "ignore": ["consecutive-duplicates-with-different-syntaxes", "consecutive-duplicates-with-different-values"]
+    }],
+    "declaration-block-single-line-max-declarations": null
+  }
+}

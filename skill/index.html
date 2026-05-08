@@ -3,17 +3,17 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sViewer — connectors</title>
+    <title>sViewer — skills</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: sans-serif; font-size: 14px; background: #f8f8f8; padding: 20px; max-width: 800px; }
         h1 { font-size: 16px; margin-bottom: 4px; }
         .subtitle { color: #888; font-size: 12px; margin-bottom: 20px; }
-        .connector { background: #fff; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 16px; padding: 16px; }
-        .connector-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; }
-        .connector-name { font-size: 15px; font-weight: bold; }
-        .connector-key { font-family: monospace; font-size: 12px; background: #f0f0f0; padding: 2px 6px; border-radius: 3px; color: #555; }
-        .connector-desc { color: #333; margin-bottom: 10px; line-height: 1.5; }
+        .skill { background: #fff; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 16px; padding: 16px; }
+        .skill-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+        .skill-name { font-size: 15px; font-weight: bold; }
+        .skill-key { font-family: monospace; font-size: 12px; background: #f0f0f0; padding: 2px 6px; border-radius: 3px; color: #555; }
+        .skill-desc { color: #333; margin-bottom: 10px; line-height: 1.5; }
         .caps { margin-bottom: 10px; }
         .caps-title { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #888; margin-bottom: 4px; letter-spacing: 0.05em; }
         .caps ul { margin-left: 16px; line-height: 1.7; font-size: 13px; color: #444; }
@@ -31,19 +31,19 @@
 </head>
 <body>
 
-<h1>sViewer — connectors</h1>
+<h1>sViewer — skills</h1>
 <p class="subtitle">
-    Connectors extend sViewer to load non-GeoJSON sources via <code>?geojson=</code>.
-    Each connector is a self-contained <code>adapter.js</code> activated in <code>customConfig.js</code>.
+    Skills extend sViewer to load non-GeoJSON sources via <code>?geojson=</code>.
+    Each skill is a self-contained <code>adapter.js</code> activated in <code>customConfig.js</code>.
 </p>
 
 <!-- CSV -->
-<div class="connector">
-    <div class="connector-header">
-        <span class="connector-name">CSV</span>
-        <span class="connector-key">adapters: ['csv']</span>
+<div class="skill">
+    <div class="skill-header">
+        <span class="skill-name">CSV</span>
+        <span class="skill-key">adapters: ['csv']</span>
     </div>
-    <div class="connector-desc">
+    <div class="skill-desc">
         Loads comma or semicolon-separated files and converts them to map features.
         Geometry is auto-detected from column names — no configuration required for standard files.
     </div>
@@ -76,12 +76,12 @@
 </div>
 
 <!-- Grist -->
-<div class="connector">
-    <div class="connector-header">
-        <span class="connector-name">Grist</span>
-        <span class="connector-key">adapters: ['grist']</span>
+<div class="skill">
+    <div class="skill-header">
+        <span class="skill-name">Grist</span>
+        <span class="skill-key">adapters: ['grist']</span>
     </div>
-    <div class="connector-desc">
+    <div class="skill-desc">
         Loads data from the Grist records API and renders it as map features.
         Works both as a standalone <code>?geojson=</code> URL and as a Grist widget embedded in a document.
     </div>
@@ -114,15 +114,15 @@
 </div>
 
 <!-- Sample -->
-<div class="connector">
-    <div class="connector-header">
-        <span class="connector-name">Sample</span>
-        <span class="connector-key">adapters: ['sample']</span>
+<div class="skill">
+    <div class="skill-header">
+        <span class="skill-name">Sample</span>
+        <span class="skill-key">adapters: ['sample']</span>
     </div>
-    <div class="connector-desc">
-        Annotated reference connector for connector authors. Loads a flat JSON array
+    <div class="skill-desc">
+        Annotated reference skill for skill authors. Loads a flat JSON array
         <code>[{latitude, longitude, …}, …]</code> and converts it to map features.
-        Read <code>connectors/sample/adapter.js</code> as a starting point for new connectors.
+        Read <code>skill/sample/adapter.js</code> as a starting point for new skills.
     </div>
     <div class="caps">
         <div class="caps-title">Capabilities</div>

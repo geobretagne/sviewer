@@ -1,4 +1,4 @@
-$.extend(hardConfig, {
+$.extend(window.SViewerHardConfig, {
     i18n: {
         en: {
             // Button tooltips
