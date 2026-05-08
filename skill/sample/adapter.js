@@ -31,7 +31,7 @@
     // ---------------------------------------------------------------------------
     // STEP 1 — implement convert(response, sourceUrl)
     //
-    // response   : already-parsed JS object (wantsText is absent → jQuery parsed JSON)
+    // response   : already-parsed JS object (wantsText is absent → fetch parsed JSON)
     // sourceUrl  : the original ?geojson= URL — read hints from its query string
     // returns    : GeoJSON FeatureCollection, or null if conversion is impossible
     // ---------------------------------------------------------------------------
