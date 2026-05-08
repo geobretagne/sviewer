@@ -191,6 +191,7 @@ window.SViewerApp = (function() {
     var marker;
     var vectorLayer;
     var _onReadyCallbacks = [];
+    var _clickHandlers = [];
 
     // ----- pseudoclasses ------------------------------------------------------------------------------------
 
@@ -1668,7 +1669,7 @@ window.SViewerApp = (function() {
     // panelButton kept for compatibility, now delegates to togglePanel
     function panelButton(e) {
         var button = $(e.target).closest('button');
-        var panelName = button.data('panel');
+        var panelName = button.data('sv-panel');
         if (panelName) {
             togglePanel(panelName);
         }
@@ -1852,10 +1853,9 @@ window.SViewerApp = (function() {
     /**
      * reads configuration from querystring
      */
-    function doConfiguration() {
-
-        // static configuration (merged from hardConfig + customConfig)
-        // Check if i18n has been loaded (via i18n.js)
+    // Merge hardConfig + customConfig into `config`, resolve lang and projection,
+    // then back-fill qs from embed config so downstream code sees a unified qs.
+    function _buildConfig() {
         var i18n = (hardConfig && hardConfig.i18n) || {};
         config = {
             lang: 'en',
@@ -1866,7 +1866,7 @@ window.SViewerApp = (function() {
         $.extend(config, window.customConfig || {});
 
         // language priority: ?lang= URL param > customConfig.lang > browser > default 'en'
-        var browserLang = ((navigator.language) ? navigator.language : navigator.userLanguage).substring(0,2);
+        var browserLang = ((navigator.language) ? navigator.language : navigator.userLanguage).substring(0, 2);
         var resolvedLang = (qs.lang && /^[a-z]{2}$/.test(qs.lang)) ? qs.lang
                          : (window.customConfig && window.customConfig.lang) ? window.customConfig.lang
                          : browserLang;
@@ -1875,35 +1875,22 @@ window.SViewerApp = (function() {
         document.documentElement.lang = config.lang;
         config.projection = ol.proj.get(config.projcode);
 
-        // In embed mode, merge config values back into qs so they're available downstream
-        // (config has been populated from hardConfig + customConfig, which includes embed options)
-        if (config.layers && !qs.layers) {
-            qs.layers = config.layers;
-        }
-        if (config.zoom && !qs.z) {
-            qs.z = config.zoom;
-        }
+        // In embed mode, back-fill qs from config so downstream sees a unified qs.
+        if (config.layers && !qs.layers) { qs.layers = config.layers; }
+        if (config.zoom   && !qs.z)      { qs.z      = config.zoom; }
         if (config.center && !qs.x && !qs.y) {
             qs.x = config.center[0];
             qs.y = config.center[1];
         }
-        if (config.lb && !qs.lb) {
-            qs.lb = config.lb;
-        }
-        if (config.title && !qs.title) {
-            qs.title = config.title;
-        }
-        if (config.q && !qs.q) {
-            qs.q = config.q;
-        }
-        if (config.s && !qs.s) {
-            qs.s = config.s;
-        }
-        if (config.theme && !qs.theme) {
-            qs.theme = config.theme;
-        }
+        if (config.lb    && !qs.lb)    { qs.lb    = config.lb; }
+        if (config.title && !qs.title) { qs.title = config.title; }
+        if (config.q     && !qs.q)     { qs.q     = config.q; }
+        if (config.s     && !qs.s)     { qs.s     = config.s; }
+        if (config.theme && !qs.theme) { qs.theme = config.theme; }
+    }
 
-        // runtime state (mutable after init)
+    // Initialise runtime `state` from config + querystring params.
+    function _initState() {
         state = {
             lb: 0,
             theme: 'light',
@@ -1934,19 +1921,21 @@ window.SViewerApp = (function() {
                 : config.layersBackground;
             state.lb = parseInt(qs.lb, 10) % lbPool.length;
         }
+    }
 
-        // querystring param: layers
+    // Parse all querystring layer/data params and apply them to config + state.
+    function _applyQueryParams() {
+
+        // layers= — WMS layers list
         if (qs.layers) {
             config.layersQueryString = qs.layers;
-            // parser to retrieve serialized namespace:name[*style[*cql_filter]] and store the description in config
             var ns_layer_style_list = (typeof qs.layers === 'string') ? qs.layers.split(',') : qs.layers;
             $.each(ns_layer_style_list, function() {
                 config.layersQueryable.push(new LayerQueryable(this));
             });
         }
-        
-        // querystring param: md (metadata identifier, comma-separated for multiple layers)
-        // fetches ISO19139 record(s) from CSW, extracts OGC:WMS endpoint and layername
+
+        // md= — ISO19139 metadata identifiers; fetches CSW, extracts WMS endpoint + layername
         if (qs.md && !qs.layers) {
             var mdIds = qs.md.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
             config.metadataIds = mdIds;
@@ -1966,13 +1955,11 @@ window.SViewerApp = (function() {
                     map.addLayer(lq.wmslayer);
                     lq.md.title = title;
                     // Auto-title only when a single metadata is loaded — ambiguous with multiple.
-                    // Use &title= explicitly for multi-md views.
                     if (mdIds.length === 1) { setTitle(title, true); }
                     var legendUrl = wmsUrl + '?' + $.param({
                         SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetLegendGraphic',
                         FORMAT: 'image/png', LAYER: layername
                     });
-                    // Extract HTML catalog links from CSW distributionInfo
                     var metadataLinks = [];
                     try {
                         var linkNodes = xmlDoc.evaluate(
@@ -1987,7 +1974,7 @@ window.SViewerApp = (function() {
                                 metadataLinks.push({ url: safeURL(lurl), label: tr('msg.full_record'), newTab: tr('msg.new_tab') });
                             }
                         }
-                    } catch(e) { /* XPath unsupported — skip links */ }
+                    } catch(_e) { /* XPath unsupported — skip links */ }
                     var $panel = $(Mustache.render(window.SViewerTemplates['sv-layer-panel'], {
                         title:         title,
                         abstract:      abstract,
@@ -2005,10 +1992,9 @@ window.SViewerApp = (function() {
             log('md= ignored: layers= takes precedence');
         }
 
-        // querystring param: qcl_filters
+        // qcl_filters= — per-layer CQL filters (semicolon-separated, order matches layers=)
         if (qs.qcl_filters) {
             var qcl_filters_list = (typeof qs.qcl_filters === 'string') ? qs.qcl_filters.split(';') : qs.qcl_filters;
-
             $.each(qcl_filters_list, function(index) {
                 if (index < config.layersQueryable.length) {
                     var opt = config.layersQueryable[index].options;
@@ -2018,13 +2004,12 @@ window.SViewerApp = (function() {
             });
         }
 
-        // querystring param: xyz
-        // recenters map on specified location
-        if (qs.x&&qs.y&&qs.z) {
+        // x/y/z= — recenter map; auto-detects EPSG:4326 coords
+        if (qs.x && qs.y && qs.z) {
             config.z = parseFloat(qs.z);
             var p = [parseFloat(qs.x), parseFloat(qs.y)];
             // is this lonlat ? anyway don't use sviewer for the vendee globe
-            if (Math.abs(p[0])<=180&&Math.abs(p[1])<=180&&config.z>7) {
+            if (Math.abs(p[0]) <= 180 && Math.abs(p[1]) <= 180 && config.z > 7) {
                 p = ol.proj.transform(p, 'EPSG:4326', config.projcode);
             }
             config.x = p[0];
@@ -2032,53 +2017,37 @@ window.SViewerApp = (function() {
             config.initialView = { center: [config.x, config.y], zoom: config.z };
         }
 
-        // querystring param: title
-        // controls map title
-        if (qs.title) {
-            setTitle(qs.title, true);
-        }
-        else {
-            setTitle(config.title, true);
-        }
+        // title= — map title
+        setTitle(qs.title || config.title, true);
 
-        // querystring param: perform getFeatureInfo on map center
-        if (qs.q) {
-            state.gfiok = true;
-        }
-
-        // querystring param: silent auto-geocode + recenter (?address=)
-        if (qs.address) {
-            state.address = qs.address;
-        }
-
-        // querystring param: load external GeoJSON layer (?geojson=URL)
-        if (qs.geojson) {
-            state.geojson = qs.geojson;
-        }
-
-        // querystring param: property to use as label (?label=propertyName)
-        if (qs.label) {
-            state.label = qs.label;
-        }
-
-        // querystring param: activate WFS feature search alongside geocoding
+        // q= — perform getFeatureInfo on map centre at startup
+        if (qs.q)        { state.gfiok    = true; }
+        // address= — silent auto-geocode + recenter
+        if (qs.address)  { state.address  = qs.address; }
+        // geojson= — load external GeoJSON layer
+        if (qs.geojson)  { state.geojson  = qs.geojson; }
+        // label= — property to use as feature label
+        if (qs.label)    { state.label    = qs.label; }
+        // s= — activate WFS feature search alongside geocoding
         if (qs.s) {
             state.search = true;
             $.each(config.layersQueryable, function() { this.discoverWFS(); });
         }
-
-        // querystring param: auto-start GPS tracking
-        if (qs.position) {
-            state.position = 1;
-        }
-
-        // querystring param: layer opacity (0–1)
+        // position= — auto-start GPS tracking
+        if (qs.position) { state.position = 1; }
+        // opacity= — layer opacity (0–1)
         if (qs.opacity !== undefined) {
             var parsedOpacity = parseFloat(qs.opacity);
             if (!isNaN(parsedOpacity) && parsedOpacity >= 0 && parsedOpacity <= 1) {
                 state.opacity = parsedOpacity;
             }
         }
+    }
+
+    function doConfiguration() {
+        _buildConfig();
+        _initState();
+        _applyQueryParams();
     }
 
 
@@ -2181,12 +2150,22 @@ window.SViewerApp = (function() {
 
         // map events
         map.on('singleclick', function(e) {
+            // Dispatch to skill click handlers first (all layers, including skill layers).
+            // A handler returning true suppresses sViewer GFI for that click.
+            var suppressed = false;
+            if (_clickHandlers.length) {
+                var payload = { coordinate: e.coordinate, pixel: e.pixel, olEvent: e };
+                _clickHandlers.forEach(function(fn) {
+                    try { if (fn(payload) === true) { suppressed = true; } } catch(_e) { /* skill errors are silenced */ }
+                });
+            }
+            if (suppressed) { return; }
             // Skip WMS GetFeatureInfo when user clicked any vector feature —
             // covers both sViewer's own GeoJSON layer and external widget layers.
             var hitVector = false;
             map.forEachFeatureAtPixel(e.pixel, function() { hitVector = true; return true; },
                 { hitTolerance: 8 });
-if (!hitVector) { queryMap(e.coordinate); }
+            if (!hitVector) { queryMap(e.coordinate); }
         });
         map.on('moveend', setPermalink);
         map.on('moveend', function() { _emit('sv:viewChange', { center: view.getCenter(), zoom: view.getZoom() }); });
@@ -2519,7 +2498,7 @@ if (!hitVector) { queryMap(e.coordinate); }
             window.parent.postMessage({ type: 'sv:ready', hardConfig: serializable, center: [config.x, config.y], zoom: config.z }, '*');
         }
         // Notify onReady callbacks registered by embed callers.
-        _onReadyCallbacks.forEach(function(fn) { try { fn(); } catch(e) {} });
+        _onReadyCallbacks.forEach(function(fn) { try { fn(); } catch(_e) { /* skill onReady errors are silenced */ } });
         _onReadyCallbacks = [];
 
     }
@@ -2561,6 +2540,10 @@ if (!hitVector) { queryMap(e.coordinate); }
     //         sv:viewChange, sv:layerLoad
     this.on  = function(event, fn) { if (_bus) { _bus.on(event, fn); } };
     this.off = function(event, fn) { if (_bus) { _bus.off(event, fn); } };
+    // Register a map click handler. fn({ coordinate, pixel, olEvent }).
+    // Use getMap().forEachFeatureAtPixel(pixel, ...) to hit-test your own layers.
+    this.addClickHandler    = function(fn) { if (typeof fn === 'function') { _clickHandlers.push(fn); } };
+    this.removeClickHandler = function(fn) { _clickHandlers = _clickHandlers.filter(function(h) { return h !== fn; }); };
     // Panel API — open/close a named skill panel in the sidepanel.
     // open(name, title, html) creates the panel + toggle button if absent.
     this.panel = {
@@ -2590,7 +2573,10 @@ if (!hitVector) { queryMap(e.coordinate); }
             }
             togglePanel('skill-' + name);
         },
-        close: function(name) { togglePanel(null); }
+        close:  function() { togglePanel(null); },
+        update: function(name, html) {
+            $('#sv-panel-skill-' + name + ' .sv-panel-content').html(html || '');
+        }
     };
     }
 
