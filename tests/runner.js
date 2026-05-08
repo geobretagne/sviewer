@@ -26,8 +26,40 @@
         runAll: runAll,
         renderRunning: renderRunning,
         renderResult: renderResult,
-        getBaseUrl: function() { return BASE_URL; }
+        getBaseUrl: function() { return BASE_URL; },
+        queryDOM: queryDOM
     };
+
+    // ------ DOM query helpers ------------------------------------------------
+
+    var _domQuerySeq = 0;
+    var _domQueryPending = {};
+
+    window.addEventListener('message', function(e) {
+        if (!e.data || e.data.type !== 'sv:domResult') { return; }
+        var cb = _domQueryPending[e.data.id];
+        if (cb) { delete _domQueryPending[e.data.id]; cb(e.data); }
+    });
+
+    // Query a DOM property/attribute inside the sViewer iframe.
+    // selector: CSS selector, prop: 'textContent'|'innerHTML'|'value'|'checked'|'hidden'|attr name.
+    // Returns a Promise resolving to {found, value}.
+    function queryDOM(selector, prop) {
+        return new Promise(function(resolve, reject) {
+            var iframe = document.getElementById('sv-test-frame');
+            if (!iframe || !iframe.contentWindow) { reject(new Error('No iframe')); return; }
+            var id = ++_domQuerySeq;
+            var timer = setTimeout(function() {
+                delete _domQueryPending[id];
+                reject(new Error('sv:domQuery timeout for "' + selector + '"'));
+            }, 3000);
+            _domQueryPending[id] = function(data) {
+                clearTimeout(timer);
+                resolve(data);
+            };
+            iframe.contentWindow.postMessage({ type: 'sv:domQuery', id: id, selector: selector, prop: prop || 'textContent' }, '*');
+        });
+    }
 
     // ------ Core -------------------------------------------------------------
 
@@ -82,8 +114,8 @@
                 clearTimeout(timer);
                 window.removeEventListener('message', onMessage);
                 try {
-                    var result = test.assert ? test.assert(event.data.hardConfig, event) : undefined;
-                    // assert may return a Promise (for fetch-based checks)
+                    var result = test.assert ? test.assert(event.data.hardConfig, event, queryDOM) : undefined;
+                    // assert may return a Promise (for fetch-based checks or queryDOM calls)
                     if (result && typeof result.then === 'function') {
                         result.then(function() { resolve('ok'); }).catch(reject);
                     } else {

@@ -602,7 +602,7 @@ function makeFeatureStyle(cfg, selected) {
 // Returns geojsonStyle defaults from customConfig/hardConfig, with built-in fallbacks.
 function geojsonStyleDefaults() {
     var gs = (window.customConfig && window.customConfig.geojsonStyle) ||
-             (window.hardConfig   && window.hardConfig.geojsonStyle)   || {};
+             (window.SViewerHardConfig && window.SViewerHardConfig.geojsonStyle) || {};
     return {
         color:       safeColor(gs.color, '#0077bb'),
         fillOpacity: gs.fillOpacity  !== undefined ? gs.fillOpacity  : 0.35,
@@ -968,7 +968,7 @@ function openSettings() {
     }());
     document.getElementById('sv-cfg-apibase').value = defaultApiBase;
     document.getElementById('sv-cfg-georchestra').value = svConfig.georchestra_base ||
-        (window.hardConfig && window.hardConfig.geOrchestraBaseUrl) ||
+        (window.SViewerHardConfig && window.SViewerHardConfig.geOrchestraBaseUrl) ||
         (window.customConfig && window.customConfig.geOrchestraBaseUrl) || '';
     (function() {
         var opVal = svConfig.wms_opacity !== undefined ? svConfig.wms_opacity : 1;
@@ -981,7 +981,7 @@ function openSettings() {
     // Background selector — populate from backgroundPresets if available
     (function() {
         var presets = (window.customConfig && window.customConfig.backgroundPresets) ||
-                      (window.hardConfig   && window.hardConfig.backgroundPresets)   || [];
+                      (window.SViewerHardConfig && window.SViewerHardConfig.backgroundPresets) || [];
         var sel    = document.getElementById('sv-cfg-lb');
         var lbl    = document.getElementById('sv-cfg-lb-label');
         var sep    = document.getElementById('sv-cfg-lb-sep');
@@ -1247,7 +1247,7 @@ function initMap() {
     initialLayers = svConfig.layers || null;
     initialMd = svConfig.md || null;
     var georchestraBase = safeHttpUrl(svConfig.georchestra_base);
-    if (georchestraBase && window.hardConfig) { window.hardConfig.geOrchestraBaseUrl = georchestraBase; }
+    if (georchestraBase && window.SViewerHardConfig) { window.SViewerHardConfig.geOrchestraBaseUrl = georchestraBase; }
 
     SViewer.init('#sv-map', opts).then(function() {
         mapReady = true;
@@ -1258,7 +1258,7 @@ function initMap() {
             saveOptions();
         };
         // React to map feature clicks — Grist-specific: track selectedRowId + apply selection style.
-        SViewer.onFeatureClick(onMapFeatureClick);
+        SViewer.on('sv:featureClick', onMapFeatureClick);
         var geojsonUrl = buildGristGeojsonUrl();
         if (geojsonUrl) { SViewer.setGeojsonUrl(geojsonUrl); }
         // Re-run column detection if onRecords fired before OL was loaded (WKT probing skipped then)

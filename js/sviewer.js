@@ -21,7 +21,7 @@ window.SViewerApp = (function() {
     window.SViewerHardConfig = window.SViewerHardConfig || {};
 
     // Fill in defaults — existing keys (from customConfig via embed.js) are preserved
-    window.SViewerHardConfig = $.extend({
+    window.SViewerHardConfig = Object.assign({
         title: 'sViewer',
         geOrchestraBaseUrl: 'https://demo.georchestra.org',
         projcode: 'EPSG:3857',
@@ -322,7 +322,7 @@ window.SViewerApp = (function() {
          */
         function getMetadata(self) {
             var parser = new ol.format.WMSCapabilities();
-            var capabilitiesUrl = ajaxURL(self.options.wmsurl_layer + '?' + $.param({
+            var capabilitiesUrl = ajaxURL(self.options.wmsurl_layer + '?' + new URLSearchParams({
                 SERVICE: 'WMS',
                 REQUEST: 'GetCapabilities'
             }));
@@ -341,10 +341,10 @@ window.SViewerApp = (function() {
                     // Layer virtual service (/geoserver/<ns>/<layer>/wms) scopes the response to this single layer.
                     // Name may appear with or without namespace prefix depending on GeoServer config; match either form.
                     if (capabilities.Capability && capabilities.Capability.Layer && capabilities.Capability.Layer.Layer) {
-                        $.each(capabilities.Capability.Layer.Layer, function() {
-                            log('Found layer in capabilities:', this.Name);
-                            if (this.Name === self.options.nslayername || this.Name === self.options.layername) {
-                                mdLayer = this;
+                        capabilities.Capability.Layer.Layer.forEach(function(lyr) {
+                            log('Found layer in capabilities:', lyr.Name);
+                            if (lyr.Name === self.options.nslayername || lyr.Name === self.options.layername) {
+                                mdLayer = lyr;
                                 log('Matched layer:', this.Name);
                             }
                         });
@@ -364,7 +364,7 @@ window.SViewerApp = (function() {
                         if (self.options.sldurl) {
                             legendArgs.SLD = self.options.sldurl;
                         }
-                        var legendUrl = self.options.wmsurl_ns + '?' + $.param(legendArgs);
+                        var legendUrl = self.options.wmsurl_ns + '?' + new URLSearchParams(legendArgs);
                         log('Legend URL:', legendUrl);
 
                         self.md.title = mdLayer.Title;
@@ -379,9 +379,9 @@ window.SViewerApp = (function() {
 
                         var xmlMetaUrl = null;
                         if (Object.prototype.hasOwnProperty.call(mdLayer, 'MetadataURL')) {
-                            $.each(mdLayer.MetadataURL, function() {
-                                if (this.Format === "text/xml" && !xmlMetaUrl) {
-                                    xmlMetaUrl = this.OnlineResource;
+                            mdLayer.MetadataURL.forEach(function(mu) {
+                                if (mu.Format === "text/xml" && !xmlMetaUrl) {
+                                    xmlMetaUrl = mu.OnlineResource;
                                 }
                             });
                         }
@@ -454,7 +454,7 @@ window.SViewerApp = (function() {
                 parseLayerParam(String(options));
             }
             else {
-                $.extend(this.options, options);
+                Object.assign(this.options, options);
             }
             createLayer();
             if (!self.options.skipMetadataPanel) {
@@ -471,7 +471,7 @@ window.SViewerApp = (function() {
      */
     LayerQueryable.prototype.discoverWFS = function() {
         var self = this;
-        var describeLayerUrl = ajaxURL(self.options.wmsurl_ns + '?' + $.param({
+        var describeLayerUrl = ajaxURL(self.options.wmsurl_ns + '?' + new URLSearchParams({
             SERVICE: 'WMS',
             VERSION: '1.1.1',
             REQUEST: 'DescribeLayer',
@@ -486,7 +486,7 @@ window.SViewerApp = (function() {
             self.wfs.typeName = typeName;
             var sep = wfsUrl.indexOf('?') >= 0 ? '&' : '?';
             return $.ajax({
-                url: ajaxURL(wfsUrl + sep + $.param({
+                url: ajaxURL(wfsUrl + sep + new URLSearchParams({
                     SERVICE: 'WFS',
                     VERSION: '1.0.0',
                     REQUEST: 'DescribeFeatureType',
@@ -573,7 +573,7 @@ window.SViewerApp = (function() {
             cswBase = metadataId.slice(atIdx + 1);
             metadataId = metadataId.slice(0, atIdx);
         }
-        var url = cswBase + '?' + $.param({
+        var url = cswBase + '?' + new URLSearchParams({
             SERVICE: 'CSW',
             VERSION: '2.0.2',
             REQUEST: 'GetRecordById',
@@ -752,7 +752,7 @@ window.SViewerApp = (function() {
     // customConfig.js is not yet loaded at this point — it runs later in init().
     // _svEmbedOptions has priority over qs (which may contain unrelated host-page params).
     if (window._svEmbedOptions) {
-        $.extend(qs, window._svEmbedOptions);
+        Object.assign(qs, window._svEmbedOptions);
     }
 
     // Debug mode: ?debug=true in URL enables console logs
@@ -775,11 +775,11 @@ window.SViewerApp = (function() {
             state.lb = typeof idx === 'number' ? idx % n : (state.lb + 1) % n;
             var preset = presets[state.lb];
 
-            $.each(config.layersBackground, function(i, layer) {
+            config.layersBackground.forEach(function(layer, i) {
                 layer.setVisible(i === preset.lb);
             });
             if (config.layersOverlay) {
-                $.each(config.layersOverlay, function(i, layer) {
+                config.layersOverlay.forEach(function(layer, i) {
                     layer.setVisible(i === preset.lo);
                 });
             }
@@ -788,7 +788,7 @@ window.SViewerApp = (function() {
             var bgLayers = config.layersBackground;
             var nb = bgLayers.length;
             var lv = 0;
-            $.each(bgLayers, function(i, layer) {
+            bgLayers.forEach(function(layer, i) {
                 if (layer.getVisible()) { lv = i; }
                 layer.setVisible(false);
             });
@@ -829,7 +829,7 @@ window.SViewerApp = (function() {
             var standaloneBase = window.SViewerBaseUrl
                 ? window.SViewerBaseUrl + 'index.html'
                 : window.location.origin + window.location.pathname;
-            permalinkQuery = standaloneBase + "?" + $.param(linkParams);
+            permalinkQuery = standaloneBase + "?" + new URLSearchParams(linkParams);
 
             $('#sv-permalink-url')
                 .prop('href', permalinkQuery)
@@ -947,7 +947,7 @@ window.SViewerApp = (function() {
                     url: config.openLSGeocodeUrl,
                     type: 'GET',
                     dataType: 'json',
-                    data: $.extend({ q: q, limit: config.maxGeocodeResults, bbox: bbox.join(',') }, config.geocodeParams || {}),
+                    data: Object.assign({ q: q, limit: config.maxGeocodeResults, bbox: bbox.join(',') }, config.geocodeParams || {}),
                     success: onGeocodeSuccess,
                     error: onGeocodeFailure
                 });
@@ -974,7 +974,7 @@ window.SViewerApp = (function() {
             url: config.openLSGeocodeUrl,
             type: 'GET',
             dataType: 'json',
-            data: $.extend({ q: text.trim(), limit: config.maxGeocodeResults, bbox: bbox.join(',') }, config.geocodeParams || {}),
+            data: Object.assign({ q: text.trim(), limit: config.maxGeocodeResults, bbox: bbox.join(',') }, config.geocodeParams || {}),
             success: function(response) {
                 var results = config.geocodeAdapter(response);
                 if (!results.length) { return; }
@@ -1326,8 +1326,8 @@ window.SViewerApp = (function() {
         $('#sv-query-content').html('');
 
         // WMS getFeatureInfo
-        $.each(config.layersQueryable, function() {
-            var url = this.wmslayer.getSource().getFeatureInfoUrl(
+        config.layersQueryable.forEach(function(lq) {
+            var url = lq.wmslayer.getSource().getFeatureInfoUrl(
                 state.gficoord,
                 viewResolution,
                 config.projection,
@@ -1336,7 +1336,7 @@ window.SViewerApp = (function() {
             );
 
             // response order = layer order
-            var domResponse = $(Mustache.render(window.SViewerTemplates['sv-query-header'], { title: this.md.title }));
+            var domResponse = $(Mustache.render(window.SViewerTemplates['sv-query-header'], { title: lq.md.title }));
             $('#sv-query-content').append(domResponse);
             // ajax request
             svSpinner.show();
@@ -1403,20 +1403,19 @@ window.SViewerApp = (function() {
      */
     function searchAllWFSLayers(value) {
         if (value.length < 2) { return; }
-        $.each(config.layersQueryable, function() {
-            var layer = this;
+        config.layersQueryable.forEach(function(layer) {
             if (!layer.wfs.url || !layer.wfs.searchFields || !layer.wfs.searchFields.length) { return; }
 
             var ogcfilter = [], propertynames = [];
             /*matchCase="false" for PropertyIsLike don't work with geoserver 2.5.0* in wfs 2.0.0 version*/
-            $.each(layer.wfs.searchFields, function(i, fieldname) {
+            layer.wfs.searchFields.forEach(function(fieldname) {
                 ogcfilter.push(
                     '<ogc:PropertyIsLike wildCard="*" singleChar="." escapeChar="!" matchCase="false">' +
                     '<ogc:PropertyName>' + fieldname + '</ogc:PropertyName>' +
                     '<ogc:Literal>*' + xmlEscape(value) + '*</ogc:Literal></ogc:PropertyIsLike>');
                 propertynames.push('<ogc:PropertyName>' + fieldname + '</ogc:PropertyName>');
             });
-            $.each(layer.wfs.fields, function(i, fieldname) {
+            layer.wfs.fields.forEach(function(fieldname) {
                 if (layer.wfs.searchFields.indexOf(fieldname) === -1) {
                     propertynames.push('<ogc:PropertyName>' + fieldname + '</ogc:PropertyName>');
                 }
@@ -1553,13 +1552,14 @@ window.SViewerApp = (function() {
             label: label || tr('msg.top_layer')
         }));
 
-        $.each(features, function(i, feature) {
+        features.forEach(function(feature) {
             var geom       = feature.getGeometry(),
                 props      = feature.getProperties(),
                 fieldItems = [],
                 titleField = detectTitleField(Object.keys(props));
 
-            $.map(props, function(val, key) {
+            Object.keys(props).forEach(function(key) {
+                var val = props[key];
                 /* skip geometry objects (ol.geom.*); null check required first: typeof null === 'object' in JS */
                 if (val !== null && typeof val === 'object' && typeof val.getType === 'function') { return; }
                 if (isNilValue(val)) { return; }
@@ -1582,7 +1582,7 @@ window.SViewerApp = (function() {
     var searchXhrs = [];
 
     function abortSearchXhrs() {
-        $.each(searchXhrs, function() { this.abort(); });
+        searchXhrs.forEach(function(xhr) { xhr.abort(); });
         searchXhrs = [];
     }
 
@@ -1862,8 +1862,8 @@ window.SViewerApp = (function() {
             layersQueryable: [],
             layersQueryString: ''
         };
-        $.extend(config, hardConfig);
-        $.extend(config, window.customConfig || {});
+        Object.assign(config, hardConfig);
+        Object.assign(config, window.customConfig || {});
 
         // language priority: ?lang= URL param > customConfig.lang > browser > default 'en'
         var browserLang = ((navigator.language) ? navigator.language : navigator.userLanguage).substring(0, 2);
@@ -1930,8 +1930,8 @@ window.SViewerApp = (function() {
         if (qs.layers) {
             config.layersQueryString = qs.layers;
             var ns_layer_style_list = (typeof qs.layers === 'string') ? qs.layers.split(',') : qs.layers;
-            $.each(ns_layer_style_list, function() {
-                config.layersQueryable.push(new LayerQueryable(this));
+            ns_layer_style_list.forEach(function(item) {
+                config.layersQueryable.push(new LayerQueryable(item));
             });
         }
 
@@ -1956,7 +1956,7 @@ window.SViewerApp = (function() {
                     lq.md.title = title;
                     // Auto-title only when a single metadata is loaded — ambiguous with multiple.
                     if (mdIds.length === 1) { setTitle(title, true); }
-                    var legendUrl = wmsUrl + '?' + $.param({
+                    var legendUrl = wmsUrl + '?' + new URLSearchParams({
                         SERVICE: 'WMS', VERSION: '1.3.0', REQUEST: 'GetLegendGraphic',
                         FORMAT: 'image/png', LAYER: layername
                     });
@@ -1995,10 +1995,10 @@ window.SViewerApp = (function() {
         // qcl_filters= — per-layer CQL filters (semicolon-separated, order matches layers=)
         if (qs.qcl_filters) {
             var qcl_filters_list = (typeof qs.qcl_filters === 'string') ? qs.qcl_filters.split(';') : qs.qcl_filters;
-            $.each(qcl_filters_list, function(index) {
+            qcl_filters_list.forEach(function(filter, index) {
                 if (index < config.layersQueryable.length) {
                     var opt = config.layersQueryable[index].options;
-                    opt.cql_filter = String(this);
+                    opt.cql_filter = String(filter);
                     config.layersQueryable[index] = new LayerQueryable(opt);
                 }
             });
@@ -2031,7 +2031,7 @@ window.SViewerApp = (function() {
         // s= — activate WFS feature search alongside geocoding
         if (qs.s) {
             state.search = true;
-            $.each(config.layersQueryable, function() { this.discoverWFS(); });
+            config.layersQueryable.forEach(function(lq) { lq.discoverWFS(); });
         }
         // position= — auto-start GPS tracking
         if (qs.position) { state.position = 1; }
@@ -2087,23 +2087,22 @@ window.SViewerApp = (function() {
         });
 
         // adding background layers (opaque, non queryable, mutually exclusive)
-        $.each(config.layersBackground, function() {
-                this.setVisible(false);
-                map.addLayer(this);
-            }
-        );
+        config.layersBackground.forEach(function(layer) {
+            layer.setVisible(false);
+            map.addLayer(layer);
+        });
 
         // adding queryable WMS layers from querystring
-        $.each(config.layersQueryable, function() {
-            map.addLayer(this.wmslayer);
+        config.layersQueryable.forEach(function(lq) {
+            map.addLayer(lq.wmslayer);
         });
 
         // adding overlay layers (above all data layers, not queryable)
         // in preset mode, visibility is driven by switchBackground() below
         if (config.layersOverlay && config.layersOverlay.length) {
-            $.each(config.layersOverlay, function() {
-                this.setVisible(false);
-                map.addLayer(this);
+            config.layersOverlay.forEach(function(layer) {
+                layer.setVisible(false);
+                map.addLayer(layer);
             });
         }
 
@@ -2210,8 +2209,8 @@ window.SViewerApp = (function() {
 
         function applyLayerOpacity(val) {
             state.opacity = val;
-            $.each(config.layersQueryable, function() {
-                this.wmslayer.setOpacity(val);
+            config.layersQueryable.forEach(function(lq) {
+                lq.wmslayer.setOpacity(val);
             });
             $('#sv-opacity-value').text(Math.round(val * 100) + '%');
             $('#sv-opacity-slider').val(Math.round(val * 100)).attr('aria-valuenow', Math.round(val * 100));
@@ -2500,6 +2499,26 @@ window.SViewerApp = (function() {
         // Notify onReady callbacks registered by embed callers.
         _onReadyCallbacks.forEach(function(fn) { try { fn(); } catch(_e) { /* skill onReady errors are silenced */ } });
         _onReadyCallbacks = [];
+
+        // Test runner DOM query protocol — only active when embedded in a parent frame.
+        // Parent sends {type:'sv:domQuery', id, selector, prop} and receives {type:'sv:domResult', id, value}.
+        // prop: 'textContent'|'innerHTML'|'value'|'checked'|'hidden'|attribute name (getAttribute fallback).
+        if (window.parent !== window) {
+            window.addEventListener('message', function(e) {
+                if (!e.data || e.data.type !== 'sv:domQuery') { return; }
+                var el = document.querySelector(e.data.selector);
+                var value = null;
+                if (el) {
+                    var prop = e.data.prop || 'textContent';
+                    if (prop in el) {
+                        value = el[prop];
+                    } else {
+                        value = el.getAttribute(prop);
+                    }
+                }
+                window.parent.postMessage({ type: 'sv:domResult', id: e.data.id, value: value, found: !!el }, '*');
+            });
+        }
 
     }
 
