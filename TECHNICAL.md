@@ -525,7 +525,7 @@ Les adaptateurs normalisent les réponses d'APIs non-GeoJSON (Grist, ArcGIS REST
 adapters: ['grist']
 ```
 
-Chaque nom correspond à `connectors/{nom}/adapter.js`. Seuls les adaptateurs fournis avec sViewer sont supportés (pas de chemin externe).
+Chaque nom correspond à `skill/{nom}/adapter.js`. Seuls les adaptateurs fournis avec sViewer sont supportés (pas de chemin externe).
 
 **Adaptateurs disponibles**
 
@@ -540,7 +540,7 @@ Chaque nom correspond à `connectors/{nom}/adapter.js`. Seuls les adaptateurs fo
 adapters: ['grist', 'arcgis']
 ```
 
-**Écrire son propre adaptateur** — créer `connectors/monadaptateur/adapter.js` :
+**Écrire son propre adaptateur** — créer `skill/monadaptateur/adapter.js` :
 
 ```javascript
 window.SViewerAdapters = window.SViewerAdapters || {};
@@ -700,13 +700,13 @@ Avec un seul `md=` : le titre de la carte est initialisé depuis la fiche. Avec 
 
 Le connecteur Grist est un widget personnalisé Grist qui affiche les données d'une table sur une carte sViewer. La synchronisation tableau → carte est supportée (sélection d'une ligne → zoom carte). La direction inverse (clic carte → sélection dans le tableau) n'est pas possible : l'API Grist `setSelectedRows` provoque une erreur `LinkConfig invalid cycle` qui casse la synchronisation tableau → carte. Clic carte = surbrillance visuelle uniquement.
 
-**Documentation complète :** [connectors/grist/README.md](connectors/grist/README.md)
+**Documentation complète :** [skill/grist/README.md](skill/grist/README.md)
 
 ### Architecture
 
 ```
 Grist document
-  └─ Widget personnalisé → connectors/grist/index.html
+  └─ Widget personnalisé → skill/grist/index.html
        ├─ embed.js        (charge OL, jQuery, Bootstrap, crée le DOM sViewer dans #sv-map)
        ├─ widget.js       (logique widget : Grist API, colonnes, styles, panneau config)
        └─ grist-plugin-api.js (CDN docs.getgrist.com — obligatoire)
@@ -980,7 +980,7 @@ sviewer/
 ├── index.html              — point d'entrée mode simple
 ├── manifest.json           — PWA manifest
 ├── sw.js                   — Service Worker
-├── connectors/             — widgets tiers (Grist, CSV…)
+├── skill/             — widgets tiers (Grist, CSV…)
 ├── deploy/                 — config infra (nginx, Docker) — non servi
 ├── local/                  — sandbox déployeur (optionnel, monté en volume Docker)
 │   ├── customConfig.js     — configuration locale (optionnel, défauts intégrés)

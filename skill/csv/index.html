@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sViewer — CSV skill</title>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; max-width: 480px; }
+        code { word-break: break-all; background: #f0f0f0; padding: 2px 4px; border-radius: 3px; }
+        pre { background: #f0f0f0; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 13px; }
+        a { color: #1a5276; }
+    </style>
+</head>
+<body>
+<h2>sViewer — CSV skill</h2>
+<p style="margin-top:1rem">This skill loads remote CSV files as map features. It runs in the background — there is no interactive interface.</p>
+<p style="margin-top:1rem"><strong>Usage:</strong> add <code>adapters: ['csv']</code> to your <code>customConfig.js</code>, then open sViewer with:</p>
+<pre>?geojson=https://your-server/your-file.csv</pre>
+<p style="margin-top:1rem">CSV files must be UTF-8, CORS-enabled, and have <code>latitude</code>/<code>longitude</code> columns (or a <code>geometry</code> GeoJSON column).</p>
+<p style="margin-top:1rem"><a href="check.html">Run checks →</a> &nbsp;·&nbsp; <a href="../">← All sViewer skills</a></p>
+</body>
+</html>

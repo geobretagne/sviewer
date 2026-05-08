@@ -307,7 +307,7 @@
             })
             .then(function() {
                 var adapterPromises = ((window.customConfig && window.customConfig.adapters) || [])
-                    .map(function(name) { return loadResource(baseUrl + 'connectors/' + name + '/adapter.js', 'js'); });
+                    .map(function(name) { return loadResource(baseUrl + 'skill/' + name + '/adapter.js', 'js'); });
                 return Promise.all([
                     Promise.all(adapterPromises),
                     loadResource(baseUrl + 'static/lib/mustache/mustache.min.js', 'js'),
