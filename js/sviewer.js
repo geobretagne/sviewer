@@ -721,18 +721,16 @@ window.SViewerApp = (function() {
      * Adjust map size on resize
      */
     function fixContentHeight() {
-        var header = $("#header"),
-            content = $("#sv-frame-map"),
-            viewHeight = $(window).height(),
-            contentHeight = viewHeight - header.outerHeight();
-
-        if ((content.outerHeight() + header.outerHeight()) !== viewHeight) {
-            contentHeight -= (content.outerHeight() - content.height());
-            content.height(contentHeight);
+        var header = document.getElementById('header');
+        var content = document.getElementById('sv-frame-map');
+        if (!header || !content) { if (window.map) { map.updateSize(); } return; }
+        var viewHeight = window.innerHeight;
+        var headerH = header.getBoundingClientRect().height;
+        var contentRect = content.getBoundingClientRect();
+        if (Math.round(contentRect.height + headerH) !== viewHeight) {
+            content.style.height = (viewHeight - headerH) + 'px';
         }
-        if (window.map) {
-            map.updateSize();
-        }
+        if (window.map) { map.updateSize(); }
     }
 
 
@@ -924,16 +922,17 @@ window.SViewerApp = (function() {
             try {
                 var results = config.geocodeAdapter(response);
                 if (results.length > 0) {
-                    var items = results.map(function(r) {
+                    var searchResults = document.getElementById('sv-search-results');
+                    var header = _htmlFragment(Mustache.render(window.SViewerTemplates['sv-search-header'], { label: tr('lbl.geocode_results') }));
+                    searchResults.insertBefore(header, searchResults.firstChild);
+                    results.slice().reverse().forEach(function(r) {
                         var coords = ol.proj.transform(r.coords, 'EPSG:4326', config.projcode);
-                        return renderSearchItem(
+                        var li = renderSearchItem(
                             { label: r.label, icon: 'bi-geo-alt-fill' },
                             { extent: [], coordinates: coords, zoom: r.zoom }
                         );
+                        searchResults.insertBefore(li, searchResults.children[1] || null);
                     });
-                    $('#sv-search-results')
-                        .prepend(items)
-                        .prepend(Mustache.render(window.SViewerTemplates['sv-search-header'], { label: tr('lbl.geocode_results') }));
                 }
             } catch(_err) {
                 document.getElementById('sv-locate-msg').textContent = tr('msg.geolocation_failed');
@@ -1516,8 +1515,8 @@ window.SViewerApp = (function() {
      * recenters map on feature click
      * @param {Jquery.Event} event
      */
-    function onSearchItemClick (event) {
-        var data = event.data;
+    function onSearchItemClick (event, data) {
+        data = data || event.data;
         marker.setPosition(data.coordinates);
         if (data.extent.length === 4 && !(data.extent[0] === data.extent[2] && data.extent[1] === data.extent[3])) {
             view.fit(data.extent);
@@ -1546,10 +1545,13 @@ window.SViewerApp = (function() {
             templateData.ariaLabel = templateData.label || '—';
         }
         templateData.idx = searchItemIdx++;
-        return $(Mustache.render(window.SViewerTemplates['sv-search-item'], templateData))
-            .find('.sv-search-item-link')
-            .on('click', clickData, onSearchItemClick)
-            .parent();
+        var frag = _htmlFragment(Mustache.render(window.SViewerTemplates['sv-search-item'], templateData));
+        var li = frag.firstElementChild;
+        var link = li.querySelector('.sv-search-item-link');
+        if (link) {
+            link.addEventListener('click', function(e) { onSearchItemClick.call(link, e, clickData); });
+        }
+        return li;
     }
 
     /**
@@ -1580,10 +1582,10 @@ window.SViewerApp = (function() {
     }
 
     function featuresToList(features, label) {
-        var $results = $("#sv-search-results");
-        $results.append(Mustache.render(window.SViewerTemplates['sv-search-header'], {
+        var results = document.getElementById('sv-search-results');
+        results.appendChild(_htmlFragment(Mustache.render(window.SViewerTemplates['sv-search-header'], {
             label: label || tr('msg.top_layer')
-        }));
+        })));
 
         features.forEach(function(feature) {
             var geom       = feature.getGeometry(),
@@ -1605,10 +1607,10 @@ window.SViewerApp = (function() {
             /* fallback ariaLabel from fields if no title found */
             var ariaLabel = titleVal || fieldItems.map(function(f) { return f.val; }).join(', ');
             var center = geom.getType() === 'Point' ? geom.getCoordinates() : ol.extent.getCenter(geom.getExtent());
-            renderSearchItem(
+            results.appendChild(renderSearchItem(
                 { label: titleVal, ariaLabel: ariaLabel, icon: 'bi-database', fields: fieldItems.length ? [{ items: fieldItems }] : [] },
                 { extent: geom.getExtent(), coordinates: center, queryGFI: true }
-            ).appendTo($results);
+            ));
         });
     }
 
@@ -1708,8 +1710,8 @@ window.SViewerApp = (function() {
 
     // panelButton kept for compatibility, now delegates to togglePanel
     function panelButton(e) {
-        var button = $(e.target).closest('button');
-        var panelName = button.data('sv-panel');
+        var button = e.target.closest('button');
+        var panelName = button && button.getAttribute('data-sv-panel');
         if (panelName) {
             togglePanel(panelName);
         }
@@ -1732,8 +1734,8 @@ window.SViewerApp = (function() {
     }
 
     // updates title on keypress
-    function onTitle(_e) {
-        setTitle($(this).val());
+    function onTitle(e) {
+        setTitle(e.target.value);
     }
 
     function adjustZoom(delta) {
@@ -1849,25 +1851,19 @@ window.SViewerApp = (function() {
     }
 
     //  info popup
-    function messagePopup(msg){
-        $("<div class='alert alert-info' role='alert'>")
-            .append($('<h3>').text(msg))
-        .css({
-            display: "block",
-            position: "fixed",
-            padding: "7px",
-            "text-align": "center",
-            "background-color": "#ffffff",
-            width: "270px",
-            "border-radius": "4px",
-            "box-shadow": "0 2px 8px rgba(0,0,0,0.2)",
-            left: ($(window).width() - 284)/2,
-            top: $(window).height()/2,
-            "z-index": 9000 })
-            .appendTo( $('body') ).delay( 1500 )
-            .fadeOut( 1000, function(){
-            $(this).remove();
-        });
+    function messagePopup(msg) {
+        var div = document.createElement('div');
+        div.className = 'alert alert-info';
+        div.setAttribute('role', 'alert');
+        div.style.cssText = 'display:block;position:fixed;padding:7px;text-align:center;background-color:#ffffff;width:270px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.2);z-index:9000;transition:opacity 1s;';
+        div.style.left = ((window.innerWidth - 284) / 2) + 'px';
+        div.style.top = (window.innerHeight / 2) + 'px';
+        var h3 = document.createElement('h3');
+        h3.textContent = msg;
+        div.appendChild(h3);
+        document.body.appendChild(div);
+        setTimeout(function() { div.style.opacity = '0'; }, 1500);
+        setTimeout(function() { div.parentNode && div.parentNode.removeChild(div); }, 2500);
     }
 
     // ----- configuration --------------------------------------------------------------------------------
@@ -2221,14 +2217,14 @@ window.SViewerApp = (function() {
         });
         map.on('moveend', setPermalink);
         map.on('moveend', function() { _emit('sv:viewChange', { center: view.getCenter(), zoom: view.getZoom() }); });
-        $('#sv-marker').on('click', clearQuery);
+        document.getElementById('sv-marker').addEventListener('click', clearQuery);
 
 
         // map buttons
-        $('#sv-btn-zoom-in').on('click', function() { adjustZoom(+1); });
-        $('#sv-btn-zoom-out').on('click', function() { adjustZoom(-1); });
-        $('#sv-btn-home').on('click', zoomInit);
-        $('#sv-btn-background').on('click', switchBackground);
+        document.getElementById('sv-btn-zoom-in').addEventListener('click', function() { adjustZoom(+1); });
+        document.getElementById('sv-btn-zoom-out').addEventListener('click', function() { adjustZoom(-1); });
+        document.getElementById('sv-btn-home').addEventListener('click', zoomInit);
+        document.getElementById('sv-btn-background').addEventListener('click', switchBackground);
 
         // fullscreen toggle
         var fsContainer = document.querySelector('.sv-scope') || document.documentElement;
@@ -2239,7 +2235,7 @@ window.SViewerApp = (function() {
             _fsBtn.classList.toggle('active', active);
             _fsBtn.querySelector('i').className = active ? 'bi bi-fullscreen-exit' : 'bi bi-fullscreen';
         }
-        $('#sv-btn-fullscreen').on('click', function() {
+        document.getElementById('sv-btn-fullscreen').addEventListener('click', function() {
             if (document.fullscreenElement || document.webkitFullscreenElement) {
                 (document.exitFullscreen || document.webkitExitFullscreen).call(document);
             } else {
@@ -2275,50 +2271,50 @@ window.SViewerApp = (function() {
             _slider.setAttribute('aria-valuenow', Math.round(val * 100));
             setPermalink();
         }
-        $('#sv-opacity-slider').on('input', function() {
-            applyLayerOpacity(parseInt($(this).val(), 10) / 100);
+        document.getElementById('sv-opacity-slider').addEventListener('input', function() {
+            applyLayerOpacity(parseInt(this.value, 10) / 100);
         });
         applyLayerOpacity(state.opacity);
 
         // geolocation toggle
-        $('#sv-btn-locate').on('click', toggleTracking);
+        document.getElementById('sv-btn-locate').addEventListener('click', toggleTracking);
         if (state.position) { startTracking(); }
 
         // prevent form submit (Enter key) from reloading the page
-        $('#sv-search-form').on('submit', function(e) {
+        document.getElementById('sv-search-form').addEventListener('submit', function(e) {
             e.preventDefault();
             searchPlace();
         });
 
         // search with autocomplete - trigger on keyup after 3 characters, debounced
         var searchDebounceTimer = null;
-        $('#sv-search-input').on('keyup focus', function(e) {
-            var query = $(this).val();
+        var _searchInput = document.getElementById('sv-search-input');
+        function onSearchKeyup(e) {
+            var query = _searchInput.value;
             // keyboard navigation within results
             if (e.type === 'keyup') {
                 var key = e.key;
-                var $items = $('#sv-search-results .sv-search-item');
-                var $active = $('#sv-search-results .sv-search-item.sv-search-active');
-                var idx = $items.index($active);
+                var items = Array.prototype.slice.call(document.querySelectorAll('#sv-search-results .sv-search-item'));
+                var active = document.querySelector('#sv-search-results .sv-search-item.sv-search-active');
+                var idx = active ? items.indexOf(active) : -1;
                 if (key === 'ArrowDown') {
                     e.preventDefault();
-                    var $next = idx < $items.length - 1 ? $items.eq(idx + 1) : $items.eq(0);
-                    $active.removeClass('sv-search-active').attr('aria-selected', 'false');
-                    $next.addClass('sv-search-active').attr('aria-selected', 'true');
-                    $('#sv-search-input').attr('aria-activedescendant', $next.attr('id'));
+                    var next = idx < items.length - 1 ? items[idx + 1] : items[0];
+                    if (active) { active.classList.remove('sv-search-active'); active.setAttribute('aria-selected', 'false'); }
+                    if (next) { next.classList.add('sv-search-active'); next.setAttribute('aria-selected', 'true'); _searchInput.setAttribute('aria-activedescendant', next.id); }
                     return;
                 }
                 if (key === 'ArrowUp') {
                     e.preventDefault();
-                    var $prev = idx > 0 ? $items.eq(idx - 1) : $items.last();
-                    $active.removeClass('sv-search-active').attr('aria-selected', 'false');
-                    $prev.addClass('sv-search-active').attr('aria-selected', 'true');
-                    $('#sv-search-input').attr('aria-activedescendant', $prev.attr('id'));
+                    var prev = idx > 0 ? items[idx - 1] : items[items.length - 1];
+                    if (active) { active.classList.remove('sv-search-active'); active.setAttribute('aria-selected', 'false'); }
+                    if (prev) { prev.classList.add('sv-search-active'); prev.setAttribute('aria-selected', 'true'); _searchInput.setAttribute('aria-activedescendant', prev.id); }
                     return;
                 }
-                if (key === 'Enter' && $active.length) {
+                if (key === 'Enter' && active) {
                     e.preventDefault();
-                    $active.find('.sv-search-item-link').trigger('click');
+                    var link = active.querySelector('.sv-search-item-link');
+                    if (link) { link.click(); }
                     return;
                 }
                 if (key === 'Escape') {
@@ -2334,11 +2330,16 @@ window.SViewerApp = (function() {
                 clearSearchResults();
                 document.getElementById('sv-locate-msg').textContent = tr('msg.search_hint');
             }
-        });
+        }
+        _searchInput.addEventListener('keyup', onSearchKeyup);
+        _searchInput.addEventListener('focus', onSearchKeyup);
 
         // set title dialog (both panel and modal)
-        $('#sv-share-title').on('keyup', onTitle);
-        $('#sv-share-title').on('blur', setPermalink);
+        var _shareTitle = document.getElementById('sv-share-title');
+        if (_shareTitle) {
+            _shareTitle.addEventListener('keyup', onTitle);
+            _shareTitle.addEventListener('blur', setPermalink);
+        }
 
         // theme switch
         var _themeSwitch = document.getElementById('sv-theme-switch');
@@ -2352,7 +2353,8 @@ window.SViewerApp = (function() {
         });
 
         // WebComponent button (can appear in side panel or modal)
-        $(document).on('click', '.sv-embed-btn', function() {
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.sv-embed-btn')) { return; }
             document.getElementById('sv-embed-iframe-code').value = generateIframeCode();
             document.getElementById('sv-embed-js-code').value = generateEmbedCode();
             closePanel();
@@ -2360,7 +2362,7 @@ window.SViewerApp = (function() {
         });
 
         // Snapshot button — export map canvas as PNG download
-        $(document).on('click', '#sv-btn-snapshot', function() {
+        document.addEventListener('click', function(e) { if (e.target.closest('#sv-btn-snapshot')) {
             closePanel();
             map.once('rendercomplete', function() {
                 var canvas = map.getViewport().querySelector('canvas');
@@ -2380,10 +2382,10 @@ window.SViewerApp = (function() {
                 }
             });
             map.renderSync();
-        });
+        }});
 
         // Permalink button — close share panel and show link in modal
-        $(document).on('click', '#sv-btn-permalink', function() {
+        document.addEventListener('click', function(e) { if (e.target.closest('#sv-btn-permalink')) {
             var _permalinkEl = document.getElementById('sv-permalink-url');
             var href = _permalinkEl.href;
             _permalinkEl.href = href;
@@ -2436,15 +2438,19 @@ window.SViewerApp = (function() {
                 qrcodeDisplayEl.innerHTML = '';
                 qrcodeDisplayEl.appendChild(div);
             });
-        });
+        }});
 
         function copyToClipboard(text, btn, fallback) {
-            var orig = btn.html();
+            var orig = btn.innerHTML;
             var onCopied = function() {
-                btn.html('<i class="bi bi-check" aria-hidden="true"></i> ' + tr('btn.copied'));
-                var $live = $('<span class="visually-hidden" aria-live="polite" aria-atomic="true">').text(tr('btn.copied'));
-                btn.after($live);
-                setTimeout(function() { btn.html(orig); $live.remove(); }, 2000);
+                btn.innerHTML = '<i class="bi bi-check" aria-hidden="true"></i> ' + tr('btn.copied');
+                var live = document.createElement('span');
+                live.className = 'visually-hidden';
+                live.setAttribute('aria-live', 'polite');
+                live.setAttribute('aria-atomic', 'true');
+                live.textContent = tr('btn.copied');
+                btn.parentNode && btn.parentNode.insertBefore(live, btn.nextSibling);
+                setTimeout(function() { btn.innerHTML = orig; live.parentNode && live.parentNode.removeChild(live); }, 2000);
             };
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(onCopied).catch(function() {
@@ -2455,35 +2461,41 @@ window.SViewerApp = (function() {
             }
         }
 
-        $(document).on('click', '#sv-permalink-copy-btn', function() {
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('#sv-permalink-copy-btn');
+            if (!btn) { return; }
             var url = document.getElementById('sv-permalink-url').href;
-            copyToClipboard(url, $(this), function() { window.prompt('', url); });
+            copyToClipboard(url, btn, function() { window.prompt('', url); });
         });
 
-        $('#sv-embed-copy-js').on('click', function() {
+        var _embedCopyJs = document.getElementById('sv-embed-copy-js');
+        if (_embedCopyJs) { _embedCopyJs.addEventListener('click', function() {
             var textarea = document.getElementById('sv-embed-js-code');
-            copyToClipboard(textarea.value, $(this), function() {
+            copyToClipboard(textarea.value, this, function() {
                 textarea.select(); document.execCommand('copy');
             });
-        });
+        }); }
 
-        $('#sv-embed-copy-iframe').on('click', function() {
+        var _embedCopyIframe = document.getElementById('sv-embed-copy-iframe');
+        if (_embedCopyIframe) { _embedCopyIframe.addEventListener('click', function() {
             var textarea = document.getElementById('sv-embed-iframe-code');
-            copyToClipboard(textarea.value, $(this), function() {
+            copyToClipboard(textarea.value, this, function() {
                 textarea.select(); document.execCommand('copy');
             });
-        });
+        }); }
 
         // dynamic resize
-        $(window).on('orientationchange resize pageshow updatelayout', panelLayout);
+        window.addEventListener('orientationchange', panelLayout);
+        window.addEventListener('resize', panelLayout);
+        window.addEventListener('pageshow', panelLayout);
 
         // Side panel toggles
-        $('#sv-panel-controls button').on('click', panelButton);
-        $('.sv-sidepanel-close').on('click', closePanel);
+        document.querySelectorAll('#sv-panel-controls button').forEach(function(btn) { btn.addEventListener('click', panelButton); });
+        document.querySelectorAll('.sv-sidepanel-close').forEach(function(btn) { btn.addEventListener('click', closePanel); });
 
         // Close panel when clicking on backdrop (small screens)
-        $('#sv-frame-map').on('click', function(e) {
-            if ($(this).hasClass('sv-panel-open') && window.innerWidth <= 600) {
+        document.getElementById('sv-frame-map').addEventListener('click', function(e) {
+            if (this.classList.contains('sv-panel-open') && window.innerWidth <= 600) {
                 // On small screens, close panel if clicking backdrop area (left 15%)
                 if (e.target === this && e.clientX < window.innerWidth * 0.15) {
                     closePanel();
@@ -2519,7 +2531,9 @@ window.SViewerApp = (function() {
         }
 
         // resize map
-        $(window).on("orientationchange resize pageshow", fixContentHeight);
+        window.addEventListener('orientationchange', fixContentHeight);
+        window.addEventListener('resize', fixContentHeight);
+        window.addEventListener('pageshow', fixContentHeight);
         fixContentHeight();
 
         if (state.gfiok) {
@@ -2702,8 +2716,10 @@ window.SViewerApp = (function() {
 })();
 
 // Auto-initialize on document ready
-$(document).ready(function() {
-    if (window.SViewerApp && window.SViewerApp.init) {
-        window.SViewerApp.init();
-    }
-});
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.SViewerApp && window.SViewerApp.init) { window.SViewerApp.init(); }
+    });
+} else {
+    if (window.SViewerApp && window.SViewerApp.init) { window.SViewerApp.init(); }
+}
