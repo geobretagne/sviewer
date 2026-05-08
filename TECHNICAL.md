@@ -918,7 +918,7 @@ Bouton **Image** dans le panneau **Configuration** → télécharge la vue coura
 Toutes les chaînes traduites sont centralisées dans `static/js/i18n.js` :
 
 ```javascript
-$.extend(hardConfig, {
+Object.assign(window.SViewerHardConfig, {
     i18n: {
         fr: {
             'Query': 'Interroger',
@@ -940,7 +940,7 @@ $.extend(hardConfig, {
 
 **Étape 1 :** Ajouter la clé dans `static/js/i18n.js`
 ```javascript
-$.extend(hardConfig, {
+Object.assign(window.SViewerHardConfig, {
     i18n: {
         fr: { 'ma clé': 'Texte français' },
         en: { 'ma clé': 'English text' },
@@ -1029,9 +1029,10 @@ sviewer/
 - **Bootstrap 5** : composants UI, responsive
 - **OpenLayers 10** : rendu de carte, interactions OGC
 - **proj4.js** : projections cartographiques
+- **Mustache** : rendu de templates HTML
 - **qrcode.js** : génération codes QR (chargement lazy)
 
-Toutes les dépendances sont **self-hosted** (pas de CDN).
+Toutes les dépendances sont **self-hosted** (pas de CDN). Aucune dépendance jQuery.
 
 ### Flux de chargement (Mode WebComponent)
 

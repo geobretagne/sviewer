@@ -1,4 +1,4 @@
-/*globals $:false, ol:false, proj4:false*/
+/*globals ol:false, proj4:false*/
 
 // Isolated SViewer instance - encapsulates all state and DOM interactions
 window.SViewerApp = (function() {
@@ -231,7 +231,6 @@ window.SViewerApp = (function() {
         };
         this.wmslayer = null;
 
-        // to allow usage of this. in jquery statements
         var self = this;
 
         /**
@@ -435,7 +434,6 @@ window.SViewerApp = (function() {
          */
         this.construct = function(options) {
             // layers from query string parameter
-            // In jQuery 4, $.each may pass String object wrappers instead of primitives
             if (typeof options === "string" || (typeof options === "object" && options && options.constructor === String)) {
                 parseLayerParam(String(options));
             }
@@ -1646,9 +1644,6 @@ window.SViewerApp = (function() {
         return false;
     }
 
-    // panel size and placement to fit small screens
-    function panelLayout () { /* resize hook — reserved for future responsive panel sizing */ }
-
     function resetPanel() {
         var sidepanel = document.getElementById('sv-sidepanel');
         sidepanel.querySelectorAll('.sv-panel-section').forEach(function(s) { s.style.display = 'none'; });
@@ -2102,7 +2097,7 @@ window.SViewerApp = (function() {
             ],
             // MouseWheelZoom defaults to focusWithTabindex in OL6+: zoom only works
             // when the map viewport has keyboard focus. Override with always so the
-            // wheel works even after clicking jQuery Mobile panels or buttons.
+            // wheel works even after clicking side panels or buttons.
             interactions: ol.interaction.defaults.defaults({mouseWheelZoom: false}).extend([
                 new ol.interaction.MouseWheelZoom({
                     condition: ol.events.condition.always
@@ -2462,11 +2457,6 @@ window.SViewerApp = (function() {
                 textarea.select(); document.execCommand('copy');
             });
         }); }
-
-        // dynamic resize
-        window.addEventListener('orientationchange', panelLayout);
-        window.addEventListener('resize', panelLayout);
-        window.addEventListener('pageshow', panelLayout);
 
         // Side panel toggles — delegated: buttons are added dynamically after doGUI runs
         document.getElementById('sv-panel-controls').addEventListener('click', panelButton);

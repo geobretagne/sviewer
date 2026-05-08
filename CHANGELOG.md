@@ -6,6 +6,11 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **jQuery supprimé** : `embed.js`, `sviewer.js` et `i18n.js` n'ont plus aucune dépendance jQuery. Bootstrap 5 est utilisé en mode natif. Le répertoire `static/lib/jquery/` est supprimé.
+- **Lien d'accessibilité « Aller à la carte »** : déplacé avant le spinner — premier élément focusable dans le DOM (Lighthouse skip-link). La cible `#sv-ol-map` reçoit `tabindex="-1"` pour être focusable programmatiquement.
+
 ## [0.9.1] - 2026-05-07
 
 ### Added
@@ -281,14 +286,14 @@ sed -i 's|BACKEND_URL|http://your-backend:8080|g' deploy/nginx/nginx-server-prox
 - `customConfig.DIST.js` updated to demonstrate `backgroundPresets` (3 presets: photo+labels, photo, map) and `layersOverlay` pool; `layersBackground` marked as legacy
 
 ### Fixed
-- XSS in GetFeatureInfo panel — raw WMS HTML response now parsed with `$.parseHTML(..., false)` (script execution disabled)
+- XSS in GetFeatureInfo panel — raw WMS HTML response now parsed via `DOMParser` with script execution disabled
 - XML injection in WFS filter — user search input now escaped via `xmlEscape()` before interpolation into OGC filter
 - XSS in QR code error path — replaced `innerHTML` with DOM node construction (`createElement` + `textContent`)
 - Skip link "Aller à la carte" rendered visibly over the map — CSS selector mismatch (`sv-skip-to-content` vs `skip-to-content`) corrected
 
 ### Performance
 - `embed.js` now minified (`embed.min.js`) — loaded by `index.html` in production (−24% parse time on critical path)
-- jQuery and proj4 loaded in parallel via `Promise.all` before OpenLayers — saves ~100 ms waterfall on first load
+- proj4 and OpenLayers loaded in parallel via `Promise.all` — saves ~100 ms waterfall on first load
 - Deleted `lib/bootstrap-icons/fonts/bootstrap-icons.woff2` (130 KB, unreferenced — subset at `build/` is used)
 
 ### Removed

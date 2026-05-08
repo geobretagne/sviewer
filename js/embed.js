@@ -38,16 +38,16 @@
     var debug = /[?&]debug=1/.test(window.location.search);
 
     var SV_SHELL_HTML = `
+        <a href="#sv-ol-map" class="sv-skip-to-content i18n" data-i18n="btn.skip_to_map">Skip to map</a>
+
         <div id="sv-spinner" class="sv-spinner">
             <div class="spinner-border text-light" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
         </div>
 
-        <a href="#sv-ol-map" class="sv-skip-to-content i18n" data-i18n="btn.skip_to_map">Skip to map</a>
-
         <div id="sv-frame-map" class="sv-framemap">
-            <div id="sv-ol-map" class="sv-map" tabindex="0" role="region" aria-label="Interactive map">
+            <div id="sv-ol-map" class="sv-map" tabindex="-1" role="region" aria-label="Interactive map">
                 <div id="sv-marker"></div>
                 <div id="sv-loading-bar" class="sv-loading-bar" aria-hidden="true" style="display:none;"></div>
             </div>
