@@ -6,11 +6,6 @@ OpenLayers 10
 https://openlayers.org/ under 2-Clause BSD
 Full-featured library for rendering geospatial data and creating interactive maps.
 
-jQuery 4.x
-==========
-https://jquery.org/license/ under MIT License
-DOM manipulation and AJAX requests.
-
 Bootstrap 5
 ===========
 https://getbootstrap.com/docs/5.0/getting-started/license/ under MIT License

@@ -11,7 +11,9 @@ sViewer est fait pour les gens qui veulent une carte sans passer par un logiciel
 
 Le cas typique : une ou deux données parmi les nombreuses données déjà publiées par les géomaticiens, à partager avec des collègues ou à afficher sur son site.
 
-sViewer n'est **pas** un logiciel SIG : pas de dessin, pas d'analyse spatiale, pas de gestion de "couches". Si vous cherchez un outil pour publier beaucoup de données, regardez [mviewer](https://mviewer.github.io/fr/), [mapstore](https://docs.georchestra.geo-solutions.it/fr/latest/mapstore/index.html) ou encore [georchestra](https://georchestra.org). Ceci dit, sViewer complètera parfaitement ces environnements ! Pour de l'analyse complexe, regardez [QGIS](https://qgis.org/). Les données géographiques bénéficient d'un large écosystème et tout est disponible en logiciel libre : faites confiance à leurs communautés.
+sViewer n'est **pas** un logiciel SIG : pas de dessin, pas d'analyse spatiale, pas de gestion de "couches". Si vous cherchez un outil pour publier beaucoup de données, regardez [mviewer](https://mviewer.github.io/fr/), [mapstore](https://docs.georchestra.geo-solutions.it/fr/latest/mapstore/index.html) ou encore [georchestra](https://georchestra.org). Ceci dit, sViewer complètera parfaitement ces environnements ! Pour de l'analyse complexe, regardez [QGIS](https://qgis.org/).
+
+Les données géographiques bénéficient d'un large écosystème et tout est disponible en logiciel libre : faites confiance à leurs communautés.
 
 ---
 
@@ -26,13 +28,14 @@ Que permet sViewer ?
 * **Exporter en image** — PNG depuis le panneau de partage
 * **Interroger les données** — cliquez sur la carte pour afficher la fiche d'une zone ou d'un objet
 * **Traçabilité des données** — producteur, licence, date de mise à jour affichés automatiquement depuis les métadonnées
-* **Superposer des données JSON ou GeoJSON** — chargez un fichier GeoJSON ou API JSON distant avec `?geojson=URL` ; connecteur [Grist](https://www.getgrist.com) intégré (GitHub, data.gouv.fr, API REST…)
+* **Superposer des données JSON ou GeoJSON** — chargez un fichier GeoJSON ou API JSON distant avec `?geojson=URL`
 * **Rechercher une adresse** — barre de recherche intégrée, géolocalisation ; service de géocodage configurable (France ou mondial)
 * **Thème clair et sombre** — manuel ou automatique selon le système
 * **Tous les appareils** — téléphone, tablette, ordinateur, même URL
 * **Intégrer dans n'importe quelle page** — une ligne `<iframe>` suffit
 * **API JavaScript** — intégrez et contrôlez la carte
 * **Logiciel libre, gratuit, auto-hébergeable** — licence GPL, aucun compte, aucune inscription, aucune dépendance externe
+* **Skills** qui étendent les possibilités : par exemple édition de géométries dans [Grist](https://www.getgrist.com)
 
 
 ![sViewer sur mobile — panneau de partage ouvert](examples/screenshot-mobile.png)
@@ -51,7 +54,7 @@ Vos données sont déjà publiées. Copiez l'URL de partage depuis le panneau de
 https://my-sviewer.example.org/sviewer/?layers=mon_espace:ma_donnee
 ```
 
-Remplacez `mon_espace:ma_donnee` par le nom de votre couche WMS.
+Remplacez `mon_espace:ma_donnee` par le nom de votre donnée WMS.
 
 ### Vous avez une fiche de métadonnées [GeoNetwork](https://geonetwork-opensource.org)
 
@@ -65,7 +68,7 @@ sViewer récupère automatiquement l'URL WMS et les métadonnées (titre, résum
 
 ### Vous avez un tableur ([Grist](https://www.getgrist.com), CSV…) ou un shapefile
 
-sViewer affiche des flux WMS — pas les fichiers directement. Deux alternatives :
+sViewer affiche des données via WMS — pas les fichiers directement. Deux alternatives :
 
 - **Grist** — si vos données sont dans un document Grist avec une colonne géométrie, utilisez le [widget Grist intégré](skill/grist/) : carte interactive synchronisée avec le tableau, édition de géométries depuis la carte, lien de partage autonome. → [Documentation complète du widget Grist](skill/grist/README.md)
 - **Autres formats** — parlez à votre service SIG ou utilisez un outil comme [uMap](https://umap.openstreetmap.fr/) qui accepte les imports directs.
@@ -124,12 +127,12 @@ Démarrage rapide (administrateur)
 # 1. Déposez le dossier sviewer/ sur votre serveur web (Apache, nginx…)
 # 2. Appliquez le snippet nginx fourni — OBLIGATOIRE (voir ci-dessous)
 # 3. Copiez et éditez la configuration
-cp etc/customConfig.DIST.js etc/customConfig.js
+cp local/customConfig.DIST.js local/customConfig.js
 # 4. Ouvrez dans un navigateur
 https://votre-serveur/sviewer/
 ```
 
-> **Important — configuration nginx obligatoire.** Le dossier contient des outils de build et des fichiers de configuration non destinés au public. Sans le snippet `etc/nginx-server.conf`, ces fichiers sont accessibles à tout visiteur. Ne jamais servir le dossier à nu.
+> **Important — configuration nginx obligatoire.** Le dossier contient des outils de build et des fichiers de configuration non destinés au public. Sans le snippet `deploy/nginx/nginx-server.conf`, ces fichiers sont accessibles à tout visiteur. Ne jamais servir le dossier à nu.
 
 Paramètres configurables : fonds de carte, emprise initiale, URL [geOrchestra](https://georchestra.org), langue, géocodage.
 
@@ -139,7 +142,7 @@ Paramètres configurables : fonds de carte, emprise initiale, URL [geOrchestra](
 Notes techniques
 -----------------
 
-* **Technologie** : OpenLayers 10, jQuery, Bootstrap 5
+* **Technologie** : OpenLayers 10, Bootstrap 5
 * **Projection** : EPSG:3857 (Web Mercator) — les paramètres `x`/`y` acceptent aussi la longitude/latitude (EPSG:4326), détection automatique
 * **Langues** : français, anglais, espagnol, allemand
 * **Aucune dépendance externe** : toutes les librairies sont auto-hébergées (pas de CDN)
@@ -154,5 +157,5 @@ Remerciements
 * Les contributeurs, utilisateurs et membres de la communauté [geOrchestra](https://georchestra.org)
 * Les communautés du [logiciel libre](https://fr.wikipedia.org/wiki/Logiciel_libre) et de la [donnée ouverte](https://fr.wikipedia.org/wiki/Donn%C3%A9es_ouvertes)
 * Les projets copains : [geOrchestra](https://github.com/georchestra/georchestra), [mviewer](https://github.com/mviewer/mviewer), [geonetwork-ui](https://github.com/geonetwork/geonetwork-ui)
-* Les librairies libres : [OpenLayers](https://github.com/openlayers/openlayers), [Bootstrap](https://github.com/twbs/bootstrap), [jQuery](https://github.com/jquery/jquery)
+* Les librairies libres : [OpenLayers](https://github.com/openlayers/openlayers), [Bootstrap](https://github.com/twbs/bootstrap), [Mustache](https://github.com/janl/mustache.js)
 * [IGN Géoplateforme](https://geoplateforme.ign.fr) et [Nominatim / OpenStreetMap](https://nominatim.openstreetmap.org) — services de géocodage

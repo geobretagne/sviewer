@@ -408,9 +408,79 @@ customConfig = {
         strokeWidth: 4,
         selectionColor: '#ee7733'
     },
+    layerOpacity: 1,                  // opacité initiale des données WMS (0–1)
+    searchPlaceholder: 'adresse, lieu-dit, commune...',
+    gpsTrackingInterval: 5,           // secondes entre deux mises à jour GPS
+    gpsTrackingTimeout: 300,          // arrêt auto GPS après N secondes (0 = jamais)
     adapters: ['grist'],
-    layersBackground: [ /* ... */ ]
+    skills: ['my-skill'],             // → voir skill/SKILL_API.md
+    layersBackground: [ /* ... */ ],
+    backgroundPresets: [ /* ... */ ]  // → voir section Presets fonds de carte
 };
+```
+
+### `layerOpacity`
+
+Opacité initiale de toutes les données WMS (hors fonds de carte). Plage : `0`–`1`. Défaut : `1`. Équivalent persistant du paramètre URL `?opacity=`.
+
+```javascript
+layerOpacity: 0.8
+```
+
+### `searchPlaceholder`
+
+Texte affiché dans la barre de recherche quand elle est vide.
+
+```javascript
+searchPlaceholder: 'adresse, lieu-dit, commune...'
+```
+
+### `geocodeAdapter`
+
+Fonction de normalisation des réponses du service de géocodage. Obligatoire si `openLSGeocodeUrl` pointe vers un service non compatible IGN Géoplateforme (ex: Nominatim). Reçoit la réponse JSON parsée, retourne un tableau d'objets `{ label, coords, score, zoom }`.
+
+```javascript
+// IGN Géoplateforme (défaut — inutile de le déclarer)
+geocodeAdapter: function(response) {
+    return (response.features || []).map(function(f) {
+        var zoomByType = { municipality: 13, street: 17, housenumber: 18 };
+        return {
+            label:  f.properties.label,
+            coords: f.geometry.coordinates,  // [lon, lat]
+            score:  f.properties.score || 0,
+            zoom:   zoomByType[f.properties.type] || 16
+        };
+    });
+},
+
+// Nominatim (OpenStreetMap)
+openLSGeocodeUrl: 'https://nominatim.openstreetmap.org/search',
+geocodeParams: { format: 'json' },
+geocodeAdapter: function(response) {
+    return (response || []).map(function(r) {
+        var zoomByType = { city: 12, town: 13, village: 14, road: 16, house: 18 };
+        return {
+            label:  r.display_name,
+            coords: [parseFloat(r.lon), parseFloat(r.lat)],
+            score:  0.5,
+            zoom:   zoomByType[r.type] || 14
+        };
+    });
+}
+```
+
+### `gpsTrackingInterval` / `gpsTrackingTimeout`
+
+Contrôle le suivi GPS (`?position=1`).
+
+| Clé | Défaut | Description |
+|-----|--------|-------------|
+| `gpsTrackingInterval` | `5` | Secondes entre deux mises à jour de position |
+| `gpsTrackingTimeout` | `0` | Arrêt automatique après N secondes (`0` = jamais) |
+
+```javascript
+gpsTrackingInterval: 5,
+gpsTrackingTimeout: 300   // arrêt après 5 minutes
 ```
 
 ### Étendues (Extents)
@@ -482,6 +552,28 @@ layersBackground: [
 - WMTS Géoplateforme : utiliser un IIFE (`(function(){ ... })()`) pour éviter les variables globales
 - Services TMS geopf (`data.geopf.fr/tms`) : Y-axis = XYZ standard (`{y}`), malgré le profil TMS déclaré
 - Services TMS MapProxy : Y-axis = TMS inversé (`{-y}`), `maxResolution` requis car la grille démarre à zoom 0 = 78271 m/px (décalage d'un niveau vs grille OL standard)
+
+### Presets fonds de carte (`backgroundPresets`)
+
+`backgroundPresets` remplace `layersBackground` seul quand on veut combiner fond de carte et données superposées en un seul clic. Chaque preset pilote atomiquement `layersBackground[lb]` et `layersOverlay[lo]`.
+
+```javascript
+backgroundPresets: [
+    { lb: 0, lo: -1, title: 'Photo aérienne' },
+    { lb: 0, lo: 0,  title: 'Photo aérienne + noms de lieux' },
+    { lb: 1, lo: -1, title: 'OpenStreetMap' }
+]
+```
+
+| Clé | Type | Description |
+|-----|------|-------------|
+| `lb` | `number` | Index dans `layersBackground[]` |
+| `lo` | `number` | Index dans `layersOverlay[]` — `-1` = aucune donnée superposée |
+| `title` | `string` | Libellé affiché dans le sélecteur de fond |
+
+**Comportement :** si `backgroundPresets` est défini et non vide, il prend la main sur `layersBackground` seul. Le paramètre `?lb=` pointe alors sur l'index du preset, pas sur l'index du fond.
+
+`layersBackground` seul (mode legacy) reste supporté mais déconseillé pour les nouvelles configs.
 
 ### Service de géocodage
 
