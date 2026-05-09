@@ -683,6 +683,26 @@ Chemins bloqués par défaut : `node_modules/`, `scripts/`, `build/ol-custom-ent
 
 Si vous utilisez Apache, reproduisez la même logique avec `Require all denied` sur les répertoires sensibles et `Require all granted` uniquement sur les chemins publics.
 
+### Mise à jour du hash CSP après modification de `index.html`
+
+Le snippet nginx inclut un hash `sha256-…` dans la `Content-Security-Policy` pour autoriser le script inline de `index.html`. Si ce script est modifié, le hash doit être recalculé.
+
+Chrome hash le contenu exact entre `<script>` (inclus, sans le tag) et `</script>` (exclu), en bytes bruts UTF-8. Formule :
+
+```bash
+python3 -c "
+import hashlib, base64
+with open('index.html', 'rb') as f:
+    raw = f.read()
+body = raw.index(b'<body>')
+s = raw.index(b'<script>', body) + 8   # +8 = len('<script>'), le \\n initial est inclus
+e = raw.index(b'</script>', s)
+print('sha256-' + base64.b64encode(hashlib.sha256(raw[s:e]).digest()).decode())
+"
+```
+
+Remplacer ensuite la valeur `sha256-…` dans `deploy/nginx/nginx-server.conf` et `deploy/nginx/nginx-server-proxy.conf`.
+
 ---
 
 ## Services OGC et Données
