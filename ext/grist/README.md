@@ -10,7 +10,7 @@ Affichez vos données Grist sur une carte, sélectionnez une ligne sur le tablea
 2. Cliquez sur **Ajouter un widget** → **Widget personnalisé**.
 3. Dans le champ **URL du widget**, saisissez :
    ```
-   https://votre-serveur/sviewer/skill/grist/
+   https://votre-serveur/sviewer/ext/grist/
    ```
 4. Dans **Accès**, choisissez **Lire la table** (lecture seule) ou **Complet** (requis pour l'édition de géométrie).
 5. Dans **Données**, sélectionnez la table contenant vos données.

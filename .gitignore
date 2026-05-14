@@ -15,5 +15,5 @@ CLAUDE.md
 CLAUDE.original.md
 connectors/MISSION.md
 connectors/*/MISSION.md
-skill/MISSION.md
-skill/*/MISSION.md
+ext/MISSION.md
+ext/*/MISSION.md

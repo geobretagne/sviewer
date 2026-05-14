@@ -52,7 +52,7 @@
                 <div id="sv-loading-bar" class="sv-loading-bar" aria-hidden="true" style="display:none;"></div>
             </div>
 
-            <div id="sv-skill-toolbar" class="sv-map-controls" role="group" aria-label="Skill controls"></div>
+            <div id="sv-ext-toolbar" class="sv-map-controls" role="group" aria-label="Extension controls"></div>
 
             <div id="sv-map-controls" class="sv-map-controls" role="group" aria-label="Map controls">
                 <div class="sv-map-btn-group" role="group" aria-label="Navigation">
@@ -308,7 +308,7 @@
             })
             .then(function() {
                 var adapterPromises = ((window.customConfig && window.customConfig.adapters) || [])
-                    .map(function(name) { return loadResource(baseUrl + 'skill/' + name + '/adapter.js', 'js'); });
+                    .map(function(name) { return loadResource(baseUrl + 'ext/' + name + '/adapter.js', 'js'); });
                 return Promise.all([
                     Promise.all(adapterPromises),
                     loadResource(baseUrl + 'static/lib/mustache/mustache.min.js', 'js'),
@@ -439,11 +439,11 @@
                             var adapterStr = adapterNames.length ? ' ' + adapterNames.join(', ') : '';
                             versionEl.innerHTML = '<a href="https://github.com/geobretagne/sviewer/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">sViewer ' + SVIEWER_VERSION + '</a> <span style="font-family:monospace">' + SVIEWER_COMMIT + '</span>' + adapterStr;
                         }
-                        // Load skills after map ready — each skill wraps init in SViewer.onReady()
-                        var skillNames = (window.customConfig && window.customConfig.skills) || [];
-                        skillNames.forEach(function(name) {
-                            loadResource(baseUrl + 'skill/' + name + '/skill.js', 'js')
-                                .catch(function(e) { console.warn('SViewer: skill ' + name + ' failed to load', e); });
+                        // Load extensions after map ready — each extension wraps init in SViewer.onReady()
+                        var extNames = (window.customConfig && window.customConfig.extensions) || [];
+                        extNames.forEach(function(name) {
+                            loadResource(baseUrl + 'ext/' + name + '/extension.js', 'js')
+                                .catch(function(e) { console.warn('SViewer: extension ' + name + ' failed to load', e); });
                         });
                         return window.SViewerApp;
                     } else {

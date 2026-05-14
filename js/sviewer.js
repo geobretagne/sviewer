@@ -2172,13 +2172,13 @@ window.SViewerApp = (function() {
 
         // map events
         map.on('singleclick', function(e) {
-            // Dispatch to skill click handlers first (all layers, including skill layers).
+            // Dispatch to extension click handlers first (all layers, including extension layers).
             // A handler returning true suppresses sViewer GFI for that click.
             var suppressed = false;
             if (_clickHandlers.length) {
                 var payload = { coordinate: e.coordinate, pixel: e.pixel, olEvent: e };
                 _clickHandlers.forEach(function(fn) {
-                    try { if (fn(payload) === true) { suppressed = true; } } catch(_e) { /* skill errors are silenced */ }
+                    try { if (fn(payload) === true) { suppressed = true; } } catch(_e) { /* extension errors are silenced */ }
                 });
             }
             if (suppressed) { return; }
@@ -2543,7 +2543,7 @@ window.SViewerApp = (function() {
             window.parent.postMessage({ type: 'sv:ready', hardConfig: serializable, center: [config.x, config.y], zoom: config.z }, '*');
         }
         // Notify onReady callbacks registered by embed callers.
-        _onReadyCallbacks.forEach(function(fn) { try { fn(); } catch(_e) { /* skill onReady errors are silenced */ } });
+        _onReadyCallbacks.forEach(function(fn) { try { fn(); } catch(_e) { /* extension onReady errors are silenced */ } });
         _onReadyCallbacks = [];
 
         // Test runner protocol — only active when embedded in a parent frame.
@@ -2616,19 +2616,19 @@ window.SViewerApp = (function() {
     // Use getMap().forEachFeatureAtPixel(pixel, ...) to hit-test your own layers.
     this.addClickHandler    = function(fn) { if (typeof fn === 'function') { _clickHandlers.push(fn); } };
     this.removeClickHandler = function(fn) { _clickHandlers = _clickHandlers.filter(function(h) { return h !== fn; }); };
-    // Panel API — open/close a named skill panel in the sidepanel.
+    // Panel API — open/close a named extension panel in the sidepanel.
     // open(name, title, html) creates the panel + toggle button if absent.
     this.panel = {
         open: function(name, title, html) {
-            var panelId = 'sv-panel-skill-' + name;
-            var btnId   = 'sv-btn-panel-skill-' + name;
+            var panelId = 'sv-panel-ext-' + name;
+            var btnId   = 'sv-btn-panel-ext-' + name;
             if (!document.getElementById(panelId)) {
                 var btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'btn btn-dark sv-map-btn sv-panel-toggle';
                 btn.setAttribute('aria-pressed', 'false');
                 btn.id = btnId;
-                btn.setAttribute('data-sv-panel', 'skill-' + name);
+                btn.setAttribute('data-sv-panel', 'ext-' + name);
                 btn.setAttribute('aria-label', title);
                 btn.textContent = title;
                 document.getElementById('sv-panel-controls').appendChild(btn);
@@ -2638,7 +2638,7 @@ window.SViewerApp = (function() {
                 section.setAttribute('role', 'region');
                 section.style.display = 'none';
                 section.id = panelId;
-                section.setAttribute('data-sv-section', 'skill-' + name);
+                section.setAttribute('data-sv-section', 'ext-' + name);
                 section.setAttribute('aria-label', title);
 
                 var h3 = document.createElement('h3');
@@ -2662,13 +2662,13 @@ window.SViewerApp = (function() {
                 section.appendChild(content);
                 document.getElementById('sv-sidepanel').appendChild(section);
             } else {
-                document.querySelector('#sv-panel-skill-' + name + ' .sv-panel-content').innerHTML = html || '';
+                document.querySelector('#sv-panel-ext-' + name + ' .sv-panel-content').innerHTML = html || '';
             }
-            togglePanel('skill-' + name);
+            togglePanel('ext-' + name);
         },
         close:  function() { togglePanel(null); },
         update: function(name, html) {
-            document.querySelector('#sv-panel-skill-' + name + ' .sv-panel-content').innerHTML = html || '';
+            document.querySelector('#sv-panel-ext-' + name + ' .sv-panel-content').innerHTML = html || '';
         }
     };
     }

@@ -1,15 +1,15 @@
-# Skill API
+# Extension API
 
-Un skill est un fichier `skill/<name>/skill.js` chargé automatiquement par embed.js après que la carte est prête, si `customConfig.skills` le déclare.
+An extension is a file `ext/<name>/extension.js` loaded automatically by embed.js after the map is ready, if `customConfig.extensions` declares it.
 
 ```javascript
 // local/customConfig.js
 customConfig = {
-    skills: ['my-skill']
+    extensions: ['my-extension']
 };
 ```
 
-embed.js charge `skill/my-skill/skill.js` après `sv:mapReady`. Le skill s'initialise dans `SViewer.onMapReady()`.
+embed.js loads `ext/my-extension/extension.js` after `sv:mapReady`. The extension initialises in `SViewer.onMapReady()`.
 
 ---
 
@@ -92,8 +92,8 @@ window.SViewerState    // état runtime (activePanel, mapZoom, layersVisible, �
 ## UI
 
 ```javascript
-// Injecter un bouton dans la barre de contrôles skill
-const toolbar = document.getElementById('sv-skill-toolbar');
+// Injecter un bouton dans la barre de contrôles extension
+const toolbar = document.getElementById('sv-ext-toolbar');
 const btn = document.createElement('button');
 btn.className = 'btn btn-dark sv-map-btn';
 toolbar.appendChild(btn);
@@ -151,4 +151,4 @@ customConfig = { adapters: ['my-adapter'] };
 
 ## Exemple complet
 
-Voir `skill/sample/skill.js`.
+Voir `ext/sample/extension.js`.

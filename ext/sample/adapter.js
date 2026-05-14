@@ -2,9 +2,9 @@
  * sViewer adapter — SAMPLE / TEMPLATE
  *
  * THIS IS A REFERENCE IMPLEMENTATION — not intended for production use.
- * Copy this file to skill/{yourname}/adapter.js and adapt it.
+ * Copy this file to ext/{yourname}/adapter.js and adapt it.
  *
- * Demonstrates the minimal skill pattern:
+ * Demonstrates the minimal extension adapter pattern:
  *   - How to register in the adapter registry
  *   - How to implement match() and convert()
  *   - How to read geometry hints from the URL
@@ -13,8 +13,8 @@
  * Input: a flat JSON array of objects, each with latitude + longitude fields.
  *   Example: [{ "name": "Paris", "latitude": 48.85, "longitude": 2.35 }, …]
  *
- * This format is intentionally simple — real skills handle more complex
- * envelopes (see skill/grist/adapter.js for a production example).
+ * This format is intentionally simple — real extensions handle more complex
+ * envelopes (see ext/grist/adapter.js for a production example).
  *
  * Activated via customConfig.js:  adapters: ['sample']
  * Trigger URL:  ?geojson=https://example.com/data.json&_format=sample
