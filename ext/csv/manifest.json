@@ -1,0 +1,75 @@
+{
+  "id": "csv",
+  "type": "extension",
+  "version": "1.0.0",
+  "name": "CSV",
+  "description": "Charge un fichier CSV distant comme données vectorielles — géométrie auto-détectée depuis les noms de colonnes",
+  "author": "fphg",
+  "screenshot": "screenshot.png",
+  "tags": ["csv", "import", "données vectorielles"],
+
+  "entry": "adapter.js",
+
+  "params": [
+    {
+      "name": "_format",
+      "type": "string",
+      "description": "Forcer l'activation pour URLs sans extension .csv",
+      "enum": ["csv"],
+      "example": "_format=csv"
+    },
+    {
+      "name": "_geommode",
+      "type": "string",
+      "description": "Mode de lecture géométrie",
+      "enum": ["geojson", "latlon", "latlon_str", "lonlat_str", "wkt"],
+      "example": "_geommode=latlon"
+    },
+    {
+      "name": "_geomcol",
+      "type": "string",
+      "description": "Nom de colonne géométrie JSON ou WKT (override auto-détection)",
+      "example": "_geomcol=geom"
+    },
+    {
+      "name": "_collat",
+      "type": "string",
+      "description": "Nom de colonne latitude",
+      "example": "_collat=lat"
+    },
+    {
+      "name": "_collon",
+      "type": "string",
+      "description": "Nom de colonne longitude",
+      "example": "_collon=lng"
+    },
+    {
+      "name": "_labelcol",
+      "type": "string",
+      "description": "Colonne utilisée comme étiquette sur la carte",
+      "example": "_labelcol=nom"
+    }
+  ],
+
+  "sviewer": {
+    "minVersion": "0.10.0"
+  },
+
+  "seo": {
+    "title": "CSV extension — importer des données CSV dans sViewer",
+    "metaDescription": "Chargez un fichier CSV avec colonnes lat/lon ou géométrie GeoJSON/WKT comme données vectorielles dans sViewer. Compatible data.gouv.fr, GitHub raw, Google Sheets."
+  },
+
+  "examples": [
+    {
+      "title": "CSV avec colonnes lat/lon",
+      "url": "?geojson=https://example.com/data.csv",
+      "description": "Auto-détection colonnes latitude/longitude"
+    },
+    {
+      "title": "CSV sans extension .csv",
+      "url": "?geojson=https://example.com/data&_format=csv",
+      "description": "Forcer l'adaptateur CSV pour URLs sans extension"
+    }
+  ]
+}

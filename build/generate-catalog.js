@@ -1,4 +1,119 @@
-<!DOCTYPE html>
+#!/usr/bin/env node
+'use strict';
+
+const fs   = require('fs');
+const path = require('path');
+
+const EXT_DIR     = path.resolve(__dirname, '../ext');
+const CATALOG_OUT = path.join(EXT_DIR, 'index.html');
+
+// --- Collect manifests -------------------------------------------------------
+
+const manifests = fs.readdirSync(EXT_DIR, { withFileTypes: true })
+    .filter(d => d.isDirectory())
+    .map(d => {
+        const mpath = path.join(EXT_DIR, d.name, 'manifest.json');
+        if (!fs.existsSync(mpath)) { return null; }
+        try {
+            const m = JSON.parse(fs.readFileSync(mpath, 'utf8'));
+            m._dir = d.name;
+            return m;
+        } catch(e) {
+            console.warn('Invalid manifest:', mpath, e.message);
+            return null;
+        }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+// --- Helpers -----------------------------------------------------------------
+
+function esc(str) {
+    return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function screenshotExists(m) {
+    return m.screenshot && fs.existsSync(path.join(EXT_DIR, m._dir, m.screenshot));
+}
+
+// --- Card HTML ---------------------------------------------------------------
+
+function renderCard(m) {
+    const hasScreenshot = screenshotExists(m);
+
+    const tags = (m.tags || []).map(t =>
+        `<span class="sv-tag">${esc(t)}</span>`
+    ).join('');
+
+    const params = (m.params || []).length > 0 ? `
+            <details class="sv-params">
+                <summary>Paramètres URL <span class="sv-param-count">${m.params.length}</span></summary>
+                <table>
+                    <thead><tr><th>Paramètre</th><th>Exemple</th><th>Description</th></tr></thead>
+                    <tbody>
+                        ${m.params.map(p => `<tr>
+                            <td><code>${esc(p.name)}</code></td>
+                            <td><code>${esc(p.example || '')}</code></td>
+                            <td>${esc(p.description)}${p.enum ? ` <span class="sv-enum">${p.enum.map(esc).join(' · ')}</span>` : ''}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+            </details>` : '';
+
+    const examples = (m.examples || []).length > 0 ? `
+            <ul class="sv-examples">
+                ${m.examples.map(ex => `<li>
+                    <a href="${esc(ex.url)}">${esc(ex.title)}</a>${ex.description ? ` <span class="sv-ex-desc">— ${esc(ex.description)}</span>` : ''}
+                </li>`).join('')}
+            </ul>` : '';
+
+    const img = hasScreenshot
+        ? `<img src="${esc(m._dir)}/${esc(m.screenshot)}" alt="${esc(m.name)} screenshot" class="sv-card-img" loading="lazy">`
+        : '';
+
+    return `
+    <article id="ext-${esc(m._dir)}" class="sv-card" data-search="${esc((m.name + ' ' + m.description + ' ' + (m.tags || []).join(' ')).toLowerCase())}" role="listitem">
+        ${img}
+        <div class="sv-card-body">
+            <div class="sv-card-head">
+                <h2><a href="${esc(m._dir)}/">${esc(m.name)}</a></h2>
+                <span class="sv-badge">${esc(m.type)}</span>
+            </div>
+            <p class="sv-desc">${esc(m.description)}</p>
+            ${tags ? `<div class="sv-tags" aria-label="Tags">${tags}</div>` : ''}
+            ${params}
+            ${examples}
+            <footer class="sv-card-footer">
+                <span>v${esc(m.version)}</span>
+                ${m.sviewer && m.sviewer.minVersion ? `<span>sViewer ≥ ${esc(m.sviewer.minVersion)}</span>` : ''}
+                ${m.author ? `<span>${esc(m.author)}</span>` : ''}
+            </footer>
+        </div>
+    </article>`;
+}
+
+function renderNav(items) {
+    const links = items.map(m =>
+        `        <li><a class="sv-nav-link" href="#ext-${esc(m._dir)}" data-id="${esc(m._dir)}">${esc(m.name)}</a></li>`
+    ).join('\n');
+    return `<nav class="sv-nav" aria-label="Extensions">
+    <ul>
+${links}
+    </ul>
+</nav>`;
+}
+
+// --- Full page ---------------------------------------------------------------
+
+function buildCatalog(items) {
+    const cards = items.map(renderCard).join('\n');
+    const nav   = renderNav(items);
+
+    return `<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="utf-8">
@@ -228,177 +343,11 @@
 </header>
 
 <div class="sv-layout">
-    <nav class="sv-nav" aria-label="Extensions">
-    <ul>
-        <li><a class="sv-nav-link" href="#ext-csv" data-id="csv">CSV</a></li>
-        <li><a class="sv-nav-link" href="#ext-grist" data-id="grist">Grist</a></li>
-        <li><a class="sv-nav-link" href="#ext-sample" data-id="sample">Sample</a></li>
-    </ul>
-</nav>
+    ${nav}
     <div class="sv-content">
         <div id="sv-count" aria-live="polite" aria-atomic="true"></div>
         <div id="sv-list" role="list">
-
-    <article id="ext-csv" class="sv-card" data-search="csv charge un fichier csv distant comme données vectorielles — géométrie auto-détectée depuis les noms de colonnes csv import données vectorielles" role="listitem">
-        
-        <div class="sv-card-body">
-            <div class="sv-card-head">
-                <h2><a href="csv/">CSV</a></h2>
-                <span class="sv-badge">extension</span>
-            </div>
-            <p class="sv-desc">Charge un fichier CSV distant comme données vectorielles — géométrie auto-détectée depuis les noms de colonnes</p>
-            <div class="sv-tags" aria-label="Tags"><span class="sv-tag">csv</span><span class="sv-tag">import</span><span class="sv-tag">données vectorielles</span></div>
-            
-            <details class="sv-params">
-                <summary>Paramètres URL <span class="sv-param-count">6</span></summary>
-                <table>
-                    <thead><tr><th>Paramètre</th><th>Exemple</th><th>Description</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td><code>_format</code></td>
-                            <td><code>_format=csv</code></td>
-                            <td>Forcer l'activation pour URLs sans extension .csv <span class="sv-enum">csv</span></td>
-                        </tr><tr>
-                            <td><code>_geommode</code></td>
-                            <td><code>_geommode=latlon</code></td>
-                            <td>Mode de lecture géométrie <span class="sv-enum">geojson · latlon · latlon_str · lonlat_str · wkt</span></td>
-                        </tr><tr>
-                            <td><code>_geomcol</code></td>
-                            <td><code>_geomcol=geom</code></td>
-                            <td>Nom de colonne géométrie JSON ou WKT (override auto-détection)</td>
-                        </tr><tr>
-                            <td><code>_collat</code></td>
-                            <td><code>_collat=lat</code></td>
-                            <td>Nom de colonne latitude</td>
-                        </tr><tr>
-                            <td><code>_collon</code></td>
-                            <td><code>_collon=lng</code></td>
-                            <td>Nom de colonne longitude</td>
-                        </tr><tr>
-                            <td><code>_labelcol</code></td>
-                            <td><code>_labelcol=nom</code></td>
-                            <td>Colonne utilisée comme étiquette sur la carte</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </details>
-            
-            <ul class="sv-examples">
-                <li>
-                    <a href="?geojson=https://example.com/data.csv">CSV avec colonnes lat/lon</a> <span class="sv-ex-desc">— Auto-détection colonnes latitude/longitude</span>
-                </li><li>
-                    <a href="?geojson=https://example.com/data&amp;_format=csv">CSV sans extension .csv</a> <span class="sv-ex-desc">— Forcer l'adaptateur CSV pour URLs sans extension</span>
-                </li>
-            </ul>
-            <footer class="sv-card-footer">
-                <span>v1.0.0</span>
-                <span>sViewer ≥ 0.10.0</span>
-                <span>fphg</span>
-            </footer>
-        </div>
-    </article>
-
-    <article id="ext-grist" class="sv-card" data-search="grist carte synchronisée avec une table grist — affichage, sélection et édition des géométries grist édition" role="listitem">
-        
-        <div class="sv-card-body">
-            <div class="sv-card-head">
-                <h2><a href="grist/">Grist</a></h2>
-                <span class="sv-badge">extension</span>
-            </div>
-            <p class="sv-desc">Carte synchronisée avec une table Grist — affichage, sélection et édition des géométries</p>
-            <div class="sv-tags" aria-label="Tags"><span class="sv-tag">grist</span><span class="sv-tag">édition</span></div>
-            
-            <details class="sv-params">
-                <summary>Paramètres URL <span class="sv-param-count">5</span></summary>
-                <table>
-                    <thead><tr><th>Paramètre</th><th>Exemple</th><th>Description</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td><code>_geommode</code></td>
-                            <td><code>_geommode=latlon</code></td>
-                            <td>Mode de lecture géométrie <span class="sv-enum">geojson · latlon · latlon_str · lonlat_str · wkt</span></td>
-                        </tr><tr>
-                            <td><code>_geomcol</code></td>
-                            <td><code>_geomcol=shape</code></td>
-                            <td>Nom de colonne géométrie JSON ou WKT</td>
-                        </tr><tr>
-                            <td><code>_collat</code></td>
-                            <td><code>_collat=lat</code></td>
-                            <td>Nom de colonne latitude</td>
-                        </tr><tr>
-                            <td><code>_collon</code></td>
-                            <td><code>_collon=lng</code></td>
-                            <td>Nom de colonne longitude</td>
-                        </tr><tr>
-                            <td><code>_labelcol</code></td>
-                            <td><code>_labelcol=nom</code></td>
-                            <td>Colonne utilisée comme étiquette sur la carte</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </details>
-            
-            <ul class="sv-examples">
-                <li>
-                    <a href="ext/grist/">Widget Grist (ouverture dans Grist)</a> <span class="sv-ex-desc">— URL à coller dans Grist → Ajouter un widget personnalisé</span>
-                </li>
-            </ul>
-            <footer class="sv-card-footer">
-                <span>v1.0.0</span>
-                <span>sViewer ≥ 0.10.0</span>
-                <span>fphg</span>
-            </footer>
-        </div>
-    </article>
-
-    <article id="ext-sample" class="sv-card" data-search="sample implémentation de référence annotée pour auteurs d'extensions — charge un tableau json plat comme données vectorielles référence template développement" role="listitem">
-        
-        <div class="sv-card-body">
-            <div class="sv-card-head">
-                <h2><a href="sample/">Sample</a></h2>
-                <span class="sv-badge">extension</span>
-            </div>
-            <p class="sv-desc">Implémentation de référence annotée pour auteurs d'extensions — charge un tableau JSON plat comme données vectorielles</p>
-            <div class="sv-tags" aria-label="Tags"><span class="sv-tag">référence</span><span class="sv-tag">template</span><span class="sv-tag">développement</span></div>
-            
-            <details class="sv-params">
-                <summary>Paramètres URL <span class="sv-param-count">4</span></summary>
-                <table>
-                    <thead><tr><th>Paramètre</th><th>Exemple</th><th>Description</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td><code>_format</code></td>
-                            <td><code>_format=sample</code></td>
-                            <td>Requis — active cet adaptateur <span class="sv-enum">sample</span></td>
-                        </tr><tr>
-                            <td><code>_collat</code></td>
-                            <td><code>_collat=lat</code></td>
-                            <td>Nom de colonne latitude (défaut: latitude)</td>
-                        </tr><tr>
-                            <td><code>_collon</code></td>
-                            <td><code>_collon=lng</code></td>
-                            <td>Nom de colonne longitude (défaut: longitude)</td>
-                        </tr><tr>
-                            <td><code>_labelcol</code></td>
-                            <td><code>_labelcol=name</code></td>
-                            <td>Colonne utilisée comme étiquette sur la carte</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </details>
-            
-            <ul class="sv-examples">
-                <li>
-                    <a href="?geojson=https://example.com/data.json&amp;_format=sample">Tableau JSON plat</a> <span class="sv-ex-desc">— Tableau [{latitude, longitude, …}, …]</span>
-                </li>
-            </ul>
-            <footer class="sv-card-footer">
-                <span>v1.0.0</span>
-                <span>sViewer ≥ 0.10.0</span>
-                <span>fphg</span>
-            </footer>
-        </div>
-    </article>
+${cards}
         </div>
         <p id="sv-noresults" role="status">Aucune extension trouvée.</p>
     </div>
@@ -459,4 +408,11 @@
 </script>
 
 </body>
-</html>
+</html>`;
+}
+
+// --- Write -------------------------------------------------------------------
+
+const html = buildCatalog(manifests);
+fs.writeFileSync(CATALOG_OUT, html, 'utf8');
+console.log('Catalog written:', CATALOG_OUT, '(' + manifests.length + ' extensions)');

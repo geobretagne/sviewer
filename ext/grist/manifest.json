@@ -1,0 +1,63 @@
+{
+  "id": "grist",
+  "type": "extension",
+  "version": "1.0.0",
+  "name": "Grist",
+  "description": "Carte synchronisée avec une table Grist — affichage, sélection et édition des géométries",
+  "author": "fphg",
+  "screenshot": "screenshot.png",
+  "tags": ["grist", "édition"],
+
+  "entry": "adapter.js",
+
+  "params": [
+    {
+      "name": "_geommode",
+      "type": "string",
+      "description": "Mode de lecture géométrie",
+      "enum": ["geojson", "latlon", "latlon_str", "lonlat_str", "wkt"],
+      "example": "_geommode=latlon"
+    },
+    {
+      "name": "_geomcol",
+      "type": "string",
+      "description": "Nom de colonne géométrie JSON ou WKT",
+      "example": "_geomcol=shape"
+    },
+    {
+      "name": "_collat",
+      "type": "string",
+      "description": "Nom de colonne latitude",
+      "example": "_collat=lat"
+    },
+    {
+      "name": "_collon",
+      "type": "string",
+      "description": "Nom de colonne longitude",
+      "example": "_collon=lng"
+    },
+    {
+      "name": "_labelcol",
+      "type": "string",
+      "description": "Colonne utilisée comme étiquette sur la carte",
+      "example": "_labelcol=nom"
+    }
+  ],
+
+  "sviewer": {
+    "minVersion": "0.10.0"
+  },
+
+  "seo": {
+    "title": "Grist extension — carte synchronisée avec sViewer",
+    "metaDescription": "Widget Grist intégré à sViewer : visualisez et éditez les géométries d'une table Grist directement sur la carte, générez une carte publique."
+  },
+
+  "examples": [
+    {
+      "title": "Widget Grist (ouverture dans Grist)",
+      "url": "ext/grist/",
+      "description": "URL à coller dans Grist → Ajouter un widget personnalisé"
+    }
+  ]
+}

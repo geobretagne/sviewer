@@ -149,6 +149,61 @@ customConfig = { adapters: ['my-adapter'] };
 
 ---
 
+## Manifest (`manifest.json`)
+
+Each extension must have `ext/<name>/manifest.json`. Used by `npm run build:catalog` to generate `ext/index.html`.
+
+```jsonc
+{
+  "id":          "my-ext",           // matches directory name
+  "type":        "extension",        // "extension" | "demo"
+  "version":     "1.0.0",
+  "name":        "My Extension",     // display name
+  "description": "One-line summary",
+  "author":      "handle",
+  "screenshot":  "screenshot.png",   // optional — omit if none (160×120 px recommended)
+  "tags":        ["csv", "import"],  // free-form keywords for catalog search
+
+  "entry": "adapter.js",             // extension: JS entry point (relative to ext/<name>/)
+  // "url": "https://…",            // demo: external URL instead of entry
+
+  "params": [                        // URL params the extension reads — catalog display only
+    {
+      "name":        "_format",      // param name (no ?)
+      "type":        "string",       // string | integer | boolean
+      "description": "Force adapter activation",
+      "enum":        ["my-ext"],     // optional — allowed values shown as pills
+      "example":     "_format=my-ext"
+    }
+  ],
+
+  "sviewer": {
+    "minVersion": "0.10.0"           // minimum sViewer version required
+  },
+
+  "seo": {                           // optional — for future per-extension detail pages
+    "title":           "…",
+    "metaDescription": "…"
+  },
+
+  "examples": [                      // optional — clickable links in catalog card
+    {
+      "title":       "Basic usage",
+      "url":         "?geojson=https://example.com/data&_format=my-ext",
+      "description": "Short context"  // optional
+    }
+  ]
+}
+```
+
+After editing, regenerate the catalog:
+
+```bash
+npm run build:catalog
+```
+
+---
+
 ## Exemple complet
 
-Voir `ext/sample/extension.js`.
+Voir `ext/sample/extension.js` et `ext/sample/manifest.json`.

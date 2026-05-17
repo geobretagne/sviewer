@@ -1,0 +1,56 @@
+{
+  "id": "sample",
+  "type": "extension",
+  "version": "1.0.0",
+  "name": "Sample",
+  "description": "Implémentation de référence annotée pour auteurs d'extensions — charge un tableau JSON plat comme données vectorielles",
+  "author": "fphg",
+  "tags": ["référence", "template", "développement"],
+
+  "entry": "adapter.js",
+
+  "params": [
+    {
+      "name": "_format",
+      "type": "string",
+      "description": "Requis — active cet adaptateur",
+      "enum": ["sample"],
+      "example": "_format=sample"
+    },
+    {
+      "name": "_collat",
+      "type": "string",
+      "description": "Nom de colonne latitude (défaut: latitude)",
+      "example": "_collat=lat"
+    },
+    {
+      "name": "_collon",
+      "type": "string",
+      "description": "Nom de colonne longitude (défaut: longitude)",
+      "example": "_collon=lng"
+    },
+    {
+      "name": "_labelcol",
+      "type": "string",
+      "description": "Colonne utilisée comme étiquette sur la carte",
+      "example": "_labelcol=name"
+    }
+  ],
+
+  "sviewer": {
+    "minVersion": "0.10.0"
+  },
+
+  "seo": {
+    "title": "Sample extension — référence pour développeurs sViewer",
+    "metaDescription": "Adaptateur de référence annoté pour créer une extension sViewer. Démontre match(), convert(), lecture des hints URL et construction d'un GeoJSON FeatureCollection."
+  },
+
+  "examples": [
+    {
+      "title": "Tableau JSON plat",
+      "url": "?geojson=https://example.com/data.json&_format=sample",
+      "description": "Tableau [{latitude, longitude, …}, …]"
+    }
+  ]
+}
