@@ -28,34 +28,37 @@
     var psvLoading    = false;
     var mvtLoaded     = false;
     var mvtLoading    = false;
+    var mvtQueue      = [];    // callbacks waiting for MVT load
+    var psvQueue      = [];    // callbacks waiting for PSV load
     var selectedId    = null;  // id of selected picture feature
     var selectedAzimuth = 0;   // current viewer yaw in degrees
 
     // Resolve base URL of this extension (needed for relative asset paths).
-    function extBase() {
-        var scripts = document.getElementsByTagName('script');
-        for (var i = 0; i < scripts.length; i++) {
-            var m = (scripts[i].src || '').match(/^(.*\/)panoramax\/extension\.js$/);
-            if (m) { return m[1] + 'panoramax/'; }
-        }
-        return 'ext/panoramax/';
-    }
-    var BASE = extBase();
+    // SViewer.extensionBase() uses document.currentScript — must be called at module scope.
+    var BASE = SViewer.extensionBase();
 
     function loadMVT(cb) {
         if (mvtLoaded) { cb(); return; }
-        if (mvtLoading) { var t = setInterval(function() { if (mvtLoaded) { clearInterval(t); cb(); } }, 50); return; }
+        mvtQueue.push(cb);
+        if (mvtLoading) { return; }
         mvtLoading = true;
         var s = document.createElement('script');
         s.src = BASE + 'mvt.min.js';
-        s.onload = function() { mvtLoaded = true; mvtLoading = false; cb(); };
-        s.onerror = function() { mvtLoading = false; };
+        s.onload = function() {
+            mvtLoaded = true; mvtLoading = false;
+            var q = mvtQueue.splice(0); q.forEach(function(fn) { fn(); });
+        };
+        s.onerror = function() {
+            mvtLoading = false;
+            mvtQueue.splice(0); // discard — avoid orphaned callbacks
+        };
         document.head.appendChild(s);
     }
 
     function loadPSV(cb) {
         if (psvLoaded) { cb(); return; }
-        if (psvLoading) { var t = setInterval(function() { if (psvLoaded) { clearInterval(t); cb(); } }, 50); return; }
+        psvQueue.push(cb);
+        if (psvLoading) { return; }
         psvLoading = true;
         var link = document.createElement('link');
         link.rel = 'stylesheet';
@@ -63,8 +66,14 @@
         document.head.appendChild(link);
         var s = document.createElement('script');
         s.src = BASE + 'psv.min.js';
-        s.onload = function() { psvLoaded = true; psvLoading = false; cb(); };
-        s.onerror = function() { psvLoading = false; };
+        s.onload = function() {
+            psvLoaded = true; psvLoading = false;
+            var q = psvQueue.splice(0); q.forEach(function(fn) { fn(); });
+        };
+        s.onerror = function() {
+            psvLoading = false;
+            psvQueue.splice(0); // discard — avoid orphaned callbacks
+        };
         document.head.appendChild(s);
     }
 
@@ -148,7 +157,7 @@
         active = true;
         loadMVT(function() {
             if (!active) { return; } // disabled while loading
-            var OL = window.OLMVT;
+            var OL = window._OLMVT_panoramax;
             OLS = OL; // expose style constructors to style functions
             _picStyleDefault = new OL.Style({
                 image: new OL.Circle({
@@ -187,13 +196,15 @@
         if (psvInstance) { try { psvInstance.destroy(); } catch(e) {} psvInstance = null; }
     }
 
+    function openPanel(html) {
+        SViewer.panel.open(PANEL, 'Panoramax', html);
+    }
+
     function openSequence(feature) {
         var seqId = feature.get('id');
         if (!seqId) { return; }
 
-        SViewer.panel.open(PANEL, 'Panoramax', '<div style="padding:1rem;color:#888">Chargement…</div>');
-        var autoBtn = document.getElementById('sv-btn-panel-ext-' + PANEL);
-        if (autoBtn) { autoBtn.remove(); }
+        openPanel('<div style="padding:1rem;color:#888">Chargement…</div>');
         destroyPSV();
 
         fetch(API_BASE + '/collections/' + seqId + '/items?limit=1')
@@ -220,16 +231,20 @@
         if (typeof seqId === 'string' && seqId.charAt(0) === '[') {
             try { seqId = JSON.parse(seqId)[0]; } catch(e) { seqId = null; }
         }
-        if (!picId || !seqId) { return; }
+        if (!picId || !seqId) {
+            openPanel('<div style="padding:1rem;color:#c00">Image introuvable (métadonnées manquantes).</div>');
+            return;
+        }
 
-        SViewer.panel.open(PANEL, 'Panoramax', '<div style="padding:1rem;color:#888">Chargement…</div>');
-        var autoBtn = document.getElementById('sv-btn-panel-ext-' + PANEL);
-        if (autoBtn) { autoBtn.remove(); }
+        openPanel('<div style="padding:1rem;color:#888">Chargement…</div>');
 
         fetch(API_BASE + '/collections/' + seqId + '/items/' + picId)
             .then(function(r) { return r.ok ? r.json() : null; })
             .then(function(data) {
-                if (!data) { return; }
+                if (!data) {
+                    openPanel('<div style="padding:1rem;color:#c00">Impossible de charger l\'image.</div>');
+                    return;
+                }
                 var props = data.properties || {};
                 var imageUrl = props['geovisio:image']     || '';
                 var thumb    = props['geovisio:thumbnail'] || '';
@@ -239,7 +254,9 @@
                 selectedAzimuth = azimuth;
                 showPanel({ imageUrl: imageUrl, thumb: thumb, date: date, producer: producer, azimuth: azimuth });
             })
-            .catch(function() {});
+            .catch(function() {
+                openPanel('<div style="padding:1rem;color:#c00">Erreur réseau.</div>');
+            });
     }
 
     function showPanel(p) {
@@ -247,10 +264,7 @@
             + (p.date     ? '<div style="font-size:.8rem;color:#666;margin-bottom:.2rem">' + p.date + '</div>' : '')
             + (p.producer ? '<div style="font-size:.8rem;color:#666;margin-bottom:.4rem">' + p.producer + '</div>' : '');
 
-        SViewer.panel.open(PANEL, 'Panoramax', html);
-        var autoBtn = document.getElementById('sv-btn-panel-ext-' + PANEL);
-        if (autoBtn) { autoBtn.remove(); }
-
+        openPanel(html);
         destroyPSV();
         if (!p.imageUrl) { return; }
 
@@ -287,7 +301,7 @@
         btn.title = 'Panoramax';
         btn.setAttribute('aria-pressed', 'false');
         btn.setAttribute('aria-label', 'Panoramax street-level photos');
-        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1zM2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4zm.5 2a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m9 2.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0M8 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5"/></svg>';
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1zM2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4z"/><path d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M3 6.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0"/></svg>';
 
         btn.addEventListener('click', function() {
             if (active) {

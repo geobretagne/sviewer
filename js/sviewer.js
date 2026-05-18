@@ -1,7 +1,7 @@
 /*globals ol:false, proj4:false*/
 
 // Isolated SViewer instance - encapsulates all state and DOM interactions
-window.SViewerApp = (function() {
+window.SViewer.app = (function() {
     // Projection: EPSG:3857 (Web Mercator)
     proj4.defs([
         ["EPSG:4326", "+title=WGS 84, +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"],
@@ -18,10 +18,10 @@ window.SViewerApp = (function() {
     var customConfig = window.customConfig || {};
 
     // Ensure hardConfig exists (created by embed.js before i18n.js loaded)
-    window.SViewerHardConfig = window.SViewerHardConfig || {};
+    window.SViewer.hardConfig = window.SViewer.hardConfig || {};
 
     // Fill in defaults — existing keys (from customConfig via embed.js) are preserved
-    window.SViewerHardConfig = Object.assign({
+    window.SViewer.hardConfig = Object.assign({
         title: 'sViewer',
         geOrchestraBaseUrl: 'https://demo.georchestra.org',
         projcode: 'EPSG:3857',
@@ -90,9 +90,9 @@ window.SViewerApp = (function() {
             { lb: 0, lo: 0,  title: 'Photo aérienne + noms de lieux' },
             { lb: 1, lo: -1, title: 'OpenStreetMap' }
         ]
-    }, window.SViewerHardConfig, window.customConfig || {});
+    }, window.SViewer.hardConfig, window.customConfig || {});
 
-    var hardConfig = window.SViewerHardConfig;
+    var hardConfig = window.SViewer.hardConfig;
 
     // Spinner for the impatients
     var svSpinner = {
@@ -175,7 +175,7 @@ window.SViewerApp = (function() {
         }
         return new Promise(function(resolve, reject) {
             var script = document.createElement('script');
-            script.src = (window.SViewerBaseUrl || '') + 'static/lib/qrcode/qrcode.min.js';
+            script.src = (window.SViewer.baseUrl || '') + 'static/lib/qrcode/qrcode.min.js';
             script.async = true;
             script.onload = function() {
                 qrcodeLoaded = true;
@@ -405,7 +405,7 @@ window.SViewerApp = (function() {
                 .map(function(m) {
                     return { url: safeURL(m.OnlineResource), label: tr('msg.full_record'), newTab: tr('msg.new_tab') };
                 });
-            return _htmlFragment(Mustache.render(window.SViewerTemplates['sv-layer-panel'], {
+            return _htmlFragment(Mustache.render(window.SViewer.templates['sv-layer-panel'], {
                 title:         mdLayer.Title,
                 abstract:      mdLayer.Abstract,
                 legendUrl:     legendUrl,
@@ -659,7 +659,7 @@ window.SViewerApp = (function() {
     }
 
     function buildISOTable(meta) {
-        return _htmlFragment(Mustache.render(window.SViewerTemplates['sv-iso-table'], {
+        return _htmlFragment(Mustache.render(window.SViewer.templates['sv-iso-table'], {
             dateLabel:     tr('msg.meta_date'),
             producerLabel: tr('msg.meta_producer'),
             contactLabel:  tr('msg.meta_contact'),
@@ -743,9 +743,9 @@ window.SViewerApp = (function() {
 
     // In embed mode, merge SViewer.init() options on top of qs.
     // customConfig.js is not yet loaded at this point — it runs later in init().
-    // _svEmbedOptions has priority over qs (which may contain unrelated host-page params).
-    if (window._svEmbedOptions) {
-        Object.assign(qs, window._svEmbedOptions);
+    // SViewer.embedOptions has priority over qs (which may contain unrelated host-page params).
+    if (window.SViewer.embedOptions) {
+        Object.assign(qs, window.SViewer.embedOptions);
     }
 
     // Debug mode: ?debug=true in URL enables console logs
@@ -821,8 +821,8 @@ window.SViewerApp = (function() {
             if (state.label) { linkParams.label = state.label; }
             if (config.title) { linkParams.title = config.title; }
             // In embed mode, permalink must point to the standalone sViewer, not the host page
-            var standaloneBase = window.SViewerBaseUrl
-                ? window.SViewerBaseUrl + 'index.html'
+            var standaloneBase = window.SViewer.baseUrl
+                ? window.SViewer.baseUrl + 'index.html'
                 : window.location.origin + window.location.pathname;
             permalinkQuery = standaloneBase + "?" + new URLSearchParams(linkParams);
 
@@ -879,7 +879,7 @@ window.SViewerApp = (function() {
         if (state.geojson) {
             embedParams.geojson = state.geojson;
         }
-        var baseUrl = window.SViewerBaseUrl || config.baseUrl || window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
+        var baseUrl = window.SViewer.baseUrl || config.baseUrl || window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
         var code = '<div id="sviewer-map" style="width: 100%; height: 500px;"></div>\n' +
                    '<script src="' + baseUrl + 'static/js/embed.min.js"></script>\n' +
                    '<script>\n' +
@@ -924,7 +924,7 @@ window.SViewerApp = (function() {
                         var results = config.geocodeAdapter(response);
                         if (results.length > 0) {
                             var searchResults = document.getElementById('sv-search-results');
-                            var header = _htmlFragment(Mustache.render(window.SViewerTemplates['sv-search-header'], { label: tr('lbl.geocode_results') }));
+                            var header = _htmlFragment(Mustache.render(window.SViewer.templates['sv-search-header'], { label: tr('lbl.geocode_results') }));
                             searchResults.insertBefore(header, searchResults.firstChild);
                             results.slice().reverse().forEach(function(r) {
                                 var coords = ol.proj.transform(r.coords, 'EPSG:4326', config.projcode);
@@ -1136,6 +1136,7 @@ window.SViewerApp = (function() {
 
     // Select feature by OL feature id (set via feature.setId()). Zooms to feature,
     // shows properties panel, emits sv:featureSelect.
+    // Falls back to matching feature.get('id') when no top-level GeoJSON id is set.
     function selectFeatureById(id) {
         if (!vectorLayer) { return; }
         if (id === null || id === undefined) {
@@ -1143,8 +1144,21 @@ window.SViewerApp = (function() {
             _emit('sv:featureSelect', { feature: null, properties: null });
             return;
         }
-        var feature = vectorLayer.getSource().getFeatureById(id);
-        if (!feature) { return; }
+        var source = vectorLayer.getSource();
+        var feature = source.getFeatureById(id);
+        if (!feature) {
+            // GeoJSON features without a top-level "id" field have getId() === undefined.
+            // Fall back to matching the "id" property so selectFeature(props.id) works.
+            var all = source.getFeatures();
+            for (var i = 0; i < all.length; i++) {
+                if (all[i].get('id') == id) { feature = all[i]; break; } // intentional ==
+            }
+        }
+        if (!feature) {
+            console.warn('SViewer.selectFeature: no feature found for id=' + id
+                + '. Ensure GeoJSON features have a top-level "id" field.');
+            return;
+        }
         var geom = feature.getGeometry();
         if (geom) { view.fit(geom.getExtent(), { maxZoom: 16, duration: 400, padding: [40,40,40,40] }); }
         var props = feature.getProperties();
@@ -1243,8 +1257,8 @@ window.SViewerApp = (function() {
     }
 
     function _renderGeoJSONInfoPanel(count, sourceUrl, adapter) {
-        if (!window.SViewerTemplates || !window.SViewerTemplates['sv-layer-panel']) { return; }
-        var frag = _htmlFragment(Mustache.render(window.SViewerTemplates['sv-layer-panel'], {
+        if (!window.SViewer.templates || !window.SViewer.templates['sv-layer-panel']) { return; }
+        var frag = _htmlFragment(Mustache.render(window.SViewer.templates['sv-layer-panel'], {
             title:        _sourceLabel(sourceUrl, adapter),
             featureCount: count,
             labelCount:   tr('msg.feature_count'),
@@ -1270,17 +1284,18 @@ window.SViewerApp = (function() {
         // Warn early if _format hint names an adapter that is not loaded.
         var formatHint = (function() { try { return new URL(url).searchParams.get('_format'); } catch(_e) { return null; } }());
         if (formatHint) {
-            var hintedAdapter = (window.SViewerAdapters || {})[formatHint];
+            var hintedAdapter = (window.SViewer.adapters || {})[formatHint];
             if (!hintedAdapter) {
                 messagePopup(tr('msg.extension_not_loaded', formatHint));
                 log('_format hint "' + formatHint + '" found but extension not loaded — add to customConfig extensions[]');
+                _emit('sv:featuresError', { error: 'adapter-not-loaded', adapter: formatHint, url: url });
                 return;
             }
         }
         // Check if any loaded adapter needs raw text instead of parsed JSON (e.g. CSV adapter).
         var textAdapter = null;
         var matchedAdapter = null;
-        var adapters = window.SViewerAdapters || {};
+        var adapters = window.SViewer.adapters || {};
         for (var adName in adapters) {
             if (adapters[adName].wantsText && adapters[adName].match && adapters[adName].match(url)) {
                 textAdapter = adapters[adName];
@@ -1299,7 +1314,7 @@ window.SViewerApp = (function() {
             var geojson = textAdapter ? textAdapter.convert(data, url) : (
             // Non-GeoJSON response → normalize via registered adapters (customConfig.adapters)
             (data && data.type === 'FeatureCollection') ? data : (function() {
-                var jsonAdapters = window.SViewerAdapters || {};
+                var jsonAdapters = window.SViewer.adapters || {};
                 for (var name in jsonAdapters) {
                     var a = jsonAdapters[name];
                     if (a.wantsText) { continue; }
@@ -1310,10 +1325,17 @@ window.SViewerApp = (function() {
                 return (typeof config.jsonLayerAdapter === 'function') ? config.jsonLayerAdapter(data, url) : null;
             }()));
             log('loadGeoJSON: geojson features=', geojson ? geojson.features.length : 'null (no adapter matched or conversion failed)');
-            if (!geojson) { messagePopup(tr('msg.query_failed')); return; }
+            if (!geojson) {
+                messagePopup(tr('msg.query_failed'));
+                _emit('sv:featuresError', { error: 'no-data', url: url });
+                return;
+            }
             _applyGeoJSON(geojson, url, matchedAdapter);
         })
-        .catch(function() { messagePopup(tr('msg.query_failed')); });
+        .catch(function(err) {
+            messagePopup(tr('msg.query_failed'));
+            _emit('sv:featuresError', { error: err && err.message || 'fetch-error', url: url });
+        });
     }
 
     /**
@@ -1342,7 +1364,7 @@ window.SViewerApp = (function() {
             );
 
             // response order = layer order
-            var headerFrag = _htmlFragment(Mustache.render(window.SViewerTemplates['sv-query-header'], { title: lq.md.title }));
+            var headerFrag = _htmlFragment(Mustache.render(window.SViewer.templates['sv-query-header'], { title: lq.md.title }));
             var headerEl = headerFrag.firstElementChild;
             document.getElementById('sv-query-content').appendChild(headerEl);
             // ajax request
@@ -1522,7 +1544,7 @@ window.SViewerApp = (function() {
             templateData.ariaLabel = templateData.label || '—';
         }
         templateData.idx = searchItemIdx++;
-        var frag = _htmlFragment(Mustache.render(window.SViewerTemplates['sv-search-item'], templateData));
+        var frag = _htmlFragment(Mustache.render(window.SViewer.templates['sv-search-item'], templateData));
         var li = frag.firstElementChild;
         var link = li.querySelector('.sv-search-item-link');
         if (link) {
@@ -1560,7 +1582,7 @@ window.SViewerApp = (function() {
 
     function featuresToList(features, label) {
         var results = document.getElementById('sv-search-results');
-        results.appendChild(_htmlFragment(Mustache.render(window.SViewerTemplates['sv-search-header'], {
+        results.appendChild(_htmlFragment(Mustache.render(window.SViewer.templates['sv-search-header'], {
             label: label || tr('msg.top_layer')
         })));
 
@@ -1696,9 +1718,7 @@ window.SViewerApp = (function() {
         if (_shareTitle && _shareTitle.value === '') {
             _shareTitle.value = config.title;
         }
-        if (!silent && typeof SViewer.onTitleChange === 'function') {
-            SViewer.onTitleChange(title);
-        }
+        if (!silent) { _emit('sv:titleChange', { title: title }); }
     }
 
     // updates title on keypress
@@ -1843,7 +1863,7 @@ window.SViewerApp = (function() {
      * configname MUST MATCH ^[A-Za-z0-9_-]+$
      */
     function init() {
-        var configBase = window.SViewerBaseUrl || '';
+        var configBase = window.SViewer.baseUrl || '';
         var qsconfig;
         function startApp() {
             if (qs.c) { customConfig.customConfigName = qs.c; }
@@ -1861,7 +1881,7 @@ window.SViewerApp = (function() {
         if (qs.c && qs.c.match(/^[A-Za-z0-9_-]+$/)) {
             qsconfig = configBase + "local/customConfig_"+qs.c+".js";
             loadScript(qsconfig, startApp);
-        } else if (window.SViewerEmbedded) {
+        } else if (window.SViewer.embedded) {
             // embed.js already loaded customConfig.js — skip redundant fetch
             startApp();
         } else {
@@ -1996,7 +2016,7 @@ window.SViewerApp = (function() {
                             }
                         }
                     } catch(_e) { /* XPath unsupported — skip links */ }
-                    var panelFrag = _htmlFragment(Mustache.render(window.SViewerTemplates['sv-layer-panel'], {
+                    var panelFrag = _htmlFragment(Mustache.render(window.SViewer.templates['sv-layer-panel'], {
                         title:         title,
                         abstract:      abstract,
                         legendUrl:     legendUrl,
@@ -2162,8 +2182,8 @@ window.SViewerApp = (function() {
         if (scope) {
             scope.setAttribute('data-theme', theme);
         }
-        // In embed mode SViewerBaseUrl is set by embed.js — don't touch the host page's root
-        if (!window.SViewerBaseUrl) {
+        // In embed mode SViewer.baseUrl is set by embed.js — don't touch the host page's root
+        if (!window.SViewer.baseUrl) {
             document.documentElement.setAttribute('data-theme', theme);
         }
     }
@@ -2534,7 +2554,7 @@ window.SViewerApp = (function() {
         // Notify parent frame (test runner or embedder) that sViewer is ready.
         // Only serialize cloneable keys — functions and OL layer objects can't cross postMessage.
         if (window.parent !== window) {
-            var hc = window.SViewerHardConfig;
+            var hc = window.SViewer.hardConfig;
             var serializable = {};
             Object.keys(hc).forEach(function(k) {
                 var v = hc[k];
@@ -2603,10 +2623,6 @@ window.SViewerApp = (function() {
     this.switchBackground = function(idx) { switchBackground(idx); };
     // Trigger a vector layer redraw without replacing the style (preserves declutter).
     this.refreshVector = function() { if (vectorLayer) { vectorLayer.changed(); map.renderSync(); } };
-    // Optional callback — set by embedders to be notified when the user
-    // changes the title via the share panel. Not called for programmatic
-    // setTitle() calls (init, md/WFS auto-title). Null by default.
-    this.onTitleChange = null;
     // Register a callback to fire once after sViewer init completes.
     this.onReady = function(fn) { _onReadyCallbacks.push(fn); };
     // Subscribe to sViewer events. Use inside onReady() to guarantee bus is wired.
@@ -2621,22 +2637,13 @@ window.SViewerApp = (function() {
     this.addClickHandler    = function(fn) { if (typeof fn === 'function') { _clickHandlers.push(fn); } };
     this.removeClickHandler = function(fn) { _clickHandlers = _clickHandlers.filter(function(h) { return h !== fn; }); };
     // Panel API — open/close a named extension panel in the sidepanel.
-    // open(name, title, html) creates the panel + toggle button if absent.
+    // open(name, title, html) creates the panel DOM on first call (no toolbar button injected).
+    // update(name, html) no-ops if name !== current owner (stale async callback protection).
+    var _panelOwner = null;
     this.panel = {
         open: function(name, title, html) {
             var panelId = 'sv-panel-ext-' + name;
-            var btnId   = 'sv-btn-panel-ext-' + name;
             if (!document.getElementById(panelId)) {
-                var btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'btn btn-dark sv-map-btn sv-panel-toggle';
-                btn.setAttribute('aria-pressed', 'false');
-                btn.id = btnId;
-                btn.setAttribute('data-sv-panel', 'ext-' + name);
-                btn.setAttribute('aria-label', title);
-                btn.textContent = title;
-                document.getElementById('sv-panel-controls').appendChild(btn);
-
                 var section = document.createElement('div');
                 section.className = 'sv-panel-section';
                 section.setAttribute('role', 'region');
@@ -2666,13 +2673,22 @@ window.SViewerApp = (function() {
                 section.appendChild(content);
                 document.getElementById('sv-sidepanel').appendChild(section);
             } else {
-                document.querySelector('#sv-panel-ext-' + name + ' .sv-panel-content').innerHTML = html || '';
+                var panelEl = document.getElementById(panelId);
+                panelEl.querySelector('.sv-panel-title').textContent = title;
+                panelEl.setAttribute('aria-label', title);
+                panelEl.querySelector('.sv-panel-content').innerHTML = html || '';
             }
+            _panelOwner = name;
             togglePanel('ext-' + name);
         },
-        close:  function() { togglePanel(null); },
+        close: function() { _panelOwner = null; togglePanel(null); },
         update: function(name, html) {
-            document.querySelector('#sv-panel-ext-' + name + ' .sv-panel-content').innerHTML = html || '';
+            if (name !== _panelOwner) {
+                console.warn('SViewer.panel.update: ignored — current owner is "' + _panelOwner + '", not "' + name + '"');
+                return;
+            }
+            var el = document.querySelector('#sv-panel-ext-' + name + ' .sv-panel-content');
+            if (el) { el.innerHTML = html || ''; }
         }
     };
     }
@@ -2681,9 +2697,9 @@ window.SViewerApp = (function() {
     var instance = new SViewer();
 
     // Expose configuration for external scripts (i18n.js, etc.)
-    window.SViewerHardConfig = hardConfig;
-    window.SViewerConfig = config;
-    window.SViewerState = state;
+    window.SViewer.hardConfig = hardConfig;
+    window.SViewer.config = config;
+    window.SViewer.state = state;
     // Note: do NOT overwrite window.customConfig - it may have been set by embed.js or host page
     // window.customConfig was already set before sviewer.js loaded
 
@@ -2693,8 +2709,8 @@ window.SViewerApp = (function() {
 // Auto-initialize on document ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-        if (window.SViewerApp && window.SViewerApp.init) { window.SViewerApp.init(); }
+        if (window.SViewer.app && window.SViewer.app.init) { window.SViewer.app.init(); }
     });
 } else {
-    if (window.SViewerApp && window.SViewerApp.init) { window.SViewerApp.init(); }
+    if (window.SViewer.app && window.SViewer.app.init) { window.SViewer.app.init(); }
 }

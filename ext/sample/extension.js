@@ -13,7 +13,7 @@
 SViewer.onMapReady(({ map, view }) => {
 
     // --- Toolbar button ---------------------------------------------------
-    const toolbar = document.getElementById('sv-ext-toolbar');
+    const toolbar = document.getElementById('sv-panel-controls');
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'btn btn-dark sv-map-btn';

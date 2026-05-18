@@ -2,7 +2,7 @@
  * sViewer extension — CSV
  *
  * Converts a CSV text response to a GeoJSON FeatureCollection.
- * Registered as window.SViewerAdapters['csv'].
+ * Registered via SViewer.registerAdapter(['csv'].
  *
  * Activated via customConfig.js:  extensions: ['csv']
  *
@@ -226,10 +226,8 @@
         return { type: 'FeatureCollection', features: features };
     }
 
-    // Register in the global extension registry.
-    // wantsText: true signals sviewer.js to fetch this URL as text, not JSON.
-    window.SViewerAdapters = window.SViewerAdapters || {};
-    window.SViewerAdapters['csv'] = {
+    // Register via SViewer.registerAdapter — safe at module scope, validates input.
+    SViewer.registerAdapter('csv', {
         // Activate for .csv URLs or when user appends &_format=csv for extension-less URLs.
         match: function(url) {
             return typeof url === 'string' && (
@@ -244,5 +242,5 @@
         // Signal to sviewer.js dispatcher that this extension needs raw text, not parsed JSON.
         wantsText: true,
         convert: convert
-    };
+    });
 }());

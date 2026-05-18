@@ -37,6 +37,29 @@
 
     var debug = /[?&]debug=1/.test(window.location.search);
 
+    // Queue for addClickHandler calls made before SViewerApp is ready.
+    // Drained on sv:mapReady so extensions calling addClickHandler at module scope work correctly.
+    var _clickHandlerQueue = [];
+
+    // Cached sv:mapReady payload — set once when the event fires.
+    // Used by onMapReady() to call late subscribers immediately (map already ready).
+    var _mapReadyPayload = null;
+
+    _svBus.on('sv:mapReady', function(payload) {
+        _mapReadyPayload = payload;
+        var q = _clickHandlerQueue.splice(0);
+        q.forEach(function(fn) {
+            if (window.SViewer.app && window.SViewer.app.addClickHandler) {
+                window.SViewer.app.addClickHandler(fn);
+            }
+        });
+    });
+
+    // Internal adapter registry — sviewer.js reads via window.SViewer.adapters.
+    // Using a sealed object prevents extensions from accidentally overwriting the registry
+    // with window.SViewer.adapters = {} (would replace the reference sviewer.js holds).
+    var _adapterRegistry = {};
+
     var SV_SHELL_HTML = `
         <a href="#sv-ol-map" class="sv-skip-to-content i18n" data-i18n="btn.skip_to_map">Skip to map</a>
 
@@ -243,8 +266,6 @@
         }
     }
     var baseUrl = scriptSrc.replace(/static\/js\/embed\..*$/, '');
-    window.SViewerBaseUrl = baseUrl;
-    window.SViewerEmbedded = true;
 
     var config = {
         baseUrl: baseUrl,
@@ -314,7 +335,7 @@
                     .catch(function() {});
             })
             .then(function() {
-                // Load all extensions before map init — adapters register on SViewerAdapters,
+                // Load all extensions before map init — adapters register on SViewer.adapters,
                 // UI extensions use onMapReady() so early load is safe for both.
                 // URL param ?_ext=name adds an extension without customConfig.
                 var urlExt = new URLSearchParams(window.location.search).get('ext');
@@ -334,14 +355,14 @@
             });
     }
 
-    // Fetch all Mustache templates and store them in window.SViewerTemplates
+    // Fetch all Mustache templates and store them in window.SViewer.templates
     function loadTemplates(baseUrl) {
         var names = ['sv-layer-panel', 'sv-iso-table', 'sv-query-header', 'sv-search-item', 'sv-search-header', 'sv-share-modal'];
-        window.SViewerTemplates = {};
+        window.SViewer.templates = {};
         return Promise.all(names.map(function(name) {
             return fetch(baseUrl + 'static/templates/' + name + '.html')
                 .then(function(r) { return r.text(); })
-                .then(function(t) { window.SViewerTemplates[name] = t; });
+                .then(function(t) { window.SViewer.templates[name] = t; });
         }));
     }
 
@@ -349,11 +370,11 @@
     function insertShareModal() {
         return new Promise(function(resolve) {
             // Wait for templates to be loaded
-            if (window.SViewerTemplates && window.SViewerTemplates['sv-share-modal']) {
+            if (window.SViewer.templates && window.SViewer.templates['sv-share-modal']) {
                 var scope = document.querySelector('.sv-scope');
                 if (scope) {
                     var tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = window.SViewerTemplates['sv-share-modal'];
+                    tempDiv.innerHTML = window.SViewer.templates['sv-share-modal'];
                     var modal = tempDiv.firstElementChild;
                     scope.appendChild(modal);
                 }
@@ -368,8 +389,8 @@
     // Load i18n first (before sviewer.js initializes)
     function loadI18nScript() {
         // Ensure hardConfig exists before i18n.js tries to extend it
-        if (!window.SViewerHardConfig) {
-            window.SViewerHardConfig = window.customConfig || {};
+        if (!window.SViewer.hardConfig) {
+            window.SViewer.hardConfig = window.customConfig || {};
         }
         return new Promise(function(resolve, reject) {
             var script = document.createElement('script');
@@ -425,6 +446,23 @@
     window.SViewer = {
         version: SVIEWER_VERSION,
         commit: SVIEWER_COMMIT,
+        baseUrl: baseUrl,
+        embedded: true,
+
+        // Returns the base URL of the calling extension's directory (trailing slash).
+        // Call at module scope inside extension.js — relies on document.currentScript.
+        // Falls back to baseUrl + 'ext/<name>/' derived from the script src if currentScript
+        // is unavailable (e.g. called asynchronously after module scope).
+        extensionBase: function() {
+            var src = (document.currentScript && document.currentScript.src) || '';
+            if (src) {
+                // src = …/ext/<name>/extension.js → strip filename
+                return src.replace(/\/[^/]+\.js([?#].*)?$/, '/');
+            }
+            console.warn('SViewer.extensionBase() called outside module scope — document.currentScript is null. Call at module scope and store the result in a variable.');
+            return baseUrl + 'ext/';
+        },
+
         init: function(containerSelector, options) {
             options = options || {};
             config.container = containerSelector;
@@ -436,7 +474,7 @@
             createContainer(containerSelector);
 
             // Store embed options for sviewer.js — applied on top of qs after customConfig.js loads
-            window._svEmbedOptions = options;
+            window.SViewer.embedOptions = options;
 
             // Load all resources
             return loadDependencies()
@@ -444,8 +482,8 @@
                 .then(loadI18nScript)
                 .then(loadSViewerScript)
                 .then(function() {
-                    // SViewerApp instance is now available
-                    if (window.SViewerApp) {
+                    // SViewer.app instance is now available
+                    if (window.SViewer.app) {
                         console.log('SViewer: Ready');
                         // Patch version footer with active extension names
                         var versionEl = document.querySelector('.sv-scope .mt-3.text-end');
@@ -454,9 +492,9 @@
                             var extStr = extNames.length ? ' ' + extNames.join(', ') : '';
                             versionEl.innerHTML = '<a href="https://github.com/geobretagne/sviewer/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">sViewer ' + SVIEWER_VERSION + '</a> <span style="font-family:monospace">' + SVIEWER_COMMIT + '</span>' + extStr;
                         }
-                        return window.SViewerApp;
+                        return window.SViewer.app;
                     } else {
-                        throw new Error('SViewerApp instance not found after loading');
+                        throw new Error('SViewer.app instance not found after loading');
                     }
                 })
                 .catch(function(error) {
@@ -466,21 +504,21 @@
 
         // Public API methods
         getApp: function() {
-            return window.SViewerApp;
+            return window.SViewer.app;
         },
 
         getMap: function() {
-            return window.SViewerApp ? window.SViewerApp.getMap() : null;
+            return window.SViewer.app ? window.SViewer.app.getMap() : null;
         },
 
         getView: function() {
-            return window.SViewerApp ? window.SViewerApp.getView() : null;
+            return window.SViewer.app ? window.SViewer.app.getView() : null;
         },
 
         // Set the geojson URL baked into share/embed permalinks without rendering a layer.
         setGeojsonUrl: function(url) {
-            if (window.SViewerApp && window.SViewerApp.setGeojsonUrl) {
-                window.SViewerApp.setGeojsonUrl(url);
+            if (window.SViewer.app && window.SViewer.app.setGeojsonUrl) {
+                window.SViewer.app.setGeojsonUrl(url);
             }
         },
 
@@ -515,59 +553,104 @@
 
         // Register callback fired once the OL map is ready.
         // fn({ map, view })
-        onMapReady: function(fn) { _svBus.on('sv:mapReady', fn); },
+        // Fires immediately if map is already ready (late subscriber safe).
+        // Guaranteed to fire exactly once per registration.
+        onMapReady: function(fn) {
+            if (_mapReadyPayload) { fn(_mapReadyPayload); return; }
+            function once(payload) { _svBus.off('sv:mapReady', once); fn(payload); }
+            _svBus.on('sv:mapReady', once);
+        },
 
         // Register callback fired when user clicks a vector feature on the map.
         // fn({ feature, coordinate, properties })
         onFeatureClick: function(fn) { _svBus.on('sv:featureClick', fn); },
+        offFeatureClick: function(fn) { _svBus.off('sv:featureClick', fn); },
 
         // Register callback fired when selection changes (click or selectFeature).
         // fn({ feature, properties }) — feature/properties null on deselect.
         onFeatureSelect: function(fn) { _svBus.on('sv:featureSelect', fn); },
+        offFeatureSelect: function(fn) { _svBus.off('sv:featureSelect', fn); },
 
         // Register callback fired after loadFeatures completes and layer is on map.
         // fn({ features, count })
         onFeaturesLoaded: function(fn) { _svBus.on('sv:featuresLoaded', fn); },
+        offFeaturesLoaded: function(fn) { _svBus.off('sv:featuresLoaded', fn); },
+
+        // Fired when a ?geojson= or loadFeatures() call fails.
+        // fn({ error, url }) — error is a string ('fetch-error', 'no-data', 'adapter-not-loaded', or HTTP status)
+        onFeaturesError: function(fn) { _svBus.on('sv:featuresError', fn); },
+        offFeaturesError: function(fn) { _svBus.off('sv:featuresError', fn); },
+
+        // User-edited map title via share panel (not fired for programmatic setTitle calls).
+        // fn({ title })
+        onTitleChange: function(fn) { _svBus.on('sv:titleChange', fn); },
+        offTitleChange: function(fn) { _svBus.off('sv:titleChange', fn); },
 
         // Switch background preset by index (0-based). No-op if map not ready.
         switchBackground: function(idx) {
-            if (window.SViewerApp && window.SViewerApp.switchBackground) {
-                window.SViewerApp.switchBackground(idx);
+            if (window.SViewer.app && window.SViewer.app.switchBackground) {
+                window.SViewer.app.switchBackground(idx);
             }
         },
 
         // Trigger vector layer redraw (style function re-evaluated per feature).
         refreshVector: function() {
-            if (window.SViewerApp && window.SViewerApp.refreshVector) {
-                window.SViewerApp.refreshVector();
+            if (window.SViewer.app && window.SViewer.app.refreshVector) {
+                window.SViewer.app.refreshVector();
             }
         },
 
-        // Register a raw map click handler — receives { coordinate, pixel, olEvent }.
-        // Return true from fn to suppress WMS GetFeatureInfo for that click.
+        // Register a raw map click handler — receives OL MapBrowserEvent.
+        // Return truthy to suppress sViewer built-in click handling for that click.
+        // Safe to call before map ready — queued and applied on sv:mapReady.
         addClickHandler: function(fn) {
-            if (window.SViewerApp && window.SViewerApp.addClickHandler) {
-                window.SViewerApp.addClickHandler(fn);
+            if (typeof fn !== 'function') { return; }
+            if (window.SViewer.app && window.SViewer.app.addClickHandler) {
+                window.SViewer.app.addClickHandler(fn);
+            } else {
+                _clickHandlerQueue.push(fn);
             }
         },
         removeClickHandler: function(fn) {
-            if (window.SViewerApp && window.SViewerApp.removeClickHandler) {
-                window.SViewerApp.removeClickHandler(fn);
+            // Remove from queue if not yet applied.
+            _clickHandlerQueue = _clickHandlerQueue.filter(function(h) { return h !== fn; });
+            if (window.SViewer.app && window.SViewer.app.removeClickHandler) {
+                window.SViewer.app.removeClickHandler(fn);
             }
         },
 
         // Open / update / close an extension sidepanel.
         panel: {
             open: function(name, title, html) {
-                if (window.SViewerApp && window.SViewerApp.panel) { window.SViewerApp.panel.open(name, title, html); }
+                if (window.SViewer.app && window.SViewer.app.panel) { window.SViewer.app.panel.open(name, title, html); }
             },
             close: function() {
-                if (window.SViewerApp && window.SViewerApp.panel) { window.SViewerApp.panel.close(); }
+                if (window.SViewer.app && window.SViewer.app.panel) { window.SViewer.app.panel.close(); }
             },
             update: function(name, html) {
-                if (window.SViewerApp && window.SViewerApp.panel) { window.SViewerApp.panel.update(name, html); }
+                if (window.SViewer.app && window.SViewer.app.panel) { window.SViewer.app.panel.update(name, html); }
             }
-        }
+        },
+
+        // Register a data adapter for the ?geojson= fetch pipeline.
+        // name    : unique key (string) — matches ?_format= hint
+        // adapter : { match(url), convert(response, url), wantsText }
+        // Safe to call before map ready and at extension module scope.
+        // Replaces direct window.SViewer.adapters[key] = ... assignment.
+        registerAdapter: function(name, adapter) {
+            if (typeof name !== 'string' || !name) {
+                console.warn('SViewer.registerAdapter: name must be a non-empty string');
+                return;
+            }
+            if (!adapter || typeof adapter.convert !== 'function') {
+                console.warn('SViewer.registerAdapter: adapter must have a convert() function (name=' + name + ')');
+                return;
+            }
+            _adapterRegistry[name] = adapter;
+        },
+
+        // Read-only view of the adapter registry — sviewer.js reads this.
+        adapters: _adapterRegistry
     };
 
     console.log('SViewer: Embed script loaded');

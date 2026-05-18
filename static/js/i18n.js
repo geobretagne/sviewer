@@ -1,4 +1,4 @@
-Object.assign(window.SViewerHardConfig, {
+Object.assign(window.SViewer.hardConfig, {
     i18n: {
         en: {
             // Button tooltips

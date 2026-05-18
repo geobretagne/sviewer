@@ -412,8 +412,7 @@ customConfig = {
     searchPlaceholder: 'adresse, lieu-dit, commune...',
     gpsTrackingInterval: 5,           // secondes entre deux mises à jour GPS
     gpsTrackingTimeout: 300,          // arrêt auto GPS après N secondes (0 = jamais)
-    adapters: ['grist'],
-    extensions: ['my-extension'],      // → voir ext/EXT_API.md
+    extensions: ['grist', 'my-extension'],  // → voir ext/EXT_API.md — adapters register via SViewer.registerAdapter()
     layersBackground: [ /* ... */ ],
     backgroundPresets: [ /* ... */ ]  // → voir section Presets fonds de carte
 };
@@ -632,19 +631,20 @@ Chaque nom correspond à `ext/{nom}/adapter.js`. Seuls les adaptateurs fournis a
 adapters: ['grist', 'arcgis']
 ```
 
-**Écrire son propre adaptateur** — créer `ext/monadaptateur/adapter.js` :
+**Écrire son propre adaptateur** — créer `ext/monadaptateur/extension.js` :
 
 ```javascript
-window.SViewerAdapters = window.SViewerAdapters || {};
-window.SViewerAdapters['monadaptateur'] = {
+SViewer.registerAdapter('monadaptateur', {
     match: function(url) { return url.indexOf('monapi.example.com') !== -1; },
     convert: function(response, sourceUrl) {
         // retourner un GeoJSON FeatureCollection (EPSG:4326)
+        return null;
     }
-};
+});
 ```
 
 `match` est optionnel — sans `match`, l'adaptateur est appelé pour toutes les URLs (fallback).
+Utiliser `SViewer.registerAdapter()` et non `window.SViewer.adapters[key] =` directement.
 
 **Paramètres hint Grist** — le widget Grist encode des hints géométriques dans l'URL source pour bypasser l'auto-détection :
 
@@ -1030,7 +1030,7 @@ Bouton **Image** dans le panneau **Configuration** → télécharge la vue coura
 Toutes les chaînes traduites sont centralisées dans `static/js/i18n.js` :
 
 ```javascript
-Object.assign(window.SViewerHardConfig, {
+Object.assign(window.SViewer.hardConfig, {
     i18n: {
         fr: {
             'Query': 'Interroger',
@@ -1052,7 +1052,7 @@ Object.assign(window.SViewerHardConfig, {
 
 **Étape 1 :** Ajouter la clé dans `static/js/i18n.js`
 ```javascript
-Object.assign(window.SViewerHardConfig, {
+Object.assign(window.SViewer.hardConfig, {
     i18n: {
         fr: { 'ma clé': 'Texte français' },
         en: { 'ma clé': 'English text' },
@@ -1069,7 +1069,7 @@ Object.assign(window.SViewerHardConfig, {
 
 **Étape 3 :** Pour du texte JavaScript
 ```javascript
-var msg = hardConfig.i18n[window.SViewerConfig.lang]['ma clé'];
+var msg = window.SViewer.hardConfig.i18n[window.SViewer.config.lang]['ma clé'];
 alert(msg);
 ```
 
@@ -1151,15 +1151,15 @@ Toutes les dépendances sont **self-hosted** (pas de CDN). Aucune dépendance jQ
 ```
 embed.js
   ├── Crée le bus d'événements (_svBus) — exposé via window._SViewerInternals (figé)
-  ├── Détecte baseUrl depuis l'URL du script (window.SViewerBaseUrl)
-  ├── Stocke les options dans window._svEmbedOptions
+  ├── Détecte baseUrl depuis l'URL du script (window.SViewer.baseUrl)
+  ├── Stocke les options dans window.SViewer.embedOptions
   ├── Crée le DOM (.sv-scope container)
   ├── Charge en parallèle : proj4 → OpenLayers → customConfig.js
   │   et en parallèle : Bootstrap JS + CSS sViewer (révèle le container)
   ├── Charge i18n.js
   └── Charge sviewer.js
-        ├── Merge _svEmbedOptions dans qs (priorité sur la page hôte)
-        ├── Charge customConfig.js via SViewerBaseUrl (chemin absolu)
+        ├── Merge SViewer.embedOptions dans qs (priorité sur la page hôte)
+        ├── Charge customConfig.js via SViewer.baseUrl (chemin absolu)
         └── doConfiguration() → doMap() → doGUI()
               └── init() : s'abonne à sv:loadFeatures / sv:loadFeatureObjects / sv:selectFeature
                            émet sv:mapReady
@@ -1170,7 +1170,7 @@ embed.js
 Fusionné à partir de, dans cet ordre de priorité :
 1. `hardConfig` (défauts sViewer)
 2. `customConfig` (configuration locale, `local/customConfig.js`)
-3. Options embed `_svEmbedOptions` (passées à `SViewer.init()`, écrasent `customConfig`)
+3. Options embed `SViewer.embedOptions` (passées à `SViewer.init()`, écrasent `customConfig`)
 
 ```javascript
 config = {
@@ -1198,9 +1198,9 @@ state = {
 }
 ```
 
-### API SViewerApp
+### API SViewer.app
 
-`SViewer.init()` retourne une Promise résolue avec l'instance `SViewerApp` une fois sViewer prêt.
+`SViewer.init()` retourne une Promise résolue avec l'instance `SViewer.app` une fois sViewer prêt.
 
 **Méthodes publiques :**
 
@@ -1208,7 +1208,7 @@ state = {
 |---------|----------|-------------|
 | `SViewer.getMap()` | `ol.Map` | Objet carte OpenLayers |
 | `SViewer.getView()` | `ol.View` | Vue OpenLayers (centre, zoom, projection) |
-| `SViewer.getApp()` | `SViewerApp` | Instance sViewer (même résultat que la Promise) |
+| `SViewer.getApp()` | `SViewer.app` | Instance sViewer (même résultat que la Promise) |
 | `app.getMap()` | `ol.Map` | Identique à `SViewer.getMap()` |
 | `app.getView()` | `ol.View` | Identique à `SViewer.getView()` |
 | `app.getConfig()` | `object` | Configuration fusionnée (lecture seule) |
@@ -1217,7 +1217,7 @@ state = {
 | `SViewer.onTitleChange` | callback | Fonction appelée quand l'utilisateur modifie le titre via le panneau de partage. `null` par défaut. Non appelée lors des modifications programmatiques (init, chargement md). Exemple : `SViewer.onTitleChange = function(title) { /* persister */ };` |
 | `SViewer.loadFeatures(geojson)` | — | Charge un GeoJSON FeatureCollection (objet JS) comme données vectorielles. Équivalent à `?geojson=` mais avec données déjà parsées. |
 | `SViewer.loadFeatureObjects(features, options)` | — | Charge un tableau d'entités OpenLayers (`ol.Feature[]`) déjà en EPSG:3857. Zéro reprojection, zéro sérialisation — chemin haute performance pour les widgets. Voir options ci-dessous. |
-| `SViewer.selectFeature(id)` | — | Sélectionne une entité par son id OL (`feature.getId()`), zoome dessus, affiche ses propriétés dans le panneau. |
+| `SViewer.selectFeature(id)` | — | Sélectionne une entité par son id OL (`feature.getId()` — champ GeoJSON `id` de premier niveau). Fallback sur `properties.id` si absent. Zoome, affiche propriétés dans le panneau. `console.warn` si aucune entité trouvée. |
 | `SViewer.clearSelection()` | — | Efface la sélection courante et ferme le panneau de propriétés. |
 | `SViewer.onMapReady(fn)` | — | Enregistre un callback appelé une fois la carte initialisée. Argument : `{ map, view }`. |
 | `SViewer.onFeatureClick(fn)` | — | Enregistre un callback appelé à chaque clic sur une entité vectorielle. Argument : `{ feature, coordinate, properties }`. |

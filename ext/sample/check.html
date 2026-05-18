@@ -47,7 +47,7 @@
 
 <div class="check">
     <div class="check-title">1. Adapter registration</div>
-    <div class="check-desc">window.SViewerAdapters['sample'] must exist after adapter.js loads.</div>
+    <div class="check-desc">window.SViewer.adapters['sample'] must exist after adapter.js loads.</div>
     <div class="result" id="r-register">waiting…</div>
 </div>
 
@@ -131,14 +131,14 @@
         .catch(function() { fail('r-bundle', 'could not fetch sviewer.min.js'); });
 
     // 1 — registration
-    if (window.SViewerAdapters && window.SViewerAdapters['sample']) {
-        pass('r-register', 'window.SViewerAdapters[\'sample\'] registered');
+    if (window.SViewer.adapters && window.SViewer.adapters['sample']) {
+        pass('r-register', 'window.SViewer.adapters[\'sample\'] registered');
     } else {
         fail('r-register', 'extension not found — check extension.js loaded');
         return;
     }
 
-    var adapter = window.SViewerAdapters['sample'];
+    var adapter = window.SViewer.adapters['sample'];
 
     // 2 — match positive
     var urlPos = 'https://example.com/data.json?_format=sample';

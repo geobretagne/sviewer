@@ -61,3 +61,45 @@ SV_TESTS.push({
         if (!hardConfig) throw new Error('hardConfig not received — sViewer did not start');
     }
 });
+
+// Regression: selectFeature must find features that have properties.id but no top-level GeoJSON id.
+// The fixture has no top-level "id" field — only properties.id = "brest-1".
+// Regression: ?geojson= pointing to a 404 URL must not crash sViewer.
+// sv:featuresError is emitted internally — this test only verifies no crash (sv:ready fires).
+SV_TESTS.push({
+    id: 'geojson-fetch-404-no-crash',
+    label: '?geojson= 404 — sViewer recovers, sv:featuresError emitted, no crash',
+    group: 'GeoJSON',
+    type: 'visual',
+    params: {
+        geojson: SVRunner.getBaseUrl() + 'tests/fixtures/nonexistent-does-not-exist.geojson'
+    },
+    assert: function(hardConfig) {
+        if (!hardConfig) throw new Error('hardConfig not received — sViewer crashed on 404 geojson fetch');
+        if (!hardConfig.initialExtent) throw new Error('initialExtent missing after 404 geojson');
+    }
+});
+
+// Extension calls SViewer.selectFeature('brest-1') on featuresLoaded.
+// Assert: query panel opens (sv-panel-open class on #sv-frame-map).
+SV_TESTS.push({
+    id: 'geojson-select-feature-props-id-fallback',
+    label: 'selectFeature — falls back to properties.id when no top-level GeoJSON id',
+    group: 'GeoJSON',
+    type: 'visual',
+    timeout: 8000,
+    params: {
+        geojson: SVRunner.getBaseUrl() + 'tests/fixtures/props-id-only.geojson',
+        ext: 'test-select-fallback'
+    },
+    assert: function(hardConfig, event, queryDOM) {
+        if (!hardConfig) throw new Error('hardConfig not received');
+        return new Promise(function(resolve) { setTimeout(resolve, 1500); })
+            .then(function() { return queryDOM('#sv-frame-map', 'className'); })
+            .then(function(r) {
+                if (!r.value || r.value.indexOf('sv-panel-open') === -1) {
+                    throw new Error('Query panel did not open — selectFeature fallback failed. className: ' + r.value);
+                }
+            });
+    }
+});

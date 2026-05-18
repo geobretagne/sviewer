@@ -5,4 +5,4 @@ import Style from 'ol/style/Style.js';
 import Fill from 'ol/style/Fill.js';
 import Stroke from 'ol/style/Stroke.js';
 import Circle from 'ol/style/Circle.js';
-window.OLMVT = { VectorTileLayer, VectorTileSource, MVT, Style, Fill, Stroke, Circle };
+window._OLMVT_panoramax = { VectorTileLayer, VectorTileSource, MVT, Style, Fill, Stroke, Circle };
