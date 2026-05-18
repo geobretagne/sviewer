@@ -1153,7 +1153,7 @@ window.SViewer.app = (function() {
             // Fall back to matching the "id" property so selectFeature(props.id) works.
             var all = source.getFeatures();
             for (var i = 0; i < all.length; i++) {
-                if (all[i].get('id') == id) { feature = all[i]; break; } // intentional ==
+                if (all[i].get('id') == id) { feature = all[i]; break; } // eslint-disable-line eqeqeq -- coerces string URL param vs numeric feature id
             }
         }
         if (!feature) {
