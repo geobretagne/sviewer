@@ -304,13 +304,28 @@
                 var cfgFile = (c && /^[A-Za-z0-9_-]+$/.test(c))
                     ? 'local/customConfig_' + c + '.js'
                     : 'local/customConfig.js';
-                return loadResource(baseUrl + cfgFile, 'js').catch(function() {});
+                return fetch(baseUrl + cfgFile, { method: 'HEAD' })
+                    .then(function(res) {
+                        if (!res.ok) { return; }
+                        var ct = res.headers.get('content-type') || '';
+                        if (ct.indexOf('html') !== -1) { return; } // nginx 404 page
+                        return loadResource(baseUrl + cfgFile, 'js');
+                    })
+                    .catch(function() {});
             })
             .then(function() {
-                var adapterPromises = ((window.customConfig && window.customConfig.adapters) || [])
-                    .map(function(name) { return loadResource(baseUrl + 'ext/' + name + '/adapter.js', 'js'); });
+                // Load all extensions before map init — adapters register on SViewerAdapters,
+                // UI extensions use onMapReady() so early load is safe for both.
+                // URL param ?_ext=name adds an extension without customConfig.
+                var urlExt = new URLSearchParams(window.location.search).get('ext');
+                var configExts = (window.customConfig && window.customConfig.extensions) || [];
+                var allExts = urlExt && !configExts.includes(urlExt)
+                    ? configExts.concat([urlExt])
+                    : configExts;
+                var extPromises = allExts
+                    .map(function(name) { return loadResource(baseUrl + 'ext/' + name + '/extension.js', 'js').catch(function() {}); });
                 return Promise.all([
-                    Promise.all(adapterPromises),
+                    Promise.all(extPromises),
                     loadResource(baseUrl + 'static/lib/mustache/mustache.min.js', 'js'),
                     Promise.all(cssPromises),
                     bootstrapPromise,
@@ -432,19 +447,13 @@
                     // SViewerApp instance is now available
                     if (window.SViewerApp) {
                         console.log('SViewer: Ready');
-                        // Patch version footer with active adapter names
+                        // Patch version footer with active extension names
                         var versionEl = document.querySelector('.sv-scope .mt-3.text-end');
                         if (versionEl) {
-                            var adapterNames = (window.customConfig && window.customConfig.adapters) || [];
-                            var adapterStr = adapterNames.length ? ' ' + adapterNames.join(', ') : '';
-                            versionEl.innerHTML = '<a href="https://github.com/geobretagne/sviewer/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">sViewer ' + SVIEWER_VERSION + '</a> <span style="font-family:monospace">' + SVIEWER_COMMIT + '</span>' + adapterStr;
+                            var extNames = (window.customConfig && window.customConfig.extensions) || [];
+                            var extStr = extNames.length ? ' ' + extNames.join(', ') : '';
+                            versionEl.innerHTML = '<a href="https://github.com/geobretagne/sviewer/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">sViewer ' + SVIEWER_VERSION + '</a> <span style="font-family:monospace">' + SVIEWER_COMMIT + '</span>' + extStr;
                         }
-                        // Load extensions after map ready — each extension wraps init in SViewer.onReady()
-                        var extNames = (window.customConfig && window.customConfig.extensions) || [];
-                        extNames.forEach(function(name) {
-                            loadResource(baseUrl + 'ext/' + name + '/extension.js', 'js')
-                                .catch(function(e) { console.warn('SViewer: extension ' + name + ' failed to load', e); });
-                        });
                         return window.SViewerApp;
                     } else {
                         throw new Error('SViewerApp instance not found after loading');
@@ -531,6 +540,32 @@
         refreshVector: function() {
             if (window.SViewerApp && window.SViewerApp.refreshVector) {
                 window.SViewerApp.refreshVector();
+            }
+        },
+
+        // Register a raw map click handler — receives { coordinate, pixel, olEvent }.
+        // Return true from fn to suppress WMS GetFeatureInfo for that click.
+        addClickHandler: function(fn) {
+            if (window.SViewerApp && window.SViewerApp.addClickHandler) {
+                window.SViewerApp.addClickHandler(fn);
+            }
+        },
+        removeClickHandler: function(fn) {
+            if (window.SViewerApp && window.SViewerApp.removeClickHandler) {
+                window.SViewerApp.removeClickHandler(fn);
+            }
+        },
+
+        // Open / update / close an extension sidepanel.
+        panel: {
+            open: function(name, title, html) {
+                if (window.SViewerApp && window.SViewerApp.panel) { window.SViewerApp.panel.open(name, title, html); }
+            },
+            close: function() {
+                if (window.SViewerApp && window.SViewerApp.panel) { window.SViewerApp.panel.close(); }
+            },
+            update: function(name, html) {
+                if (window.SViewerApp && window.SViewerApp.panel) { window.SViewerApp.panel.update(name, html); }
             }
         }
     };

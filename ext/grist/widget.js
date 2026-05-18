@@ -1238,7 +1238,8 @@ function initMap() {
         x: svConfig.x ? parseFloat(svConfig.x) : 0,
         y: svConfig.y ? parseFloat(svConfig.y) : 6000000,
         z: svConfig.z ? parseInt(svConfig.z, 10) : 5,
-        title: svConfig.title || 'sViewer — Grist'
+        title: svConfig.title || 'sViewer — Grist',
+        ext: 'grist'
     };
     if (svConfig.layers) { opts.layers = svConfig.layers; }
     if (svConfig.md && !svConfig.layers) { opts.md = svConfig.md; }
@@ -1248,6 +1249,22 @@ function initMap() {
     initialMd = svConfig.md || null;
     var georchestraBase = safeHttpUrl(svConfig.georchestra_base);
     if (georchestraBase && window.SViewerHardConfig) { window.SViewerHardConfig.geOrchestraBaseUrl = georchestraBase; }
+
+    // Share links must point to standalone sViewer index.html, not this widget page.
+    var svBase = (function() {
+        var raw = svConfig.sviewer_base;
+        if (raw) {
+            try {
+                var u = new URL(raw);
+                if (u.protocol === 'http:' || u.protocol === 'https:') {
+                    return (u.origin + u.pathname).replace(/\/?$/, '/');
+                }
+            } catch(e) {}
+        }
+        var loc = window.location;
+        return loc.origin + loc.pathname.replace(/ext\/grist\/[^/]*$/, '');
+    }());
+    window.SViewerBaseUrl = svBase;
 
     SViewer.init('#sv-map', opts).then(function() {
         mapReady = true;

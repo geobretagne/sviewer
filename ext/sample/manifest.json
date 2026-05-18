@@ -7,7 +7,7 @@
   "author": "fphg",
   "tags": ["référence", "template", "développement"],
 
-  "entry": "adapter.js",
+  "entry": "extension.js",
 
   "params": [
     {

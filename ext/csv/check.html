@@ -22,12 +22,12 @@
 <h1>csv extension — check</h1>
 <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:10px 16px;margin-bottom:12px;font-size:12px;">
     <strong>⚠ Prerequisite for end-to-end checks:</strong>
-    <code>adapters: ['csv']</code> must be set in <code>customConfig.js</code>.
+    <code>extensions: ['csv']</code> must be set in <code>customConfig.js</code>.
     Unit checks (0–13) run without it — only the e2e links (14–15) require it.
 </div>
 <p style="color:#888;font-size:12px;margin-bottom:12px;">
     Unit checks use inline CSV strings — no external fetch, no CORS dependency.
-    End-to-end checks use data.gouv.fr (CORS-enabled). Requires <code>adapters: ['csv']</code> in customConfig.
+    End-to-end checks use data.gouv.fr (CORS-enabled). Requires <code>extensions: ['csv']</code> in customConfig.
 </p>
 <div style="background:#fff;border:1px solid #ddd;border-radius:4px;padding:10px 16px;margin-bottom:16px;font-size:12px;">
     <strong>Data sources used by end-to-end checks</strong>
@@ -149,7 +149,7 @@
     </div>
 </div>
 
-<script src="adapter.js"></script>
+<script src="extension.js"></script>
 <script>
 (function() {
     'use strict';
@@ -202,7 +202,7 @@
     if (window.SViewerAdapters && window.SViewerAdapters['csv']) {
         pass('r-register', "window.SViewerAdapters['csv'] registered");
     } else {
-        fail('r-register', 'adapter not found — check adapter.js loaded and adapters:[\'csv\'] in customConfig');
+        fail('r-register', "extension not found — check extension.js loaded and extensions:['csv'] in customConfig");
         return;
     }
 

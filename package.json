@@ -14,7 +14,9 @@
     "lint:js": "eslint js/ static/js/",
     "lint:css": "stylelint css/sviewer.css",
     "lint": "npm run lint:js && npm run lint:css",
-    "build:catalog": "node build/generate-catalog.js"
+    "build:catalog": "node build/generate-catalog.js",
+    "build:psv": "esbuild build/psv-entry.js --bundle --minify --format=iife --outfile=ext/panoramax/psv.min.js",
+    "build:mvt": "esbuild build/mvt-entry.js --bundle --minify --format=iife --outfile=ext/panoramax/mvt.min.js"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
@@ -29,7 +31,9 @@
     "postcss-cli": "^11.0.1",
     "stylelint": "^17.11.0",
     "stylelint-config-standard": "^40.0.0",
-    "terser": "^5.31.0"
+    "terser": "^5.31.0",
+    "@photo-sphere-viewer/core": "^5.14.1",
+    "three": "^0.179.0"
   },
   "keywords": [
     "map",

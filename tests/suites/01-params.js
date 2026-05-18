@@ -130,3 +130,15 @@ SV_TESTS.push({
         if (dist > 2000) throw new Error('Center too far from Paris: ' + Math.round(dist) + 'm off');
     }
 });
+
+SV_TESTS.push({
+    id: 'param-ext-unknown',
+    label: '?ext=nonexistent — unknown extension ignored, sViewer still loads',
+    group: 'Params',
+    type: 'visual',
+    params: { ext: 'nonexistent_ext_xyz' },
+    assert: function(hardConfig) {
+        if (!hardConfig) throw new Error('hardConfig not received — sViewer crashed on unknown ?ext=');
+        if (!hardConfig.initialExtent) throw new Error('initialExtent missing after unknown ?ext=');
+    }
+});

@@ -817,6 +817,7 @@ window.SViewerApp = (function() {
             if (state.position) { linkParams.position = '1'; }
             if (state.opacity !== null && state.opacity !== 1) { linkParams.opacity = state.opacity; }
             if (state.geojson) { linkParams.geojson = state.geojson; }
+            if (qs.ext) { linkParams.ext = qs.ext; }
             if (state.label) { linkParams.label = state.label; }
             if (config.title) { linkParams.title = config.title; }
             // In embed mode, permalink must point to the standalone sViewer, not the host page
@@ -1271,8 +1272,8 @@ window.SViewerApp = (function() {
         if (formatHint) {
             var hintedAdapter = (window.SViewerAdapters || {})[formatHint];
             if (!hintedAdapter) {
-                messagePopup(tr('msg.adapter_not_loaded', formatHint));
-                log('_format hint "' + formatHint + '" found but adapter not loaded — add to customConfig adapters[]');
+                messagePopup(tr('msg.extension_not_loaded', formatHint));
+                log('_format hint "' + formatHint + '" found but extension not loaded — add to customConfig extensions[]');
                 return;
             }
         }
@@ -1903,6 +1904,7 @@ window.SViewerApp = (function() {
         }
         if (config.lb    && !qs.lb)    { qs.lb    = config.lb; }
         if (config.title && !qs.title) { qs.title = config.title; }
+        if (config.ext   && !qs.ext)   { qs.ext   = config.ext; }
         if (config.q     && !qs.q)     { qs.q     = config.q; }
         if (config.s     && !qs.s)     { qs.s     = config.s; }
         if (config.theme && !qs.theme) { qs.theme = config.theme; }
@@ -2612,6 +2614,8 @@ window.SViewerApp = (function() {
     //         sv:viewChange, sv:layerLoad
     this.on  = function(event, fn) { if (_bus) { _bus.on(event, fn); } };
     this.off = function(event, fn) { if (_bus) { _bus.off(event, fn); } };
+    // Convenience alias — extensions use SViewer.onMapReady(fn) as entry point.
+    this.onMapReady = function(fn) { if (_bus) { _bus.on('sv:mapReady', fn); } };
     // Register a map click handler. fn({ coordinate, pixel, olEvent }).
     // Use getMap().forEachFeatureAtPixel(pixel, ...) to hit-test your own layers.
     this.addClickHandler    = function(fn) { if (typeof fn === 'function') { _clickHandlers.push(fn); } };

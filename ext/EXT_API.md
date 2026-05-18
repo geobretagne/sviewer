@@ -9,6 +9,12 @@ customConfig = {
 };
 ```
 
+Extensions can also be activated via URL without customConfig:
+
+```
+index.html?ext=my-extension
+```
+
 embed.js loads `ext/my-extension/extension.js` after `sv:mapReady`. The extension initialises in `SViewer.onMapReady()`.
 
 ---
@@ -92,8 +98,8 @@ window.SViewerState    // état runtime (activePanel, mapZoom, layersVisible, �
 ## UI
 
 ```javascript
-// Injecter un bouton dans la barre de contrôles extension
-const toolbar = document.getElementById('sv-ext-toolbar');
+// Injecter un bouton dans la barre des panneaux (côté droit)
+const toolbar = document.getElementById('sv-panel-controls');
 const btn = document.createElement('button');
 btn.className = 'btn btn-dark sv-map-btn';
 toolbar.appendChild(btn);
@@ -113,9 +119,9 @@ SViewer.onTitleChange = (title) => { /* persister */ };
 
 ---
 
-## Adaptateur JSON (optionnel)
+## Convertisseur de données JSON (optionnel)
 
-Un adaptateur normalise les réponses d'APIs non-GeoJSON pour `?geojson=`.
+Un convertisseur normalise les réponses d'APIs non-GeoJSON pour `?geojson=`.
 
 ```javascript
 window.SViewerAdapters = window.SViewerAdapters || {};
@@ -141,10 +147,10 @@ window.SViewerAdapters['my-adapter'] = {
 };
 ```
 
-Déclarer l'adaptateur dans `customConfig.adapters` pour l'activer :
+Déclarer l'extension dans `customConfig.extensions` pour l'activer :
 
 ```javascript
-customConfig = { adapters: ['my-adapter'] };
+customConfig = { extensions: ['my-adapter'] };
 ```
 
 ---
@@ -164,14 +170,14 @@ Each extension must have `ext/<name>/manifest.json`. Used by `npm run build:cata
   "screenshot":  "screenshot.png",   // optional — omit if none (160×120 px recommended)
   "tags":        ["csv", "import"],  // free-form keywords for catalog search
 
-  "entry": "adapter.js",             // extension: JS entry point (relative to ext/<name>/)
+  "entry": "extension.js",            // JS entry point (relative to ext/<name>/)
   // "url": "https://…",            // demo: external URL instead of entry
 
   "params": [                        // URL params the extension reads — catalog display only
     {
       "name":        "_format",      // param name (no ?)
       "type":        "string",       // string | integer | boolean
-      "description": "Force adapter activation",
+      "description": "Force extension activation",
       "enum":        ["my-ext"],     // optional — allowed values shown as pills
       "example":     "_format=my-ext"
     }
