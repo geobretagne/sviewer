@@ -4,6 +4,29 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.11.0] - 2026-05-18
+
+### Added
+
+- **Extension API v2** : cycle de vie complet pour les extensions tierces — `SViewer.onMapReady`, `SViewer.panel.open/update/close`, `SViewer.onFeaturesLoaded`, `SViewer.onFeaturesError`, `SViewer.onFeatureClick`, `SViewer.onFeatureSelect`, `SViewer.addClickHandler/removeClickHandler`. Un handler retournant `true` consomme le clic et supprime le GFI/sélection vecteur natif.
+- **Extension : `altitude`** (`?ext=altitude`) : profil en long altimétrique via l'API IGN Géoplateforme. Tracé d'un itinéraire sur la carte (points + ligne de prévisualisation en caoutchouc), calcul du profil, graphique SVG avec dénivelés cumulés, stats ↑/↓/min–max, résultat affiché comme donnée vectorielle.
+- **Extension : `isochrone`** (`?ext=isochrone`) : isochrones via l'API IGN Géoplateforme Navigation. Sélection du point de départ sur la carte, choix piéton/voiture, mode temps (minutes) ou distance (km), résultat affiché comme polygone.
+- **Extension : `panoramax`** (`?ext=panoramax`) : visionneuse Panoramax (street-level imagery). Clic sur la carte → ouverture de l'image la plus proche dans le panneau latéral.
+- **Catalogue d'extensions** (`ext/index.html`) : généré via `npm run build:catalog` à partir des `manifest.json` de chaque extension.
+- **`?ext=`** : supporte plusieurs extensions séparées par des virgules (`?ext=altitude,panoramax`).
+- **OL global documenté** : `ol` est accessible globalement depuis les extensions — coordonnées, géométries, styles, events. Voir `ext/EXT_API.md`.
+
+### Fixed
+
+- **Fermeture du panneau sur second clic carte** : un handler d'extension consommant le clic (`return true`) empêche désormais correctement le déclenchement du GFI et de la sélection vecteur natifs (`_lastClickSuppressed`).
+- **`panel.open()` idempotent** : appeler `panel.open()` sur un panneau déjà ouvert ne le referme plus (`_alreadyOpen`).
+- **OL build** : `ol.geom.LineString`, `ol.Observable`, `ol.unByKey` manquants dans le bundle custom — erreurs silencieuses dans les handlers d'extension. Ajoutés à `build/ol-custom-entry.js`.
+- **Lien d'accessibilité** : cible du skip-link corrigée (`#sviewer`, `tabindex="-1"`) — élément présent dans le HTML statique, détectable par Lighthouse.
+
+### Mise à jour depuis 0.10.0
+
+Aucune modification de configuration requise. Remplacer les fichiers du déploiement par ceux de cette version. Les nouvelles extensions (`altitude`, `isochrone`, `panoramax`) sont opt-in via `customConfig.extensions` ou `?ext=` — aucun impact sur les instances existantes.
+
 ## [0.10.0] - 2026-05-09
 
 ### Changed
