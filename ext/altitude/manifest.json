@@ -1,0 +1,22 @@
+{
+  "id":          "altitude",
+  "type":        "extension",
+  "version":     "1.0.0",
+  "name":        "Profil en long",
+  "description": "Tracé d'un itinéraire sur la carte et calcul du profil altimétrique via l'API IGN Géoplateforme",
+  "author":      "fphg",
+  "tags":        ["altimétrie", "profil", "dénivelé", "IGN", "Géoplateforme"],
+
+  "entry": "extension.js",
+
+  "sviewer": {
+    "minVersion": "0.10.0"
+  },
+
+  "examples": [
+    {
+      "title": "Profil en long",
+      "url":   "?ext=altitude&z=12&x=2.3488&y=48.8534"
+    }
+  ]
+}

@@ -197,6 +197,7 @@ window.SViewer.app = (function() {
     var vectorLayer;
     var _onReadyCallbacks = [];
     var _clickHandlers = [];
+    var _lastClickSuppressed = false;
 
     // ----- pseudoclasses ------------------------------------------------------------------------------------
 
@@ -1112,6 +1113,7 @@ window.SViewer.app = (function() {
         _vectorClickBound = true;
         map.on('singleclick', function(e) {
             if (!vectorLayer) { return; }
+            if (_lastClickSuppressed) { return; }
             var hit = false;
             map.forEachFeatureAtPixel(e.pixel, function(feature) {
                 if (hit) { return; }
@@ -2203,6 +2205,7 @@ window.SViewer.app = (function() {
                     try { if (fn(payload) === true) { suppressed = true; } } catch(_e) { /* extension errors are silenced */ }
                 });
             }
+            _lastClickSuppressed = suppressed;
             if (suppressed) { return; }
             // Skip WMS GetFeatureInfo when user clicked any vector feature —
             // covers both sViewer's own GeoJSON layer and external widget layers.
@@ -2679,7 +2682,12 @@ window.SViewer.app = (function() {
                 panelEl.querySelector('.sv-panel-content').innerHTML = html || '';
             }
             _panelOwner = name;
-            togglePanel('ext-' + name);
+            var _alreadyOpen = (function() {
+                var s = document.getElementById('sv-sidepanel');
+                var sec = s && s.querySelector('[data-sv-section="ext-' + name + '"]');
+                return sec && sec.style.display !== 'none' && document.getElementById('sv-sidepanel').classList.contains('active');
+            }());
+            if (!_alreadyOpen) { togglePanel('ext-' + name); }
         },
         close: function() { _panelOwner = null; togglePanel(null); },
         update: function(name, html) {

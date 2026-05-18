@@ -1,0 +1,22 @@
+{
+  "id":          "isochrone",
+  "type":        "extension",
+  "version":     "1.0.0",
+  "name":        "Isochrone / Isodistance",
+  "description": "Compute and display isochrone or isodistance zones using IGN Géoplateforme navigation API",
+  "author":      "fphg",
+  "tags":        ["isochrone", "isodistance", "navigation", "IGN", "Géoplateforme"],
+
+  "entry": "extension.js",
+
+  "sviewer": {
+    "minVersion": "0.10.0"
+  },
+
+  "examples": [
+    {
+      "title": "Isochrone depuis Paris",
+      "url":   "?ext=isochrone&z=12&x=2.3488&y=48.8534"
+    }
+  ]
+}

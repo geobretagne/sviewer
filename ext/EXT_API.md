@@ -184,6 +184,13 @@ SViewer.commit    // short git hash, e.g. 'f285337'
 const BASE = SViewer.extensionBase();  // e.g. 'https://example.com/ext/my-ext/'
 ```
 
+`ol` is available as a global — the full OpenLayers API is accessible from extensions.
+
+```javascript
+// Coordinate conversion example (EPSG:3857 → EPSG:4326):
+var coord = ol.proj.transform(evt.coordinate, 'EPSG:3857', 'EPSG:4326');
+```
+
 **Warning:** `extensionBase()` relies on `document.currentScript` — only set during synchronous
 module execution. Call it at the top of your extension file and store the result. Calling it
 inside a callback (`onMapReady`, `setTimeout`, `fetch.then`) returns a wrong fallback path with

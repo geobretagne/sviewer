@@ -1092,10 +1092,13 @@ sviewer/
 ├── index.html              — point d'entrée mode simple
 ├── manifest.json           — PWA manifest
 ├── sw.js                   — Service Worker
-├── ext/                    — extensions (Grist, CSV…)
+├── ext/                    — extensions (Grist, CSV, élévation, isochrone, Panoramax…)
 │   ├── grist/              — widget Grist (index.html, widget.js, adapter.js)
 │   ├── csv/                — adaptateur CSV (adapter.js)
-│   └── sample/             — adaptateur de référence commenté
+│   ├── altitude/           — outils altimétriques : profil en long, … (IGN Géoplateforme)
+│   ├── isochrone/          — isochrones (IGN Géoplateforme navigation)
+│   ├── panoramax/          — viewer Panoramax (street-level imagery)
+│   └── sample/             — extension de référence commentée
 ├── deploy/                 — config infra (nginx, Docker) — non servi
 ├── local/                  — sandbox déployeur (optionnel, monté en volume Docker)
 │   ├── customConfig.js     — configuration locale (optionnel, défauts intégrés)
