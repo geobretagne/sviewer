@@ -2651,7 +2651,7 @@ window.SViewer.app = (function() {
     this.removeClickHandler = function(fn) { _clickHandlers = _clickHandlers.filter(function(h) { return h !== fn; }); };
 
     // Sanitize HTML from extension-supplied strings before setting innerHTML.
-    // Strips on* event handler attributes and <script> elements.
+    // Strips <script>, on* event handlers, and javascript:/data: URL protocols.
     // Extensions are deployer-controlled but may reflect untrusted API data.
     function _sanitizeExtHtml(html) {
         if (!html) { return ''; }
@@ -2660,6 +2660,10 @@ window.SViewer.app = (function() {
         doc.body.querySelectorAll('*').forEach(function(el) {
             Array.from(el.attributes).forEach(function(attr) {
                 if (/^on/i.test(attr.name)) { el.removeAttribute(attr.name); }
+            });
+            ['href', 'src', 'action'].forEach(function(attr) {
+                var val = el.getAttribute(attr);
+                if (val && /^\s*(javascript|data):/i.test(val)) { el.removeAttribute(attr); }
             });
         });
         return doc.body.innerHTML;
