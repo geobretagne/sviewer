@@ -285,9 +285,19 @@
                     if (picLayer) { picLayer.changed(); }
                 });
             } catch(e) {
-                container.innerHTML = p.thumb
-                    ? '<img src="' + p.thumb + '" alt="photo" style="width:100%;height:100%;object-fit:cover;border-radius:4px">'
-                    : '<div style="color:#888;padding:1rem;text-align:center">Aperçu indisponible</div>';
+                container.innerHTML = '';
+                if (p.thumb) {
+                    var img = document.createElement('img');
+                    img.src = p.thumb;
+                    img.alt = 'photo';
+                    img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:4px';
+                    container.appendChild(img);
+                } else {
+                    var msg = document.createElement('div');
+                    msg.style.cssText = 'color:#888;padding:1rem;text-align:center';
+                    msg.textContent = 'Aperçu indisponible';
+                    container.appendChild(msg);
+                }
             }
         });
     }

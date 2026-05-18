@@ -245,7 +245,10 @@
                 renderResult(data);
             })
             .catch(function (err) {
-                showResult('<div style="color:#c00;font-size:.8rem">Erreur : ' + err.message + '</div>');
+                var div = document.createElement('div');
+                div.style.cssText = 'color:#c00;font-size:.8rem';
+                div.textContent = 'Erreur : ' + err.message;
+                showResult(div.outerHTML);
             })
             .finally(function () {
                 var sb = document.getElementById('sv-elev-submit');

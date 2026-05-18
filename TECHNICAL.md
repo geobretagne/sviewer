@@ -668,8 +668,26 @@ allowedDomains: ['my-georchestra.example.org', 'data.geopf.fr']
 
 - Absent ou `[]` : tous les domaines autorisés (comportement par défaut, compatible avec les configs existantes)
 - La correspondance est exacte **ou par sous-domaine** : `'example.org'` autorise aussi `tiles.example.org`
-- S'applique aux trois points d'entrée : URL WMS personnalisée (`?layers=ns:layer@url`), URL WMS extraite d'un enregistrement CSW, URL WFS découverte via DescribeLayer
+- S'applique aux quatre points d'entrée : URL WMS personnalisée (`?layers=ns:layer@url`), URL WMS extraite d'un enregistrement CSW, URL WFS découverte via DescribeLayer, URL GeoJSON (`?geojson=`)
 - En cas de blocage, un avertissement est émis en console (`sViewer: blocked … not in allowedDomains`)
+
+### Sécurité — sanitisation HTML des panneaux d'extension
+
+Le HTML passé à `SViewer.panel.open()` et `SViewer.panel.update()` est sanitisé avant injection dans le DOM. La sanitisation supprime :
+
+- les éléments `<script>`
+- les attributs de gestionnaire d'événements (`on*` : `onerror`, `onclick`, `onload`, etc.)
+
+**Pourquoi :** les extensions sont du code déployeur, mais elles peuvent refléter des données d'API tierces non maîtrisées. La sanitisation coupe le vecteur XSS sans changer l'API.
+
+**Conséquence pour les extensions :** ne pas utiliser de gestionnaires `onclick=` inline dans le HTML passé au panneau — utiliser `addEventListener` après rendu :
+
+```javascript
+SViewer.panel.open('myext', 'Mon outil', '<button id="my-btn">Lancer</button>');
+document.getElementById('my-btn').addEventListener('click', myHandler);
+```
+
+La sanitisation n'affecte pas le HTML statique injecté directement par l'extension dans le DOM via `document.createElement()`.
 
 ### Sécurité — déploiement serveur web
 

@@ -1306,6 +1306,10 @@ window.SViewer.app = (function() {
             }
         }
         log('loadGeoJSON:', url, '| textAdapter:', textAdapter ? 'yes' : 'no', '| adapters loaded:', Object.keys(adapters).join(',') || 'none');
+        if (!isDomainAllowed(url)) {
+            log('loadGeoJSON: blocked URL not in allowedDomains:', url);
+            return;
+        }
         fetch(url)
         .then(function(res) {
             if (!res.ok) { throw new Error('HTTP ' + res.status); }
@@ -1378,8 +1382,14 @@ window.SViewer.app = (function() {
                     if (response.search(config.nodata) < 0) {
                         closePanel();
                         /* DOMParser without script execution prevents XSS
-                           from attacker-controlled WMS servers returning malicious GetFeatureInfo HTML */
+                           from attacker-controlled WMS servers returning malicious GetFeatureInfo HTML.
+                           Strip on* event handler attributes before import to prevent onerror/onload XSS. */
                         var parsed = new DOMParser().parseFromString(response, 'text/html');
+                        parsed.body.querySelectorAll('*').forEach(function(el) {
+                            Array.from(el.attributes).forEach(function(attr) {
+                                if (/^on/i.test(attr.name)) { el.removeAttribute(attr.name); }
+                            });
+                        });
                         Array.prototype.forEach.call(parsed.body.childNodes, function(node) {
                             container.appendChild(document.importNode(node, true));
                         });
@@ -2577,7 +2587,7 @@ window.SViewer.app = (function() {
         // prop: 'textContent'|'innerHTML'|'value'|'checked'|'hidden'|attribute name (getAttribute fallback).
         if (window.parent !== window) {
             window.addEventListener('message', function(e) {
-                if (!e.data) { return; }
+                if (!e.data || e.origin !== window.location.origin) { return; }
                 if (e.data.type === 'sv:domQuery') {
                     var el = document.querySelector(e.data.selector);
                     var value = null;
@@ -2639,6 +2649,22 @@ window.SViewer.app = (function() {
     // Use getMap().forEachFeatureAtPixel(pixel, ...) to hit-test your own layers.
     this.addClickHandler    = function(fn) { if (typeof fn === 'function') { _clickHandlers.push(fn); } };
     this.removeClickHandler = function(fn) { _clickHandlers = _clickHandlers.filter(function(h) { return h !== fn; }); };
+
+    // Sanitize HTML from extension-supplied strings before setting innerHTML.
+    // Strips on* event handler attributes and <script> elements.
+    // Extensions are deployer-controlled but may reflect untrusted API data.
+    function _sanitizeExtHtml(html) {
+        if (!html) { return ''; }
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        doc.body.querySelectorAll('script').forEach(function(el) { el.remove(); });
+        doc.body.querySelectorAll('*').forEach(function(el) {
+            Array.from(el.attributes).forEach(function(attr) {
+                if (/^on/i.test(attr.name)) { el.removeAttribute(attr.name); }
+            });
+        });
+        return doc.body.innerHTML;
+    }
+
     // Panel API — open/close a named extension panel in the sidepanel.
     // open(name, title, html) creates the panel DOM on first call (no toolbar button injected).
     // update(name, html) no-ops if name !== current owner (stale async callback protection).
@@ -2670,7 +2696,7 @@ window.SViewer.app = (function() {
 
                 var content = document.createElement('div');
                 content.className = 'sv-panel-content';
-                content.innerHTML = html || '';
+                content.innerHTML = _sanitizeExtHtml(html);
 
                 section.appendChild(header);
                 section.appendChild(content);
@@ -2679,7 +2705,7 @@ window.SViewer.app = (function() {
                 var panelEl = document.getElementById(panelId);
                 panelEl.querySelector('.sv-panel-title').textContent = title;
                 panelEl.setAttribute('aria-label', title);
-                panelEl.querySelector('.sv-panel-content').innerHTML = html || '';
+                panelEl.querySelector('.sv-panel-content').innerHTML = _sanitizeExtHtml(html);
             }
             _panelOwner = name;
             var _alreadyOpen = (function() {
@@ -2696,7 +2722,7 @@ window.SViewer.app = (function() {
                 return;
             }
             var el = document.querySelector('#sv-panel-ext-' + name + ' .sv-panel-content');
-            if (el) { el.innerHTML = html || ''; }
+            if (el) { el.innerHTML = _sanitizeExtHtml(html); }
         }
     };
     }

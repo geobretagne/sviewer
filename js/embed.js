@@ -339,7 +339,7 @@
                 // UI extensions use onMapReady() so early load is safe for both.
                 // URL param ?_ext=name adds an extension without customConfig.
                 var urlExts = (new URLSearchParams(window.location.search).get('ext') || '')
-                    .split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+                    .split(',').map(function(s) { return s.trim(); }).filter(function(s) { return /^[a-zA-Z0-9_-]+$/.test(s); });
                 var configExts = (window.customConfig && window.customConfig.extensions) || [];
                 var allExts = configExts.concat(urlExts.filter(function(e) { return !configExts.includes(e); }));
                 var extPromises = allExts
