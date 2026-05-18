@@ -162,6 +162,7 @@
     --bs-btn-border-radius:      var(--sv-radius);
     --bs-btn-box-shadow:         var(--sv-btn-box-shadow);
     --bs-btn-focus-box-shadow:   var(--sv-btn-focus-ring);
+
     border: 1px solid var(--sv-btn-border);
 }
 
