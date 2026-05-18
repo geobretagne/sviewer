@@ -87,8 +87,8 @@
             '<div>',
             '<label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem">Profil</label>',
             '<div style="display:flex;gap:.5rem">',
-            '<button type="button" class="btn btn-sm btn-outline-secondary sv-iso-profile active" data-value="pedestrian">Piéton</button>',
-            '<button type="button" class="btn btn-sm btn-outline-secondary sv-iso-profile" data-value="car">Voiture</button>',
+            '<button type="button" class="btn btn-sm btn-outline-secondary sv-iso-profile active" data-value="pedestrian" aria-pressed="true">Piéton</button>',
+            '<button type="button" class="btn btn-sm btn-outline-secondary sv-iso-profile" data-value="car" aria-pressed="false">Voiture</button>',
             '</div>',
             '</div>',
 
@@ -96,8 +96,8 @@
             '<div>',
             '<label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem">Type</label>',
             '<div style="display:flex;gap:.5rem">',
-            '<button type="button" class="btn btn-sm btn-outline-secondary sv-iso-costtype active" data-value="time">Temps</button>',
-            '<button type="button" class="btn btn-sm btn-outline-secondary sv-iso-costtype" data-value="distance">Distance</button>',
+            '<button type="button" class="btn btn-sm btn-outline-secondary sv-iso-costtype active" data-value="time" aria-pressed="true">Temps</button>',
+            '<button type="button" class="btn btn-sm btn-outline-secondary sv-iso-costtype" data-value="distance" aria-pressed="false">Distance</button>',
             '</div>',
             '</div>',
 
@@ -106,7 +106,7 @@
             '<label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem">Durée (minutes)</label>',
             '<div style="display:flex;gap:.5rem;align-items:center">',
             '<input id="sv-iso-slider" type="range" min="1" max="60" value="10" style="flex:1">',
-            '<input id="sv-iso-value" type="number" min="1" max="9999" value="10" style="width:4rem;text-align:right;background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:2px 4px">',
+            '<input id="sv-iso-value" type="number" min="1" max="9999" value="10" aria-label="Valeur" style="width:4rem;text-align:right;background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:2px 4px">',
             '</div>',
             '</div>',
 
@@ -136,8 +136,9 @@
         // Profile toggle
         document.querySelectorAll('.sv-iso-profile').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                document.querySelectorAll('.sv-iso-profile').forEach(function (b) { b.classList.remove('active'); });
+                document.querySelectorAll('.sv-iso-profile').forEach(function (b) { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
                 btn.classList.add('active');
+                btn.setAttribute('aria-pressed', 'true');
                 updateCostLabel();
             });
         });
@@ -145,8 +146,9 @@
         // Cost type toggle
         document.querySelectorAll('.sv-iso-costtype').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                document.querySelectorAll('.sv-iso-costtype').forEach(function (b) { b.classList.remove('active'); });
+                document.querySelectorAll('.sv-iso-costtype').forEach(function (b) { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
                 btn.classList.add('active');
+                btn.setAttribute('aria-pressed', 'true');
                 updateCostLabel();
             });
         });

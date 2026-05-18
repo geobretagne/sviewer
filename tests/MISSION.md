@@ -37,11 +37,13 @@ tests/
   runner.js               — runVisual(), renderResult(), renderRunning()
   ui.js                   — panel DOM, click handlers, run-all/run-group, ?autorun=1
   MISSION.md              — this file
+  embed-host.html         — minimal host page that loads embed.min.js + relays sv:ready to runner
   suites/
     01-params.js          — visual: URL KVP params (?x= ?y= ?z= ?c= ?lang= ?lb= ?layers=)
     02-config-merge.js    — visual: hardConfig/customConfig merge via ?c=test
     03-i18n.js            — visual: key coverage, all 4 languages
     04-wms-services.js    — visual: live WMS endpoints (geobretagne.fr, IGN GPF)
+    12-embed-mode.js      — embed: DOM creation via embed.js, toolbar, panels, search, share URL
 
 local/
   customConfig_test.js    — fixed test profile (title, initialExtent, maxFeatures)
@@ -53,7 +55,7 @@ local/
 SV_TESTS.push({
     id: 'unique-id',
     label: 'Human readable description',
-    group: 'Params',         // 'Params' | 'Config' | 'i18n' | 'Live'
+    group: 'Params',         // 'Params' | 'Config' | 'i18n' | 'Live' | 'Embed'
     type: 'visual',
 
     // URL params to load sViewer with

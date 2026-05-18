@@ -489,7 +489,7 @@
                         if (versionEl) {
                             var extNames = (window.customConfig && window.customConfig.extensions) || [];
                             var extStr = extNames.length ? ' ' + extNames.join(', ') : '';
-                            versionEl.innerHTML = '<a href="https://github.com/geobretagne/sviewer/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">sViewer ' + SVIEWER_VERSION + '</a> <span style="font-family:monospace">' + SVIEWER_COMMIT + '</span>' + extStr;
+                            versionEl.innerHTML = '<a href="https://github.com/geobretagne/sviewer/" target="_blank" rel="noopener" aria-label="sViewer ' + SVIEWER_VERSION + ' sur GitHub (nouvel onglet)" style="color:inherit;text-decoration:none;">sViewer ' + SVIEWER_VERSION + '</a> <span style="font-family:monospace">' + SVIEWER_COMMIT + '</span>' + extStr;
                         }
                         return window.SViewer.app;
                     } else {

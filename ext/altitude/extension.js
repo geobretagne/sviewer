@@ -292,8 +292,13 @@
         d += ' L' + px(elevs.length - 1) + ',' + (PAD.t + iH) + ' L' + px(0) + ',' + (PAD.t + iH) + ' Z';
 
         var yMid = Math.round((zMin + zMax) / 2);
+        var zMinR = Math.round(zMin), zMaxR = Math.round(zMax);
+        var svgTitle = 'Profil altimétrique — ' + totalKm.toFixed(1) + ' km';
+        var svgDesc  = 'Altitude min ' + zMinR + ' m, max ' + zMaxR + ' m, dénivelé positif ' + Math.round(diff.positive || 0) + ' m';
         var svg = [
-            '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" style="display:block;overflow:visible">',
+            '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" role="img" aria-labelledby="sv-elev-svg-title sv-elev-svg-desc" style="display:block;overflow:visible">',
+            '<title id="sv-elev-svg-title">' + svgTitle + '</title>',
+            '<desc id="sv-elev-svg-desc">' + svgDesc + '</desc>',
             // Grid lines
             '<line x1="' + PAD.l + '" y1="' + (PAD.t + iH / 2) + '" x2="' + (PAD.l + iW) + '" y2="' + (PAD.t + iH / 2) + '" stroke="#333" stroke-dasharray="2,3"/>',
             // Area

@@ -606,17 +606,17 @@ geojsonStyle: {
 - Valeurs par défaut : orange `#ff6600`, opacité `0.35`, trait `4 px`, sélection `#ee7733`
 - Si une entité possède une propriété `_label`, elle est affichée comme étiquette texte au-dessus de l'entité
 
-### Adaptateurs JSON (`adapters`)
+### Adaptateurs JSON (`extensions`)
 
 Les adaptateurs normalisent les réponses d'APIs non-GeoJSON (Grist, ArcGIS REST…) en `FeatureCollection` pour affichage via `?geojson=`.
 
 **Activer un adaptateur** — ajouter son nom dans `customConfig.js` :
 
 ```javascript
-adapters: ['grist']
+extensions: ['grist']
 ```
 
-Chaque nom correspond à `ext/{nom}/adapter.js`. Seuls les adaptateurs fournis avec sViewer sont supportés (pas de chemin externe).
+Chaque nom correspond à `ext/{nom}/extension.js`. Seuls les adaptateurs fournis avec sViewer sont supportés (pas de chemin externe).
 
 **Adaptateurs disponibles**
 
@@ -628,7 +628,7 @@ Chaque nom correspond à `ext/{nom}/adapter.js`. Seuls les adaptateurs fournis a
 **Plusieurs adaptateurs** — listés dans l'ordre de priorité. Chaque adaptateur déclare un `match(url)` qui limite son activation à certaines URLs source :
 
 ```javascript
-adapters: ['grist', 'arcgis']
+extensions: ['grist', 'arcgis']
 ```
 
 **Écrire son propre adaptateur** — créer `ext/monadaptateur/extension.js` :
