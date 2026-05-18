@@ -35,7 +35,7 @@ Que permet sViewer ?
 * **Intégrer dans n'importe quelle page** — une ligne `<iframe>` suffit
 * **API JavaScript** — intégrez et contrôlez la carte
 * **Logiciel libre, gratuit, auto-hébergeable** — licence GPL, aucun compte, aucune inscription, aucune dépendance externe
-* **Skills** qui étendent les possibilités : par exemple édition de géométries dans [Grist](https://www.getgrist.com)
+* **Extensions** qui étendent les possibilités : par exemple édition de géométries dans [Grist](https://www.getgrist.com)
 
 
 ![sViewer sur mobile — panneau de partage ouvert](examples/screenshot-mobile.png)
@@ -70,7 +70,7 @@ sViewer récupère automatiquement l'URL WMS et les métadonnées (titre, résum
 
 sViewer affiche des données via WMS — pas les fichiers directement. Deux alternatives :
 
-- **Grist** — si vos données sont dans un document Grist avec une colonne géométrie, utilisez le [widget Grist intégré](skill/grist/) : carte interactive synchronisée avec le tableau, édition de géométries depuis la carte, lien de partage autonome. → [Documentation complète du widget Grist](skill/grist/README.md)
+- **Grist** — si vos données sont dans un document Grist avec une colonne géométrie, utilisez le [widget Grist intégré](ext/grist/) : carte interactive synchronisée avec le tableau, édition de géométries depuis la carte, lien de partage autonome. → [Documentation complète du widget Grist](ext/grist/README.md)
 - **Autres formats** — parlez à votre service SIG ou utilisez un outil comme [uMap](https://umap.openstreetmap.fr/) qui accepte les imports directs.
 
 

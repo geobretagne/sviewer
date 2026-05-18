@@ -1,39 +1,39 @@
 /**
- * Sample skill — reference implementation for skill authors.
+ * Sample extension — reference implementation for extension authors.
  *
  * Demonstrates: toolbar button, loadFeatureObjects, onFeatureClick,
  * onFeatureSelect, onFeaturesLoaded, selectFeature, refreshVector.
  *
  * Activate in customConfig.js:
- *   customConfig = { skills: ['sample'] };
+ *   customConfig = { extensions: ['sample'] };
  *
- * Full API reference: skill/SKILL_API.md
+ * Full API reference: ext/EXT_API.md
  */
 
 SViewer.onMapReady(({ map, view }) => {
 
     // --- Toolbar button ---------------------------------------------------
-    const toolbar = document.getElementById('sv-skill-toolbar');
+    const toolbar = document.getElementById('sv-panel-controls');
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'btn btn-dark sv-map-btn';
-    btn.title = 'Sample skill — load demo features';
+    btn.title = 'Sample extension — load demo features';
     btn.innerHTML = '<i class="bi bi-stars" aria-hidden="true"></i>';
     btn.addEventListener('click', loadDemoFeatures);
     toolbar.appendChild(btn);
 
     // --- Event listeners --------------------------------------------------
     SViewer.onFeaturesLoaded(({ count }) => {
-        console.log('[sample skill] features loaded:', count);
+        console.log('[sample ext] features loaded:', count);
     });
 
     SViewer.onFeatureClick(({ feature, properties }) => {
-        console.log('[sample skill] feature clicked:', feature.getId(), properties);
+        console.log('[sample ext] feature clicked:', feature.getId(), properties);
     });
 
     SViewer.onFeatureSelect((e) => {
         if (!e) { return; } // deselect
-        console.log('[sample skill] feature selected:', e.properties);
+        console.log('[sample ext] feature selected:', e.properties);
     });
 
     // --- Demo data --------------------------------------------------------

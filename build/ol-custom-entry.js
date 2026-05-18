@@ -26,6 +26,8 @@ import VectorSource from 'ol/source/Vector.js';
 import Feature from 'ol/Feature.js';
 import CircleGeom from 'ol/geom/Circle.js';
 import Point from 'ol/geom/Point.js';
+import LineString from 'ol/geom/LineString.js';
+import Observable, { unByKey } from 'ol/Observable.js';
 
 // Import styles
 import Style from 'ol/style/Style.js';
@@ -83,9 +85,12 @@ window.ol = {
     Vector: VectorSource,
   },
   Feature,
+  Observable,
+  unByKey,
   geom: {
     Circle: CircleGeom,
     Point,
+    LineString,
   },
   style: {
     Style,

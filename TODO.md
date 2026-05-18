@@ -3,7 +3,7 @@
 
 ## En cours — v0.9.x
 
-- [~] Grist skill : dépendance CDN docs.getgrist.com — investigué, impossible à supprimer côté sViewer.
+- [~] Grist extension : dépendance CDN docs.getgrist.com — investigué, impossible à supprimer côté sViewer.
 
   **Analyse (2026-05-05) :**
   L'URL `grist-plugin-api.js` est prévisible sur toute instance Grist (`{origin}/grist-plugin-api.js`).
@@ -19,7 +19,7 @@
 
 - [ ] CI : GitHub Actions workflow — build + healthcheck verify on tag push (no registry push)
 - [ ] Grist widget : real-world user testing
-- [ ] CSV skill : real-world user testing
+- [ ] CSV extension : real-world user testing
 
 
 ## Backlog — layer controls (future, P3)

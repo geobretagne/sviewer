@@ -1,16 +1,16 @@
 /**
- * sViewer adapter — CSV
+ * sViewer extension — CSV
  *
  * Converts a CSV text response to a GeoJSON FeatureCollection.
- * Registered as window.SViewerAdapters['csv'].
+ * Registered via SViewer.registerAdapter(['csv'].
  *
- * Activated via customConfig.js:  adapters: ['csv']
+ * Activated via customConfig.js:  extensions: ['csv']
  *
  * Input:  raw CSV text (UTF-8, comma or semicolon separated, optional BOM,
  *         first row = header)
  * Output: GeoJSON FeatureCollection (EPSG:4326)
  *
- * URL hints (same system as grist adapter, appended to the ?geojson= URL):
+ * URL hints (same system as grist extension, appended to the ?geojson= URL):
  *   _format    — must be 'csv' when URL has no .csv extension (e.g. data.gouv.fr redirects)
  *   _geomcol   — column name for GeoJSON geometry or WKT
  *   _geommode  — geojson | latlon | latlon_str | lonlat_str | wkt
@@ -19,7 +19,7 @@
  *   _labelcol  — column used as feature label (_label property)
  *
  * When hints are absent, geometry is auto-detected from column names and values.
- * Same detection logic as skill/grist/adapter.js — keep in sync.
+ * Same detection logic as ext/grist/extension.js — keep in sync.
  *
  * CORS required: the CSV file must be served with Access-Control-Allow-Origin.
  * Known compatible sources: data.gouv.fr (static.data.gouv.fr), GitHub raw,
@@ -226,10 +226,8 @@
         return { type: 'FeatureCollection', features: features };
     }
 
-    // Register in the global adapter registry.
-    // wantsText: true signals sviewer.js to fetch this URL as text, not JSON.
-    window.SViewerAdapters = window.SViewerAdapters || {};
-    window.SViewerAdapters['csv'] = {
+    // Register via SViewer.registerAdapter — safe at module scope, validates input.
+    SViewer.registerAdapter('csv', {
         // Activate for .csv URLs or when user appends &_format=csv for extension-less URLs.
         match: function(url) {
             return typeof url === 'string' && (
@@ -241,8 +239,8 @@
             try { return decodeURIComponent(new URL(url).pathname.split('/').pop()) || 'CSV'; }
             catch(e) { return 'CSV'; }
         },
-        // Signal to sviewer.js dispatcher that this adapter needs raw text, not parsed JSON.
+        // Signal to sviewer.js dispatcher that this extension needs raw text, not parsed JSON.
         wantsText: true,
         convert: convert
-    };
+    });
 }());

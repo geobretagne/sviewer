@@ -1,10 +1,10 @@
 /**
- * sViewer adapter — Grist public records API
+ * sViewer extension — Grist public records API
  *
  * Converts Grist API responses to GeoJSON FeatureCollections.
- * Registered as window.SViewerAdapters['grist'].
+ * Registered via SViewer.registerAdapter(['grist'].
  *
- * Activated via customConfig.js:  adapters: ['grist']
+ * Activated via customConfig.js:  extensions: ['grist']
  *
  * Input:  { records: [ { id, fields: { geometry: '{"type":...}', col1, … } } ] }
  * Output: GeoJSON FeatureCollection (EPSG:4326)
@@ -197,10 +197,8 @@
         return { type: 'FeatureCollection', features: features };
     }
 
-    // Register in the global adapter registry.
-    // sviewer.js iterates window.SViewerAdapters, calls match(url) then convert().
-    window.SViewerAdapters = window.SViewerAdapters || {};
-    window.SViewerAdapters['grist'] = {
+    // Register via SViewer.registerAdapter — safe at module scope, validates input.
+    SViewer.registerAdapter('grist', {
         // Only activate for Grist records API URLs — path pattern is unambiguous.
         match: function(url) {
             return typeof url === 'string' && /\/api\/docs\/[^/]+\/tables\/[^/]+\/records/.test(url);
@@ -210,5 +208,5 @@
             return 'Grist — ' + (m ? decodeURIComponent(m[1]) : url);
         },
         convert: convert
-    };
+    });
 }());

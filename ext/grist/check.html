@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sViewer — grist skill check</title>
+    <title>sViewer — grist extension check</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: sans-serif; font-size: 14px; background: #f8f8f8; padding: 20px; }
@@ -19,16 +19,16 @@
     </style>
 </head>
 <body>
-<h1>grist skill — check</h1>
+<h1>grist extension — check</h1>
 <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:10px 16px;margin-bottom:12px;font-size:12px;">
     <strong>⚠ Prerequisite for end-to-end checks:</strong>
-    <code>adapters: ['grist']</code> must be set in <code>customConfig.js</code>.
+    <code>extensions: ['grist']</code> must be set in <code>customConfig.js</code>.
     Unit checks (0–9) run without it — only the e2e link (10) requires it.
 </div>
 <p style="color:#888;font-size:12px;margin-bottom:12px;">
     Unit checks use inline Grist-envelope JSON — no external fetch, no CORS dependency.
     End-to-end check requires network access to a public Grist document and
-    <code>adapters: ['grist']</code> in customConfig.
+    <code>extensions: ['grist']</code> in customConfig.
 </p>
 <div style="background:#fff;border:1px solid #ddd;border-radius:4px;padding:10px 16px;margin-bottom:16px;font-size:12px;">
     <strong>Data sources used by end-to-end checks</strong>
@@ -50,7 +50,7 @@
 
 <div class="check">
     <div class="check-title">1. Adapter registration</div>
-    <div class="check-desc">window.SViewerAdapters['grist'] must exist after adapter.js loads.</div>
+    <div class="check-desc">window.SViewer.adapters['grist'] must exist after adapter.js loads.</div>
     <div class="result" id="r-register">waiting…</div>
 </div>
 
@@ -117,7 +117,7 @@
     </div>
 </div>
 
-<script src="adapter.js"></script>
+<script src="extension.js"></script>
 <script>
 (function() {
     'use strict';
@@ -179,14 +179,14 @@
         .catch(function() { fail('r-bundle', 'could not fetch sviewer.min.js'); });
 
     // 1 — registration
-    if (window.SViewerAdapters && window.SViewerAdapters['grist']) {
-        pass('r-register', "window.SViewerAdapters['grist'] registered");
+    if (window.SViewer.adapters && window.SViewer.adapters['grist']) {
+        pass('r-register', "window.SViewer.adapters['grist'] registered");
     } else {
-        fail('r-register', "adapter not found — check adapter.js loaded and adapters:['grist'] in customConfig");
+        fail('r-register', "adapter not found — check extension.js loaded and extensions:['grist'] in customConfig");
         return;
     }
 
-    var adapter = window.SViewerAdapters['grist'];
+    var adapter = window.SViewer.adapters['grist'];
 
     // 2 — match positive
     var urlPos = 'https://docs.getgrist.com/api/docs/abc123/tables/Cities/records';

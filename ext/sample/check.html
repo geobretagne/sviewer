@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sViewer — sample skill check</title>
+    <title>sViewer — sample extension check</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: sans-serif; font-size: 14px; background: #f8f8f8; padding: 20px; }
@@ -19,10 +19,10 @@
     </style>
 </head>
 <body>
-<h1>sample skill — check</h1>
+<h1>sample extension — check</h1>
 <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:10px 16px;margin-bottom:12px;font-size:12px;">
     <strong>⚠ Prerequisite for end-to-end checks:</strong>
-    <code>adapters: ['sample']</code> must be set in <code>customConfig.js</code>.
+    <code>extensions: ['sample']</code> must be set in <code>customConfig.js</code>.
     Unit checks (0–6) run without it — only the e2e link (7) requires it.
 </div>
 <p style="color:#888;font-size:12px;margin-bottom:12px;">
@@ -47,7 +47,7 @@
 
 <div class="check">
     <div class="check-title">1. Adapter registration</div>
-    <div class="check-desc">window.SViewerAdapters['sample'] must exist after adapter.js loads.</div>
+    <div class="check-desc">window.SViewer.adapters['sample'] must exist after adapter.js loads.</div>
     <div class="result" id="r-register">waiting…</div>
 </div>
 
@@ -93,7 +93,7 @@
     </div>
 </div>
 
-<script src="adapter.js"></script>
+<script src="extension.js"></script>
 <script>
 (function() {
     'use strict';
@@ -131,14 +131,14 @@
         .catch(function() { fail('r-bundle', 'could not fetch sviewer.min.js'); });
 
     // 1 — registration
-    if (window.SViewerAdapters && window.SViewerAdapters['sample']) {
-        pass('r-register', 'window.SViewerAdapters[\'sample\'] registered');
+    if (window.SViewer.adapters && window.SViewer.adapters['sample']) {
+        pass('r-register', 'window.SViewer.adapters[\'sample\'] registered');
     } else {
-        fail('r-register', 'adapter not found — check adapter.js loaded');
+        fail('r-register', 'extension not found — check extension.js loaded');
         return;
     }
 
-    var adapter = window.SViewerAdapters['sample'];
+    var adapter = window.SViewer.adapters['sample'];
 
     // 2 — match positive
     var urlPos = 'https://example.com/data.json?_format=sample';

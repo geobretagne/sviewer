@@ -12,7 +12,7 @@ var I18N_REQUIRED_KEYS = [
     'inp.search_placeholder',
     'lbl.dark_theme', 'lbl.edit_title', 'lbl.geocode_results', 'lbl.layer_opacity',
     'lbl.query_the_map', 'lbl.search_place',
-    'msg.adapter_not_loaded', 'msg.csw_error', 'msg.csw_no_wms',
+    'msg.extension_not_loaded', 'msg.csw_error', 'msg.csw_no_wms',
     'msg.estimating_position', 'msg.feature_count', 'msg.full_record',
     'msg.geolocation_failed', 'msg.gps_tracking_off', 'msg.gps_tracking_on',
     'msg.legend_of', 'msg.meta_contact', 'msg.meta_date', 'msg.meta_licence',

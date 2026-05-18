@@ -53,8 +53,8 @@ export default [
         }
     },
     {
-        // Skills — ES2017, relaxed (third-party authors, modern browsers only)
-        files: ['skill/**/*.js'],
+        // Extensions — ES2017, relaxed (third-party authors, modern browsers only)
+        files: ['ext/**/*.js'],
         languageOptions: {
             ecmaVersion: 2017,
             globals: {

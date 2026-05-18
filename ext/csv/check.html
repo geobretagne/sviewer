@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sViewer — csv skill check</title>
+    <title>sViewer — csv extension check</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: sans-serif; font-size: 14px; background: #f8f8f8; padding: 20px; }
@@ -19,15 +19,15 @@
     </style>
 </head>
 <body>
-<h1>csv skill — check</h1>
+<h1>csv extension — check</h1>
 <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:10px 16px;margin-bottom:12px;font-size:12px;">
     <strong>⚠ Prerequisite for end-to-end checks:</strong>
-    <code>adapters: ['csv']</code> must be set in <code>customConfig.js</code>.
+    <code>extensions: ['csv']</code> must be set in <code>customConfig.js</code>.
     Unit checks (0–13) run without it — only the e2e links (14–15) require it.
 </div>
 <p style="color:#888;font-size:12px;margin-bottom:12px;">
     Unit checks use inline CSV strings — no external fetch, no CORS dependency.
-    End-to-end checks use data.gouv.fr (CORS-enabled). Requires <code>adapters: ['csv']</code> in customConfig.
+    End-to-end checks use data.gouv.fr (CORS-enabled). Requires <code>extensions: ['csv']</code> in customConfig.
 </p>
 <div style="background:#fff;border:1px solid #ddd;border-radius:4px;padding:10px 16px;margin-bottom:16px;font-size:12px;">
     <strong>Data sources used by end-to-end checks</strong>
@@ -49,7 +49,7 @@
 
 <div class="check">
     <div class="check-title">1. Adapter registration</div>
-    <div class="check-desc">window.SViewerAdapters['csv'] must exist after adapter.js loads.</div>
+    <div class="check-desc">window.SViewer.adapters['csv'] must exist after adapter.js loads.</div>
     <div class="result" id="r-register">waiting…</div>
 </div>
 
@@ -149,7 +149,7 @@
     </div>
 </div>
 
-<script src="adapter.js"></script>
+<script src="extension.js"></script>
 <script>
 (function() {
     'use strict';
@@ -199,14 +199,14 @@
         .catch(function() { fail('r-bundle', 'could not fetch sviewer.min.js'); });
 
     // 1 — registration
-    if (window.SViewerAdapters && window.SViewerAdapters['csv']) {
-        pass('r-register', "window.SViewerAdapters['csv'] registered");
+    if (window.SViewer.adapters && window.SViewer.adapters['csv']) {
+        pass('r-register', "window.SViewer.adapters['csv'] registered");
     } else {
-        fail('r-register', 'adapter not found — check adapter.js loaded and adapters:[\'csv\'] in customConfig');
+        fail('r-register', "extension not found — check extension.js loaded and extensions:['csv'] in customConfig");
         return;
     }
 
-    var adapter = window.SViewerAdapters['csv'];
+    var adapter = window.SViewer.adapters['csv'];
 
     // 2 — match extension
     var extOk  = adapter.match('https://example.com/data.csv') &&

@@ -602,7 +602,7 @@ function makeFeatureStyle(cfg, selected) {
 // Returns geojsonStyle defaults from customConfig/hardConfig, with built-in fallbacks.
 function geojsonStyleDefaults() {
     var gs = (window.customConfig && window.customConfig.geojsonStyle) ||
-             (window.SViewerHardConfig && window.SViewerHardConfig.geojsonStyle) || {};
+             (window.SViewer.hardConfig && window.SViewer.hardConfig.geojsonStyle) || {};
     return {
         color:       safeColor(gs.color, '#0077bb'),
         fillOpacity: gs.fillOpacity  !== undefined ? gs.fillOpacity  : 0.35,
@@ -960,7 +960,7 @@ function openSettings() {
     var defaultSvBase = svConfig.sviewer_base || (function() {
         var loc = window.location;
         var dir = loc.pathname.replace(/\/[^\/]*$/, '/');
-        return loc.origin + dir.replace(/skill\/grist\/$/, '');
+        return loc.origin + dir.replace(/ext\/grist\/$/, '');
     }());
     document.getElementById('sv-cfg-svbase').value = defaultSvBase;
     var defaultApiBase = svConfig.grist_api_base || (function() {
@@ -968,7 +968,7 @@ function openSettings() {
     }());
     document.getElementById('sv-cfg-apibase').value = defaultApiBase;
     document.getElementById('sv-cfg-georchestra').value = svConfig.georchestra_base ||
-        (window.SViewerHardConfig && window.SViewerHardConfig.geOrchestraBaseUrl) ||
+        (window.SViewer.hardConfig && window.SViewer.hardConfig.geOrchestraBaseUrl) ||
         (window.customConfig && window.customConfig.geOrchestraBaseUrl) || '';
     (function() {
         var opVal = svConfig.wms_opacity !== undefined ? svConfig.wms_opacity : 1;
@@ -981,7 +981,7 @@ function openSettings() {
     // Background selector — populate from backgroundPresets if available
     (function() {
         var presets = (window.customConfig && window.customConfig.backgroundPresets) ||
-                      (window.SViewerHardConfig && window.SViewerHardConfig.backgroundPresets) || [];
+                      (window.SViewer.hardConfig && window.SViewer.hardConfig.backgroundPresets) || [];
         var sel    = document.getElementById('sv-cfg-lb');
         var lbl    = document.getElementById('sv-cfg-lb-label');
         var sep    = document.getElementById('sv-cfg-lb-sep');
@@ -1238,7 +1238,8 @@ function initMap() {
         x: svConfig.x ? parseFloat(svConfig.x) : 0,
         y: svConfig.y ? parseFloat(svConfig.y) : 6000000,
         z: svConfig.z ? parseInt(svConfig.z, 10) : 5,
-        title: svConfig.title || 'sViewer — Grist'
+        title: svConfig.title || 'sViewer — Grist',
+        ext: 'grist'
     };
     if (svConfig.layers) { opts.layers = svConfig.layers; }
     if (svConfig.md && !svConfig.layers) { opts.md = svConfig.md; }
@@ -1247,16 +1248,32 @@ function initMap() {
     initialLayers = svConfig.layers || null;
     initialMd = svConfig.md || null;
     var georchestraBase = safeHttpUrl(svConfig.georchestra_base);
-    if (georchestraBase && window.SViewerHardConfig) { window.SViewerHardConfig.geOrchestraBaseUrl = georchestraBase; }
+    if (georchestraBase && window.SViewer.hardConfig) { window.SViewer.hardConfig.geOrchestraBaseUrl = georchestraBase; }
+
+    // Share links must point to standalone sViewer index.html, not this widget page.
+    var svBase = (function() {
+        var raw = svConfig.sviewer_base;
+        if (raw) {
+            try {
+                var u = new URL(raw);
+                if (u.protocol === 'http:' || u.protocol === 'https:') {
+                    return (u.origin + u.pathname).replace(/\/?$/, '/');
+                }
+            } catch(e) {}
+        }
+        var loc = window.location;
+        return loc.origin + loc.pathname.replace(/ext\/grist\/[^/]*$/, '');
+    }());
+    window.SViewer.baseUrl = svBase;
 
     SViewer.init('#sv-map', opts).then(function() {
         mapReady = true;
         // Persist title edits made via the sViewer share panel into widget options.
         // Only fires on user interaction (not programmatic setTitle calls).
-        SViewer.onTitleChange = function(title) {
-            svConfig.title = title;
+        SViewer.onTitleChange(function(e) {
+            svConfig.title = e.title;
             saveOptions();
-        };
+        });
         // React to map feature clicks — Grist-specific: track selectedRowId + apply selection style.
         SViewer.on('sv:featureClick', onMapFeatureClick);
         var geojsonUrl = buildGristGeojsonUrl();

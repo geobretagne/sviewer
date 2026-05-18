@@ -1,4 +1,4 @@
-Object.assign(window.SViewerHardConfig, {
+Object.assign(window.SViewer.hardConfig, {
     i18n: {
         en: {
             // Button tooltips
@@ -56,7 +56,7 @@ Object.assign(window.SViewerHardConfig, {
             'msg.meta_licence':         'Licence',
             'msg.no_item_found':        'No item found',
             'msg.query_failed':         'Query failed',
-            'msg.adapter_not_loaded':   'Adapter "{0}" not loaded — add it to customConfig adapters[]',
+            'msg.extension_not_loaded': 'Extension "{0}" not loaded — add it to customConfig extensions[]',
             'msg.geolocation_failed':   'Geolocation failed',
             'msg.estimating_position':  'Estimating device position...',
             'msg.position_error':       'Device position error',
@@ -123,7 +123,7 @@ Object.assign(window.SViewerHardConfig, {
             'msg.meta_licence':         'Licence',
             'msg.no_item_found':        "aucun objet n'a été trouvé",
             'msg.query_failed':         "l'interrogation a échoué",
-            'msg.adapter_not_loaded':   'Adaptateur « {0} » non chargé — ajoutez-le dans customConfig adapters[]',
+            'msg.extension_not_loaded': 'Extension « {0} » non chargée — ajoutez-la dans customConfig extensions[]',
             'msg.geolocation_failed':   'Localisation impossible',
             'msg.estimating_position':  'estimation de la position ...',
             'msg.position_error':       "la localisation de l'appareil a échoué",
@@ -190,7 +190,7 @@ Object.assign(window.SViewerHardConfig, {
             'msg.meta_licence':         'Licencia',
             'msg.no_item_found':        'No se encontraron elementos',
             'msg.query_failed':         'La consulta falló',
-            'msg.adapter_not_loaded':   'Adaptador « {0} » no cargado — añádalo en customConfig adapters[]',
+            'msg.extension_not_loaded': 'Extensión « {0} » no cargada — añádala en customConfig extensions[]',
             'msg.geolocation_failed':   'La geolocalización ha fracasado',
             'msg.estimating_position':  'Estimando la posición del dispositivo...',
             'msg.position_error':       'Error de posición del dispositivo',
@@ -257,7 +257,7 @@ Object.assign(window.SViewerHardConfig, {
             'msg.meta_licence':         'Lizenz',
             'msg.no_item_found':        'kein Treffer',
             'msg.query_failed':         'Abfrage nicht erfolgt',
-            'msg.adapter_not_loaded':   'Adapter „{0}" nicht geladen — in customConfig adapters[] eintragen',
+            'msg.extension_not_loaded': 'Erweiterung „{0}" nicht geladen — in customConfig extensions[] eintragen',
             'msg.geolocation_failed':   'Geolokalisierung fehlgeschlagen',
             'msg.estimating_position':  'Geräteposition wird geschätzt...',
             'msg.position_error':       'Fehler bei der Geräteposition',
