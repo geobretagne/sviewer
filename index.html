@@ -74,7 +74,7 @@
             if (qs) {
                 qs.split('&').forEach(function(pair) {
                     var parts = pair.split('=');
-                    params[parts[0]] = decodeURIComponent(parts[1] || '');
+                    params[parts[0]] = decodeURIComponent((parts[1] || '').replace(/\+/g, ' '));
                 });
             }
             SViewer.init('#sviewer', params);

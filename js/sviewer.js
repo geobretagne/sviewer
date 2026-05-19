@@ -1721,7 +1721,7 @@ window.SViewer.app = (function() {
 
    // updates title
    function setTitle(title, silent) {
-        config.title = title;
+        config.title = typeof title === 'string' ? title.trim() : title;
         document.title = config.title;
        if (config.title!=='') {
             document.getElementById('sv-panel-share-title').textContent = config.title;
