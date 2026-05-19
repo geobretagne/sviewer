@@ -1,11 +1,11 @@
 {
   "id":          "isochrone",
   "type":        "extension",
-  "version":     "1.0.0",
+  "version":     "1.1.0",
   "name":        "Isochrone / Isodistance",
-  "description": "Compute and display isochrone or isodistance zones using IGN Géoplateforme navigation API",
+  "description": "Compute and display isochrone or isodistance zones using IGN Géoplateforme navigation API, with POI search via Nominatim/OSM",
   "author":      "fphg",
-  "tags":        ["isochrone", "isodistance", "navigation", "IGN", "Géoplateforme"],
+  "tags":        ["isochrone", "isodistance", "navigation", "IGN", "Géoplateforme", "POI", "OSM"],
 
   "entry": "extension.js",
 

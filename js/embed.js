@@ -11,8 +11,8 @@
 
 (function() {
 
-    var SVIEWER_VERSION='0.11.1';
-    var SVIEWER_COMMIT='de961b9';
+    var SVIEWER_VERSION='0.12.0';
+    var SVIEWER_COMMIT='1bf7069';
 
     // Internal event bus — shared with sviewer.js via window._SViewerInternals.
     // Frozen after creation to prevent host-page collision or tampering.
@@ -625,6 +625,9 @@
             },
             close: function() {
                 if (window.SViewer.app && window.SViewer.app.panel) { window.SViewer.app.panel.close(); }
+            },
+            onClose: function(name, fn) {
+                if (window.SViewer.app && window.SViewer.app.panel) { window.SViewer.app.panel.onClose(name, fn); }
             },
             update: function(name, html) {
                 if (window.SViewer.app && window.SViewer.app.panel) { window.SViewer.app.panel.update(name, html); }

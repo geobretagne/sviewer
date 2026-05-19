@@ -67,7 +67,7 @@ function renderCard(m) {
     const examples = (m.examples || []).length > 0 ? `
             <ul class="sv-examples">
                 ${m.examples.map(ex => `<li>
-                    <a href="${esc(ex.url)}">${esc(ex.title)}</a>${ex.description ? ` <span class="sv-ex-desc">— ${esc(ex.description)}</span>` : ''}
+                    <a href="${ex.url.startsWith('?') ? '../' + ex.url : esc(ex.url)}">${esc(ex.title)}</a>${ex.description ? ` <span class="sv-ex-desc">— ${esc(ex.description)}</span>` : ''}
                 </li>`).join('')}
             </ul>` : '';
 

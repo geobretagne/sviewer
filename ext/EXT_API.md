@@ -241,6 +241,13 @@ btn.addEventListener('click', function() {
     if (active) { enable(); } else { disable(); }
 });
 
+// If the extension has a persistent mode (active while panel is hidden),
+// use sv-alt-toggle instead of sv-panel-toggle so that resetPanel() does
+// not clear the button's active state when other panels open.
+// Combined with panel.onClose(), this gives correct visual feedback:
+// button stays highlighted while mode is active, even when panel is closed.
+btn.className = 'btn btn-dark sv-map-btn sv-alt-toggle';
+
 // Switch background layer by index (0-based, matches customConfig.layersBackground).
 SViewer.switchBackground(idx);
 
@@ -314,6 +321,19 @@ SViewer.panel.update(id, html);
 
 // Close the panel (idempotent). Clears the panel owner.
 SViewer.panel.close();
+
+// Register a callback fired when the panel is closed while visible.
+// Fires for: × button click, another panel opening, SViewer.panel.close().
+// Does NOT fire when the panel is already hidden (e.g. GFI opens query panel
+// while the extension panel was already closed — altitude mode survives that).
+// Use to deactivate extension state and reset toolbar button when the user
+// explicitly dismisses the panel.
+SViewer.panel.onClose(id, function() {
+    active = false;
+    btn.setAttribute('aria-pressed', 'false');
+    btn.classList.remove('active');
+    // clean up map layers, stop drawing, etc.
+});
 ```
 
 ---

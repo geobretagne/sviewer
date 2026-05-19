@@ -1,0 +1,59 @@
+[
+  {
+    "key": "health",
+    "labels": { "fr": "Santé", "en": "Health", "es": "Salud", "de": "Gesundheit" },
+    "items": [
+      { "key": "hospital",      "labels": { "fr": "Hôpital",            "en": "Hospital",         "es": "Hospital",              "de": "Krankenhaus"    } },
+      { "key": "clinic",        "labels": { "fr": "Clinique",           "en": "Clinic",           "es": "Clínica",               "de": "Klinik"         } },
+      { "key": "pharmacy",      "labels": { "fr": "Pharmacie",          "en": "Pharmacy",         "es": "Farmacia",              "de": "Apotheke"       } },
+      { "key": "doctors",       "labels": { "fr": "Médecin",            "en": "Doctor",           "es": "Médico",                "de": "Arzt"           } },
+      { "key": "dentist",       "labels": { "fr": "Dentiste",           "en": "Dentist",          "es": "Dentista",              "de": "Zahnarzt"       } },
+      { "key": "nursing_home",  "labels": { "fr": "Maison de retraite", "en": "Nursing home",     "es": "Residencia de mayores", "de": "Pflegeheim"     } }
+    ]
+  },
+  {
+    "key": "education",
+    "labels": { "fr": "Éducation", "en": "Education", "es": "Educación", "de": "Bildung" },
+    "items": [
+      { "key": "school",       "labels": { "fr": "École",      "en": "School",       "es": "Escuela",   "de": "Schule"      } },
+      { "key": "kindergarten", "labels": { "fr": "Maternelle", "en": "Kindergarten", "es": "Guardería", "de": "Kindergarten" } }
+    ]
+  },
+  {
+    "key": "transport",
+    "labels": { "fr": "Transport", "en": "Transport", "es": "Transporte", "de": "Verkehr" },
+    "items": [
+      { "key": "station",          "labels": { "fr": "Gare",              "en": "Train station",   "es": "Estación de tren",    "de": "Bahnhof"        } },
+      { "key": "tram_stop",        "labels": { "fr": "Arrêt de tram",     "en": "Tram stop",       "es": "Parada de tranvía",   "de": "Straßenbahnhalt." } },
+      { "key": "bus_station",      "labels": { "fr": "Gare routière",     "en": "Bus station",     "es": "Estación de autobús", "de": "Busbahnhof"     } },
+      { "key": "bus_stop",         "labels": { "fr": "Arrêt de bus",      "en": "Bus stop",        "es": "Parada de autobús",   "de": "Bushaltestelle" } },
+      { "key": "fuel",             "labels": { "fr": "Station-service",   "en": "Fuel station",    "es": "Gasolinera",          "de": "Tankstelle"     } },
+      { "key": "charging_station", "labels": { "fr": "Borne de recharge", "en": "Charging station","es": "Punto de recarga",    "de": "Ladestation"    } },
+      { "key": "parking",          "labels": { "fr": "Parking",           "en": "Parking",         "es": "Aparcamiento",        "de": "Parkplatz"      } }
+    ]
+  },
+  {
+    "key": "services",
+    "labels": { "fr": "Services", "en": "Services", "es": "Servicios", "de": "Dienste" },
+    "items": [
+      { "key": "town_hall",        "labels": { "fr": "Mairie",                "en": "Town hall",        "es": "Ayuntamiento",       "de": "Rathaus"              } },
+      { "key": "library",          "labels": { "fr": "Bibliothèque",          "en": "Library",          "es": "Biblioteca",         "de": "Bibliothek"           } },
+      { "key": "community_centre", "labels": { "fr": "Centre communautaire",  "en": "Community centre", "es": "Centro cívico",      "de": "Gemeinschaftszentrum" } },
+      { "key": "bank",             "labels": { "fr": "Banque",                "en": "Bank",             "es": "Banco",              "de": "Bank"                 } },
+      { "key": "post_office",      "labels": { "fr": "Bureau de poste",       "en": "Post office",      "es": "Oficina de correos", "de": "Postamt"              } },
+      { "key": "police",           "labels": { "fr": "Police",                "en": "Police",           "es": "Policía",            "de": "Polizei"              } },
+      { "key": "fire_station",     "labels": { "fr": "Caserne de pompiers",   "en": "Fire station",     "es": "Parque de bomberos", "de": "Feuerwache"           } },
+      { "key": "place_of_worship", "labels": { "fr": "Lieu de culte",         "en": "Place of worship", "es": "Lugar de culto",     "de": "Gotteshaus"           } }
+    ]
+  },
+  {
+    "key": "leisure",
+    "labels": { "fr": "Loisirs", "en": "Leisure", "es": "Ocio", "de": "Freizeit" },
+    "items": [
+      { "key": "arts_centre",   "labels": { "fr": "Centre culturel", "en": "Arts centre",   "es": "Centro cultural", "de": "Kulturzentrum" } },
+      { "key": "sports_centre", "labels": { "fr": "Centre sportif",  "en": "Sports centre", "es": "Centro deportivo","de": "Sportzentrum"  } },
+      { "key": "swimming_pool", "labels": { "fr": "Piscine",         "en": "Swimming pool", "es": "Piscina",         "de": "Schwimmbad"    } },
+      { "key": "stadium",       "labels": { "fr": "Stade",           "en": "Stadium",       "es": "Estadio",         "de": "Stadion"       } }
+    ]
+  }
+]
