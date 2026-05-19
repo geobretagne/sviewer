@@ -1680,6 +1680,18 @@ window.SViewer.app = (function() {
     }
 
     function resetPanel() {
+        if (_panelOwner && _panelCloseCallbacks[_panelOwner]) {
+            var sec = document.getElementById('sv-panel-ext-' + _panelOwner);
+            if (sec && sec.style.display !== 'none') {
+                var _cb = _panelCloseCallbacks[_panelOwner];
+                _panelOwner = null;
+                _cb();
+            } else {
+                _panelOwner = null;
+            }
+        } else {
+            _panelOwner = null;
+        }
         var sidepanel = document.getElementById('sv-sidepanel');
         sidepanel.querySelectorAll('.sv-panel-section').forEach(function(s) { s.style.display = 'none'; });
         sidepanel.classList.remove('active');
@@ -2672,7 +2684,9 @@ window.SViewer.app = (function() {
     // Panel API — open/close a named extension panel in the sidepanel.
     // open(name, title, html) creates the panel DOM on first call (no toolbar button injected).
     // update(name, html) no-ops if name !== current owner (stale async callback protection).
+    // onClose(name, fn) registers a callback fired only when the named panel is closed while visible.
     var _panelOwner = null;
+    var _panelCloseCallbacks = {};
     this.panel = {
         open: function(name, title, html) {
             var panelId = 'sv-panel-ext-' + name;
@@ -2720,6 +2734,7 @@ window.SViewer.app = (function() {
             if (!_alreadyOpen) { togglePanel('ext-' + name); }
         },
         close: function() { _panelOwner = null; togglePanel(null); },
+        onClose: function(name, fn) { _panelCloseCallbacks[name] = fn; },
         update: function(name, html) {
             if (name !== _panelOwner) {
                 console.warn('SViewer.panel.update: ignored — current owner is "' + _panelOwner + '", not "' + name + '"');

@@ -626,6 +626,9 @@
             close: function() {
                 if (window.SViewer.app && window.SViewer.app.panel) { window.SViewer.app.panel.close(); }
             },
+            onClose: function(name, fn) {
+                if (window.SViewer.app && window.SViewer.app.panel) { window.SViewer.app.panel.onClose(name, fn); }
+            },
             update: function(name, html) {
                 if (window.SViewer.app && window.SViewer.app.panel) { window.SViewer.app.panel.update(name, html); }
             }

@@ -230,17 +230,43 @@
 <div class="sv-layout">
     <nav class="sv-nav" aria-label="Extensions">
     <ul>
+        <li><a class="sv-nav-link" href="#ext-altitude" data-id="altitude">Altitude</a></li>
         <li><a class="sv-nav-link" href="#ext-csv" data-id="csv">CSV</a></li>
         <li><a class="sv-nav-link" href="#ext-grist" data-id="grist">Grist</a></li>
         <li><a class="sv-nav-link" href="#ext-isochrone" data-id="isochrone">Isochrone / Isodistance</a></li>
         <li><a class="sv-nav-link" href="#ext-panoramax" data-id="panoramax">Panoramax</a></li>
-        <li><a class="sv-nav-link" href="#ext-altitude" data-id="altitude">Profil en long</a></li>
         <li><a class="sv-nav-link" href="#ext-sample" data-id="sample">Sample</a></li>
     </ul>
 </nav>
     <div class="sv-content">
         <div id="sv-count" aria-live="polite" aria-atomic="true"></div>
         <div id="sv-list" role="list">
+
+    <article id="ext-altitude" class="sv-card" data-search="altitude altitude ponctuelle et profil altimétrique via l'api ign géoplateforme. deux modes : clic pour mesurer l'altitude d'un point, ou tracé d'un itinéraire pour obtenir un profil en long. altimétrie altitude profil dénivelé ign géoplateforme" role="listitem">
+        
+        <div class="sv-card-body">
+            <div class="sv-card-head">
+                <h2><a href="altitude/">Altitude</a></h2>
+                <span class="sv-badge">extension</span>
+            </div>
+            <p class="sv-desc">Altitude ponctuelle et profil altimétrique via l'API IGN Géoplateforme. Deux modes : clic pour mesurer l'altitude d'un point, ou tracé d'un itinéraire pour obtenir un profil en long.</p>
+            <div class="sv-tags" aria-label="Tags"><span class="sv-tag">altimétrie</span><span class="sv-tag">altitude</span><span class="sv-tag">profil</span><span class="sv-tag">dénivelé</span><span class="sv-tag">IGN</span><span class="sv-tag">Géoplateforme</span></div>
+            
+            
+            <ul class="sv-examples">
+                <li>
+                    <a href="?ext=altitude&amp;z=12&amp;x=6.8770&amp;y=45.9237">Altitude — Chamonix</a>
+                </li><li>
+                    <a href="?ext=altitude&amp;z=12&amp;x=2.3488&amp;y=48.8534">Profil — Paris</a>
+                </li>
+            </ul>
+            <footer class="sv-card-footer">
+                <span>v2.0.0</span>
+                <span>sViewer ≥ 0.11.1</span>
+                <span>fphg</span>
+            </footer>
+        </div>
+    </article>
 
     <article id="ext-csv" class="sv-card" data-search="csv charge un fichier csv distant comme données vectorielles — géométrie auto-détectée depuis les noms de colonnes csv import données vectorielles" role="listitem">
         
@@ -392,30 +418,6 @@
             <ul class="sv-examples">
                 <li>
                     <a href="?ext=panoramax&amp;z=17&amp;x=2.3488&amp;y=48.8534">Panoramax — photos de rue</a>
-                </li>
-            </ul>
-            <footer class="sv-card-footer">
-                <span>v1.0.0</span>
-                <span>sViewer ≥ 0.10.0</span>
-                <span>fphg</span>
-            </footer>
-        </div>
-    </article>
-
-    <article id="ext-altitude" class="sv-card" data-search="profil en long tracé d'un itinéraire sur la carte et calcul du profil altimétrique via l'api ign géoplateforme altimétrie profil dénivelé ign géoplateforme" role="listitem">
-        
-        <div class="sv-card-body">
-            <div class="sv-card-head">
-                <h2><a href="altitude/">Profil en long</a></h2>
-                <span class="sv-badge">extension</span>
-            </div>
-            <p class="sv-desc">Tracé d'un itinéraire sur la carte et calcul du profil altimétrique via l'API IGN Géoplateforme</p>
-            <div class="sv-tags" aria-label="Tags"><span class="sv-tag">altimétrie</span><span class="sv-tag">profil</span><span class="sv-tag">dénivelé</span><span class="sv-tag">IGN</span><span class="sv-tag">Géoplateforme</span></div>
-            
-            
-            <ul class="sv-examples">
-                <li>
-                    <a href="?ext=altitude&amp;z=12&amp;x=2.3488&amp;y=48.8534">Profil en long</a>
                 </li>
             </ul>
             <footer class="sv-card-footer">
