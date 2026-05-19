@@ -1,7 +1,7 @@
 {
   "id":          "panoramax",
   "type":        "extension",
-  "version":     "1.0.0",
+  "version":     "1.1.0",
   "name":        "Panoramax",
   "description": "Affiche la couverture photos de rue Panoramax (MVT) et ouvre un visualiseur 360° au clic",
   "author":      "fphg",
@@ -10,7 +10,7 @@
   "entry": "extension.js",
 
   "sviewer": {
-    "minVersion": "0.10.0"
+    "minVersion": "0.11.1"
   },
 
   "examples": [
