@@ -4,6 +4,31 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.11.1] - 2026-05-19
+
+Version de maintenance, sécurité et accessibilité.
+
+### Fixed
+
+- **Titre URL `+` non décodé** : le parseur de paramètres URL dans `index.html` n'appliquait pas `replace(/\+/g, ' ')` avant `decodeURIComponent`. Les titres partagés via `URLSearchParams` (espaces encodés en `+`) s'affichaient avec des `+` littéraux dans le panneau de partage.
+- **Titre avec retour à la ligne** : `setTitle()` élimine désormais les espaces superflus (`trim()`) — supprime le `%0A` en fin de `?title=` présent dans certaines URL construites manuellement.
+- **CSP `img-src` manquant `blob:`** : les tuiles WMS d'OpenLayers utilisent des URL `blob:` bloquées par la CSP. Ajout de `blob:` à `img-src` dans les trois snippets nginx (`nginx-server.conf`, `nginx-server-proxy.conf`, `nginx-default.conf`).
+- **Hash CSP mis à jour** : le hash `sha256` du script inline de `index.html` est mis à jour après le correctif du parseur URL.
+- **i18n** : suppression des clés mortes `btn.overlay` et `panel.link_modal.title` (aucune référence `data-i18n` ni `tr()` dans le code).
+
+### Sécurité / Accessibilité
+
+- **WCAG 2.1 AA** : `aria-pressed` sur les boutons de profil/coût de l'extension isochrone ; `aria-label` sur le champ de valeur ; SVG du profil altimétrique annoté (`role="img"`, `<title>`, `<desc>`) ; contraste `.sv-gps-accuracy` amélioré (`#aaa` → `#999`) ; lien footer embed avec indication "(nouvel onglet)".
+- **XSS / path traversal** : durcissement des vecteurs d'injection dans les panneaux d'extension, les origines de messages et les noms de profil de configuration.
+- **CVE `brace-expansion`** : mise à jour `package-lock.json`.
+- **Suite de tests embed** (`tests/suites/12-embed-mode.js`) : 10 tests de régression couvrant le chargement via `embed.js`, DOM, panneau latéral, recherche, partage, i18n et scoping CSS.
+- **Extension Panoramax** : `manifest.json` créé, catalogue mis à jour (6 extensions).
+- **TECHNICAL.md** : section `adapters` renommée en `extensions`.
+
+### Mise à jour depuis 0.11.0
+
+Aucune modification de configuration requise. Mettre à jour les snippets nginx (`deploy/nginx/`) avec le nouveau hash CSP et `blob:` dans `img-src`. Remplacer les fichiers JS/HTML du déploiement.
+
 ## [0.11.0] - 2026-05-18
 
 ### Added

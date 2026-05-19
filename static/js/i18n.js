@@ -27,8 +27,6 @@ Object.assign(window.SViewer.hardConfig, {
             'panel.embed_modal.tab_js':     'JavaScript',
             'panel.embed_modal.hint_iframe': 'For CMS and blog editors (WordPress, Squarespace…)',
             'panel.embed_modal.hint_js':    'For developers integrating in an HTML page',
-            'panel.link_modal.title':   'Link to this map',
-
             // Labels
             'lbl.edit_title':       'Map title',
             'lbl.dark_theme':       'Dark theme',
@@ -96,8 +94,6 @@ Object.assign(window.SViewer.hardConfig, {
             'panel.embed_modal.tab_js':     'JavaScript',
             'panel.embed_modal.hint_iframe': 'Pour les éditeurs CMS et blogs (WordPress, Squarespace…)',
             'panel.embed_modal.hint_js':    'Pour les développeurs intégrant dans une page HTML',
-            'panel.link_modal.title':   'Lien vers cette carte',
-
             'lbl.edit_title':        'Titre de la carte',
             'lbl.dark_theme':        'Mode sombre',
             'btn.embed':             'Intégrer dans une page',
@@ -162,8 +158,6 @@ Object.assign(window.SViewer.hardConfig, {
             'panel.embed_modal.tab_js':     'JavaScript',
             'panel.embed_modal.hint_iframe': 'Para editores CMS y blogs (WordPress, Squarespace…)',
             'panel.embed_modal.hint_js':    'Para desarrolladores que integran en una página HTML',
-            'panel.link_modal.title':   'Vínculo a este mapa',
-
             'lbl.edit_title':        'Título del mapa',
             'lbl.dark_theme':        'Modo oscuro',
             'btn.embed':             'Insertar en una página',
@@ -228,8 +222,6 @@ Object.assign(window.SViewer.hardConfig, {
             'panel.embed_modal.tab_js':     'JavaScript',
             'panel.embed_modal.hint_iframe': 'Für CMS- und Blog-Editoren (WordPress, Squarespace…)',
             'panel.embed_modal.hint_js':    'Für Entwickler, die in eine HTML-Seite einbinden',
-            'panel.link_modal.title':   'Link zur Karte',
-
             'lbl.edit_title':        'Kartentitel',
             'lbl.dark_theme':        'Dunkles Design',
             'btn.embed':             'In eine Seite einbetten',
