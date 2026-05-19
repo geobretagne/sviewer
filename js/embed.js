@@ -11,7 +11,7 @@
 
 (function() {
 
-    var SVIEWER_VERSION='0.11.1';
+    var SVIEWER_VERSION='0.12.0';
     var SVIEWER_COMMIT='de961b9';
 
     // Internal event bus — shared with sviewer.js via window._SViewerInternals.
