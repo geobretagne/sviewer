@@ -630,9 +630,9 @@
 
     /* ── capture position from iframe ── */
     function doCapture() {
-        var src = document.getElementById('bp-iframe').src;
         try {
-            var u = new URL(src);
+            var live = document.getElementById('bp-iframe').contentWindow.location.href;
+            var u = new URL(live);
             var x = u.searchParams.get('x');
             var y = u.searchParams.get('y');
             var z = u.searchParams.get('z');
@@ -640,7 +640,7 @@
             if (y) { document.getElementById('bp-y').value = y; }
             if (z) { document.getElementById('bp-z').value = z; }
             updateBar();
-        } catch (e) { /* ignore */ }
+        } catch (e) { /* cross-origin or not yet loaded */ }
     }
 
     /* ── load existing URL ── */
