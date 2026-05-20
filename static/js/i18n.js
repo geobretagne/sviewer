@@ -65,9 +65,11 @@ Object.assign(window.SViewer.hardConfig, {
             'msg.top_layer':            'Labels',
             'msg.csw_no_wms':           'No OGC:WMS endpoint found in metadata record',
             'msg.csw_error':            'Metadata record could not be loaded',
+            'btn.overlay':               'Overlay',
             'btn.fullscreen':            'Full screen',
             'btn.snapshot':             'Download map as image',
-            'btn.snapshot_label':       'Image'
+            'btn.snapshot_label':       'Image',
+            'panel.link_modal.title':   'Link to this map'
         },
         fr: {
             'btn.initial_view':  'vue initiale',
@@ -129,9 +131,11 @@ Object.assign(window.SViewer.hardConfig, {
             'msg.top_layer':            'Étiquettes',
             'msg.csw_no_wms':           'Aucun endpoint OGC:WMS trouvé dans la fiche de métadonnées',
             'msg.csw_error':            'La fiche de métadonnées n\'a pas pu être chargée',
+            'btn.overlay':               'Surcouche',
             'btn.fullscreen':            'Plein écran',
             'btn.snapshot':             'Télécharger la carte en image',
-            'btn.snapshot_label':       'Image'
+            'btn.snapshot_label':       'Image',
+            'panel.link_modal.title':   'Lien vers cette carte'
         },
         es: {
             'btn.initial_view':  'Vista inicial',
@@ -193,9 +197,11 @@ Object.assign(window.SViewer.hardConfig, {
             'msg.top_layer':            'Etiquetas',
             'msg.csw_no_wms':           'No se encontró ningún endpoint OGC:WMS en la ficha de metadatos',
             'msg.csw_error':            'No se pudo cargar la ficha de metadatos',
+            'btn.overlay':               'Capa superpuesta',
             'btn.fullscreen':            'Pantalla completa',
             'btn.snapshot':             'Descargar el mapa como imagen',
-            'btn.snapshot_label':       'Imagen'
+            'btn.snapshot_label':       'Imagen',
+            'panel.link_modal.title':   'Enlace a este mapa'
         },
         de: {
             'btn.initial_view':  'Startansicht',
@@ -257,9 +263,11 @@ Object.assign(window.SViewer.hardConfig, {
             'msg.top_layer':            'Beschriftungen',
             'msg.csw_no_wms':           'Kein OGC:WMS-Endpunkt im Metadatensatz gefunden',
             'msg.csw_error':            'Metadatensatz konnte nicht geladen werden',
+            'btn.overlay':               'Überlagerung',
             'btn.fullscreen':            'Vollbild',
             'btn.snapshot':             'Karte als Bild herunterladen',
-            'btn.snapshot_label':       'Bild'
+            'btn.snapshot_label':       'Bild',
+            'panel.link_modal.title':   'Link zu dieser Karte'
         }
     }
 });
