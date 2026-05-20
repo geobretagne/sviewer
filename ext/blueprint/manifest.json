@@ -1,6 +1,6 @@
 {
   "id":          "blueprint",
-  "type":        "extension",
+  "type":        "page",
   "version":     "0.1.0",
   "name":        "Blueprint",
   "description": "Compose and share an sViewer URL in under 60 seconds — build, preview, copy, modify",
@@ -16,7 +16,7 @@
   "examples": [
     {
       "title": "Blueprint (open builder)",
-      "url":   "ext/blueprint/",
+      "url":   "blueprint/",
       "description": "Standalone builder — open directly, not via ?ext="
     }
   ]

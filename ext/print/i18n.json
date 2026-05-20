@@ -1,0 +1,62 @@
+{
+  "fr": {
+    "btn.label":        "Imprimer",
+    "panel.title":      "Impression",
+    "label.format":     "Format",
+    "orient.landscape": "A4 Paysage",
+    "orient.portrait":  "A4 Portrait",
+    "label.qr":         "Ajouter un QR code (permalink)",
+    "btn.print":        "Imprimer / Enregistrer en PDF",
+    "msg.rendering":    "Rendu en cours…",
+    "msg.done":         "Prêt — lancez l'impression",
+    "err.tainted":      "Impression impossible : les tuiles WMS ne sont pas CORS-compatibles.",
+    "err.timeout":      "Délai dépassé — les tuiles n'ont pas toutes chargé.",
+    "err.qr":           "QR code non disponible — impression sans QR code.",
+    "err.popup":        "Fenêtre bloquée — autorisez les popups pour ce site."
+  },
+  "en": {
+    "btn.label":        "Print",
+    "panel.title":      "Print",
+    "label.format":     "Format",
+    "orient.landscape": "A4 Landscape",
+    "orient.portrait":  "A4 Portrait",
+    "label.qr":         "Add QR code (permalink)",
+    "btn.print":        "Print / Save as PDF",
+    "msg.rendering":    "Rendering…",
+    "msg.done":         "Ready — open print dialog",
+    "err.tainted":      "Cannot print: WMS tiles are not CORS-compatible.",
+    "err.timeout":      "Timeout — not all tiles loaded in time.",
+    "err.qr":           "QR code unavailable — printing without QR code.",
+    "err.popup":        "Popup blocked — allow popups for this site."
+  },
+  "es": {
+    "btn.label":        "Imprimir",
+    "panel.title":      "Impresión",
+    "label.format":     "Formato",
+    "orient.landscape": "A4 Apaisado",
+    "orient.portrait":  "A4 Vertical",
+    "label.qr":         "Añadir código QR (permalink)",
+    "btn.print":        "Imprimir / Guardar como PDF",
+    "msg.rendering":    "Renderizando…",
+    "msg.done":         "Listo — abra el diálogo de impresión",
+    "err.tainted":      "No se puede imprimir: las teselas WMS no son compatibles con CORS.",
+    "err.timeout":      "Tiempo agotado — no se cargaron todas las teselas.",
+    "err.qr":           "Código QR no disponible — impresión sin código QR.",
+    "err.popup":        "Ventana emergente bloqueada — permita las ventanas emergentes para este sitio."
+  },
+  "de": {
+    "btn.label":        "Drucken",
+    "panel.title":      "Drucken",
+    "label.format":     "Format",
+    "orient.landscape": "A4 Querformat",
+    "orient.portrait":  "A4 Hochformat",
+    "label.qr":         "QR-Code hinzufügen (Permalink)",
+    "btn.print":        "Drucken / Als PDF speichern",
+    "msg.rendering":    "Wird gerendert…",
+    "msg.done":         "Bereit — Druckdialog öffnen",
+    "err.tainted":      "Druck nicht möglich: WMS-Kacheln sind nicht CORS-kompatibel.",
+    "err.timeout":      "Zeitüberschreitung — nicht alle Kacheln geladen.",
+    "err.qr":           "QR-Code nicht verfügbar — Druck ohne QR-Code.",
+    "err.popup":        "Popup blockiert — erlauben Sie Popups für diese Seite."
+  }
+}

@@ -1,6 +1,6 @@
 {
   "id": "sample",
-  "type": "extension",
+  "type": "demo",
   "version": "1.0.0",
   "name": "Sample",
   "description": "Implémentation de référence annotée pour auteurs d'extensions — charge un tableau JSON plat comme données vectorielles",

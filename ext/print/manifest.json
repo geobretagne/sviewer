@@ -1,0 +1,22 @@
+{
+  "id":          "print",
+  "type":        "extension",
+  "version":     "0.1.0",
+  "name":        "Print / PDF",
+  "description": "Génère une impression haute résolution de la carte courante (re-rendu OL à la résolution cible). Format A4 paysage. QR code permalink optionnel (qr-creator, MIT, auto-hébergé).",
+  "author":      "fphg",
+  "tags":        ["impression", "PDF", "export", "print"],
+
+  "entry": "extension.js",
+
+  "sviewer": {
+    "minVersion": "0.13.0"
+  },
+
+  "examples": [
+    {
+      "title": "Impression — carte OSM",
+      "url":   "?ext=print&z=10&x=2.3488&y=48.8534"
+    }
+  ]
+}
