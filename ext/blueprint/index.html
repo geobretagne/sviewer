@@ -129,9 +129,12 @@
         .bp-field input:disabled,
         .bp-field select:disabled { opacity: .4; cursor: not-allowed; }
         .bp-field input.bp-error { border-color: #d9534f; }
+        .bp-field input.bp-ok { border-color: #5cb85c; }
         .bp-error-msg { font-size: 11px; color: #d9534f; display: none; }
+        .bp-ok-msg    { font-size: 11px; color: #5cb85c; display: none; }
         .bp-field input.bp-error + .bp-error-msg,
         .bp-error-msg.bp-visible { display: block; }
+        .bp-ok-msg.bp-visible { display: block; }
 
         .bp-field input[type="range"] { width: 100%; accent-color: var(--accent); }
 
@@ -244,7 +247,13 @@
             color: #fff;
         }
         #bp-bar .bp-btn-primary:hover { background: var(--accent-hov); }
+    #bp-url-open { color: var(--bar-url); font-size: 14px; flex-shrink: 0; text-decoration: none; line-height: 1; }
+    #bp-url-open:hover { color: #fff; }
+    #bp-platform { padding: 8px 14px; background: var(--bg-panel); border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+    #bp-platform a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    #bp-platform a:hover { text-decoration: underline; }
     </style>
+    <link rel="stylesheet" href="../../static/fonts/bootstrap-icons.subset.css">
 </head>
 <body>
 
@@ -259,6 +268,12 @@
 
     <!-- Form -->
     <div id="bp-form">
+
+        <!-- Platform info -->
+        <div id="bp-platform" style="display:none">
+            <span id="bp-platform-label"></span>
+            <a id="bp-platform-url" href="#" target="_blank" rel="noopener"></a>
+        </div>
 
         <!-- Load existing URL -->
         <div class="bp-section">
@@ -298,18 +313,25 @@
         <div class="bp-section">
             <div class="bp-section-title" id="bp-s-layer1"></div>
             <div class="bp-field">
-                <label for="bp-layer-name" id="bp-lbl-layer-name"></label>
-                <input type="text" id="bp-layer-name" autocomplete="off">
-                <span class="bp-error-msg" id="bp-err-layer-name"></span>
-            </div>
-            <div class="bp-field">
                 <label for="bp-wms-url" id="bp-lbl-wms-url"></label>
                 <input type="url" id="bp-wms-url" autocomplete="off">
                 <span class="bp-error-msg" id="bp-err-wms-url"></span>
+                <span class="bp-ok-msg" id="bp-ok-wms-url"></span>
+            </div>
+            <div class="bp-field">
+                <label for="bp-layer-name" id="bp-lbl-layer-name"></label>
+                <div class="bp-ac-wrap">
+                    <input type="text" id="bp-layer-name" autocomplete="off" aria-autocomplete="list" aria-controls="bp-layer-ac-list" aria-expanded="false">
+                    <ul id="bp-layer-ac-list" role="listbox"></ul>
+                </div>
+                <span class="bp-error-msg" id="bp-err-layer-name"></span>
+                <span class="bp-ok-msg" id="bp-ok-layer-name"></span>
             </div>
             <div class="bp-field">
                 <label for="bp-md" id="bp-lbl-md"></label>
                 <input type="text" id="bp-md" autocomplete="off">
+                <span class="bp-error-msg" id="bp-err-md"></span>
+                <span class="bp-ok-msg" id="bp-ok-md"></span>
             </div>
         </div>
 
@@ -339,6 +361,8 @@
             <div class="bp-field">
                 <label for="bp-geojson" id="bp-lbl-geojson"></label>
                 <input type="url" id="bp-geojson" autocomplete="off">
+                <span class="bp-error-msg" id="bp-err-geojson"></span>
+                <span class="bp-ok-msg" id="bp-ok-geojson"></span>
             </div>
             <div class="bp-field">
                 <label for="bp-label" id="bp-lbl-label"></label>
@@ -408,6 +432,7 @@
 <!-- Sticky bottom bar -->
 <div id="bp-bar">
     <a id="bp-url-display" href="#" target="_blank" rel="noopener"></a>
+    <a id="bp-url-open" href="#" target="_blank" rel="noopener" title="Ouvrir dans sViewer"><i class="bi bi-box-arrow-up-right"></i></a>
     <button class="bp-btn bp-btn-primary" id="bp-btn-preview"></button>
     <button class="bp-btn" id="bp-btn-copy"></button>
     <button class="bp-btn" id="bp-btn-reset"></button>
@@ -585,6 +610,205 @@
         return true;
     }
 
+    /* ── CSW helpers (mirrors sviewer.js) ── */
+    var _ISO_NS = { gmd:'http://www.isotc211.org/2005/gmd', gco:'http://www.isotc211.org/2005/gco', gmx:'http://www.isotc211.org/2005/gmx', xlink:'http://www.w3.org/1999/xlink' };
+    function _isoNsResolver(p) { return _ISO_NS[p] || null; }
+    function _isoXt(xmlDoc, node, xpath) {
+        var n = xmlDoc.evaluate(xpath, node, _isoNsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        return n ? n.textContent.trim() : null;
+    }
+    function _parseCSWForWMS(xmlDoc) {
+        var nodes = xmlDoc.evaluate('//gmd:distributionInfo//gmd:CI_OnlineResource',
+            xmlDoc.documentElement, _isoNsResolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+        for (var i = 0; i < nodes.snapshotLength; i++) {
+            var node = nodes.snapshotItem(i);
+            var proto    = _isoXt(xmlDoc, node, 'gmd:protocol/gco:CharacterString');
+            var rawUrl   = _isoXt(xmlDoc, node, 'gmd:linkage/gmd:URL');
+            var layername = _isoXt(xmlDoc, node, 'gmd:name/gco:CharacterString');
+            if (proto === 'OGC:WMS' && rawUrl && layername) {
+                var wmsUrl = rawUrl.indexOf('?') > 0 ? rawUrl.split('?')[0] : rawUrl;
+                return { wmsUrl: wmsUrl, layername: layername };
+            }
+        }
+        return null;
+    }
+
+    /* ── async URL probes ── */
+    function _validateGeoJSONUrl(url, cb) {
+        var el  = document.getElementById('bp-geojson');
+        var err = document.getElementById('bp-err-geojson');
+        el.classList.remove('bp-error');
+        err.classList.remove('bp-visible');
+        if (!url) { return; }
+        try { new URL(url); } catch (e) { cb('err.geojson_invalid_url'); return; }
+        if (!url.startsWith('https://')) { cb('err.geojson_invalid_url'); return; }
+        fetch(url, { method: 'HEAD', mode: 'cors' })
+            .then(function (r) {
+                var ct = r.headers.get('content-type') || '';
+                if (ct.indexOf('html') !== -1) { cb('err.geojson_not_json'); } else { cb(null); }
+            })
+            .catch(function () { cb('err.geojson_cors'); });
+    }
+
+    function _buildCapabilitiesProbeUrl(base) {
+        var u = new URL(base);
+        ['service','SERVICE','request','REQUEST','version','VERSION'].forEach(function (k) { u.searchParams.delete(k); });
+        u.searchParams.set('SERVICE', 'WMS');
+        u.searchParams.set('REQUEST', 'GetCapabilities');
+        u.searchParams.set('VERSION', '1.3.0');
+        return u.toString();
+    }
+
+    function _cleanWMSEndpoint(raw) {
+        var u = new URL(raw);
+        ['service','SERVICE','request','REQUEST','version','VERSION'].forEach(function (k) { u.searchParams.delete(k); });
+        return u.toString();
+    }
+
+    function _probeCapabilities(probeUrl, cb) {
+        /* headers-only probe — used for layer name validation */
+        var ctrl = new AbortController();
+        var done = false;
+        fetch(probeUrl, { method: 'GET', mode: 'cors', signal: ctrl.signal })
+            .then(function (r) {
+                var ct = r.headers.get('content-type') || '';
+                ctrl.abort();
+                done = true;
+                if (ct.indexOf('xml') !== -1 || ct.indexOf('text/plain') !== -1) { cb(null); }
+                else { cb('err.wms_not_capabilities'); }
+            })
+            .catch(function (e) {
+                if (done || e.name === 'AbortError') { return; }
+                cb('err.wms_cors');
+            });
+    }
+
+    function _parseWMSLayers(xmlDoc) {
+        var layers = [];
+        var nodes = xmlDoc.getElementsByTagName('Layer');
+        for (var i = 0; i < nodes.length; i++) {
+            var nameEl  = nodes[i].getElementsByTagName('Name')[0];
+            var titleEl = nodes[i].getElementsByTagName('Title')[0];
+            if (!nameEl) { continue; }
+            var name  = nameEl.textContent.trim();
+            var title = titleEl ? titleEl.textContent.trim() : '';
+            if (name && layers.findIndex(function (l) { return l.name === name; }) === -1) {
+                layers.push({ name: name, title: title });
+            }
+        }
+        return layers;
+    }
+
+    var _wmsLayerCache = {}; /* endpoint → [{name, title}] */
+
+    function _fetchCapabilitiesAndCache(probeUrl, cleanUrl, cb) {
+        fetch(probeUrl, { mode: 'cors' })
+            .then(function (r) {
+                if (!r.ok) { throw new Error('HTTP ' + r.status); }
+                var ct = r.headers.get('content-type') || '';
+                if (ct.indexOf('xml') === -1 && ct.indexOf('text/plain') === -1) {
+                    cb('err.wms_not_capabilities'); return r.text().then(function(){});
+                }
+                return r.text();
+            })
+            .then(function (text) {
+                if (!text) { return; }
+                var xmlDoc = new DOMParser().parseFromString(text, 'text/xml');
+                _wmsLayerCache[cleanUrl] = _parseWMSLayers(xmlDoc);
+                cb(null);
+            })
+            .catch(function () { cb('err.wms_cors'); });
+    }
+
+    function _validateWMSUrl(url, cb) {
+        var el  = document.getElementById('bp-wms-url');
+        var err = document.getElementById('bp-err-wms-url');
+        el.classList.remove('bp-error');
+        err.classList.remove('bp-visible');
+        if (!url) { _wmsLayerCache = {}; return; }
+        if (!url.startsWith('https://')) { cb('err.https_required'); return; }
+        try { new URL(url); } catch (e) { cb('err.https_required'); return; }
+        var cleanUrl  = _cleanWMSEndpoint(url);
+        var probeUrl  = _buildCapabilitiesProbeUrl(url);
+        _fetchCapabilitiesAndCache(probeUrl, cleanUrl, function (errKey) {
+            if (!errKey) { el.value = cleanUrl; }
+            cb(errKey);
+        });
+    }
+
+    function _validateLayerName(layerName, cb) {
+        /* only fires when no custom WMS URL — probes geOrchestra virtual endpoint */
+        var el  = document.getElementById('bp-layer-name');
+        var err = document.getElementById('bp-err-layer-name');
+        el.classList.remove('bp-error');
+        err.classList.remove('bp-visible');
+        if (!layerName) { return; }
+        if (!_geOrchestraBaseUrl) { cb(null); return; } /* no local service configured — skip */
+        var parts = layerName.split('*')[0].split('@')[0]; /* strip style/cql/wmsurl suffixes */
+        var colonIdx = parts.indexOf(':');
+        if (colonIdx < 1) { cb('err.wms_namespace_required'); return; }
+        var ns = encodeURIComponent(parts.substring(0, colonIdx));
+        var ln = encodeURIComponent(parts.substring(colonIdx + 1));
+        var endpoint = _geOrchestraBaseUrl + '/geoserver/' + ns + '/' + ln + '/wms';
+        _probeCapabilities(_buildCapabilitiesProbeUrl(endpoint), function (errKey) {
+            cb(errKey ? 'err.wms_layer_not_found' : null);
+        });
+    }
+
+    function _validateMdUrl(val, cb) {
+        var el  = document.getElementById('bp-md');
+        var err = document.getElementById('bp-err-md');
+        el.classList.remove('bp-error');
+        err.classList.remove('bp-visible');
+        if (!val) { return; }
+        var cswBase = _geOrchestraBaseUrl + '/geonetwork/srv/eng/csw';
+        var mdId = val;
+        var atIdx = val.indexOf('@http');
+        if (atIdx !== -1) { cswBase = val.slice(atIdx + 1); mdId = val.slice(0, atIdx); }
+        if (!cswBase.startsWith('https://')) { cb('err.md_no_service'); return; }
+        var url = cswBase + '?' + new URLSearchParams({
+            SERVICE: 'CSW', VERSION: '2.0.2', REQUEST: 'GetRecordById',
+            Id: mdId, ElementSetName: 'full',
+            OutputSchema: 'http://www.isotc211.org/2005/gmd'
+        });
+        fetch(url, { mode: 'cors' })
+            .then(function (r) {
+                if (!r.ok) { throw new Error('HTTP ' + r.status); }
+                return r.text();
+            })
+            .then(function (text) {
+                var xmlDoc = new DOMParser().parseFromString(text, 'text/xml');
+                if (xmlDoc.querySelector('parsererror')) { cb('err.md_not_found'); return; }
+                var result;
+                try { result = _parseCSWForWMS(xmlDoc); } catch (e) { cb('err.md_not_found'); return; }
+                cb(result ? null : 'err.md_no_wms');
+            })
+            .catch(function () { cb('err.md_not_found'); });
+    }
+
+    function _showFieldError(inputId, errId, msgKey) {
+        var el  = document.getElementById(inputId);
+        var err = document.getElementById(errId);
+        el.classList.remove('bp-ok');
+        var okId = errId.replace('bp-err-', 'bp-ok-');
+        var ok = document.getElementById(okId);
+        if (ok) { ok.classList.remove('bp-visible'); }
+        el.classList.add('bp-error');
+        err.textContent = t(msgKey);
+        err.classList.add('bp-visible');
+    }
+
+    function _showFieldOk(inputId, errId, msg) {
+        var el  = document.getElementById(inputId);
+        var err = document.getElementById(errId);
+        el.classList.remove('bp-error');
+        err.classList.remove('bp-visible');
+        el.classList.add('bp-ok');
+        var okId = errId.replace('bp-err-', 'bp-ok-');
+        var ok = document.getElementById(okId);
+        if (ok) { ok.textContent = msg; ok.classList.add('bp-visible'); }
+    }
+
     /* ── validate — returns true if ok to preview ── */
     function validate() {
         var ok = true;
@@ -614,6 +838,10 @@
             errName.classList.add('bp-visible');
             ok = false;
         }
+        if (errWms.classList.contains('bp-visible')) { ok = false; }
+        if (errName.classList.contains('bp-visible')) { ok = false; }
+        if (document.getElementById('bp-err-geojson').classList.contains('bp-visible')) { ok = false; }
+        if (document.getElementById('bp-err-md').classList.contains('bp-visible')) { ok = false; }
         return ok;
     }
 
@@ -623,6 +851,7 @@
         var el = document.getElementById('bp-url-display');
         el.textContent = url;
         el.href = url;
+        document.getElementById('bp-url-open').href = url;
     }
 
     /* ── preview ── */
@@ -632,6 +861,7 @@
         var el = document.getElementById('bp-url-display');
         el.textContent = url;
         el.href = url;
+        document.getElementById('bp-url-open').href = url;
         document.getElementById('bp-iframe').src = url;
     }
 
@@ -751,14 +981,61 @@
         document.getElementById('bp-s').addEventListener('change', schedulePreview);
         document.getElementById('bp-wms-url').addEventListener('input', function () {
             var el = document.getElementById('bp-wms-url');
-            el.classList.remove('bp-error');
+            el.classList.remove('bp-error'); el.classList.remove('bp-ok');
             document.getElementById('bp-err-wms-url').classList.remove('bp-visible');
+            document.getElementById('bp-ok-wms-url').classList.remove('bp-visible');
             schedulePreview();
         });
+        document.getElementById('bp-wms-url').addEventListener('blur', function () {
+            var url = this.value.trim();
+            _validateWMSUrl(url, function (errKey) {
+                if (errKey) { _showFieldError('bp-wms-url', 'bp-err-wms-url', errKey); }
+                else if (url) { _showFieldOk('bp-wms-url', 'bp-err-wms-url', '✓ ' + t('ok.wms_url')); }
+            });
+        });
         document.getElementById('bp-layer-name').addEventListener('input', function () {
-            document.getElementById('bp-layer-name').classList.remove('bp-error');
+            var el = document.getElementById('bp-layer-name');
+            el.classList.remove('bp-error'); el.classList.remove('bp-ok');
             document.getElementById('bp-err-layer-name').classList.remove('bp-visible');
+            document.getElementById('bp-ok-layer-name').classList.remove('bp-visible');
             schedulePreview();
+        });
+        document.getElementById('bp-layer-name').addEventListener('blur', function () {
+            var wmsUrl = document.getElementById('bp-wms-url').value.trim();
+            if (wmsUrl) { return; } /* custom WMS — layer validated via WMS URL probe */
+            _validateLayerName(this.value.trim(), function (errKey) {
+                if (errKey) { _showFieldError('bp-layer-name', 'bp-err-layer-name', errKey); }
+                else if (document.getElementById('bp-layer-name').value.trim()) {
+                    _showFieldOk('bp-layer-name', 'bp-err-layer-name', '✓ ' + t('ok.layer_name'));
+                }
+            });
+        });
+        document.getElementById('bp-geojson').addEventListener('blur', function () {
+            var url = this.value.trim();
+            _validateGeoJSONUrl(url, function (errKey) {
+                if (errKey) { _showFieldError('bp-geojson', 'bp-err-geojson', errKey); }
+                else if (url) { _showFieldOk('bp-geojson', 'bp-err-geojson', '✓ ' + t('ok.geojson')); }
+            });
+        });
+        document.getElementById('bp-geojson').addEventListener('input', function () {
+            var el = document.getElementById('bp-geojson');
+            el.classList.remove('bp-error'); el.classList.remove('bp-ok');
+            document.getElementById('bp-err-geojson').classList.remove('bp-visible');
+            document.getElementById('bp-ok-geojson').classList.remove('bp-visible');
+        });
+        document.getElementById('bp-md').addEventListener('blur', function () {
+            _validateMdUrl(this.value.trim(), function (errKey) {
+                if (errKey) { _showFieldError('bp-md', 'bp-err-md', errKey); }
+                else if (document.getElementById('bp-md').value.trim()) {
+                    _showFieldOk('bp-md', 'bp-err-md', '✓ ' + t('ok.md'));
+                }
+            });
+        });
+        document.getElementById('bp-md').addEventListener('input', function () {
+            var el = document.getElementById('bp-md');
+            el.classList.remove('bp-error'); el.classList.remove('bp-ok');
+            document.getElementById('bp-err-md').classList.remove('bp-visible');
+            document.getElementById('bp-ok-md').classList.remove('bp-visible');
         });
     }
 
@@ -780,6 +1057,8 @@
         });
     }
 
+    var _geOrchestraBaseUrl = '';
+
     function loadCustomConfig() {
         return new Promise(function (resolve) {
             var s = document.createElement('script');
@@ -790,6 +1069,15 @@
                     ? cfg.backgroundPresets
                     : _defaultPresets;
                 populatePresets(presets);
+                _geOrchestraBaseUrl = (cfg.geOrchestraBaseUrl || '').replace(/\/$/, '');
+                if (_geOrchestraBaseUrl) {
+                    var platform = document.getElementById('bp-platform');
+                    document.getElementById('bp-platform-label').textContent = t('label.platform') + ' ';
+                    var a = document.getElementById('bp-platform-url');
+                    a.textContent = _geOrchestraBaseUrl;
+                    a.href = _geOrchestraBaseUrl;
+                    platform.style.display = '';
+                }
                 resolve();
             };
             s.onerror = function () {
@@ -917,6 +1205,90 @@
         function escAc(s) {
             return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
+    }());
+
+    /* ── Layer name autocomplete ── */
+    (function () {
+        var inp    = document.getElementById('bp-layer-name');
+        var list   = document.getElementById('bp-layer-ac-list');
+        var cursor = -1;
+
+        function openList(layers) {
+            list.innerHTML = '';
+            cursor = -1;
+            if (!layers.length) { closeList(); return; }
+            layers.forEach(function (layer) {
+                var li = document.createElement('li');
+                li.className = 'bp-ac-item';
+                li.setAttribute('role', 'option');
+                li.setAttribute('aria-selected', 'false');
+                li.dataset.name = layer.name;
+                var esc = function (s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+                li.innerHTML = '<div class="bp-ac-item-name">' + esc(layer.name) + '</div>'
+                             + (layer.title ? '<div class="bp-ac-item-desc">' + esc(layer.title) + '</div>' : '');
+                li.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    inp.value = layer.name;
+                    closeList();
+                    inp.classList.remove('bp-error');
+                    document.getElementById('bp-err-layer-name').classList.remove('bp-visible');
+                    schedulePreview();
+                });
+                list.appendChild(li);
+            });
+            list.classList.add('bp-ac-open');
+            inp.setAttribute('aria-expanded', 'true');
+        }
+
+        function closeList() {
+            list.classList.remove('bp-ac-open');
+            list.innerHTML = '';
+            inp.setAttribute('aria-expanded', 'false');
+            cursor = -1;
+        }
+
+        function setCursor(idx) {
+            var items = list.querySelectorAll('.bp-ac-item');
+            items.forEach(function (el, i) { el.setAttribute('aria-selected', i === idx ? 'true' : 'false'); });
+            cursor = idx;
+        }
+
+        function suggest() {
+            var wmsUrl = document.getElementById('bp-wms-url').value.trim();
+            if (!wmsUrl) { closeList(); return; }
+            var clean;
+            try { clean = _cleanWMSEndpoint(wmsUrl); } catch (e) { closeList(); return; }
+            var cached = _wmsLayerCache[clean];
+            if (!cached || !cached.length) { closeList(); return; }
+            var tok = inp.value.trim().toLowerCase();
+            var matches = cached.filter(function (l) {
+                if (!tok) { return true; }
+                return l.name.toLowerCase().indexOf(tok) !== -1 || l.title.toLowerCase().indexOf(tok) !== -1;
+            }).slice(0, 15);
+            openList(matches);
+        }
+
+        inp.addEventListener('input', function () { suggest(); });
+        inp.addEventListener('focus', function () { suggest(); });
+        inp.addEventListener('blur',  function () { setTimeout(closeList, 150); });
+
+        inp.addEventListener('keydown', function (e) {
+            var items = list.querySelectorAll('.bp-ac-item');
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setCursor(Math.min(cursor + 1, items.length - 1));
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setCursor(Math.max(cursor - 1, 0));
+            } else if (e.key === 'Enter' && cursor >= 0) {
+                e.preventDefault();
+                inp.value = items[cursor].dataset.name;
+                closeList();
+                schedulePreview();
+            } else if (e.key === 'Escape') {
+                closeList();
+            }
+        });
     }());
 
     /* ── init ── */
