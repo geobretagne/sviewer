@@ -1894,6 +1894,7 @@ window.SViewer.app = (function() {
             doConfiguration();
             doMap();
             doGUI();
+            window.SViewer.view = view;
         }
         function loadScript(src, cb) {
             var s = document.createElement('script');
@@ -2753,7 +2754,6 @@ window.SViewer.app = (function() {
     window.SViewer.hardConfig = hardConfig;
     window.SViewer.config = config;
     window.SViewer.state = state;
-    Object.defineProperty(window.SViewer, 'view', { get: function() { return view; } });
     // Note: do NOT overwrite window.customConfig - it may have been set by embed.js or host page
     // window.customConfig was already set before sviewer.js loaded
 
