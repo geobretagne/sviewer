@@ -852,6 +852,7 @@
                 li.className = 'bp-ac-item';
                 li.setAttribute('role', 'option');
                 li.setAttribute('aria-selected', 'false');
+                li.title = ext.description;
                 li.dataset.id = ext.id;
                 li.innerHTML = '<div class="bp-ac-item-name">' + escAc(ext.name) + ' <code style="font-weight:400;font-size:10px">' + escAc(ext.id) + '</code></div>'
                              + '<div class="bp-ac-item-desc">' + escAc(ext.description) + '</div>';
