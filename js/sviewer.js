@@ -2753,7 +2753,7 @@ window.SViewer.app = (function() {
     window.SViewer.hardConfig = hardConfig;
     window.SViewer.config = config;
     window.SViewer.state = state;
-    window.SViewer.view = view;
+    Object.defineProperty(window.SViewer, 'view', { get: function() { return view; } });
     // Note: do NOT overwrite window.customConfig - it may have been set by embed.js or host page
     // window.customConfig was already set before sviewer.js loaded
 
