@@ -631,14 +631,16 @@
     /* ── capture position from iframe ── */
     function doCapture() {
         try {
-            var live = document.getElementById('bp-iframe').contentWindow.location.href;
-            var u = new URL(live);
-            var x = u.searchParams.get('x');
-            var y = u.searchParams.get('y');
-            var z = u.searchParams.get('z');
-            if (x) { document.getElementById('bp-x').value = x; }
-            if (y) { document.getElementById('bp-y').value = y; }
-            if (z) { document.getElementById('bp-z').value = z; }
+            var iw = document.getElementById('bp-iframe').contentWindow;
+            var sv = iw && iw.SViewer;
+            var view = sv && sv.view;
+            if (!view) { return; }
+            var c = view.getCenter();
+            var z = view.getZoom();
+            if (!c) { return; }
+            document.getElementById('bp-x').value = Math.round(c[0]);
+            document.getElementById('bp-y').value = Math.round(c[1]);
+            document.getElementById('bp-z').value = z;
             updateBar();
         } catch (e) { /* cross-origin or not yet loaded */ }
     }
