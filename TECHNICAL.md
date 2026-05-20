@@ -130,16 +130,22 @@ Charge automatiquement une ou plusieurs données WMS depuis des identifiants de 
 
 #### `q` (query)
 
-Active une requête GetFeatureInfo au démarrage sur les données visibles.
+Active une requête automatique au démarrage sur les données visibles.
 
 ```
 ?layers=geor:commune&q=1
+?geojson=https://…/data.geojson&q=1
 ```
 
-**Comportement :**
-- Exécute une requête au centre de la vue initiale
+**Comportement WMS :**
+- Exécute un GetFeatureInfo au centre de la vue initiale
 - Affiche les résultats dans le panneau Résultats
 - Nécessite au moins une donnée queryable (attribut `queryable="1"` en WMS)
+
+**Comportement GeoJSON :**
+- Après chargement des entités, recherche l'entité la plus proche du centre de la vue (hit-test pixel, tolérance 32 px, puis fallback `getClosestFeatureToCoordinate`)
+- Affiche ses propriétés dans le panneau Résultats
+- Fonctionne avec tout adaptateur (`?geojson=`, Grist, CSV…)
 
 #### `s` (search)
 
@@ -147,13 +153,15 @@ Active la barre de recherche au démarrage.
 
 ```
 ?s=1
+?geojson=https://…/data.geojson&s=1
 ```
 
 **Services interrogés :**
 - IGN Géoplateforme (ou `customConfig.openLSGeocodeUrl`)
 - WFS de chaque donnée queryable (si disponible et CORS OK)
+- Entités GeoJSON chargées — recherche en mémoire sur toutes les propriétés scalaires (string, nombre, date), résultats limités à `config.maxWfsSearchFeatures`
 
-**CORS :** Géoplateforme et services WFS doivent supporter CORS.
+**CORS :** Géoplateforme et services WFS doivent supporter CORS. La recherche GeoJSON est en mémoire — aucun appel réseau.
 
 #### `qcl_filters`
 
@@ -1237,6 +1245,7 @@ state = {
 | `SViewer.setGeojsonUrl(url)` | — | Met à jour l'URL GeoJSON dans l'état (permalien/partage) sans recharger les données |
 | `SViewer.onTitleChange` | callback | Fonction appelée quand l'utilisateur modifie le titre via le panneau de partage. `null` par défaut. Non appelée lors des modifications programmatiques (init, chargement md). Exemple : `SViewer.onTitleChange = function(title) { /* persister */ };` |
 | `SViewer.loadFeatures(geojson)` | — | Charge un GeoJSON FeatureCollection (objet JS) comme données vectorielles. Équivalent à `?geojson=` mais avec données déjà parsées. |
+| `SViewer.refreshWMS()` | — | Force le rechargement de toutes les sources tuiles WMS (vide le cache OL). Utile après une modification serveur (édition WFS-T, import planifié). |
 | `SViewer.loadFeatureObjects(features, options)` | — | Charge un tableau d'entités OpenLayers (`ol.Feature[]`) déjà en EPSG:3857. Zéro reprojection, zéro sérialisation — chemin haute performance pour les widgets. Voir options ci-dessous. |
 | `SViewer.selectFeature(id)` | — | Sélectionne une entité par son id OL (`feature.getId()` — champ GeoJSON `id` de premier niveau). Fallback sur `properties.id` si absent. Zoome, affiche propriétés dans le panneau. `console.warn` si aucune entité trouvée. |
 | `SViewer.clearSelection()` | — | Efface la sélection courante et ferme le panneau de propriétés. |

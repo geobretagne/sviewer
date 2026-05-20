@@ -28,7 +28,7 @@ Que permet sViewer ?
 * **Exporter en image** — PNG depuis le panneau de partage
 * **Interroger les données** — cliquez sur la carte pour afficher la fiche d'une zone ou d'un objet
 * **Traçabilité des données** — producteur, licence, date de mise à jour affichés automatiquement depuis les métadonnées
-* **Superposer des données JSON ou GeoJSON** — chargez un fichier GeoJSON ou API JSON distant avec `?geojson=URL`
+* **Superposer des données JSON ou GeoJSON** — chargez un fichier GeoJSON ou API JSON distant avec `?geojson=URL` ; ajoutez `&s=1` pour rendre les entités recherchables, `&q=1` pour interroger automatiquement l'entité au centre au démarrage
 * **Rechercher une adresse** — barre de recherche intégrée, géolocalisation ; service de géocodage configurable (France ou mondial)
 * **Thème clair et sombre** — manuel ou automatique selon le système
 * **Tous les appareils** — téléphone, tablette, ordinateur, même URL
