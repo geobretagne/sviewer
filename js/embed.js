@@ -12,7 +12,7 @@
 (function() {
 
     var SVIEWER_VERSION='0.12.0';
-    var SVIEWER_COMMIT='1bf7069';
+    var SVIEWER_COMMIT='425a7f7';
 
     // Internal event bus — shared with sviewer.js via window._SViewerInternals.
     // Frozen after creation to prevent host-page collision or tampering.

@@ -286,6 +286,10 @@
                 <input type="text" id="bp-style" autocomplete="off">
             </div>
             <div class="bp-field">
+                <label for="bp-cql" id="bp-lbl-cql"></label>
+                <input type="text" id="bp-cql" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="bp-field">
                 <label id="bp-lbl-opacity"></label>
                 <div class="bp-opacity-row">
                     <input type="range" id="bp-opacity" min="0" max="1" step="0.1" value="1">
@@ -377,6 +381,8 @@
         document.getElementById('bp-lbl-wms-url').textContent    = t('label.wms_url');
         document.getElementById('bp-lbl-layer-name').textContent = t('label.layer_name');
         document.getElementById('bp-lbl-style').textContent      = t('label.style');
+        document.getElementById('bp-lbl-cql').textContent        = t('label.cql');
+        document.getElementById('bp-cql').placeholder            = t('hint.cql');
         document.getElementById('bp-lbl-opacity').textContent    = t('label.opacity');
         document.getElementById('bp-lbl-title').textContent      = t('label.title');
         document.getElementById('bp-lbl-basemap').textContent    = t('label.basemap');
@@ -427,9 +433,13 @@
         var layerName = document.getElementById('bp-layer-name').value.trim();
         if (layerName) {
             var style   = document.getElementById('bp-style').value.trim();
+            var cql     = document.getElementById('bp-cql').value.trim();
             var opacity = document.getElementById('bp-opacity').value;
             /* sViewer layers= format: layername[*style[*cql_filter]][@wmsurl] */
-            var layerPart = layerName + (style ? '*' + style : '');
+            /* cql without style: emit empty style slot so position is unambiguous */
+            var layerPart = layerName;
+            if (style || cql) { layerPart += '*' + style; }
+            if (cql)          { layerPart += '*' + cql; }
             p.set('layers', wmsUrl ? layerPart + '@' + wmsUrl : layerPart);
             if (opacity !== '1') { p.set('opacity', opacity); }
         }
@@ -478,6 +488,7 @@
             var starParts = layerPart.split('*');
             document.getElementById('bp-layer-name').value = starParts[0] || '';
             document.getElementById('bp-style').value      = starParts[1] || '';
+            document.getElementById('bp-cql').value        = starParts[2] || '';
             document.getElementById('bp-wms-url').value    = wmsUrlParsed;
             var op = qs.get('opacity');
             document.getElementById('bp-opacity').value = (op !== null && op !== '') ? op : '1';
@@ -557,7 +568,7 @@
     /* ── reset ── */
     function doReset() {
         ['bp-x','bp-y','bp-z','bp-wms-url','bp-layer-name',
-         'bp-style','bp-title-input','bp-ext','bp-load-input','bp-md','bp-geojson'].forEach(function (id) {
+         'bp-style','bp-cql','bp-title-input','bp-ext','bp-load-input','bp-md','bp-geojson'].forEach(function (id) {
             document.getElementById(id).value = '';
         });
         document.getElementById('bp-opacity').value = '1';
@@ -624,7 +635,7 @@
             schedulePreview();
         });
 
-        ['bp-x','bp-y','bp-z','bp-style','bp-title-input','bp-ext','bp-md','bp-geojson'].forEach(function (id) {
+        ['bp-x','bp-y','bp-z','bp-style','bp-cql','bp-title-input','bp-ext','bp-md','bp-geojson'].forEach(function (id) {
             document.getElementById(id).addEventListener('input', schedulePreview);
         });
         document.getElementById('bp-lb').addEventListener('change', schedulePreview);
