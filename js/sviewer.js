@@ -315,7 +315,22 @@ window.SViewer.app = (function() {
             var wmsSource = new ol.source.TileWMS(wms_params);
             wmsSource.on('tileloadstart', function() { loadingBar.start(); });
             wmsSource.on('tileloadend',   function() { loadingBar.end(); _emit('sv:layerLoad', { layer: self }); });
-            wmsSource.on('tileloaderror', function() { loadingBar.end(); });
+            var _wmsErrTimer = null;
+            wmsSource.on('tileloaderror', function() {
+                loadingBar.end();
+                clearTimeout(_wmsErrTimer);
+                _wmsErrTimer = setTimeout(function() {
+                    var bannerId = 'sv-wms-err-' + self.options.layername.replace(/\W/g, '_');
+                    if (document.getElementById(bannerId)) { return; }
+                    var banner = document.createElement('div');
+                    banner.id = bannerId;
+                    banner.className = 'alert alert-danger mt-2';
+                    banner.setAttribute('role', 'alert');
+                    banner.textContent = tr('msg.wms_error', self.options.layername);
+                    var lc = document.getElementById('sv-legend-content');
+                    if (lc) { lc.insertBefore(banner, lc.firstChild); }
+                }, 2000);
+            });
             self.wmslayer = new ol.layer.Tile({
                 opacity: isNaN(self.options.opacity)?1:self.options.opacity,
                 source: wmsSource
@@ -1275,6 +1290,19 @@ window.SViewer.app = (function() {
         else { legendContent.insertBefore(card, legendContent.firstChild); }
     }
 
+    function _geojsonErrorBanner(msg) {
+        var lc = document.getElementById('sv-legend-content');
+        if (!lc) { messagePopup(msg); return; }
+        var existing = document.getElementById('sv-geojson-err');
+        if (existing) { existing.textContent = msg; return; }
+        var banner = document.createElement('div');
+        banner.id = 'sv-geojson-err';
+        banner.className = 'alert alert-danger mt-2';
+        banner.setAttribute('role', 'alert');
+        banner.textContent = msg;
+        lc.insertBefore(banner, lc.firstChild);
+    }
+
     // url: GeoJSON URL to fetch. geojsonDirect: pre-parsed FeatureCollection (skips fetch).
     function loadGeoJSON(url, geojsonDirect) {
         // Direct data path — skip fetch entirely.
@@ -1332,14 +1360,17 @@ window.SViewer.app = (function() {
             }()));
             log('loadGeoJSON: geojson features=', geojson ? geojson.features.length : 'null (no adapter matched or conversion failed)');
             if (!geojson) {
-                messagePopup(tr('msg.query_failed'));
+                _geojsonErrorBanner(tr('msg.geojson_no_data'));
                 _emit('sv:featuresError', { error: 'no-data', url: url });
                 return;
             }
             _applyGeoJSON(geojson, url, matchedAdapter);
         })
         .catch(function(err) {
-            messagePopup(tr('msg.query_failed'));
+            var msg = (err && err.message && err.message.indexOf('HTTP') === 0)
+                ? tr('msg.geojson_http_error', err.message)
+                : tr('msg.geojson_load_error');
+            _geojsonErrorBanner(msg);
             _emit('sv:featuresError', { error: err && err.message || 'fetch-error', url: url });
         });
     }

@@ -69,7 +69,11 @@ Object.assign(window.SViewer.hardConfig, {
             'btn.fullscreen':            'Full screen',
             'btn.snapshot':             'Download map as image',
             'btn.snapshot_label':       'Image',
-            'panel.link_modal.title':   'Link to this map'
+            'panel.link_modal.title':   'Link to this map',
+            'msg.wms_error':            'WMS service unavailable: {0}',
+            'msg.geojson_load_error':   'Data could not be loaded (network or CORS error)',
+            'msg.geojson_http_error':   'Data could not be loaded ({0})',
+            'msg.geojson_no_data':      'No data found at this URL'
         },
         fr: {
             'btn.initial_view':  'vue initiale',
@@ -135,7 +139,11 @@ Object.assign(window.SViewer.hardConfig, {
             'btn.fullscreen':            'Plein écran',
             'btn.snapshot':             'Télécharger la carte en image',
             'btn.snapshot_label':       'Image',
-            'panel.link_modal.title':   'Lien vers cette carte'
+            'panel.link_modal.title':   'Lien vers cette carte',
+            'msg.wms_error':            'Service WMS indisponible : {0}',
+            'msg.geojson_load_error':   'Impossible de charger les données (erreur réseau ou CORS)',
+            'msg.geojson_http_error':   'Impossible de charger les données ({0})',
+            'msg.geojson_no_data':      'Aucune donnée trouvée à cette URL'
         },
         es: {
             'btn.initial_view':  'Vista inicial',
@@ -201,7 +209,11 @@ Object.assign(window.SViewer.hardConfig, {
             'btn.fullscreen':            'Pantalla completa',
             'btn.snapshot':             'Descargar el mapa como imagen',
             'btn.snapshot_label':       'Imagen',
-            'panel.link_modal.title':   'Enlace a este mapa'
+            'panel.link_modal.title':   'Enlace a este mapa',
+            'msg.wms_error':            'Servicio WMS no disponible: {0}',
+            'msg.geojson_load_error':   'No se pudieron cargar los datos (error de red o CORS)',
+            'msg.geojson_http_error':   'No se pudieron cargar los datos ({0})',
+            'msg.geojson_no_data':      'No se encontraron datos en esta URL'
         },
         de: {
             'btn.initial_view':  'Startansicht',
@@ -267,7 +279,11 @@ Object.assign(window.SViewer.hardConfig, {
             'btn.fullscreen':            'Vollbild',
             'btn.snapshot':             'Karte als Bild herunterladen',
             'btn.snapshot_label':       'Bild',
-            'panel.link_modal.title':   'Link zu dieser Karte'
+            'panel.link_modal.title':   'Link zu dieser Karte',
+            'msg.wms_error':            'WMS-Dienst nicht verfügbar: {0}',
+            'msg.geojson_load_error':   'Daten konnten nicht geladen werden (Netzwerk- oder CORS-Fehler)',
+            'msg.geojson_http_error':   'Daten konnten nicht geladen werden ({0})',
+            'msg.geojson_no_data':      'Keine Daten unter dieser URL gefunden'
         }
     }
 });
