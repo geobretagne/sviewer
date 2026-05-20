@@ -10,7 +10,7 @@
   "entry": "extension.js",
 
   "sviewer": {
-    "minVersion": "0.12.1"
+    "minVersion": "0.13.0"
   },
 
   "examples": [
