@@ -662,6 +662,7 @@
     /* ── mutual exclusion: md= vs layers= ── */
     var _WMS_FIELDS  = ['bp-wms-url','bp-layer-name','bp-style','bp-cql','bp-opacity'];
     var _WMS_CHECKS  = ['bp-q','bp-s'];
+    var _MD_DISABLES = ['bp-title-input']; /* md= sets title from CSW — manual title ignored */
 
     function syncMutex() {
         var mdFilled  = document.getElementById('bp-md').value.trim() !== '';
@@ -671,6 +672,9 @@
             document.getElementById(id).disabled = mdFilled;
         });
         _WMS_CHECKS.forEach(function (id) {
+            document.getElementById(id).disabled = mdFilled;
+        });
+        _MD_DISABLES.forEach(function (id) {
             document.getElementById(id).disabled = mdFilled;
         });
         document.getElementById('bp-md').disabled = wmsFilled;
