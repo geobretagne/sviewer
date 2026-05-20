@@ -3,7 +3,7 @@
   "type":        "extension",
   "version":     "0.1.0",
   "name":        "Print / PDF",
-  "description": "Génère une impression haute résolution de la carte courante (re-rendu OL à la résolution cible). Format A4 paysage. Aucune dépendance externe.",
+  "description": "Génère une impression haute résolution de la carte courante (re-rendu OL à la résolution cible). Format A4 paysage. QR code permalink optionnel (qr-creator, MIT, auto-hébergé).",
   "author":      "fphg",
   "tags":        ["impression", "PDF", "export", "print"],
 

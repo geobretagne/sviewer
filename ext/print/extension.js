@@ -1,14 +1,18 @@
 /**
  * sViewer extension — Print / PDF
  *
- * Re-renders the OL map at target print resolution, assembles a print page
- * (title, map image, scale bar, date) in a new tab, then triggers window.print().
+ * Re-renders the OL map at target print resolution, opens a print tab with
+ * the full-page map image and an optional QR code overlay (bottom-right),
+ * then triggers window.print().
  *
  * Method: map.setSize([w, h]) — bypasses DOM measurement, forces OL to render
  * at exact print pixel dimensions. After rendercomplete, grab canvas.toDataURL(),
  * then map.setSize(origSize) to restore. Zero DOM manipulation needed.
  *
- * A4 landscape @ 150 dpi = 1754 × 1240 px map area (minus header ~80px).
+ * A4 landscape @ 150 dpi = 1754 × 1240 px (full page, no header).
+ *
+ * QR code: optional, lazy-loads qr-creator.min.js only when checked.
+ * Encodes the current permalink minus ?ext=print.
  *
  * Activated via:  customConfig = { extensions: ['print'] }
  *             or  ?ext=print
@@ -19,20 +23,21 @@
     var BASE  = SViewer.extensionBase();
     var PANEL = 'print';
 
-    // --- Print dimensions (px at 150 dpi) ------------------------------------
-    // A4 landscape: 297 × 210 mm → 1754 × 1240 px @ 150 dpi
-    var PRINT_W   = 1754;
-    var PRINT_H   = 1240;
-    var HEADER_H  = 80;   // title row height in print page
-    var MAP_H     = PRINT_H - HEADER_H;
+    // A4 @ 150 dpi: landscape 1754 × 1240 px, portrait 1240 × 1754 px
+    var FORMATS = {
+        landscape: { w: 1754, h: 1240, page: 'A4 landscape' },
+        portrait:  { w: 1240, h: 1754, page: 'A4 portrait'  }
+    };
 
     var RENDER_TIMEOUT_MS = 12000;
 
     // --- State ---------------------------------------------------------------
-    var mapRef    = null;
-    var active    = false;
-    var btnEl     = null;
-    var rendering = false;
+    var mapRef     = null;
+    var active     = false;
+    var btnEl      = null;
+    var rendering  = false;
+    var qrLibReady = false;
+    var lastOrient = 'landscape';   // persists across updateMsg re-renders
 
     // --- i18n ----------------------------------------------------------------
     var _i18n = {};
@@ -52,15 +57,14 @@
     SViewer.onMapReady(function (ctx) {
         mapRef = ctx.map;
 
-        // Toolbar button
         var toolbar = document.getElementById('sv-panel-controls');
         btnEl = document.createElement('button');
-        btnEl.type        = 'button';
-        btnEl.className   = 'btn btn-dark sv-map-btn sv-alt-toggle';
+        btnEl.type      = 'button';
+        btnEl.className = 'btn btn-dark sv-map-btn sv-alt-toggle';
         btnEl.setAttribute('aria-pressed', 'false');
         btnEl.setAttribute('aria-label', t('btn.label'));
         btnEl.setAttribute('title', t('btn.label'));
-        btnEl.innerHTML   = '<i class="bi bi-printer" aria-hidden="true"></i>';
+        btnEl.innerHTML = '<i class="bi bi-printer" aria-hidden="true"></i>';
         btnEl.addEventListener('click', onBtnClick);
         toolbar.appendChild(btnEl);
 
@@ -79,38 +83,35 @@
         active = !active;
         btnEl.setAttribute('aria-pressed', String(active));
         btnEl.classList.toggle('active', active);
-        if (active) {
-            openPanel();
-        } else {
-            SViewer.panel.close();
-        }
+        if (active) { openPanel(); } else { SViewer.panel.close(); }
     }
 
     function panelHtml(msg) {
-        var currentTitle = (SViewer.config && SViewer.config.title) || '';
         return [
             '<div style="padding:0.75rem;display:flex;flex-direction:column;gap:0.75rem">',
 
             '<div>',
-            '<label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.2rem">',
-            t('label.title'),
-            '</label>',
-            '<input id="sv-print-title" type="text" class="form-control form-control-sm"',
-            ' placeholder="' + escHtml(t('hint.title')) + '"',
-            ' value="' + escHtml(currentTitle) + '">',
-            '</div>',
-
+            '<label for="sv-print-orient" style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.2rem">' + t('label.format') + '</label>',
             '<div style="display:flex;gap:.5rem;align-items:center">',
-            '<span style="font-size:.8rem;font-weight:600;white-space:nowrap">A4 — ' + t('orient.landscape') + '</span>',
+            '<select id="sv-print-orient" class="form-select form-select-sm" style="width:auto;color:#212529;background-color:#fff">',
+            '<option value="landscape"' + (lastOrient === 'landscape' ? ' selected' : '') + '>' + t('orient.landscape') + '</option>',
+            '<option value="portrait"'  + (lastOrient === 'portrait'  ? ' selected' : '') + '>' + t('orient.portrait')  + '</option>',
+            '</select>',
             '<span style="font-size:.75rem;color:var(--bs-secondary)">150 dpi</span>',
             '</div>',
+            '</div>',
+
+            '<label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;cursor:pointer">',
+            '<input id="sv-print-qr" type="checkbox">',
+            t('label.qr'),
+            '</label>',
 
             '<button id="sv-print-btn" class="btn btn-sm btn-primary w-100"',
             (rendering ? ' disabled' : '') + '>',
             t('btn.print'),
             '</button>',
 
-            msg ? '<div id="sv-print-msg" style="font-size:.8rem;color:var(--bs-secondary)">' + escHtml(msg) + '</div>' : '',
+            msg ? '<div style="font-size:.8rem;color:var(--bs-secondary)">' + escHtml(msg) + '</div>' : '',
 
             '</div>'
         ].join('');
@@ -121,20 +122,21 @@
         document.getElementById('sv-print-btn').addEventListener('click', doPrint);
     }
 
-    function updateMsg(msg) {
+    function updateMsg(msg, keepQr) {
         SViewer.panel.update(PANEL, panelHtml(msg));
         var btn = document.getElementById('sv-print-btn');
         if (btn) { btn.addEventListener('click', doPrint); }
+        var chk = document.getElementById('sv-print-qr');
+        if (chk && keepQr) { chk.checked = true; }
+        // orientation already reflected via lastOrient in panelHtml
     }
 
     // --- Scale bar -----------------------------------------------------------
 
     function scaleBarInfo(view) {
-        // Resolution in m/px at current centre
-        var res = view.getResolution();
-        // Pick a round distance that fits ~120px
+        var res      = view.getResolution();
         var targetPx = 120;
-        var rawM = res * targetPx;
+        var rawM     = res * targetPx;
         var magnitude = Math.pow(10, Math.floor(Math.log10(rawM)));
         var nice = [1, 2, 5, 10].reduce(function (best, f) {
             return Math.abs(f * magnitude - rawM) < Math.abs(best - rawM) ? f * magnitude : best;
@@ -144,22 +146,64 @@
         return { px: barPx, label: label };
     }
 
+    // --- Permalink without ext=print -----------------------------------------
+
+    function permalink() {
+        var url    = new URL(window.location.href);
+        var extVal = url.searchParams.get('ext');
+        if (extVal) {
+            // Remove 'print' from comma-separated ext list; drop param if empty
+            var parts = extVal.split(',').map(function (s) { return s.trim(); })
+                              .filter(function (s) { return s && s !== 'print'; });
+            if (parts.length) {
+                url.searchParams.set('ext', parts.join(','));
+            } else {
+                url.searchParams.delete('ext');
+            }
+        }
+        return url.toString();
+    }
+
+    // --- QR lib lazy load ----------------------------------------------------
+
+    function loadQrLib(cb) {
+        if (qrLibReady) { cb(); return; }
+        var s = document.createElement('script');
+        s.src = BASE + 'qr-creator.min.js';
+        s.onload  = function () { qrLibReady = true; cb(); };
+        s.onerror = function () { cb(new Error('qr-load-failed')); };
+        document.head.appendChild(s);
+    }
+
     // --- Print ---------------------------------------------------------------
 
     function doPrint() {
         if (rendering) { return; }
         rendering = true;
-        updateMsg(t('msg.rendering'));
 
-        var userTitle = (document.getElementById('sv-print-title') || {}).value || '';
-        var view      = mapRef.getView();
-        var scale     = scaleBarInfo(view);
+        var wantQr = !!(document.getElementById('sv-print-qr') || {}).checked;
+        var orientEl = document.getElementById('sv-print-orient');
+        lastOrient = (orientEl && orientEl.value === 'portrait') ? 'portrait' : 'landscape';
+        var fmt = FORMATS[lastOrient];
 
-        // Save current size — restore after capture.
+        updateMsg(t('msg.rendering'), wantQr);
+
+        var view   = mapRef.getView();
+        var scale  = scaleBarInfo(view);
+        var link   = wantQr ? permalink() : null;
+
+        // Capture attribution — expand if collapsed so full text is available
+        var attrEl = mapRef.getViewport().querySelector('.ol-attribution');
+        var attrText = '';
+        if (attrEl) {
+            var wasCollapsed = attrEl.classList.contains('ol-collapsed');
+            if (wasCollapsed) { attrEl.classList.remove('ol-collapsed'); }
+            attrText = (attrEl.innerText || attrEl.textContent || '').trim();
+            if (wasCollapsed) { attrEl.classList.add('ol-collapsed'); }
+        }
+
         var origSize = mapRef.getSize();
-
-        // Force OL to render at exact print dimensions — no DOM manipulation needed.
-        mapRef.setSize([PRINT_W, MAP_H]);
+        mapRef.setSize([fmt.w, fmt.h]);
 
         var done  = false;
         var timer = null;
@@ -175,20 +219,28 @@
             clearTimeout(timer);
 
             var canvas = mapRef.getViewport().querySelector('canvas');
-            if (!canvas) { restore(); updateMsg(''); return; }
+            if (!canvas) { restore(); updateMsg('', wantQr); return; }
 
             var dataUrl;
             try {
                 dataUrl = canvas.toDataURL('image/png');
             } catch (e) {
                 restore();
-                updateMsg(t('err.tainted'));
+                updateMsg(t('err.tainted'), wantQr);
                 return;
             }
 
             restore();
-            openPrintTab(dataUrl, userTitle, scale);
-            updateMsg(t('msg.done'));
+
+            if (wantQr) {
+                loadQrLib(function (err) {
+                    var opened = openPrintTab(dataUrl, scale, err ? null : link, attrText, fmt);
+                    updateMsg(opened ? (err ? t('err.qr') : t('msg.done')) : t('err.popup'), wantQr);
+                });
+            } else {
+                var opened = openPrintTab(dataUrl, scale, null, attrText, fmt);
+                updateMsg(opened ? t('msg.done') : t('err.popup'), wantQr);
+            }
         }
 
         timer = setTimeout(function () {
@@ -196,22 +248,30 @@
             done = true;
             mapRef.un('rendercomplete', onRenderComplete);
             restore();
-            updateMsg(t('err.timeout'));
+            updateMsg(t('err.timeout'), wantQr);
         }, RENDER_TIMEOUT_MS);
 
         mapRef.once('rendercomplete', onRenderComplete);
         mapRef.renderSync();
     }
 
+    // --- QR data URL ---------------------------------------------------------
+
+    function qrDataUrl(text) {
+        var c = document.createElement('canvas');
+        // QrCreator renders at size × size px
+        QrCreator.render({ text: text, radius: 0, ecLevel: 'M', fill: '#000', background: '#fff', size: 128 }, c);
+        return c.toDataURL('image/png');
+    }
+
     // --- Print page ----------------------------------------------------------
 
-    function openPrintTab(dataUrl, title, scale) {
+    function openPrintTab(dataUrl, scale, qrUrl, attrText, fmt) {
         var dateStr = new Date().toLocaleDateString(
             (SViewer.config && SViewer.config.lang) || 'fr',
             { year: 'numeric', month: 'long', day: 'numeric' }
         );
 
-        // Scale bar SVG: white background, black bar, label
         var barSvg = [
             '<svg xmlns="http://www.w3.org/2000/svg" width="' + (scale.px + 4) + '" height="22">',
             '<rect x="2" y="8" width="' + scale.px + '" height="6" fill="white" stroke="black" stroke-width="1.5"/>',
@@ -221,42 +281,46 @@
             '</svg>'
         ].join('');
 
+        var qrImg = qrUrl ? '<img src="' + qrDataUrl(qrUrl) + '" width="96" height="96" alt="QR" style="display:block">' : '';
+        var attrHtml = attrText ? '<div id="attr">' + escHtml(attrText) + '</div>' : '';
+
         var html = [
             '<!DOCTYPE html><html><head>',
             '<meta charset="utf-8">',
-            '<title>' + escHtml(title || 'sViewer') + '</title>',
+            '<title>sViewer</title>',
             '<style>',
             '* { margin:0; padding:0; box-sizing:border-box; }',
-            'html, body { width:297mm; height:210mm; overflow:hidden; background:#fff; }',
-            '@page { size: A4 landscape; margin:0; }',
-            'body { display:flex; flex-direction:column; font-family:sans-serif; }',
-            '#ph { height:' + HEADER_H + 'px; display:flex; align-items:center;',
-            '       justify-content:space-between; padding:0 12px;',
-            '       border-bottom:1px solid #ccc; background:#f8f8f8; }',
-            '#ph h1 { font-size:14pt; font-weight:600; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }',
-            '#ph .meta { display:flex; align-items:center; gap:16px; flex-shrink:0; }',
-            '#ph .meta span { font-size:8pt; color:#555; }',
-            '#pm { flex:1; overflow:hidden; }',
-            '#pm img { display:block; width:' + PRINT_W + 'px; height:' + MAP_H + 'px; }',
+            'html, body { width:' + (fmt.w > fmt.h ? '297mm' : '210mm') + '; height:' + (fmt.w > fmt.h ? '210mm' : '297mm') + '; overflow:hidden; background:#fff; }',
+            '@page { size: ' + fmt.page + '; margin:0; }',
+            'body { position:relative; font-family:sans-serif; }',
+            '#pm { width:100%; height:100%; display:flex; }',
+            '#pm img.map { display:block; width:100%; height:100%; object-fit:fill; }',
+            '.ov { position:absolute; background:rgba(255,255,255,0.82); padding:5px 7px; border-radius:3px; }',
+            '#qrov { top:6mm; right:6mm; }',
+            '#scov { bottom:6mm; right:6mm; display:flex; flex-direction:column; align-items:flex-end; gap:4px; }',
+            '#scov .date { font-size:8pt; color:#333; }',
+            '#attr { position:absolute; bottom:6mm; left:6mm;',
+            '        font-size:7pt; color:#333; max-width:140mm;',
+            '        background:rgba(255,255,255,0.82); padding:4px 6px; border-radius:3px; }',
             '@media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }',
             '</style>',
             '</head><body>',
-            '<div id="ph">',
-            '<h1>' + escHtml(title || 'sViewer') + '</h1>',
-            '<div class="meta">',
+            '<div id="pm"><img class="map" src="' + dataUrl + '" alt="map"></div>',
+            qrImg ? '<div id="qrov" class="ov">' + qrImg + '</div>' : '',
+            '<div id="scov" class="ov">',
             barSvg,
-            '<span>' + escHtml(dateStr) + '</span>',
+            '<span class="date">' + escHtml(dateStr) + '</span>',
             '</div>',
-            '</div>',
-            '<div id="pm"><img src="' + dataUrl + '" alt="map"></div>',
+            attrHtml,
             '<script>window.onload = function() { window.print(); };<\/script>',
             '</body></html>'
         ].join('');
 
         var w = window.open('', '_blank');
-        if (!w) { return; }
+        if (!w) { return false; }
         w.document.write(html);
         w.document.close();
+        return true;
     }
 
     // --- Utilities -----------------------------------------------------------
@@ -266,7 +330,8 @@
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
 }());
