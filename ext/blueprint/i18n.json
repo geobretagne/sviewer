@@ -1,7 +1,7 @@
 {
   "fr": {
-    "page.title":         "Blueprint — sViewer",
-    "app.title":          "Blueprint",
+    "page.title":         "sViewer Blueprint",
+    "app.title":          "sViewer Blueprint",
     "app.subtitle":       "Composez et partagez une vue sViewer en moins d'une minute",
     "section.load":       "Charger une URL existante",
     "section.position":   "Position",
@@ -58,8 +58,8 @@
     "hint.geojson":       "https://..."
   },
   "en": {
-    "page.title":         "Blueprint — sViewer",
-    "app.title":          "Blueprint",
+    "page.title":         "sViewer Blueprint",
+    "app.title":          "sViewer Blueprint",
     "app.subtitle":       "Compose and share an sViewer view in under a minute",
     "section.load":       "Load existing URL",
     "section.position":   "Position",
@@ -116,8 +116,8 @@
     "hint.geojson":       "https://..."
   },
   "es": {
-    "page.title":         "Blueprint — sViewer",
-    "app.title":          "Blueprint",
+    "page.title":         "sViewer Blueprint",
+    "app.title":          "sViewer Blueprint",
     "app.subtitle":       "Componga y comparta una vista sViewer en menos de un minuto",
     "section.load":       "Cargar URL existente",
     "section.position":   "Posición",
@@ -174,8 +174,8 @@
     "hint.geojson":       "https://..."
   },
   "de": {
-    "page.title":         "Blueprint — sViewer",
-    "app.title":          "Blueprint",
+    "page.title":         "sViewer Blueprint",
+    "app.title":          "sViewer Blueprint",
     "app.subtitle":       "Erstellen und teilen Sie eine sViewer-Ansicht in unter einer Minute",
     "section.load":       "Bestehende URL laden",
     "section.position":   "Position",
