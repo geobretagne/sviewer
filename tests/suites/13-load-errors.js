@@ -11,42 +11,7 @@
  * assert(hardConfig, event, queryDOM, clickDOM)
  */
 
-// --- GeoJSON 404 → #sv-geojson-err banner appears -------------------------
-
-SV_TESTS.push({
-    id: 'geojson-404-error-banner',
-    label: 'GeoJSON 404 — #sv-geojson-err banner appears in legend panel',
-    group: 'LoadErrors',
-    type: 'visual',
-    timeout: 8000,
-    params: {
-        geojson: SVRunner.getBaseUrl() + 'tests/fixtures/nonexistent-file-404.geojson',
-        z: 10,
-        x: 2.3488,
-        y: 48.8534
-    },
-    assert: function(hardConfig, event, queryDOM, clickDOM) {
-        if (!hardConfig) { throw new Error('sViewer crashed'); }
-        // Open legend panel so #sv-legend-content is in DOM
-        return clickDOM('#sv-btn-panel-legend', 200).then(function() {
-            var maxAttempts = 12;
-            var attempt = 0;
-            function poll() {
-                attempt++;
-                return queryDOM('#sv-geojson-err', 'textContent').then(function(r) {
-                    if (r.found) { return; }
-                    if (attempt >= maxAttempts) {
-                        throw new Error('#sv-geojson-err banner never appeared after GeoJSON 404');
-                    }
-                    return new Promise(function(res) { setTimeout(res, 300); }).then(poll);
-                });
-            }
-            return poll();
-        });
-    }
-});
-
-// --- GeoJSON 404 → banner has role=alert -----------------------------------
+// --- GeoJSON 404 → banner has role=alert (also proves banner appeared) ----
 
 SV_TESTS.push({
     id: 'geojson-404-banner-role-alert',

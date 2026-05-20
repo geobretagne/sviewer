@@ -7,43 +7,10 @@
  * assert(hardConfig, event, queryDOM, clickDOM)
  */
 
-// messagePopup creates a .alert.alert-info appended to body
-SV_TESTS.push({
-    id: 'msg-popup-appears',
-    label: 'messagePopup — div.alert.alert-info appended to body after trigger',
-    group: 'MessagePopup',
-    type: 'visual',
-    params: {},
-    assert: function(hc, ev, queryDOM, clickDOM) {
-        // Click the GPS locate button — browser has no GPS → fires messagePopup
-        // after a short error callback. Wait up to 4s for element to appear.
-        return clickDOM('#sv-btn-locate', 300).then(function() {
-            // Poll for the popup (up to 3s total, 300ms intervals)
-            var maxAttempts = 10;
-            var attempt = 0;
-            function poll() {
-                attempt++;
-                return queryDOM('.alert.alert-info', 'textContent').then(function(r) {
-                    if (r.found) { return; }
-                    if (attempt >= maxAttempts) {
-                        throw new Error('alert.alert-info never appeared in body after GPS error');
-                    }
-                    return new Promise(function(res) { setTimeout(res, 300); }).then(poll);
-                });
-            }
-            return poll();
-        }).catch(function(e) {
-            // GPS button may not exist in all configs — mark as skipped (pass)
-            if (e.message && e.message.indexOf('not found') !== -1) { return; }
-            throw e;
-        });
-    }
-});
-
-// messagePopup must have role=alert for accessibility
+// messagePopup must have role=alert for accessibility (also proves it appeared)
 SV_TESTS.push({
     id: 'msg-popup-role-alert',
-    label: 'messagePopup — element has role="alert"',
+    label: 'messagePopup — element has role="alert" after GPS error trigger',
     group: 'MessagePopup',
     type: 'visual',
     params: {},

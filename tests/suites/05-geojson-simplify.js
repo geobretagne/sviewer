@@ -62,24 +62,6 @@ SV_TESTS.push({
     }
 });
 
-// Regression: selectFeature must find features that have properties.id but no top-level GeoJSON id.
-// The fixture has no top-level "id" field — only properties.id = "brest-1".
-// Regression: ?geojson= pointing to a 404 URL must not crash sViewer.
-// sv:featuresError is emitted internally — this test only verifies no crash (sv:ready fires).
-SV_TESTS.push({
-    id: 'geojson-fetch-404-no-crash',
-    label: '?geojson= 404 — sViewer recovers, sv:featuresError emitted, no crash',
-    group: 'GeoJSON',
-    type: 'visual',
-    params: {
-        geojson: SVRunner.getBaseUrl() + 'tests/fixtures/nonexistent-does-not-exist.geojson'
-    },
-    assert: function(hardConfig) {
-        if (!hardConfig) throw new Error('hardConfig not received — sViewer crashed on 404 geojson fetch');
-        if (!hardConfig.initialExtent) throw new Error('initialExtent missing after 404 geojson');
-    }
-});
-
 // Extension calls SViewer.selectFeature('brest-1') on featuresLoaded.
 // Assert: query panel opens (sv-panel-open class on #sv-frame-map).
 SV_TESTS.push({

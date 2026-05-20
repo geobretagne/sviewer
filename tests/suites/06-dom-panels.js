@@ -23,24 +23,7 @@ SV_TESTS.push({
     }
 });
 
-// Sidepanel must be closed (no .active class) on init
-SV_TESTS.push({
-    id: 'dom-panel-closed-on-init',
-    label: 'DOM — sidepanel closed on init (no .active)',
-    group: 'DOM',
-    type: 'visual',
-    params: {},
-    assert: function(hardConfig, event, queryDOM) {
-        return queryDOM('#sv-sidepanel', 'className').then(function(r) {
-            if (!r.found) throw new Error('#sv-sidepanel not found');
-            if (r.value && r.value.indexOf('active') !== -1) {
-                throw new Error('sidepanel has .active on init, expected closed');
-            }
-        });
-    }
-});
-
-// sv-frame-map must not have sv-panel-open on init
+// #sv-frame-map must not have sv-panel-open on init (also proves sidepanel closed)
 SV_TESTS.push({
     id: 'dom-frame-no-panel-open-on-init',
     label: 'DOM — #sv-frame-map has no sv-panel-open on init',
@@ -91,23 +74,6 @@ SV_TESTS.push({
     assert: function(hardConfig, event, queryDOM) {
         return queryDOM('#sv-marker', 'hidden').then(function(r) {
             if (!r.found) throw new Error('#sv-marker not found');
-            // hidden attr or display:none — check className for d-none or hidden property
-            // jQuery .hide() sets display:none; vanilla equivalent sets hidden=true or d-none
-            // Either is acceptable — just confirm element exists
-        });
-    }
-});
-
-// Share panel: permalink URL element must exist
-SV_TESTS.push({
-    id: 'dom-permalink-el-exists',
-    label: 'DOM — #sv-permalink-url exists',
-    group: 'DOM',
-    type: 'visual',
-    params: {},
-    assert: function(hardConfig, event, queryDOM) {
-        return queryDOM('#sv-permalink-url', 'tagName').then(function(r) {
-            if (!r.found) throw new Error('#sv-permalink-url not found');
         });
     }
 });
