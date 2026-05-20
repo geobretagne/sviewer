@@ -75,13 +75,15 @@ function renderCard(m) {
         ? `<img src="${esc(m._dir)}/${esc(m.screenshot)}" alt="${esc(m.name)} screenshot" class="sv-card-img" loading="lazy">`
         : '';
 
+    const typeClass = { extension: 'sv-badge-extension', page: 'sv-badge-page', demo: 'sv-badge-demo' }[m.type] || 'sv-badge-extension';
+
     return `
-    <article id="ext-${esc(m._dir)}" class="sv-card" data-search="${esc((m.name + ' ' + m.description + ' ' + (m.tags || []).join(' ')).toLowerCase())}" role="listitem">
+    <article id="ext-${esc(m._dir)}" class="sv-card" data-search="${esc((m.name + ' ' + m.description + ' ' + (m.tags || []).join(' ')).toLowerCase())}" data-type="${esc(m.type || 'extension')}" role="listitem">
         ${img}
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="${esc(m._dir)}/">${esc(m.name)}</a></h2>
-                <span class="sv-badge">${esc(m.type)}</span>
+                <span class="sv-badge ${typeClass}">${esc(m.type)}</span>
             </div>
             <p class="sv-desc">${esc(m.description)}</p>
             ${tags ? `<div class="sv-tags" aria-label="Tags">${tags}</div>` : ''}
@@ -237,12 +239,29 @@ function buildCatalog(items) {
             font-size: .65rem;
             text-transform: uppercase;
             letter-spacing: .05em;
-            background: #e8f0fa;
-            color: #1a3a5c;
             padding: 2px 7px;
             border-radius: 10px;
             white-space: nowrap;
         }
+        .sv-badge-extension { background: #e8f0fa; color: #1a3a5c; }
+        .sv-badge-page      { background: #ede8fa; color: #3a1a5c; }
+        .sv-badge-demo      { background: #f0f0f0; color: #555; }
+
+        /* Type filter */
+        .sv-filters { display: flex; gap: .4rem; margin-bottom: .75rem; flex-wrap: wrap; }
+        .sv-filter-btn {
+            font-size: .78rem;
+            padding: 3px 12px;
+            border-radius: 12px;
+            border: 1px solid #dde2e8;
+            background: #fff;
+            color: #555;
+            cursor: pointer;
+            transition: background .1s, color .1s;
+        }
+        .sv-filter-btn:hover { background: #e4eaf2; }
+        .sv-filter-btn.active { background: #1a3a5c; color: #fff; border-color: #1a3a5c; }
+        .sv-filter-btn:focus { outline: 2px solid #1a3a5c; outline-offset: 1px; }
 
         .sv-desc { color: #444; line-height: 1.55; margin-bottom: .6rem; }
 
@@ -345,6 +364,12 @@ function buildCatalog(items) {
 <div class="sv-layout">
     ${nav}
     <div class="sv-content">
+        <div class="sv-filters" role="group" aria-label="Filtrer par type">
+            <button class="sv-filter-btn active" data-type="">Tout</button>
+            <button class="sv-filter-btn" data-type="extension">Extension</button>
+            <button class="sv-filter-btn" data-type="page">Page</button>
+            <button class="sv-filter-btn" data-type="demo">Démo</button>
+        </div>
         <div id="sv-count" aria-live="polite" aria-atomic="true"></div>
         <div id="sv-list" role="list">
 ${cards}
@@ -355,30 +380,39 @@ ${cards}
 
 <script>
 (function() {
-    var input    = document.getElementById('sv-search');
-    var count    = document.getElementById('sv-count');
-    var noRes    = document.getElementById('sv-noresults');
-    var cards    = Array.from(document.querySelectorAll('.sv-card'));
-    var navLinks = Array.from(document.querySelectorAll('.sv-nav-link'));
-    var total    = cards.length;
+    var input      = document.getElementById('sv-search');
+    var count      = document.getElementById('sv-count');
+    var noRes      = document.getElementById('sv-noresults');
+    var cards      = Array.from(document.querySelectorAll('.sv-card'));
+    var navLinks   = Array.from(document.querySelectorAll('.sv-nav-link'));
+    var filterBtns = Array.from(document.querySelectorAll('.sv-filter-btn'));
+    var total      = cards.length;
+    var activeType = '';
 
     function update() {
         var q = input.value.trim().toLowerCase();
         var visible = 0;
         cards.forEach(function(c) {
-            var match = !q || c.dataset.search.indexOf(q) !== -1;
+            var matchQ    = !q || c.dataset.search.indexOf(q) !== -1;
+            var matchType = !activeType || c.dataset.type === activeType;
+            var match = matchQ && matchType;
             c.hidden = !match;
             if (match) { visible++; }
-            // mirror visibility on nav link
-            var id = c.id;
-            var link = document.querySelector('.sv-nav-link[data-id="' + id.replace('ext-', '') + '"]');
+            var link = document.querySelector('.sv-nav-link[data-id="' + c.id.replace('ext-', '') + '"]');
             if (link) { link.hidden = !match; }
         });
         noRes.style.display = visible === 0 ? '' : 'none';
-        count.textContent = q ? (visible + ' / ' + total + ' extension' + (total > 1 ? 's' : '')) : '';
+        count.textContent = (q || activeType) ? (visible + ' / ' + total) : '';
     }
 
-    // Highlight nav link for the card nearest the top of the viewport
+    filterBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            activeType = btn.dataset.type;
+            filterBtns.forEach(function(b) { b.classList.toggle('active', b === btn); });
+            update();
+        });
+    });
+
     var ticking = false;
     function onScroll() {
         if (ticking) { return; }

@@ -122,12 +122,29 @@
             font-size: .65rem;
             text-transform: uppercase;
             letter-spacing: .05em;
-            background: #e8f0fa;
-            color: #1a3a5c;
             padding: 2px 7px;
             border-radius: 10px;
             white-space: nowrap;
         }
+        .sv-badge-extension { background: #e8f0fa; color: #1a3a5c; }
+        .sv-badge-page      { background: #ede8fa; color: #3a1a5c; }
+        .sv-badge-demo      { background: #f0f0f0; color: #555; }
+
+        /* Type filter */
+        .sv-filters { display: flex; gap: .4rem; margin-bottom: .75rem; flex-wrap: wrap; }
+        .sv-filter-btn {
+            font-size: .78rem;
+            padding: 3px 12px;
+            border-radius: 12px;
+            border: 1px solid #dde2e8;
+            background: #fff;
+            color: #555;
+            cursor: pointer;
+            transition: background .1s, color .1s;
+        }
+        .sv-filter-btn:hover { background: #e4eaf2; }
+        .sv-filter-btn.active { background: #1a3a5c; color: #fff; border-color: #1a3a5c; }
+        .sv-filter-btn:focus { outline: 2px solid #1a3a5c; outline-offset: 1px; }
 
         .sv-desc { color: #444; line-height: 1.55; margin-bottom: .6rem; }
 
@@ -241,15 +258,21 @@
     </ul>
 </nav>
     <div class="sv-content">
+        <div class="sv-filters" role="group" aria-label="Filtrer par type">
+            <button class="sv-filter-btn active" data-type="">Tout</button>
+            <button class="sv-filter-btn" data-type="extension">Extension</button>
+            <button class="sv-filter-btn" data-type="page">Page</button>
+            <button class="sv-filter-btn" data-type="demo">Démo</button>
+        </div>
         <div id="sv-count" aria-live="polite" aria-atomic="true"></div>
         <div id="sv-list" role="list">
 
-    <article id="ext-altitude" class="sv-card" data-search="altitude altitude ponctuelle et profil altimétrique via l'api ign géoplateforme. deux modes : clic pour mesurer l'altitude d'un point, ou tracé d'un itinéraire pour obtenir un profil en long. altimétrie altitude profil dénivelé ign géoplateforme" role="listitem">
+    <article id="ext-altitude" class="sv-card" data-search="altitude altitude ponctuelle et profil altimétrique via l'api ign géoplateforme. deux modes : clic pour mesurer l'altitude d'un point, ou tracé d'un itinéraire pour obtenir un profil en long. altimétrie altitude profil dénivelé ign géoplateforme" data-type="extension" role="listitem">
         
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="altitude/">Altitude</a></h2>
-                <span class="sv-badge">extension</span>
+                <span class="sv-badge sv-badge-extension">extension</span>
             </div>
             <p class="sv-desc">Altitude ponctuelle et profil altimétrique via l'API IGN Géoplateforme. Deux modes : clic pour mesurer l'altitude d'un point, ou tracé d'un itinéraire pour obtenir un profil en long.</p>
             <div class="sv-tags" aria-label="Tags"><span class="sv-tag">altimétrie</span><span class="sv-tag">altitude</span><span class="sv-tag">profil</span><span class="sv-tag">dénivelé</span><span class="sv-tag">IGN</span><span class="sv-tag">Géoplateforme</span></div>
@@ -270,12 +293,12 @@
         </div>
     </article>
 
-    <article id="ext-blueprint" class="sv-card" data-search="blueprint compose and share an sviewer url in under 60 seconds — build, preview, copy, modify builder url share composer tool" role="listitem">
+    <article id="ext-blueprint" class="sv-card" data-search="blueprint compose and share an sviewer url in under 60 seconds — build, preview, copy, modify builder url share composer tool" data-type="page" role="listitem">
         
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="blueprint/">Blueprint</a></h2>
-                <span class="sv-badge">extension</span>
+                <span class="sv-badge sv-badge-page">page</span>
             </div>
             <p class="sv-desc">Compose and share an sViewer URL in under 60 seconds — build, preview, copy, modify</p>
             <div class="sv-tags" aria-label="Tags"><span class="sv-tag">builder</span><span class="sv-tag">url</span><span class="sv-tag">share</span><span class="sv-tag">composer</span><span class="sv-tag">tool</span></div>
@@ -283,7 +306,7 @@
             
             <ul class="sv-examples">
                 <li>
-                    <a href="ext/blueprint/">Blueprint (open builder)</a> <span class="sv-ex-desc">— Standalone builder — open directly, not via ?ext=</span>
+                    <a href="blueprint/">Blueprint (open builder)</a> <span class="sv-ex-desc">— Standalone builder — open directly, not via ?ext=</span>
                 </li>
             </ul>
             <footer class="sv-card-footer">
@@ -294,12 +317,12 @@
         </div>
     </article>
 
-    <article id="ext-csv" class="sv-card" data-search="csv charge un fichier csv distant comme données vectorielles — géométrie auto-détectée depuis les noms de colonnes csv import données vectorielles" role="listitem">
+    <article id="ext-csv" class="sv-card" data-search="csv charge un fichier csv distant comme données vectorielles — géométrie auto-détectée depuis les noms de colonnes csv import données vectorielles" data-type="extension" role="listitem">
         
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="csv/">CSV</a></h2>
-                <span class="sv-badge">extension</span>
+                <span class="sv-badge sv-badge-extension">extension</span>
             </div>
             <p class="sv-desc">Charge un fichier CSV distant comme données vectorielles — géométrie auto-détectée depuis les noms de colonnes</p>
             <div class="sv-tags" aria-label="Tags"><span class="sv-tag">csv</span><span class="sv-tag">import</span><span class="sv-tag">données vectorielles</span></div>
@@ -353,12 +376,12 @@
         </div>
     </article>
 
-    <article id="ext-grist" class="sv-card" data-search="grist carte synchronisée avec une table grist — affichage, sélection et édition des géométries grist édition" role="listitem">
+    <article id="ext-grist" class="sv-card" data-search="grist carte synchronisée avec une table grist — affichage, sélection et édition des géométries grist édition" data-type="page" role="listitem">
         
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="grist/">Grist</a></h2>
-                <span class="sv-badge">extension</span>
+                <span class="sv-badge sv-badge-page">page</span>
             </div>
             <p class="sv-desc">Carte synchronisée avec une table Grist — affichage, sélection et édition des géométries</p>
             <div class="sv-tags" aria-label="Tags"><span class="sv-tag">grist</span><span class="sv-tag">édition</span></div>
@@ -395,7 +418,7 @@
             
             <ul class="sv-examples">
                 <li>
-                    <a href="ext/grist/">Widget Grist (ouverture dans Grist)</a> <span class="sv-ex-desc">— URL à coller dans Grist → Ajouter un widget personnalisé</span>
+                    <a href="grist/">Widget Grist (ouverture dans Grist)</a> <span class="sv-ex-desc">— URL à coller dans Grist → Ajouter un widget personnalisé</span>
                 </li>
             </ul>
             <footer class="sv-card-footer">
@@ -406,12 +429,12 @@
         </div>
     </article>
 
-    <article id="ext-isochrone" class="sv-card" data-search="isochrone / isodistance compute and display isochrone or isodistance zones using ign géoplateforme navigation api, with poi search via nominatim/osm isochrone isodistance navigation ign géoplateforme poi osm" role="listitem">
+    <article id="ext-isochrone" class="sv-card" data-search="isochrone / isodistance compute and display isochrone or isodistance zones using ign géoplateforme navigation api, with poi search via nominatim/osm isochrone isodistance navigation ign géoplateforme poi osm" data-type="extension" role="listitem">
         
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="isochrone/">Isochrone / Isodistance</a></h2>
-                <span class="sv-badge">extension</span>
+                <span class="sv-badge sv-badge-extension">extension</span>
             </div>
             <p class="sv-desc">Compute and display isochrone or isodistance zones using IGN Géoplateforme navigation API, with POI search via Nominatim/OSM</p>
             <div class="sv-tags" aria-label="Tags"><span class="sv-tag">isochrone</span><span class="sv-tag">isodistance</span><span class="sv-tag">navigation</span><span class="sv-tag">IGN</span><span class="sv-tag">Géoplateforme</span><span class="sv-tag">POI</span><span class="sv-tag">OSM</span></div>
@@ -430,12 +453,12 @@
         </div>
     </article>
 
-    <article id="ext-panoramax" class="sv-card" data-search="panoramax affiche la couverture photos de rue panoramax (mvt) et ouvre un visualiseur 360° au clic panoramax street-level photo 360 mvt" role="listitem">
+    <article id="ext-panoramax" class="sv-card" data-search="panoramax affiche la couverture photos de rue panoramax (mvt) et ouvre un visualiseur 360° au clic panoramax street-level photo 360 mvt" data-type="extension" role="listitem">
         
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="panoramax/">Panoramax</a></h2>
-                <span class="sv-badge">extension</span>
+                <span class="sv-badge sv-badge-extension">extension</span>
             </div>
             <p class="sv-desc">Affiche la couverture photos de rue Panoramax (MVT) et ouvre un visualiseur 360° au clic</p>
             <div class="sv-tags" aria-label="Tags"><span class="sv-tag">panoramax</span><span class="sv-tag">street-level</span><span class="sv-tag">photo</span><span class="sv-tag">360</span><span class="sv-tag">MVT</span></div>
@@ -454,14 +477,14 @@
         </div>
     </article>
 
-    <article id="ext-print" class="sv-card" data-search="print / pdf génère une impression haute résolution de la carte courante (re-rendu ol à la résolution cible). format a4 paysage. aucune dépendance externe. impression pdf export print" role="listitem">
+    <article id="ext-print" class="sv-card" data-search="print / pdf génère une impression haute résolution de la carte courante (re-rendu ol à la résolution cible). format a4 paysage. qr code permalink optionnel (qr-creator, mit, auto-hébergé). impression pdf export print" data-type="extension" role="listitem">
         
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="print/">Print / PDF</a></h2>
-                <span class="sv-badge">extension</span>
+                <span class="sv-badge sv-badge-extension">extension</span>
             </div>
-            <p class="sv-desc">Génère une impression haute résolution de la carte courante (re-rendu OL à la résolution cible). Format A4 paysage. Aucune dépendance externe.</p>
+            <p class="sv-desc">Génère une impression haute résolution de la carte courante (re-rendu OL à la résolution cible). Format A4 paysage. QR code permalink optionnel (qr-creator, MIT, auto-hébergé).</p>
             <div class="sv-tags" aria-label="Tags"><span class="sv-tag">impression</span><span class="sv-tag">PDF</span><span class="sv-tag">export</span><span class="sv-tag">print</span></div>
             
             
@@ -478,12 +501,12 @@
         </div>
     </article>
 
-    <article id="ext-sample" class="sv-card" data-search="sample implémentation de référence annotée pour auteurs d'extensions — charge un tableau json plat comme données vectorielles référence template développement" role="listitem">
+    <article id="ext-sample" class="sv-card" data-search="sample implémentation de référence annotée pour auteurs d'extensions — charge un tableau json plat comme données vectorielles référence template développement" data-type="demo" role="listitem">
         
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="sample/">Sample</a></h2>
-                <span class="sv-badge">extension</span>
+                <span class="sv-badge sv-badge-demo">demo</span>
             </div>
             <p class="sv-desc">Implémentation de référence annotée pour auteurs d'extensions — charge un tableau JSON plat comme données vectorielles</p>
             <div class="sv-tags" aria-label="Tags"><span class="sv-tag">référence</span><span class="sv-tag">template</span><span class="sv-tag">développement</span></div>
@@ -533,30 +556,39 @@
 
 <script>
 (function() {
-    var input    = document.getElementById('sv-search');
-    var count    = document.getElementById('sv-count');
-    var noRes    = document.getElementById('sv-noresults');
-    var cards    = Array.from(document.querySelectorAll('.sv-card'));
-    var navLinks = Array.from(document.querySelectorAll('.sv-nav-link'));
-    var total    = cards.length;
+    var input      = document.getElementById('sv-search');
+    var count      = document.getElementById('sv-count');
+    var noRes      = document.getElementById('sv-noresults');
+    var cards      = Array.from(document.querySelectorAll('.sv-card'));
+    var navLinks   = Array.from(document.querySelectorAll('.sv-nav-link'));
+    var filterBtns = Array.from(document.querySelectorAll('.sv-filter-btn'));
+    var total      = cards.length;
+    var activeType = '';
 
     function update() {
         var q = input.value.trim().toLowerCase();
         var visible = 0;
         cards.forEach(function(c) {
-            var match = !q || c.dataset.search.indexOf(q) !== -1;
+            var matchQ    = !q || c.dataset.search.indexOf(q) !== -1;
+            var matchType = !activeType || c.dataset.type === activeType;
+            var match = matchQ && matchType;
             c.hidden = !match;
             if (match) { visible++; }
-            // mirror visibility on nav link
-            var id = c.id;
-            var link = document.querySelector('.sv-nav-link[data-id="' + id.replace('ext-', '') + '"]');
+            var link = document.querySelector('.sv-nav-link[data-id="' + c.id.replace('ext-', '') + '"]');
             if (link) { link.hidden = !match; }
         });
         noRes.style.display = visible === 0 ? '' : 'none';
-        count.textContent = q ? (visible + ' / ' + total + ' extension' + (total > 1 ? 's' : '')) : '';
+        count.textContent = (q || activeType) ? (visible + ' / ' + total) : '';
     }
 
-    // Highlight nav link for the card nearest the top of the viewport
+    filterBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            activeType = btn.dataset.type;
+            filterBtns.forEach(function(b) { b.classList.toggle('active', b === btn); });
+            update();
+        });
+    });
+
     var ticking = false;
     function onScroll() {
         if (ticking) { return; }

@@ -1,6 +1,6 @@
 {
   "id": "grist",
-  "type": "extension",
+  "type": "page",
   "version": "1.0.0",
   "name": "Grist",
   "description": "Carte synchronisée avec une table Grist — affichage, sélection et édition des géométries",
@@ -56,7 +56,7 @@
   "examples": [
     {
       "title": "Widget Grist (ouverture dans Grist)",
-      "url": "ext/grist/",
+      "url": "grist/",
       "description": "URL à coller dans Grist → Ajouter un widget personnalisé"
     }
   ]
