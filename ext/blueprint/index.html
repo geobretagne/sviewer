@@ -331,14 +331,6 @@
                     <span id="bp-opacity-val">1</span>
                 </div>
             </div>
-            <div class="bp-check">
-                <input type="checkbox" id="bp-q">
-                <label for="bp-q" id="bp-lbl-q"></label>
-            </div>
-            <div class="bp-check">
-                <input type="checkbox" id="bp-s">
-                <label for="bp-s" id="bp-lbl-s"></label>
-            </div>
         </div>
 
         <!-- GeoJSON -->
@@ -360,6 +352,14 @@
             <div class="bp-field">
                 <label for="bp-title-input" id="bp-lbl-title"></label>
                 <input type="text" id="bp-title-input">
+            </div>
+            <div class="bp-check">
+                <input type="checkbox" id="bp-q">
+                <label for="bp-q" id="bp-lbl-q"></label>
+            </div>
+            <div class="bp-check">
+                <input type="checkbox" id="bp-s">
+                <label for="bp-s" id="bp-lbl-s"></label>
             </div>
             <div class="bp-row">
                 <div class="bp-field">
@@ -697,7 +697,6 @@
 
     /* ── mutual exclusion: md= vs layers= ── */
     var _WMS_FIELDS  = ['bp-wms-url','bp-layer-name','bp-style','bp-cql','bp-opacity'];
-    var _WMS_CHECKS  = ['bp-q','bp-s'];
     var _MD_DISABLES = ['bp-title-input']; /* md= sets title from CSW — manual title ignored */
 
     function syncMutex() {
@@ -705,9 +704,6 @@
         var wmsFilled = document.getElementById('bp-layer-name').value.trim() !== '';
 
         _WMS_FIELDS.forEach(function (id) {
-            document.getElementById(id).disabled = mdFilled;
-        });
-        _WMS_CHECKS.forEach(function (id) {
             document.getElementById(id).disabled = mdFilled;
         });
         _MD_DISABLES.forEach(function (id) {
