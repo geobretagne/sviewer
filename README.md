@@ -23,6 +23,7 @@ Les données géographiques bénéficient d'un large écosystème et tout est di
 Que permet sViewer ?
 ---------------------
 
+* **Composer une vue en un clic** — [Blueprint](ext/blueprint/) : outil visuel avec validation du service WMS, autocomplétion du nom de donnée et aperçu en direct
 * **Partager une vue exacte** — zoom, position et données préservés dans l'URL
 * **Générer un QR code** — imprimez-le sur un panneau, une affiche, un document
 * **Exporter en image** — PNG depuis le panneau de partage
@@ -72,6 +73,20 @@ sViewer affiche des données via WMS — pas les fichiers directement. Deux alte
 
 - **Grist** — si vos données sont dans un document Grist avec une colonne géométrie, utilisez le [widget Grist intégré](ext/grist/) : carte interactive synchronisée avec le tableau, édition de géométries depuis la carte, lien de partage autonome. → [Documentation complète du widget Grist](ext/grist/README.md)
 - **Autres formats** — parlez à votre service SIG ou utilisez un outil comme [uMap](https://umap.openstreetmap.fr/) qui accepte les imports directs.
+
+
+Composer une URL sViewer — Blueprint
+--------------------------------------
+
+**Blueprint** est un outil visuel pour composer et partager une vue sViewer en moins d'une minute, sans connaître les paramètres d'URL.
+
+Accès : `https://votre-serveur/sviewer/ext/blueprint/`
+
+- Saisissez l'URL du service WMS ou l'identifiant de métadonnée → validation en temps réel (service disponible, donnée trouvée, CORS)
+- Autocomplétion du nom de la donnée depuis les capacités WMS
+- Configurez titre, fond de carte, zoom, thème, extension
+- L'aperçu se met à jour automatiquement
+- Copiez l'URL ou capturez la position depuis la carte
 
 
 Partager une carte
