@@ -2680,6 +2680,13 @@ window.SViewer.app = (function() {
     this.switchBackground = function(idx) { switchBackground(idx); };
     // Trigger a vector layer redraw without replacing the style (preserves declutter).
     this.refreshVector = function() { if (vectorLayer) { vectorLayer.changed(); map.renderSync(); } };
+    // Force all WMS tile sources to re-fetch from server (clears tile cache).
+    // Useful after server-side data changes (e.g. WFS-T edits, scheduled imports).
+    this.refreshWMS = function() {
+        config.layersQueryable.forEach(function(lq) {
+            if (lq.wmslayer) { lq.wmslayer.getSource().refresh(); }
+        });
+    };
     // Register a callback to fire once after sViewer init completes.
     this.onReady = function(fn) { _onReadyCallbacks.push(fn); };
     // Subscribe to sViewer events. Use inside onReady() to guarantee bus is wired.

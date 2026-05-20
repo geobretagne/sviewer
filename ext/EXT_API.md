@@ -254,6 +254,10 @@ SViewer.switchBackground(idx);
 // Force redraw of the built-in vector layer (style function re-evaluated per feature).
 SViewer.refreshVector();
 
+// Force all WMS tile sources to re-fetch from the server (clears OL tile cache).
+// Useful after server-side data changes: WFS-T edits, scheduled imports, etc.
+SViewer.refreshWMS();
+
 // Update the GeoJSON URL stored in share/embed permalinks without reloading data.
 SViewer.setGeojsonUrl(url);
 
