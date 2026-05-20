@@ -126,6 +126,8 @@
         }
         .bp-field input:focus,
         .bp-field select:focus { border-color: var(--accent); }
+        .bp-field input:disabled,
+        .bp-field select:disabled { opacity: .4; cursor: not-allowed; }
         .bp-field input.bp-error { border-color: #d9534f; }
         .bp-error-msg { font-size: 11px; color: #d9534f; display: none; }
         .bp-field input.bp-error + .bp-error-msg,
@@ -263,14 +265,14 @@
         <div class="bp-section">
             <div class="bp-section-title" id="bp-s-layer1"></div>
             <div class="bp-field">
-                <label for="bp-wms-url" id="bp-lbl-wms-url"></label>
-                <input type="url" id="bp-wms-url" autocomplete="off">
-                <span class="bp-error-msg" id="bp-err-wms-url"></span>
-            </div>
-            <div class="bp-field">
                 <label for="bp-layer-name" id="bp-lbl-layer-name"></label>
                 <input type="text" id="bp-layer-name" autocomplete="off">
                 <span class="bp-error-msg" id="bp-err-layer-name"></span>
+            </div>
+            <div class="bp-field">
+                <label for="bp-wms-url" id="bp-lbl-wms-url"></label>
+                <input type="url" id="bp-wms-url" autocomplete="off">
+                <span class="bp-error-msg" id="bp-err-wms-url"></span>
             </div>
             <div class="bp-field">
                 <label for="bp-md" id="bp-lbl-md"></label>
@@ -576,6 +578,7 @@
         document.getElementById('bp-lb').value = '0';
         document.getElementById('bp-theme').value = '';
         document.getElementById('bp-iframe').src = _base + 'index.html';
+        syncMutex();
         updateBar();
     }
 
@@ -600,6 +603,7 @@
         if (!raw) { return; }
         var ok = parseUrl(raw);
         if (ok) {
+            syncMutex();
             updateBar();
             doPreview();
         } else {
@@ -607,9 +611,23 @@
         }
     }
 
+    /* ── mutual exclusion: md= vs layers= ── */
+    var _WMS_FIELDS = ['bp-wms-url','bp-layer-name','bp-style','bp-cql','bp-opacity'];
+
+    function syncMutex() {
+        var mdFilled  = document.getElementById('bp-md').value.trim() !== '';
+        var wmsFilled = document.getElementById('bp-layer-name').value.trim() !== '';
+
+        _WMS_FIELDS.forEach(function (id) {
+            document.getElementById(id).disabled = mdFilled;
+        });
+        document.getElementById('bp-md').disabled = wmsFilled;
+    }
+
     /* ── debounced auto-preview ── */
     var _previewTimer = null;
     function schedulePreview() {
+        syncMutex();
         updateBar();
         clearTimeout(_previewTimer);
         _previewTimer = setTimeout(doPreview, 800);
@@ -700,6 +718,7 @@
         loadCustomConfig()
     ]).finally(function () {
         wireEvents();
+        syncMutex();
         updateBar();
         document.getElementById('bp-iframe').src = _base + 'index.html';
     });
