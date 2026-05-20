@@ -298,6 +298,14 @@
                     <span id="bp-opacity-val">1</span>
                 </div>
             </div>
+            <div class="bp-check">
+                <input type="checkbox" id="bp-q">
+                <label for="bp-q" id="bp-lbl-q"></label>
+            </div>
+            <div class="bp-check">
+                <input type="checkbox" id="bp-s">
+                <label for="bp-s" id="bp-lbl-s"></label>
+            </div>
         </div>
 
         <!-- GeoJSON -->
@@ -306,6 +314,10 @@
             <div class="bp-field">
                 <label for="bp-geojson" id="bp-lbl-geojson"></label>
                 <input type="url" id="bp-geojson" autocomplete="off">
+            </div>
+            <div class="bp-field">
+                <label for="bp-label" id="bp-lbl-label"></label>
+                <input type="text" id="bp-label" autocomplete="off">
             </div>
         </div>
 
@@ -326,13 +338,25 @@
                     <input type="text" id="bp-ext" autocomplete="off">
                 </div>
             </div>
-            <div class="bp-field">
-                <label for="bp-theme" id="bp-lbl-theme"></label>
-                <select id="bp-theme">
-                    <option value="" id="bp-theme-auto"></option>
-                    <option value="dark" id="bp-theme-dark"></option>
-                    <option value="light" id="bp-theme-light"></option>
-                </select>
+            <div class="bp-row">
+                <div class="bp-field">
+                    <label for="bp-theme" id="bp-lbl-theme"></label>
+                    <select id="bp-theme">
+                        <option value="" id="bp-theme-auto"></option>
+                        <option value="dark" id="bp-theme-dark"></option>
+                        <option value="light" id="bp-theme-light"></option>
+                    </select>
+                </div>
+                <div class="bp-field">
+                    <label for="bp-lang" id="bp-lbl-lang"></label>
+                    <select id="bp-lang">
+                        <option value="" id="bp-lang-auto"></option>
+                        <option value="fr">Français</option>
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                        <option value="de">Deutsch</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -386,6 +410,7 @@
         document.getElementById('bp-lbl-cql').textContent        = t('label.cql');
         document.getElementById('bp-cql').placeholder            = t('hint.cql');
         document.getElementById('bp-lbl-opacity').textContent    = t('label.opacity');
+        document.getElementById('bp-lbl-q').textContent          = t('label.q');
         document.getElementById('bp-lbl-title').textContent      = t('label.title');
         document.getElementById('bp-lbl-basemap').textContent    = t('label.basemap');
         document.getElementById('bp-lbl-ext').textContent        = t('label.ext');
@@ -403,10 +428,15 @@
         document.getElementById('bp-s-geojson').textContent      = t('section.geojson');
         document.getElementById('bp-lbl-geojson').textContent    = t('label.geojson');
         document.getElementById('bp-geojson').placeholder        = t('hint.geojson');
+        document.getElementById('bp-lbl-label').textContent      = t('label.label');
+        document.getElementById('bp-label').placeholder          = t('hint.label');
         document.getElementById('bp-lbl-theme').textContent      = t('label.theme');
         document.getElementById('bp-theme-auto').textContent     = t('theme.auto');
         document.getElementById('bp-theme-dark').textContent     = t('theme.dark');
         document.getElementById('bp-theme-light').textContent    = t('theme.light');
+        document.getElementById('bp-lbl-lang').textContent       = t('label.lang');
+        document.getElementById('bp-lang-auto').textContent      = t('lang.auto');
+        document.getElementById('bp-lbl-s').textContent          = t('label.s');
     }
 
     /* ── sViewer base URL — derived from page location, not currentScript (inline script) ── */
@@ -462,8 +492,17 @@
         var geojson = document.getElementById('bp-geojson').value.trim();
         if (geojson) { p.set('geojson', geojson); }
 
+        var label = document.getElementById('bp-label').value.trim();
+        if (label) { p.set('label', label); }
+
         var theme = document.getElementById('bp-theme').value;
         if (theme) { p.set('theme', theme); }
+
+        var lang = document.getElementById('bp-lang').value;
+        if (lang) { p.set('lang', lang); }
+
+        if (document.getElementById('bp-q').checked) { p.set('q', '1'); }
+        if (document.getElementById('bp-s').checked) { p.set('s', '1'); }
 
         var qs = p.toString();
         return _base + 'index.html' + (qs ? '?' + qs : '');
@@ -502,7 +541,11 @@
         document.getElementById('bp-ext').value         = qs.get('ext')   || '';
         document.getElementById('bp-md').value          = qs.get('md')      || '';
         document.getElementById('bp-geojson').value     = qs.get('geojson') || '';
+        document.getElementById('bp-label').value       = qs.get('label')   || '';
         document.getElementById('bp-theme').value       = qs.get('theme')   || '';
+        document.getElementById('bp-lang').value        = qs.get('lang')    || '';
+        document.getElementById('bp-q').checked         = qs.get('q') === '1';
+        document.getElementById('bp-s').checked         = qs.get('s') === '1';
         return true;
     }
 
@@ -570,13 +613,16 @@
     /* ── reset ── */
     function doReset() {
         ['bp-x','bp-y','bp-z','bp-wms-url','bp-layer-name',
-         'bp-style','bp-cql','bp-title-input','bp-ext','bp-load-input','bp-md','bp-geojson'].forEach(function (id) {
+         'bp-style','bp-cql','bp-title-input','bp-ext','bp-load-input','bp-md','bp-geojson','bp-label'].forEach(function (id) {
             document.getElementById(id).value = '';
         });
         document.getElementById('bp-opacity').value = '1';
         document.getElementById('bp-opacity-val').textContent = '1';
         document.getElementById('bp-lb').value = '0';
         document.getElementById('bp-theme').value = '';
+        document.getElementById('bp-lang').value = '';
+        document.getElementById('bp-q').checked = false;
+        document.getElementById('bp-s').checked = false;
         document.getElementById('bp-iframe').src = _base + 'index.html';
         syncMutex();
         updateBar();
@@ -612,13 +658,17 @@
     }
 
     /* ── mutual exclusion: md= vs layers= ── */
-    var _WMS_FIELDS = ['bp-wms-url','bp-layer-name','bp-style','bp-cql','bp-opacity'];
+    var _WMS_FIELDS  = ['bp-wms-url','bp-layer-name','bp-style','bp-cql','bp-opacity'];
+    var _WMS_CHECKS  = ['bp-q','bp-s'];
 
     function syncMutex() {
         var mdFilled  = document.getElementById('bp-md').value.trim() !== '';
         var wmsFilled = document.getElementById('bp-layer-name').value.trim() !== '';
 
         _WMS_FIELDS.forEach(function (id) {
+            document.getElementById(id).disabled = mdFilled;
+        });
+        _WMS_CHECKS.forEach(function (id) {
             document.getElementById(id).disabled = mdFilled;
         });
         document.getElementById('bp-md').disabled = wmsFilled;
@@ -653,11 +703,14 @@
             schedulePreview();
         });
 
-        ['bp-x','bp-y','bp-z','bp-style','bp-cql','bp-title-input','bp-ext','bp-md','bp-geojson'].forEach(function (id) {
+        ['bp-x','bp-y','bp-z','bp-style','bp-cql','bp-title-input','bp-ext','bp-md','bp-geojson','bp-label'].forEach(function (id) {
             document.getElementById(id).addEventListener('input', schedulePreview);
         });
         document.getElementById('bp-lb').addEventListener('change', schedulePreview);
         document.getElementById('bp-theme').addEventListener('change', schedulePreview);
+        document.getElementById('bp-lang').addEventListener('change', schedulePreview);
+        document.getElementById('bp-q').addEventListener('change', schedulePreview);
+        document.getElementById('bp-s').addEventListener('change', schedulePreview);
         document.getElementById('bp-wms-url').addEventListener('input', function () {
             var el = document.getElementById('bp-wms-url');
             el.classList.remove('bp-error');
