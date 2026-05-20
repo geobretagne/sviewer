@@ -1262,6 +1262,29 @@ window.SViewer.app = (function() {
         _bindVectorClick();
         _renderGeoJSONInfoPanel(features.length, sourceUrl || state.geojson, adapter);
         _emit('sv:featuresLoaded', { features: features, count: features.length });
+        // q=1: auto-query feature closest to map centre after load.
+        // setTimeout lets OL complete the render cycle before hit-testing.
+        if (state.gfiok) {
+            setTimeout(function() {
+                var centre = view.getCenter();
+                var pixel = map.getPixelFromCoordinate(centre);
+                var hit = null;
+                map.forEachFeatureAtPixel(pixel, function(f) { if (!hit) { hit = f; } },
+                    { layerFilter: function(l) { return l === vectorLayer; }, hitTolerance: 32 });
+                if (!hit) {
+                    hit = vectorLayer.getSource().getClosestFeatureToCoordinate(centre);
+                }
+                if (hit) {
+                    var props = hit.getProperties();
+                    var _qc = document.getElementById('sv-query-content');
+                    _qc.innerHTML = '';
+                    _qc.appendChild(_buildPropertiesTable(props));
+                    closePanel();
+                    togglePanel('query');
+                    _emit('sv:featureSelect', { feature: hit, properties: props });
+                }
+            }, 200);
+        }
     }
 
     function _sourceLabel(url, adapter) {
@@ -1656,6 +1679,23 @@ window.SViewer.app = (function() {
         });
     }
 
+    // s=1: in-memory search across all string properties of loaded GeoJSON features.
+    // Capped at config.maxWfsSearchFeatures to match WFS result volume.
+    function searchGeoJSONFeatures(term) {
+        if (!vectorLayer) { return; }
+        var lowerTerm = term.toLowerCase();
+        var features = vectorLayer.getSource().getFeatures().filter(function(f) {
+            var props = f.getProperties();
+            return Object.keys(props).some(function(k) {
+                var v = props[k];
+                if (v === null || typeof v === 'object') { return false; }
+                return String(v).toLowerCase().indexOf(lowerTerm) !== -1;
+            });
+        });
+        if (!features.length) { return; }
+        featuresToList(features.slice(0, config.maxWfsSearchFeatures), 'GeoJSON');
+    }
+
     var searchAbortCtrls = [];
     var searchPending = 0;
 
@@ -1690,6 +1730,7 @@ window.SViewer.app = (function() {
             openLsRequest(document.getElementById('sv-search-input').value);
             if (state.search) {
                 searchAllWFSLayers(document.getElementById('sv-search-input').value);
+                searchGeoJSONFeatures(document.getElementById('sv-search-input').value);
             }
         }
         catch(_err) {
@@ -2586,7 +2627,9 @@ window.SViewer.app = (function() {
         window.addEventListener('pageshow', fixContentHeight);
         fixContentHeight();
 
-        if (state.gfiok) {
+        // q=1 WMS path: only fires when WMS layers are present.
+        // GeoJSON-only q=1 is handled inside _applyGeoJSON after features load.
+        if (state.gfiok && config.layersQueryable.length > 0) {
             setTimeout(
                 function() { queryMap(view.getCenter()); },
                 300
