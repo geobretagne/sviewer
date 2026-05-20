@@ -1,0 +1,22 @@
+{
+  "id":          "print",
+  "type":        "extension",
+  "version":     "0.1.0",
+  "name":        "Print / PDF",
+  "description": "Génère une impression haute résolution de la carte courante (re-rendu OL à la résolution cible). Format A4 paysage. Aucune dépendance externe.",
+  "author":      "fphg",
+  "tags":        ["impression", "PDF", "export", "print"],
+
+  "entry": "extension.js",
+
+  "sviewer": {
+    "minVersion": "0.12.1"
+  },
+
+  "examples": [
+    {
+      "title": "Impression — carte OSM",
+      "url":   "?ext=print&z=10&x=2.3488&y=48.8534"
+    }
+  ]
+}

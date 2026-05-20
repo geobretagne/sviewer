@@ -236,6 +236,7 @@
         <li><a class="sv-nav-link" href="#ext-grist" data-id="grist">Grist</a></li>
         <li><a class="sv-nav-link" href="#ext-isochrone" data-id="isochrone">Isochrone / Isodistance</a></li>
         <li><a class="sv-nav-link" href="#ext-panoramax" data-id="panoramax">Panoramax</a></li>
+        <li><a class="sv-nav-link" href="#ext-print" data-id="print">Print / PDF</a></li>
         <li><a class="sv-nav-link" href="#ext-sample" data-id="sample">Sample</a></li>
     </ul>
 </nav>
@@ -269,19 +270,20 @@
         </div>
     </article>
 
-    <article id="ext-blueprint" class="sv-card" data-search="blueprint compose and share a sviewer url in under a minute — build preview copy modify builder url share composer tool" role="listitem">
-
+    <article id="ext-blueprint" class="sv-card" data-search="blueprint compose and share an sviewer url in under 60 seconds — build, preview, copy, modify builder url share composer tool" role="listitem">
+        
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="blueprint/">Blueprint</a></h2>
                 <span class="sv-badge">extension</span>
             </div>
-            <p class="sv-desc">Composez et partagez une URL sViewer en moins d'une minute — formulaire interactif, aperçu en direct, copie en un clic</p>
+            <p class="sv-desc">Compose and share an sViewer URL in under 60 seconds — build, preview, copy, modify</p>
             <div class="sv-tags" aria-label="Tags"><span class="sv-tag">builder</span><span class="sv-tag">url</span><span class="sv-tag">share</span><span class="sv-tag">composer</span><span class="sv-tag">tool</span></div>
-
+            
+            
             <ul class="sv-examples">
                 <li>
-                    <a href="blueprint/">Blueprint (ouvrir le constructeur)</a> <span class="sv-ex-desc">— Outil autonome — ouvrir directement, pas via ?ext=</span>
+                    <a href="ext/blueprint/">Blueprint (open builder)</a> <span class="sv-ex-desc">— Standalone builder — open directly, not via ?ext=</span>
                 </li>
             </ul>
             <footer class="sv-card-footer">
@@ -447,6 +449,30 @@
             <footer class="sv-card-footer">
                 <span>v1.1.0</span>
                 <span>sViewer ≥ 0.11.1</span>
+                <span>fphg</span>
+            </footer>
+        </div>
+    </article>
+
+    <article id="ext-print" class="sv-card" data-search="print / pdf génère une impression haute résolution de la carte courante (re-rendu ol à la résolution cible). format a4 paysage. aucune dépendance externe. impression pdf export print" role="listitem">
+        
+        <div class="sv-card-body">
+            <div class="sv-card-head">
+                <h2><a href="print/">Print / PDF</a></h2>
+                <span class="sv-badge">extension</span>
+            </div>
+            <p class="sv-desc">Génère une impression haute résolution de la carte courante (re-rendu OL à la résolution cible). Format A4 paysage. Aucune dépendance externe.</p>
+            <div class="sv-tags" aria-label="Tags"><span class="sv-tag">impression</span><span class="sv-tag">PDF</span><span class="sv-tag">export</span><span class="sv-tag">print</span></div>
+            
+            
+            <ul class="sv-examples">
+                <li>
+                    <a href="../?ext=print&z=10&x=2.3488&y=48.8534">Impression — carte OSM</a>
+                </li>
+            </ul>
+            <footer class="sv-card-footer">
+                <span>v0.1.0</span>
+                <span>sViewer ≥ 0.12.1</span>
                 <span>fphg</span>
             </footer>
         </div>
