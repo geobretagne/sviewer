@@ -1,0 +1,27 @@
+[
+  {
+    "id": "altitude",
+    "name": "Altitude",
+    "description": "Altitude ponctuelle et profil altimétrique via l'API IGN Géoplateforme. Deux modes : clic pour mesurer l'altitude d'un point, ou tracé d'un itinéraire pour obtenir un profil en long."
+  },
+  {
+    "id": "csv",
+    "name": "CSV",
+    "description": "Charge un fichier CSV distant comme données vectorielles — géométrie auto-détectée depuis les noms de colonnes"
+  },
+  {
+    "id": "isochrone",
+    "name": "Isochrone / Isodistance",
+    "description": "Compute and display isochrone or isodistance zones using IGN Géoplateforme navigation API, with POI search via Nominatim/OSM"
+  },
+  {
+    "id": "panoramax",
+    "name": "Panoramax",
+    "description": "Affiche la couverture photos de rue Panoramax (MVT) et ouvre un visualiseur 360° au clic"
+  },
+  {
+    "id": "print",
+    "name": "Print / PDF",
+    "description": "Génère une impression haute résolution de la carte courante (re-rendu OL à la résolution cible). Format A4 paysage. QR code permalink optionnel (qr-creator, MIT, auto-hébergé)."
+  }
+]

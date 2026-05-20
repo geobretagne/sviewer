@@ -171,6 +171,39 @@
         .bp-opacity-row input[type="range"] { flex: 1; }
         #bp-opacity-val { font-size: 12px; color: var(--text-muted); min-width: 28px; text-align: right; }
 
+        /* ── Ext autocomplete ── */
+        .bp-ac-wrap { position: relative; }
+        #bp-ac-list {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-input);
+            border: 1px solid var(--accent);
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            z-index: 200;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        #bp-ac-list.bp-ac-open { display: block; }
+        .bp-ac-item {
+            padding: 6px 8px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+        }
+        .bp-ac-item:last-child { border-bottom: none; }
+        .bp-ac-item:hover, .bp-ac-item[aria-selected="true"] {
+            background: var(--accent);
+            color: #fff;
+        }
+        .bp-ac-item-name { font-weight: 600; }
+        .bp-ac-item-desc { color: var(--text-muted); font-size: 11px; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bp-ac-item:hover .bp-ac-item-desc,
+        .bp-ac-item[aria-selected="true"] .bp-ac-item-desc { color: rgba(255,255,255,.8); }
+
         /* ── Sticky bottom bar ── */
         #bp-bar {
             position: fixed;
@@ -335,7 +368,10 @@
                 </div>
                 <div class="bp-field">
                     <label for="bp-ext" id="bp-lbl-ext"></label>
-                    <input type="text" id="bp-ext" autocomplete="off">
+                    <div class="bp-ac-wrap">
+                        <input type="text" id="bp-ext" autocomplete="off" aria-autocomplete="list" aria-controls="bp-ac-list" aria-expanded="false">
+                        <ul id="bp-ac-list" role="listbox" aria-label="Extensions disponibles"></ul>
+                    </div>
                 </div>
             </div>
             <div class="bp-row">
@@ -768,7 +804,127 @@
         });
     }
 
+    /* ── Extension autocomplete ── */
+    var _extList = [];   // [{id, name, description}]
+
+    function loadExtList() {
+        fetch(_base + 'ext/extensions.json')
+            .then(function (r) { return r.ok ? r.json() : []; })
+            .then(function (data) { _extList = Array.isArray(data) ? data : []; })
+            .catch(function () {});
+    }
+
+    (function () {
+        var inp    = document.getElementById('bp-ext');
+        var list   = document.getElementById('bp-ac-list');
+        var cursor = -1;
+
+        function currentToken() {
+            var val    = inp.value;
+            var pos    = inp.selectionStart;
+            var before = val.substring(0, pos);
+            var parts  = before.split(',');
+            return parts[parts.length - 1].trim().toLowerCase();
+        }
+
+        function replaceLastToken(id) {
+            var val    = inp.value;
+            var pos    = inp.selectionStart;
+            var before = val.substring(0, pos);
+            var after  = val.substring(pos);
+            var commaIdx = before.lastIndexOf(',');
+            var prefix = commaIdx >= 0 ? before.substring(0, commaIdx + 1) + ' ' : '';
+            // also collect already-used ids so we don't duplicate
+            inp.value = prefix + id + (after.trimStart().startsWith(',') ? after : '');
+            inp.setSelectionRange((prefix + id).length, (prefix + id).length);
+        }
+
+        function usedIds() {
+            return inp.value.split(',').map(function (s) { return s.trim(); });
+        }
+
+        function openList(items) {
+            list.innerHTML = '';
+            cursor = -1;
+            if (!items.length) { closeList(); return; }
+            items.forEach(function (ext, i) {
+                var li = document.createElement('li');
+                li.className = 'bp-ac-item';
+                li.setAttribute('role', 'option');
+                li.setAttribute('aria-selected', 'false');
+                li.dataset.id = ext.id;
+                li.innerHTML = '<div class="bp-ac-item-name">' + escAc(ext.name) + ' <code style="font-weight:400;font-size:10px">' + escAc(ext.id) + '</code></div>'
+                             + '<div class="bp-ac-item-desc">' + escAc(ext.description) + '</div>';
+                li.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    pick(ext.id);
+                });
+                list.appendChild(li);
+            });
+            list.classList.add('bp-ac-open');
+            inp.setAttribute('aria-expanded', 'true');
+        }
+
+        function closeList() {
+            list.classList.remove('bp-ac-open');
+            list.innerHTML = '';
+            inp.setAttribute('aria-expanded', 'false');
+            cursor = -1;
+        }
+
+        function pick(id) {
+            replaceLastToken(id);
+            closeList();
+            schedulePreview();
+        }
+
+        function setCursor(idx) {
+            var items = list.querySelectorAll('.bp-ac-item');
+            items.forEach(function (el, i) { el.setAttribute('aria-selected', i === idx ? 'true' : 'false'); });
+            cursor = idx;
+        }
+
+        function suggest() {
+            var tok  = currentToken();
+            var used = usedIds();
+            // show all if empty token, filter by prefix/name otherwise
+            var matches = _extList.filter(function (ext) {
+                if (used.indexOf(ext.id) !== -1 && ext.id !== tok) { return false; } // already used
+                if (!tok) { return true; }
+                return ext.id.indexOf(tok) !== -1 || ext.name.toLowerCase().indexOf(tok) !== -1;
+            });
+            if (matches.length) { openList(matches); } else { closeList(); }
+        }
+
+        inp.addEventListener('input', suggest);
+        inp.addEventListener('focus', suggest);
+        inp.addEventListener('blur', function () { setTimeout(closeList, 150); });
+
+        inp.addEventListener('keydown', function (e) {
+            var items = list.querySelectorAll('.bp-ac-item');
+            if (!list.classList.contains('bp-ac-open')) { return; }
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setCursor(Math.min(cursor + 1, items.length - 1));
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setCursor(Math.max(cursor - 1, 0));
+            } else if (e.key === 'Enter' && cursor >= 0) {
+                e.preventDefault();
+                pick(items[cursor].dataset.id);
+            } else if (e.key === 'Escape') {
+                closeList();
+            }
+        });
+
+        function escAc(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+    }());
+
     /* ── init ── */
+    loadExtList();
+
     Promise.all([
         fetch(_base + 'ext/blueprint/i18n.json')
             .then(function (r) { return r.json(); })

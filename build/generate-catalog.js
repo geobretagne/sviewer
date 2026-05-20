@@ -450,3 +450,10 @@ ${cards}
 const html = buildCatalog(manifests);
 fs.writeFileSync(CATALOG_OUT, html, 'utf8');
 console.log('Catalog written:', CATALOG_OUT, '(' + manifests.length + ' extensions)');
+
+const EXT_JSON_OUT = path.join(EXT_DIR, 'extensions.json');
+const extOnly = manifests
+    .filter(m => (m.type || 'extension') === 'extension')
+    .map(m => ({ id: m._dir, name: m.name, description: m.description }));
+fs.writeFileSync(EXT_JSON_OUT, JSON.stringify(extOnly, null, 2), 'utf8');
+console.log('Extensions JSON written:', EXT_JSON_OUT, '(' + extOnly.length + ' entries)');
