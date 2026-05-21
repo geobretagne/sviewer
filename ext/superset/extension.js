@@ -17,9 +17,12 @@
     var mapReady = false;
     var pendingGeojson = null;  // GeoJSON received before map was ready
 
+    var hasParent = window.parent !== window;
+
     // --- Announce readiness to parent -------------------------------------
 
     function announceReady() {
+        if (!hasParent) return;
         // '*' target origin — parent will restrict on its side via e.source check
         window.parent.postMessage({ type: 'sv:ready' }, '*');
     }
@@ -71,6 +74,7 @@
                 var t = typeof v;
                 if (t === 'string' || t === 'number' || t === 'boolean') safe[k] = v;
             });
+            if (!hasParent) return;
             var target = supersetOrigin || '*';
             window.parent.postMessage({ type: 'sv:click', properties: safe }, target);
         });

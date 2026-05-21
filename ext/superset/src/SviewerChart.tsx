@@ -2,7 +2,12 @@ import React, { useCallback, useEffect, useRef, useMemo } from 'react';
 
 interface FeatureCollection {
   type: 'FeatureCollection';
-  features: any[];
+  features: object[];
+}
+
+interface DataMask {
+  extraFormData?: { filters?: { col: string; op: string; val: unknown[] }[] };
+  filterState?: { value?: unknown[] };
 }
 
 interface SviewerChartProps {
@@ -16,7 +21,7 @@ interface SviewerChartProps {
   idCol: string;
   labelCol: string;
   featureCollection: FeatureCollection | null;
-  setDataMask?: (mask: any) => void;
+  setDataMask?: (mask: DataMask) => void;
 }
 
 export default function SviewerChart(props: SviewerChartProps) {
@@ -31,6 +36,7 @@ export default function SviewerChart(props: SviewerChartProps) {
 
   const iframeSrc = useMemo(() => {
     if (!sviewerUrl) return '';
+    if (!/^https?:\/\//i.test(sviewerUrl)) return '';
     const base = sviewerUrl.replace(/\/$/, '');
     const params = new URLSearchParams();
     params.set('ext', 'superset');
@@ -64,11 +70,10 @@ export default function SviewerChart(props: SviewerChartProps) {
 
       if (e.data.type === 'sv:click' && setDataMask && idCol && e.data.properties) {
         const id = e.data.properties[idCol];
-        if (id != null) {
+        const idType = typeof id;
+        if (id != null && (idType === 'string' || idType === 'number')) {
           setDataMask({
-            extraFormData: {
-              filters: [{ col: idCol, op: 'IN', val: [id] }],
-            },
+            extraFormData: { filters: [{ col: idCol, op: 'IN', val: [id] }] },
             filterState: { value: [id] },
           });
         }

@@ -1,20 +1,30 @@
 import { buildQueryContext, QueryFormData } from '@superset-ui/core';
 
+interface SviewerFormData extends QueryFormData {
+  geomMode?: string;  geom_mode?: string;
+  geomCol?: string;   geom_col?: string;
+  latCol?: string;    lat_col?: string;
+  lonCol?: string;    lon_col?: string;
+  labelCol?: string;  label_col?: string;
+  idCol?: string;     id_col?: string;
+}
+
 export default function buildQuery(formData: QueryFormData) {
-  const mode = (formData as any).geomMode || (formData as any).geom_mode || 'geojson';
+  const fd = formData as SviewerFormData;
+  const mode = fd.geomMode || fd.geom_mode || 'geojson';
   const cols: string[] = [];
 
   if (mode === 'geojson') {
-    cols.push((formData as any).geomCol || (formData as any).geom_col || 'geojson');
+    cols.push(fd.geomCol || fd.geom_col || 'geojson');
   } else {
-    const latCol = (formData as any).latCol || (formData as any).lat_col;
-    const lonCol = (formData as any).lonCol || (formData as any).lon_col;
+    const latCol = fd.latCol || fd.lat_col;
+    const lonCol = fd.lonCol || fd.lon_col;
     if (latCol) cols.push(latCol);
     if (lonCol) cols.push(lonCol);
   }
 
-  const labelCol = (formData as any).labelCol || (formData as any).label_col;
-  const idCol = (formData as any).idCol || (formData as any).id_col;
+  const labelCol = fd.labelCol || fd.label_col;
+  const idCol = fd.idCol || fd.id_col;
   if (labelCol) cols.push(labelCol);
   if (idCol) cols.push(idCol);
 

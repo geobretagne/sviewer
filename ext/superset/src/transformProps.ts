@@ -1,13 +1,27 @@
 import { ChartProps } from '@superset-ui/core';
 
+interface SviewerFormData {
+  geomMode?: string;    geom_mode?: string;
+  geomCol?: string;     geom_col?: string;
+  latCol?: string;      lat_col?: string;
+  lonCol?: string;      lon_col?: string;
+  labelCol?: string;    label_col?: string;
+  idCol?: string;       id_col?: string;
+  sviewerUrl?: string;  sviewer_url?: string;
+  wmsLayer?: string;    wms_layer?: string;
+  wmsUrl?: string;      wms_url?: string;
+  basemap?: string;
+  theme?: string;
+}
+
 interface Feature {
   type: 'Feature';
   geometry: object;
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
 }
 
 function buildFeatureCollection(
-  rows: Record<string, any>[],
+  rows: Record<string, unknown>[],
   geomMode: string,
   geomCol: string,
   latCol: string,
@@ -19,8 +33,8 @@ function buildFeatureCollection(
     let geometry: object | null = null;
 
     if (geomMode === 'latlon') {
-      const lat = parseFloat(row[latCol]);
-      const lon = parseFloat(row[lonCol]);
+      const lat = parseFloat(String(row[latCol]));
+      const lon = parseFloat(String(row[lonCol]));
       if (isFinite(lat) && isFinite(lon)) {
         geometry = { type: 'Point', coordinates: [lon, lat] };
       }
@@ -28,7 +42,7 @@ function buildFeatureCollection(
       const raw = row[geomCol];
       if (raw) {
         try {
-          geometry = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          geometry = typeof raw === 'string' ? JSON.parse(raw) : (raw as object);
         } catch {
           // skip malformed geometry
         }
@@ -38,7 +52,7 @@ function buildFeatureCollection(
     if (!geometry) continue;
 
     // Omit geometry column(s) from properties to avoid doubling payload
-    const properties = { ...row };
+    const properties: Record<string, unknown> = { ...row };
     if (geomMode === 'latlon') {
       delete properties[latCol];
       delete properties[lonCol];
@@ -54,14 +68,15 @@ function buildFeatureCollection(
 
 export default function transformProps(chartProps: ChartProps) {
   const { width, height, formData, queriesData } = chartProps;
+  const fd = formData as unknown as SviewerFormData;
 
-  const rows: Record<string, any>[] = (queriesData[0] as any)?.data || [];
-  const geomMode: string = formData.geomMode || formData.geom_mode || 'geojson';
-  const geomCol: string = formData.geomCol || formData.geom_col || 'geojson';
-  const latCol: string = formData.latCol || formData.lat_col || 'lat';
-  const lonCol: string = formData.lonCol || formData.lon_col || 'lon';
-  const labelCol: string = formData.labelCol || formData.label_col || '';
-  const idCol: string = formData.idCol || formData.id_col || '';
+  const rows: Record<string, unknown>[] = (queriesData[0] as { data?: Record<string, unknown>[] })?.data || [];
+  const geomMode: string = fd.geomMode || fd.geom_mode || 'geojson';
+  const geomCol: string = fd.geomCol || fd.geom_col || 'geojson';
+  const latCol: string = fd.latCol || fd.lat_col || 'lat';
+  const lonCol: string = fd.lonCol || fd.lon_col || 'lon';
+  const labelCol: string = fd.labelCol || fd.label_col || '';
+  const idCol: string = fd.idCol || fd.id_col || '';
 
   const featureCollection = rows.length > 0
     ? buildFeatureCollection(rows, geomMode, geomCol, latCol, lonCol)
@@ -70,11 +85,11 @@ export default function transformProps(chartProps: ChartProps) {
   return {
     width,
     height,
-    sviewerUrl: formData.sviewerUrl || formData.sviewer_url || '',
-    wmsLayer: formData.wmsLayer || formData.wms_layer || '',
-    wmsUrl: formData.wmsUrl || formData.wms_url || '',
-    basemap: formData.basemap || '',
-    theme: formData.theme || '',
+    sviewerUrl: fd.sviewerUrl || fd.sviewer_url || '',
+    wmsLayer: fd.wmsLayer || fd.wms_layer || '',
+    wmsUrl: fd.wmsUrl || fd.wms_url || '',
+    basemap: fd.basemap || '',
+    theme: fd.theme || '',
     idCol,
     labelCol,
     featureCollection,
