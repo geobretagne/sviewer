@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useCallback, useEffect, useRef, useMemo } from 'react';
 
 interface FeatureCollection {
   type: 'FeatureCollection';
@@ -40,12 +40,11 @@ export default function SviewerChart(props: SviewerChartProps) {
     return `${base}/?${params.toString()}`;
   }, [sviewerUrl, wmsLayer, wmsUrl, basemap, theme]);
 
-  // Send GeoJSON to iframe
-  function sendGeoJSON(fc: FeatureCollection) {
+  const sendGeoJSON = useCallback((fc: FeatureCollection) => {
     if (!iframeRef.current?.contentWindow) return;
     const targetOrigin = new URL(iframeSrc).origin;
     iframeRef.current.contentWindow.postMessage({ type: 'sv:geojson', data: fc }, targetOrigin);
-  }
+  }, [iframeSrc]);
 
   // Listen for messages from iframe
   useEffect(() => {
@@ -56,7 +55,6 @@ export default function SviewerChart(props: SviewerChartProps) {
       if (!e.data || typeof e.data.type !== 'string') return;
       if (e.data.type === 'sv:ready') {
         readyRef.current = true;
-        // Send any GeoJSON that arrived before iframe was ready
         const pending = pendingRef.current;
         if (pending) {
           sendGeoJSON(pending);
@@ -79,7 +77,7 @@ export default function SviewerChart(props: SviewerChartProps) {
 
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [idCol, setDataMask, iframeSrc]);
+  }, [idCol, setDataMask, sendGeoJSON]);
 
   // Send GeoJSON when featureCollection changes
   useEffect(() => {
@@ -89,12 +87,14 @@ export default function SviewerChart(props: SviewerChartProps) {
     } else {
       pendingRef.current = featureCollection;
     }
-  }, [featureCollection]);
+  }, [featureCollection, sendGeoJSON]);
 
-  // Reset ready flag when iframe src changes (reload)
+  // Reset ready flag when iframe src changes (reload); capture current featureCollection
   useEffect(() => {
     readyRef.current = false;
     pendingRef.current = featureCollection;
+  // featureCollection intentionally excluded — we want the value at src-change time
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [iframeSrc]);
 
   if (!sviewerUrl) {
@@ -117,6 +117,7 @@ export default function SviewerChart(props: SviewerChartProps) {
       height={height}
       style={{ border: 'none', display: 'block' }}
       title="sViewer Map"
+      sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
       allowFullScreen
     />
   );

@@ -1,3 +1,5 @@
+import { ChartProps } from '@superset-ui/core';
+
 interface Feature {
   type: 'Feature';
   geometry: object;
@@ -35,21 +37,25 @@ function buildFeatureCollection(
 
     if (!geometry) continue;
 
-    features.push({
-      type: 'Feature',
-      geometry,
-      properties: row,
-    });
+    // Omit geometry column(s) from properties to avoid doubling payload
+    const properties = { ...row };
+    if (geomMode === 'latlon') {
+      delete properties[latCol];
+      delete properties[lonCol];
+    } else {
+      delete properties[geomCol];
+    }
+
+    features.push({ type: 'Feature', geometry, properties });
   }
 
   return { type: 'FeatureCollection', features };
 }
 
-export default function transformProps(chartProps: any) {
+export default function transformProps(chartProps: ChartProps) {
   const { width, height, formData, queriesData } = chartProps;
 
-
-  const rows: Record<string, any>[] = queriesData[0]?.data || [];
+  const rows: Record<string, any>[] = (queriesData[0] as any)?.data || [];
   const geomMode: string = formData.geomMode || formData.geom_mode || 'geojson';
   const geomCol: string = formData.geomCol || formData.geom_col || 'geojson';
   const latCol: string = formData.latCol || formData.lat_col || 'lat';
@@ -60,7 +66,6 @@ export default function transformProps(chartProps: any) {
   const featureCollection = rows.length > 0
     ? buildFeatureCollection(rows, geomMode, geomCol, latCol, lonCol)
     : null;
-
 
   return {
     width,

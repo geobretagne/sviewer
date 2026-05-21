@@ -1,7 +1,6 @@
 import { buildQueryContext, QueryFormData } from '@superset-ui/core';
 
 export default function buildQuery(formData: QueryFormData) {
-  const rowLimit = Number((formData as any).rowLimit ?? (formData as any).row_limit ?? 2000) || 2000;
   const mode = (formData as any).geomMode || (formData as any).geom_mode || 'geojson';
   const cols: string[] = [];
 
@@ -19,11 +18,11 @@ export default function buildQuery(formData: QueryFormData) {
   if (labelCol) cols.push(labelCol);
   if (idCol) cols.push(idCol);
 
+  // row_limit comes from baseQueryObject (built-in control) — do not override
   return buildQueryContext(formData, baseQueryObject => [{
     ...baseQueryObject,
     metrics: [],
     columns: cols,
-    row_limit: rowLimit,
     orderby: [],
   }]);
 }
