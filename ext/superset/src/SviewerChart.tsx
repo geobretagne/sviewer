@@ -28,67 +28,37 @@ interface SviewerChartProps {
   setDataMask?: (mask: DataMask) => void;
 }
 
-// Extract backgroundPresets from customConfig.js text
-function parsePresets(text: string): Preset[] {
-  const block = text.match(/backgroundPresets\s*:\s*\[([\s\S]*?)\]/);
-  if (!block) return [];
-  const items = block[1].matchAll(/\{[^}]*lb\s*:\s*(\d+)[^}]*title\s*:\s*['"]([^'"]+)['"]/g);
-  return Array.from(items).map(m => ({ lb: parseInt(m[1], 10), title: m[2] }));
+interface SviewerFrameProps {
+  iframeSrc: string;
+  width: number;
+  height: number;
+  idCol: string;
+  featureCollection: FeatureCollection | null;
+  setDataMask?: (mask: DataMask) => void;
 }
 
-export default function SviewerChart(props: SviewerChartProps) {
-  const {
-    width, height, sviewerUrl, wmsLayer, wmsUrl,
-    theme, idCol, featureCollection, setDataMask,
-  } = props;
-
+// Separate component so key-based remount resets all state cleanly on src change
+function SviewerFrame({ iframeSrc, width, height, idCol, featureCollection, setDataMask }: SviewerFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const readyRef = useRef(false);
   const pendingRef = useRef<FeatureCollection | null>(null);
 
   const [presets, setPresets] = useState<Preset[]>([]);
-  const [activeLb, setActiveLb] = useState<number | null>(null);
+  const [activeLb, setActiveLb] = useState<number>(0);
 
-  // Fetch backgroundPresets from sViewer's customConfig when URL changes
-  useEffect(() => {
-    if (!sviewerUrl || !/^https?:\/\//i.test(sviewerUrl)) return;
-    const base = sviewerUrl.replace(/\/$/, '');
-    let cancelled = false;
-    fetch(`${base}/local/customConfig.js`)
-      .then(r => r.ok ? r.text() : Promise.reject(r.status))
-      .then(text => {
-        if (cancelled) return;
-        const found = parsePresets(text);
-        setPresets(found);
-        setActiveLb(found.length > 0 ? found[0].lb : null);
-      })
-      .catch(() => { if (!cancelled) setPresets([]); });
-    return () => { cancelled = true; };
-  }, [sviewerUrl]);
-
-  const iframeSrc = useMemo(() => {
-    if (!sviewerUrl) return '';
-    if (!/^https?:\/\//i.test(sviewerUrl)) return '';
-    const base = sviewerUrl.replace(/\/$/, '');
-    const params = new URLSearchParams();
-    params.set('ext', 'superset');
-    if (wmsLayer) params.set('layers', wmsUrl ? `${wmsLayer}@${wmsUrl}` : wmsLayer);
-    if (activeLb !== null) params.set('lb', String(activeLb));
-    if (theme) params.set('theme', theme);
-    return `${base}/?${params.toString()}`;
-  }, [sviewerUrl, wmsLayer, wmsUrl, activeLb, theme]);
+  const targetOrigin = useMemo(() => new URL(iframeSrc).origin, [iframeSrc]);
 
   const sendGeoJSON = useCallback((fc: FeatureCollection) => {
-    if (!iframeRef.current?.contentWindow) return;
-    const targetOrigin = new URL(iframeSrc).origin;
-    iframeRef.current.contentWindow.postMessage({ type: 'sv:geojson', data: fc }, targetOrigin);
-  }, [iframeSrc]);
+    iframeRef.current?.contentWindow?.postMessage({ type: 'sv:geojson', data: fc }, targetOrigin);
+  }, [targetOrigin]);
 
-  // Listen for messages from iframe
+  const sendSetLb = useCallback((lb: number) => {
+    iframeRef.current?.contentWindow?.postMessage({ type: 'sv:setlb', lb }, targetOrigin);
+  }, [targetOrigin]);
+
   useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (!iframeRef.current) return;
-      // Accept only messages from our iframe (unforgeable source check)
       if (e.source !== iframeRef.current.contentWindow) return;
       if (!e.data || typeof e.data.type !== 'string') return;
 
@@ -99,6 +69,14 @@ export default function SviewerChart(props: SviewerChartProps) {
           sendGeoJSON(pending);
           pendingRef.current = null;
         }
+      }
+
+      if (e.data.type === 'sv:presets' && Array.isArray(e.data.presets)) {
+        const list: Preset[] = e.data.presets.filter(
+          (p: unknown) => p && typeof (p as Preset).lb === 'number' && typeof (p as Preset).title === 'string'
+        );
+        setPresets(list);
+        if (list.length > 0) setActiveLb(list[0].lb);
       }
 
       if (e.data.type === 'sv:click' && setDataMask && idCol && e.data.properties) {
@@ -117,7 +95,6 @@ export default function SviewerChart(props: SviewerChartProps) {
     return () => window.removeEventListener('message', onMessage);
   }, [idCol, setDataMask, sendGeoJSON]);
 
-  // Send GeoJSON when featureCollection changes
   useEffect(() => {
     if (!featureCollection) return;
     if (readyRef.current) {
@@ -127,24 +104,10 @@ export default function SviewerChart(props: SviewerChartProps) {
     }
   }, [featureCollection, sendGeoJSON]);
 
-  // Reset ready flag when iframe src changes (reload); capture current featureCollection
-  useEffect(() => {
-    readyRef.current = false;
-    pendingRef.current = featureCollection;
-  // featureCollection intentionally excluded — we want the value at src-change time
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [iframeSrc]);
-
-  if (!sviewerUrl) {
-    return (
-      <div style={{
-        width, height, display: 'flex',
-        alignItems: 'center', justifyContent: 'center',
-        color: '#888', fontSize: 14,
-      }}>
-        Configure sViewer URL in chart settings
-      </div>
-    );
+  function handlePresetChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const lb = Number(e.target.value);
+    setActiveLb(lb);
+    sendSetLb(lb);
   }
 
   return (
@@ -161,8 +124,8 @@ export default function SviewerChart(props: SviewerChartProps) {
       />
       {presets.length > 1 && (
         <select
-          value={activeLb ?? ''}
-          onChange={e => setActiveLb(Number(e.target.value))}
+          value={activeLb}
+          onChange={handlePresetChange}
           style={{
             position: 'absolute',
             bottom: 8,
@@ -184,3 +147,43 @@ export default function SviewerChart(props: SviewerChartProps) {
     </div>
   );
 }
+
+export default function SviewerChart(props: SviewerChartProps) {
+  const { width, height, sviewerUrl, wmsLayer, wmsUrl, theme, idCol, featureCollection, setDataMask } = props;
+
+  const iframeSrc = useMemo(() => {
+    if (!sviewerUrl) return '';
+    if (!/^https?:\/\//i.test(sviewerUrl)) return '';
+    const base = sviewerUrl.replace(/\/$/, '');
+    const params = new URLSearchParams();
+    params.set('ext', 'superset');
+    if (wmsLayer) params.set('layers', wmsUrl ? `${wmsLayer}@${wmsUrl}` : wmsLayer);
+    if (theme) params.set('theme', theme);
+    return `${base}/?${params.toString()}`;
+  }, [sviewerUrl, wmsLayer, wmsUrl, theme]);
+
+  if (!iframeSrc) {
+    return (
+      <div style={{
+        width, height, display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+        color: '#888', fontSize: 14,
+      }}>
+        Configure sViewer URL in chart settings
+      </div>
+    );
+  }
+
+  return (
+    <SviewerFrame
+      key={iframeSrc}
+      iframeSrc={iframeSrc}
+      width={width}
+      height={height}
+      idCol={idCol}
+      featureCollection={featureCollection}
+      setDataMask={setDataMask}
+    />
+  );
+}
+

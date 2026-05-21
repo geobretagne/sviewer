@@ -6,7 +6,9 @@
  *
  * Protocol (all messages carry { type: string, ... }):
  *   parent → iframe  sv:geojson  { data: GeoJSON FeatureCollection }
+ *   parent → iframe  sv:setlb    { lb: number }
  *   iframe → parent  sv:ready    {}
+ *   iframe → parent  sv:presets  { presets: [{lb, title}] }
  *   iframe → parent  sv:click    { properties: object }
  */
 
@@ -49,11 +51,15 @@
                 pendingGeojson = fc;
             }
         }
+
+        if (e.data.type === 'sv:setlb' && typeof e.data.lb === 'number') {
+            SViewer.switchBackground(e.data.lb);
+        }
     });
 
     // --- Wire up after map ready -----------------------------------------
 
-    SViewer.onMapReady(function () {
+    SViewer.onMapReady(function (e) {
         mapReady = true;
 
         // Load any GeoJSON that arrived before map was ready
@@ -63,11 +69,11 @@
         }
 
         // Emit click events to parent for cross-filter
-        SViewer.onFeatureClick(function (e) {
-            if (!e || !e.properties) return;
+        SViewer.onFeatureClick(function (ev) {
+            if (!ev || !ev.properties) return;
             // Sanitize: keep only JSON-serializable primitives
             var safe = {};
-            var props = e.properties;
+            var props = ev.properties;
             Object.keys(props).forEach(function (k) {
                 var v = props[k];
                 if (v === null || v === undefined) { safe[k] = v; return; }
@@ -78,6 +84,16 @@
             var target = supersetOrigin || '*';
             window.parent.postMessage({ type: 'sv:click', properties: safe }, target);
         });
+
+        // Send preset list — backgroundPresets supplied in sv:mapReady event payload
+        if (hasParent) {
+            var presets = (e && e.backgroundPresets) || [];
+            var safePresets = presets.map(function (p, i) {
+                return { lb: i, title: String(p.title || i) };
+            });
+            var target = supersetOrigin || '*';
+            window.parent.postMessage({ type: 'sv:presets', presets: safePresets }, target);
+        }
 
         // Announce ready — after onFeatureClick registered so no race
         announceReady();

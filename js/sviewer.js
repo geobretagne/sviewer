@@ -2287,7 +2287,7 @@ window.SViewer.app = (function() {
 
     function doGUI() {
         applyTheme(state.theme);
-        _emit('sv:mapReady', { map: map, view: view });
+        _emit('sv:mapReady', { map: map, view: view, backgroundPresets: config.backgroundPresets || [] });
 
         // map events
         map.on('singleclick', function(e) {
