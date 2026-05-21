@@ -10,7 +10,6 @@ interface SviewerFormData {
   sviewerUrl?: string;  sviewer_url?: string;
   wmsLayer?: string;    wms_layer?: string;
   wmsUrl?: string;      wms_url?: string;
-  basemap?: string;
   theme?: string;
 }
 
@@ -88,7 +87,6 @@ export default function transformProps(chartProps: ChartProps) {
     sviewerUrl: fd.sviewerUrl || fd.sviewer_url || '',
     wmsLayer: fd.wmsLayer || fd.wms_layer || '',
     wmsUrl: fd.wmsUrl || fd.wms_url || '',
-    basemap: fd.basemap || '',
     theme: fd.theme || '',
     idCol,
     labelCol,
