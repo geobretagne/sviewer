@@ -33,6 +33,5 @@ export default function buildQuery(formData: QueryFormData) {
     ...baseQueryObject,
     metrics: [],
     columns: cols,
-    orderby: [],
   }]);
 }

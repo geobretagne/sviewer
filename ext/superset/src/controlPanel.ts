@@ -12,6 +12,7 @@ const config: ControlPanelConfig = {
       expanded: true,
       controlSetRows: [
         ['adhoc_filters'],
+        ['orderby', 'order_desc'],
         ['row_limit', null],
       ],
     },
