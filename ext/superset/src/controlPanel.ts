@@ -1,4 +1,9 @@
-import { ControlPanelConfig } from '@superset-ui/chart-controls';
+import { ControlPanelConfig, ControlStateMapping } from '@superset-ui/chart-controls';
+
+function columnChoices(state: ControlStateMapping) {
+  const cols = (state?.datasource as { columns?: { column_name: string; verbose_name?: string }[] })?.columns;
+  return (cols || []).map(c => [c.column_name, c.verbose_name || c.column_name]);
+}
 
 const config: ControlPanelConfig = {
   controlPanelSections: [
@@ -104,11 +109,13 @@ const config: ControlPanelConfig = {
           {
             name: 'geom_col',
             config: {
-              type: 'TextControl',
+              type: 'SelectControl',
               label: 'GeoJSON column',
               description: 'Column containing GeoJSON geometry string (ST_AsGeoJSON output)',
-              default: 'geojson',
+              default: null,
               renderTrigger: false,
+              clearable: true,
+              mapStateToProps: (state: ControlStateMapping) => ({ choices: columnChoices(state) }),
             },
           },
         ],
@@ -116,11 +123,13 @@ const config: ControlPanelConfig = {
           {
             name: 'lat_col',
             config: {
-              type: 'TextControl',
+              type: 'SelectControl',
               label: 'Latitude column',
               description: 'Column containing latitude (EPSG:4326)',
-              default: 'lat',
+              default: null,
               renderTrigger: false,
+              clearable: true,
+              mapStateToProps: (state: ControlStateMapping) => ({ choices: columnChoices(state) }),
             },
           },
         ],
@@ -128,11 +137,13 @@ const config: ControlPanelConfig = {
           {
             name: 'lon_col',
             config: {
-              type: 'TextControl',
+              type: 'SelectControl',
               label: 'Longitude column',
               description: 'Column containing longitude (EPSG:4326)',
-              default: 'lon',
+              default: null,
               renderTrigger: false,
+              clearable: true,
+              mapStateToProps: (state: ControlStateMapping) => ({ choices: columnChoices(state) }),
             },
           },
         ],
@@ -140,11 +151,13 @@ const config: ControlPanelConfig = {
           {
             name: 'label_col',
             config: {
-              type: 'TextControl',
+              type: 'SelectControl',
               label: 'Label column (optional)',
               description: 'Column shown as feature label on map',
-              default: '',
+              default: null,
               renderTrigger: false,
+              clearable: true,
+              mapStateToProps: (state: ControlStateMapping) => ({ choices: columnChoices(state) }),
             },
           },
         ],
@@ -152,11 +165,13 @@ const config: ControlPanelConfig = {
           {
             name: 'id_col',
             config: {
-              type: 'TextControl',
+              type: 'SelectControl',
               label: 'ID column (cross-filter)',
               description: 'Column used for cross-filtering on feature click. Leave empty to disable.',
-              default: '',
+              default: null,
               renderTrigger: false,
+              clearable: true,
+              mapStateToProps: (state: ControlStateMapping) => ({ choices: columnChoices(state) }),
             },
           },
         ],

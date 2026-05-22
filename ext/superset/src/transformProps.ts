@@ -1,15 +1,15 @@
 import { ChartProps } from '@superset-ui/core';
 
 interface SviewerFormData {
-  geomMode?: string;    geom_mode?: string;
-  geomCol?: string;     geom_col?: string;
-  latCol?: string;      lat_col?: string;
-  lonCol?: string;      lon_col?: string;
-  labelCol?: string;    label_col?: string;
-  idCol?: string;       id_col?: string;
-  sviewerUrl?: string;  sviewer_url?: string;
-  wmsLayer?: string;    wms_layer?: string;
-  wmsUrl?: string;      wms_url?: string;
+  geomMode?: string;           geom_mode?: string;
+  geomCol?: string | null;     geom_col?: string | null;
+  latCol?: string | null;      lat_col?: string | null;
+  lonCol?: string | null;      lon_col?: string | null;
+  labelCol?: string | null;    label_col?: string | null;
+  idCol?: string | null;       id_col?: string | null;
+  sviewerUrl?: string;         sviewer_url?: string;
+  wmsLayer?: string;           wms_layer?: string;
+  wmsUrl?: string;             wms_url?: string;
   basemap?: string;
   theme?: string;
 }
@@ -68,13 +68,16 @@ function buildFeatureCollection(
 
 export default function transformProps(chartProps: ChartProps) {
   const { width, height, formData, queriesData } = chartProps;
+  const rawFormData = (chartProps as ChartProps & { rawFormData?: { slice_name?: string } }).rawFormData;
   const fd = formData as unknown as SviewerFormData;
 
-  const rows: Record<string, unknown>[] = (queriesData[0] as { data?: Record<string, unknown>[] })?.data || [];
+  const query = queriesData[0] as { data?: Record<string, unknown>[]; error?: string } | undefined;
+  const rows: Record<string, unknown>[] = query?.data || [];
+  const queryError: string = query?.error || '';
   const geomMode: string = fd.geomMode || fd.geom_mode || 'geojson';
-  const geomCol: string = fd.geomCol || fd.geom_col || 'geojson';
-  const latCol: string = fd.latCol || fd.lat_col || 'lat';
-  const lonCol: string = fd.lonCol || fd.lon_col || 'lon';
+  const geomCol: string = fd.geomCol || fd.geom_col || '';
+  const latCol: string = fd.latCol || fd.lat_col || '';
+  const lonCol: string = fd.lonCol || fd.lon_col || '';
   const labelCol: string = fd.labelCol || fd.label_col || '';
   const idCol: string = fd.idCol || fd.id_col || '';
 
@@ -90,8 +93,10 @@ export default function transformProps(chartProps: ChartProps) {
     wmsUrl: fd.wmsUrl || fd.wms_url || '',
     basemap: fd.basemap || '',
     theme: fd.theme || '',
+    sliceName: rawFormData?.slice_name || '',
     idCol,
     labelCol,
+    queryError,
     featureCollection,
   };
 }
