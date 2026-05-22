@@ -1032,7 +1032,9 @@ window.SViewer.app = (function() {
                 source: vectorSource,
                 style: function(feature, resolution) {
                     var lbl = feature.get('_label');
-                    var showLabel = lbl !== undefined && lbl !== null && lbl !== '' && resolution <= 19.11;
+                    // Points: suppress labels at low zoom to avoid clutter. Polygons/lines: always show.
+                    var showLabel = lbl !== undefined && lbl !== null && lbl !== '' &&
+                        (isLine || isPoly || resolution <= 19.11);
                     var type = feature.getGeometry() ? feature.getGeometry().getType() : '';
                     var isLine = type === 'LineString' || type === 'MultiLineString';
                     var isPoly = type === 'Polygon' || type === 'MultiPolygon';

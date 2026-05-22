@@ -43,7 +43,7 @@
         if (e.data.type === 'sv:geojson') {
             var fc = e.data.data;
             if (!fc || fc.type !== 'FeatureCollection') return;
-            if (mapReady) {
+if (mapReady) {
                 SViewer.loadFeatures(fc);
             } else {
                 pendingGeojson = fc;
