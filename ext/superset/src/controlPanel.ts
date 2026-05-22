@@ -83,6 +83,18 @@ const config: ControlPanelConfig = {
             },
           },
         ],
+        [
+          {
+            name: 'feature_color',
+            config: {
+              type: 'ColorPickerControl',
+              label: 'Couleur des données',
+              description: 'Couleur appliquée à toutes les géométries',
+              default: { r: 0, g: 119, b: 187, a: 1 },
+              renderTrigger: true,
+            },
+          },
+        ],
       ],
     },
     {

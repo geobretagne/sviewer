@@ -1,5 +1,7 @@
 import { ChartProps } from '@superset-ui/core';
 
+interface RgbaColor { r: number; g: number; b: number; a: number; }
+
 interface SviewerFormData {
   geomMode?: string;           geom_mode?: string;
   geomCol?: string | null;     geom_col?: string | null;
@@ -12,6 +14,7 @@ interface SviewerFormData {
   wmsUrl?: string;             wms_url?: string;
   basemap?: string;
   theme?: string;
+  featureColor?: RgbaColor;    feature_color?: RgbaColor;
 }
 
 interface Feature {
@@ -81,9 +84,19 @@ export default function transformProps(chartProps: ChartProps) {
   const labelCol: string = fd.labelCol || fd.label_col || '';
   const idCol: string = fd.idCol || fd.id_col || '';
 
-  const featureCollection = rows.length > 0
+  const rawColor = fd.featureColor || fd.feature_color;
+  const featureColorCss = rawColor
+    ? `rgba(${rawColor.r},${rawColor.g},${rawColor.b},${rawColor.a})`
+    : '';
+
+  const rawFc = rows.length > 0
     ? buildFeatureCollection(rows, geomMode, geomCol, latCol, lonCol)
     : null;
+
+  // Inject _sv_color into every feature when a color is configured
+  const featureCollection = rawFc && featureColorCss
+    ? { ...rawFc, features: rawFc.features.map(f => ({ ...f, properties: { ...(f as { properties: Record<string, unknown> }).properties, _sv_color: featureColorCss } })) }
+    : rawFc;
 
   return {
     width,

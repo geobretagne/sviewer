@@ -1036,13 +1036,23 @@ window.SViewer.app = (function() {
                     var type = feature.getGeometry() ? feature.getGeometry().getType() : '';
                     var isLine = type === 'LineString' || type === 'MultiLineString';
                     var isPoly = type === 'Polygon' || type === 'MultiPolygon';
+
+                    // Per-feature color override via _sv_color property (falls back to global geojsonStyle)
+                    var svColor = feature.get('_sv_color');
+                    var color = svColor || gsColor;
+                    var fill = ol.color.asArray(color).slice();
+                    fill[3] = gs.fillOpacity !== undefined ? gs.fillOpacity : 0.35;
+                    var stylePoint = svColor ? new ol.style.Style({ image: new ol.style.Circle({ radius: 9, fill: new ol.style.Fill({ color: color }), stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 }) }) }) : gsStylePoint;
+                    var stylePoly  = svColor ? new ol.style.Style({ fill: new ol.style.Fill({ color: fill }), stroke: new ol.style.Stroke({ color: color, width: gsStrokeWidth }) }) : gsStylePoly;
+                    var styleLine  = svColor ? new ol.style.Style({ stroke: new ol.style.Stroke({ color: color, width: gsStrokeWidth }) }) : gsStyleLine;
+
                     var base;
                     if (isLine) {
-                        base = [gsStyleLineHalo, gsStyleLine];
+                        base = [gsStyleLineHalo, styleLine];
                     } else if (isPoly) {
-                        base = [gsStylePolyHalo, gsStylePoly];
+                        base = [gsStylePolyHalo, stylePoly];
                     } else {
-                        base = [gsStylePoint];
+                        base = [stylePoint];
                     }
                     if (!showLabel) { return base; }
                     var labelStyle = new ol.style.Style({
