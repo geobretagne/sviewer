@@ -12,7 +12,29 @@ const config: ControlPanelConfig = {
       expanded: true,
       controlSetRows: [
         ['adhoc_filters'],
-        ['orderby', 'order_desc'],
+        [
+          {
+            name: 'sort_col',
+            config: {
+              type: 'SelectControl',
+              label: 'Trier par',
+              description: 'Colonne de tri (appliqué avant la limite de lignes)',
+              default: null,
+              renderTrigger: false,
+              clearable: true,
+              mapStateToProps: (state: ControlStateMapping) => ({ choices: columnChoices(state) }),
+            },
+          },
+          {
+            name: 'sort_desc',
+            config: {
+              type: 'CheckboxControl',
+              label: 'Décroissant',
+              default: true,
+              renderTrigger: false,
+            },
+          },
+        ],
         ['row_limit', null],
       ],
     },

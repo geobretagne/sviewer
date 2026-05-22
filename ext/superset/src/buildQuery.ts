@@ -7,6 +7,8 @@ interface SviewerFormData extends QueryFormData {
   lonCol?: string;    lon_col?: string;
   labelCol?: string;  label_col?: string;
   idCol?: string;     id_col?: string;
+  sortCol?: string;   sort_col?: string;
+  sortDesc?: boolean; sort_desc?: boolean;
 }
 
 export default function buildQuery(formData: QueryFormData) {
@@ -28,10 +30,15 @@ export default function buildQuery(formData: QueryFormData) {
   if (labelCol) cols.push(labelCol);
   if (idCol) cols.push(idCol);
 
+  const sortCol = fd.sortCol || fd.sort_col;
+  const sortDesc = fd.sortDesc ?? fd.sort_desc ?? true;
+  const orderby: [string, boolean][] = sortCol ? [[sortCol, !sortDesc]] : [];
+
   // row_limit comes from baseQueryObject (built-in control) — do not override
   return buildQueryContext(formData, baseQueryObject => [{
     ...baseQueryObject,
     metrics: [],
     columns: cols,
+    orderby,
   }]);
 }
