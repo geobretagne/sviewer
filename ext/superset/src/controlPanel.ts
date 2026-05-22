@@ -8,7 +8,7 @@ function columnChoices(state: ControlStateMapping) {
 const config: ControlPanelConfig = {
   controlPanelSections: [
     {
-      label: 'Query',
+      label: 'Requête',
       expanded: true,
       controlSetRows: [
         ['adhoc_filters'],
@@ -24,8 +24,8 @@ const config: ControlPanelConfig = {
             name: 'sviewer_url',
             config: {
               type: 'TextControl',
-              label: 'sViewer URL',
-              description: 'Base URL of your sViewer instance (e.g. https://my-server/sviewer/)',
+              label: 'URL sViewer',
+              description: "URL de base de votre instance sViewer (ex. https://mon-serveur/sviewer/)",
               default: '',
               renderTrigger: true,
             },
@@ -36,8 +36,8 @@ const config: ControlPanelConfig = {
             name: 'wms_layer',
             config: {
               type: 'TextControl',
-              label: 'WMS layer (optional)',
-              description: 'Layer name, e.g. namespace:layername',
+              label: 'Donnée WMS (optionnel)',
+              description: 'Nom de la donnée, ex. namespace:nomcouche',
               default: '',
               renderTrigger: true,
             },
@@ -48,8 +48,8 @@ const config: ControlPanelConfig = {
             name: 'wms_url',
             config: {
               type: 'TextControl',
-              label: 'WMS service URL (optional)',
-              description: 'Leave empty for default instance',
+              label: 'URL du service WMS (optionnel)',
+              description: "Laisser vide pour l'instance par défaut",
               default: '',
               renderTrigger: true,
             },
@@ -60,8 +60,8 @@ const config: ControlPanelConfig = {
             name: 'basemap',
             config: {
               type: 'TextControl',
-              label: 'Basemap (lb=)',
-              description: 'Basemap key configured in sViewer customConfig',
+              label: 'Fond de carte (lb=)',
+              description: 'Clé de fond de carte configurée dans le customConfig sViewer',
               default: '',
               renderTrigger: true,
             },
@@ -72,13 +72,13 @@ const config: ControlPanelConfig = {
             name: 'theme',
             config: {
               type: 'SelectControl',
-              label: 'Theme',
+              label: 'Thème',
               default: '',
               renderTrigger: true,
               choices: [
                 ['', 'Auto'],
-                ['light', 'Light'],
-                ['dark', 'Dark'],
+                ['light', 'Clair'],
+                ['dark', 'Sombre'],
               ],
             },
           },
@@ -86,7 +86,7 @@ const config: ControlPanelConfig = {
       ],
     },
     {
-      label: 'Data',
+      label: 'Données',
       expanded: true,
       controlSetRows: [
         [
@@ -94,14 +94,14 @@ const config: ControlPanelConfig = {
             name: 'geom_mode',
             config: {
               type: 'SelectControl',
-              label: 'Geometry mode',
+              label: 'Mode géométrie',
               default: 'geojson',
               renderTrigger: false,
               choices: [
-                ['geojson', 'GeoJSON column'],
-                ['latlon', 'Latitude / Longitude columns'],
+                ['geojson', 'Colonne GeoJSON'],
+                ['latlon', 'Colonnes Latitude / Longitude'],
               ],
-              description: 'How geometry is stored in the dataset',
+              description: 'Comment la géométrie est stockée dans le jeu de données',
             },
           },
         ],
@@ -110,8 +110,8 @@ const config: ControlPanelConfig = {
             name: 'geom_col',
             config: {
               type: 'SelectControl',
-              label: 'GeoJSON column',
-              description: 'Column containing GeoJSON geometry string (ST_AsGeoJSON output)',
+              label: 'Colonne GeoJSON',
+              description: 'Colonne contenant la géométrie GeoJSON (sortie ST_AsGeoJSON)',
               default: null,
               renderTrigger: false,
               clearable: true,
@@ -124,8 +124,8 @@ const config: ControlPanelConfig = {
             name: 'lat_col',
             config: {
               type: 'SelectControl',
-              label: 'Latitude column',
-              description: 'Column containing latitude (EPSG:4326)',
+              label: 'Colonne latitude',
+              description: 'Colonne contenant la latitude (EPSG:4326)',
               default: null,
               renderTrigger: false,
               clearable: true,
@@ -138,8 +138,8 @@ const config: ControlPanelConfig = {
             name: 'lon_col',
             config: {
               type: 'SelectControl',
-              label: 'Longitude column',
-              description: 'Column containing longitude (EPSG:4326)',
+              label: 'Colonne longitude',
+              description: 'Colonne contenant la longitude (EPSG:4326)',
               default: null,
               renderTrigger: false,
               clearable: true,
@@ -152,8 +152,8 @@ const config: ControlPanelConfig = {
             name: 'label_col',
             config: {
               type: 'SelectControl',
-              label: 'Label column (optional)',
-              description: 'Column shown as feature label on map',
+              label: 'Colonne libellé (optionnel)',
+              description: 'Colonne affichée comme libellé sur la carte',
               default: null,
               renderTrigger: false,
               clearable: true,
@@ -166,8 +166,8 @@ const config: ControlPanelConfig = {
             name: 'id_col',
             config: {
               type: 'SelectControl',
-              label: 'ID column (cross-filter)',
-              description: 'Column used for cross-filtering on feature click. Leave empty to disable.',
+              label: 'Colonne ID (filtre croisé)',
+              description: 'Colonne utilisée pour le filtre croisé au clic. Laisser vide pour désactiver.',
               default: null,
               renderTrigger: false,
               clearable: true,

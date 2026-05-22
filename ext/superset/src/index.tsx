@@ -1,11 +1,8 @@
-import { ChartPlugin, ChartMetadata, Behavior, addLocaleData } from '@superset-ui/core';
+import { ChartPlugin, ChartMetadata, Behavior } from '@superset-ui/core';
 import SviewerChart from './SviewerChart';
 import transformProps from './transformProps';
 import controlPanel from './controlPanel';
 import buildQuery from './buildQuery';
-import translations from './i18n';
-
-addLocaleData(translations);
 
 const CHART_TYPE = 'sviewer_map';
 
@@ -14,7 +11,7 @@ class SviewerChartPlugin extends ChartPlugin {
     super({
       metadata: new ChartMetadata({
         name: 'sViewer Map',
-        description: 'Interactive map viewer — WMS, GeoJSON, OGC',
+        description: 'Visualisation cartographique — WMS, GeoJSON, OGC',
         thumbnail: '',
         useLegacyApi: false,
         behaviors: [Behavior.InteractiveChart, Behavior.DrillToDetail],

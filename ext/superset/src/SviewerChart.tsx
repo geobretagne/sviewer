@@ -18,8 +18,10 @@ interface SviewerChartProps {
   wmsUrl: string;
   basemap: string;
   theme: string;
+  sliceName: string;
   idCol: string;
   labelCol: string;
+  queryError: string;
   featureCollection: FeatureCollection | null;
   setDataMask?: (mask: DataMask) => void;
 }
@@ -27,7 +29,7 @@ interface SviewerChartProps {
 export default function SviewerChart(props: SviewerChartProps) {
   const {
     width, height, sviewerUrl, wmsLayer, wmsUrl,
-    basemap, theme, idCol, featureCollection, setDataMask,
+    basemap, theme, sliceName, idCol, queryError, featureCollection, setDataMask,
   } = props;
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -43,8 +45,9 @@ export default function SviewerChart(props: SviewerChartProps) {
     if (wmsLayer) params.set('layers', wmsUrl ? `${wmsLayer}@${wmsUrl}` : wmsLayer);
     if (basemap) params.set('lb', basemap);
     if (theme) params.set('theme', theme);
+    if (sliceName) params.set('title', sliceName);
     return `${base}/?${params.toString()}`;
-  }, [sviewerUrl, wmsLayer, wmsUrl, basemap, theme]);
+  }, [sviewerUrl, wmsLayer, wmsUrl, basemap, theme, sliceName]);
 
   const sendGeoJSON = useCallback((fc: FeatureCollection) => {
     if (!iframeRef.current?.contentWindow) return;
@@ -102,16 +105,22 @@ export default function SviewerChart(props: SviewerChartProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [iframeSrc]);
 
+  const centered: React.CSSProperties = {
+    width, height, display: 'flex',
+    alignItems: 'center', justifyContent: 'center',
+    fontSize: 14, textAlign: 'center', padding: 16,
+  };
+
   if (!sviewerUrl) {
-    return (
-      <div style={{
-        width, height, display: 'flex',
-        alignItems: 'center', justifyContent: 'center',
-        color: '#888', fontSize: 14,
-      }}>
-        Configure sViewer URL in chart settings
-      </div>
-    );
+    return <div style={{ ...centered, color: '#888' }}>Configurez l'URL sViewer dans les paramètres du graphique</div>;
+  }
+
+  if (queryError) {
+    return <div style={{ ...centered, color: '#e8413d' }}>{queryError}</div>;
+  }
+
+  if (featureCollection !== null && featureCollection.features.length === 0 && !wmsLayer) {
+    return <div style={{ ...centered, color: '#888' }}>Aucune donnée</div>;
   }
 
   return (
