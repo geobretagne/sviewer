@@ -707,6 +707,10 @@ Le dossier contient des fichiers non destinés au public : outils de build (`scr
 
 Chemins bloqués par défaut : `node_modules/`, `scripts/`, `build/ol-custom-entry.js`, `package.json`, `postcss.config.js`, tous les fichiers `.md`, `.sh`, `.py`, `.bak`, `.log` et les dotfiles.
 
+**Bloc `ext/superset/dist/`** : le bundle plugin Superset est servi avec `Access-Control-Allow-Origin: *` — requis pour que Superset puisse le charger depuis une origine différente. Ce bloc doit précéder le bloc `ext/` générique dans la config nginx (ordre de priorité des `location ~`).
+
+**Cache `static/`** : depuis 0.13.0, les assets `static/` (hors `static/lib/`) sont servis avec `Cache-Control: no-cache, must-revalidate` au lieu de `max-age=3600` — le navigateur revalide via ETag à chaque visite, évitant les assets périmés après une mise à jour.
+
 Si vous utilisez Apache, reproduisez la même logique avec `Require all denied` sur les répertoires sensibles et `Require all granted` uniquement sur les chemins publics.
 
 ### Mise à jour du hash CSP après modification de `index.html`
