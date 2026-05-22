@@ -1031,13 +1031,13 @@ window.SViewer.app = (function() {
             vectorLayer = new ol.layer.Vector({
                 source: vectorSource,
                 style: function(feature, resolution) {
+                    var type = feature.getGeometry() ? feature.getGeometry().getType() : '';
+                    var isLine = type === 'LineString' || type === 'MultiLineString';
+                    var isPoly = type === 'Polygon' || type === 'MultiPolygon';
                     var lbl = feature.get('_label');
                     // Points: suppress labels at low zoom to avoid clutter. Polygons/lines: always show.
                     var showLabel = lbl !== undefined && lbl !== null && lbl !== '' &&
                         (isLine || isPoly || resolution <= 19.11);
-                    var type = feature.getGeometry() ? feature.getGeometry().getType() : '';
-                    var isLine = type === 'LineString' || type === 'MultiLineString';
-                    var isPoly = type === 'Polygon' || type === 'MultiPolygon';
 
                     // Per-feature color override via _sv_color property (falls back to global geojsonStyle)
                     var svColor = feature.get('_sv_color');
