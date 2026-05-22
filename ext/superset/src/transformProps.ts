@@ -14,6 +14,8 @@ interface SviewerFormData {
   basemap?: string;
   theme?: string;
   featureColor?: RgbaColor;    feature_color?: RgbaColor;
+  sizeCol?: string | null;     size_col?: string | null;
+  sizeMode?: string;           size_mode?: string;
 }
 
 interface Feature {
@@ -68,6 +70,50 @@ function buildFeatureCollection(
   return { type: 'FeatureCollection', features };
 }
 
+const MIN_RADIUS = 4;
+const MAX_RADIUS = 20;
+
+function computeRadii(
+  features: Feature[],
+  sizeCol: string,
+  sizeMode: string,
+): number[] {
+  const values = features.map(f => {
+    const v = parseFloat(String(f.properties[sizeCol]));
+    return isFinite(v) ? v : 0;
+  });
+
+  if (sizeMode === 'rank') {
+    // Rank-based: sort indices by value, assign radius by rank percentile
+    const sorted = [...values].map((v, i) => ({ v, i })).sort((a, b) => a.v - b.v);
+    const radii = new Array(values.length).fill(MIN_RADIUS);
+    sorted.forEach(({ i }, rank) => {
+      const t = values.length > 1 ? rank / (values.length - 1) : 1;
+      radii[i] = MIN_RADIUS + (MAX_RADIUS - MIN_RADIUS) * t;
+    });
+    return radii;
+  }
+
+  const minVal = Math.min(...values);
+  const maxVal = Math.max(...values);
+  if (minVal === maxVal) return values.map(() => (MIN_RADIUS + MAX_RADIUS) / 2);
+
+  return values.map(v => {
+    const vPos = Math.max(0, v - minVal);
+    const range = maxVal - minVal;
+    let t: number;
+    if (sizeMode === 'log') {
+      t = Math.log1p(vPos) / Math.log1p(range);
+    } else if (sizeMode === 'linear') {
+      t = vPos / range;
+    } else {
+      // sqrt (default)
+      t = Math.sqrt(vPos) / Math.sqrt(range);
+    }
+    return MIN_RADIUS + (MAX_RADIUS - MIN_RADIUS) * Math.min(1, Math.max(0, t));
+  });
+}
+
 export default function transformProps(chartProps: ChartProps) {
   const { width, height, formData, queriesData } = chartProps;
   const rawFormData = (chartProps as ChartProps & { rawFormData?: { slice_name?: string } }).rawFormData;
@@ -81,6 +127,8 @@ export default function transformProps(chartProps: ChartProps) {
   const latCol: string = fd.latCol || fd.lat_col || '';
   const lonCol: string = fd.lonCol || fd.lon_col || '';
   const labelCol: string = fd.labelCol || fd.label_col || '';
+  const sizeCol: string = fd.sizeCol || fd.size_col || '';
+  const sizeMode: string = fd.sizeMode || fd.size_mode || 'sqrt';
 
   const rawColor = fd.featureColor || fd.feature_color;
   const featureColorCss = rawColor
@@ -91,14 +139,21 @@ export default function transformProps(chartProps: ChartProps) {
     ? buildFeatureCollection(rows, geomMode, geomCol, latCol, lonCol)
     : null;
 
-  // Inject _sv_color and _label into feature properties
-  const featureCollection = rawFc && (featureColorCss || labelCol)
+  // Compute per-feature radii if size column configured
+  const radii = rawFc && sizeCol
+    ? computeRadii(rawFc.features, sizeCol, sizeMode)
+    : null;
+
+  // Inject _sv_color, _label, _sv_radius into feature properties
+  const needsInject = featureColorCss || labelCol || radii;
+  const featureCollection = rawFc && needsInject
     ? {
         ...rawFc,
-        features: rawFc.features.map(f => {
+        features: rawFc.features.map((f, i) => {
           const props = { ...(f as { properties: Record<string, unknown> }).properties };
           if (featureColorCss) props._sv_color = featureColorCss;
           if (labelCol && props[labelCol] != null) props._label = props[labelCol];
+          if (radii) props._sv_radius = Math.round(radii[i]);
           return { ...f, properties: props };
         }),
       }

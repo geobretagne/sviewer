@@ -1039,12 +1039,14 @@ window.SViewer.app = (function() {
                     var showLabel = lbl !== undefined && lbl !== null && lbl !== '' &&
                         (isLine || isPoly || resolution <= 19.11);
 
-                    // Per-feature color override via _sv_color property (falls back to global geojsonStyle)
+                    // Per-feature color and radius overrides via _sv_color / _sv_radius properties
                     var svColor = feature.get('_sv_color');
+                    var svRadius = feature.get('_sv_radius');
                     var color = svColor || gsColor;
                     var fill = ol.color.asArray(color).slice();
                     fill[3] = gs.fillOpacity !== undefined ? gs.fillOpacity : 0.35;
-                    var stylePoint = svColor ? new ol.style.Style({ image: new ol.style.Circle({ radius: 9, fill: new ol.style.Fill({ color: color }), stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 }) }) }) : gsStylePoint;
+                    var pointRadius = (svRadius != null && isFinite(svRadius)) ? svRadius : 9;
+                    var stylePoint = (svColor || svRadius != null) ? new ol.style.Style({ image: new ol.style.Circle({ radius: pointRadius, fill: new ol.style.Fill({ color: color }), stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 }) }) }) : gsStylePoint;
                     var stylePoly  = svColor ? new ol.style.Style({ fill: new ol.style.Fill({ color: fill }), stroke: new ol.style.Stroke({ color: color, width: gsStrokeWidth }) }) : gsStylePoly;
                     var styleLine  = svColor ? new ol.style.Style({ stroke: new ol.style.Stroke({ color: color, width: gsStrokeWidth }) }) : gsStyleLine;
 

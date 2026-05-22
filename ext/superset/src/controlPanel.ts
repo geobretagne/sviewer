@@ -197,6 +197,38 @@ const config: ControlPanelConfig = {
             },
           },
         ],
+        [
+          {
+            name: 'size_col',
+            config: {
+              type: 'SelectControl',
+              label: 'Colonne taille (symboles proportionnels)',
+              description: 'Colonne numérique utilisée pour calculer la taille des symboles',
+              default: null,
+              renderTrigger: false,
+              clearable: true,
+              mapStateToProps: (state: ControlStateMapping) => ({ choices: columnChoices(state) }),
+            },
+          },
+        ],
+        [
+          {
+            name: 'size_mode',
+            config: {
+              type: 'SelectControl',
+              label: 'Mode de calcul de la taille',
+              description: 'Méthode de normalisation valeur → rayon',
+              default: 'sqrt',
+              renderTrigger: false,
+              choices: [
+                ['sqrt', 'Racine carrée (défaut)'],
+                ['linear', 'Linéaire'],
+                ['log', 'Logarithmique'],
+                ['rank', 'Rang'],
+              ],
+            },
+          },
+        ],
       ],
     },
   ],
