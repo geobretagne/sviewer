@@ -1266,7 +1266,7 @@ window.SViewer.app = (function() {
             catch(_e) { return false; }
         });
         log('_applyGeoJSON: OL features after reprojection filter=', features.length);
-        if (state.label) {
+if (state.label) {
             features.forEach(function(f) { f.set('_label', f.get(state.label)); });
         }
         features = _simplifyFeatures(features);
