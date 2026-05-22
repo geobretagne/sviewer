@@ -4,6 +4,38 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.14.0] - 2026-05-22
+
+### Added
+
+- **Plugin Apache Superset** (`ext/superset/`) : plugin graphique natif pour Apache Superset 4.x — pas de fork, pas de redémarrage serveur. Dataset avec colonne géométrie (GeoJSON ou lat/lon) → FeatureCollection → postMessage → iframe sViewer embarquée dans le tableau de bord. Filtres natifs Superset propagés côté serveur via `buildQueryContext`. URL de partage sViewer acceptée en entrée — tous les paramètres (`x/y/z`, `lb`, `layers`, `s=1`, `q=1`, `theme`, `ext`, etc.) transmis intégralement à l'iframe ; `ext=superset` ajouté automatiquement. Symbologie graduée : couleur par rampe (sqrt/linéaire/log/quantile/Jenks/rang), taille proportionnelle (mêmes modes). Protocole `_sv_color` / `_sv_radius` / `_label` entre plugin et sViewer.
+- **`_sv_color` sur polygones et lignes** : la couleur issue de la rampe ou de la couleur fixe Superset s'applique à tous les types de géométrie (points, lignes, polygones) via `_buildVectorLayer` dans `sviewer.js`.
+- **`_sv_radius` sur points** : rayon en pixels injecté par le plugin, interprété par `_buildVectorLayer`.
+- **Fisher-Jenks O(n²·k)** : calcul des coupures naturelles avec sommes cumulées (préfixe), algorithme O(n²·k) au lieu de O(n³).
+- **nginx : `Referrer-Policy` sur `ext/superset/dist/`** : en-tête ajouté au bloc CORS du bundle plugin.
+
+### Changed
+
+- **`ext/superset` : passthrough intégral des paramètres URL** : remplacement de l'extraction manuelle de 5 paramètres par un passthrough complet — l'URL de partage est transmise telle quelle ; le plugin n'injecte que `ext=superset` et `title=`.
+- **Contrôles Superset simplifiés** : suppression des champs `wms_url`, `wms_layer`, `basemap`, `theme` du panneau de configuration — tous encodés dans l'URL de partage sViewer.
+- **Catalogue d'extensions mis à jour** : ajout de `superset` dans `extensions.json` et `ext/index.html`.
+
+## [0.13.0] - 2026-05-20
+
+### Added
+
+- **Extension Print / PDF** (`ext/print/`, `?ext=print`) : impression haute résolution de la carte courante, re-rendu OpenLayers à la résolution cible. Format A4 paysage et portrait, 150 dpi. QR code permalink optionnel (qr-creator, MIT, auto-hébergé). Attribution OSM. Barre d'échelle.
+- **Blueprint — URL validation et WMS autocomplete** : validation en temps réel du service WMS (CORS, disponibilité), autocomplétion du nom de donnée depuis GetCapabilities, probe geOrchestra pour instance locale, validation `md=` via CSW, probe GeoJSON HEAD, indicateur visuel de succès, bannière de plateforme.
+- **`SViewer.refreshWMS()`** : force le rechargement des tuiles WMS sur toutes les sources queryables (`config.layersQueryable`). Documenté dans `ext/EXT_API.md`.
+- **`s=1` et `q=1` sur GeoJSON vectoriel** : recherche en mémoire sur les propriétés des entités (`s=1`, capped à `maxWfsSearchFeatures`) ; hit-test au pixel central + entité la plus proche comme fallback, ouverture du panneau de requête (`q=1`).
+- **Feedback d'erreur WMS et GeoJSON** : bannière `#sv-wms-err-*` (debounce sur `tileloaderror`) et `#sv-geojson-err` pour les erreurs de chargement.
+- **Catalogue d'extensions classifié** (`ext/index.html`) : badges par type (extension / page / démo), filtre, recherche, navigation par ancre.
+
+### Fixed
+
+- **CSP `nginx-server.conf`** : `manifest-src 'self'` ajouté au bloc `ext/` ; `Referrer-Policy` sur `ext/superset/dist/`.
+- **`nginx-default.conf`** : mise à jour du hash CSP et correction de `img-src blob:`.
+
 ## [0.11.1] - 2026-05-19
 
 Version de maintenance, sécurité et accessibilité.

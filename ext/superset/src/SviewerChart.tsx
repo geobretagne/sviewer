@@ -9,10 +9,7 @@ interface SviewerChartProps {
   width: number;
   height: number;
   sviewerUrl: string;
-  wmsLayer: string;
-  wmsUrl: string;
-  basemap: string;
-  theme: string;
+  urlParams: URLSearchParams;
   sliceName: string;
   autoZoom: boolean;
   queryError: string;
@@ -21,26 +18,33 @@ interface SviewerChartProps {
 
 export default function SviewerChart(props: SviewerChartProps) {
   const {
-    width, height, sviewerUrl, wmsLayer, wmsUrl,
-    basemap, theme, sliceName, autoZoom, queryError, featureCollection,
+    width, height, sviewerUrl, urlParams,
+    sliceName, autoZoom, queryError, featureCollection,
   } = props;
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const readyRef = useRef(false);
   const pendingRef = useRef<FeatureCollection | null>(null);
 
+  // Stable string for useMemo dep — URLSearchParams has no value equality
+  const urlParamsStr = urlParams.toString();
+
   const iframeSrc = useMemo(() => {
     if (!sviewerUrl) return '';
     if (!/^https?:\/\//i.test(sviewerUrl)) return '';
     const base = sviewerUrl.replace(/\/$/, '');
-    const params = new URLSearchParams();
-    params.set('ext', 'superset');
-    if (wmsLayer) params.set('layers', wmsUrl ? `${wmsLayer}@${wmsUrl}` : wmsLayer);
-    if (basemap) params.set('lb', basemap);
-    if (theme) params.set('theme', theme);
-    if (sliceName) params.set('title', sliceName);
+    // Start from share URL params (full passthrough), then enforce plugin params
+    const params = new URLSearchParams(urlParamsStr);
+    // Ensure superset is in the ext list
+    const exts = params.get('ext') || '';
+    const extList = exts.split(',').map(s => s.trim()).filter(Boolean);
+    if (!extList.includes('superset')) extList.push('superset');
+    params.set('ext', extList.join(','));
+    // Title always driven by Superset slice name
+    if (sliceName) params.set('title', sliceName); else params.delete('title');
     return `${base}/?${params.toString()}`;
-  }, [sviewerUrl, wmsLayer, wmsUrl, basemap, theme, sliceName]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sviewerUrl, urlParamsStr, sliceName]);
 
   const sendGeoJSON = useCallback((fc: FeatureCollection) => {
     if (!iframeRef.current?.contentWindow) return;
@@ -101,7 +105,7 @@ export default function SviewerChart(props: SviewerChartProps) {
     return <div style={{ ...centered, color: '#e8413d' }}>{queryError}</div>;
   }
 
-  if (featureCollection !== null && featureCollection.features.length === 0 && !wmsLayer) {
+  if (featureCollection !== null && featureCollection.features.length === 0 && !urlParams.get('layers')) {
     return <div style={{ ...centered, color: '#888' }}>Aucune donnée</div>;
   }
 

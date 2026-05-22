@@ -39,102 +39,7 @@ const config: ControlPanelConfig = {
       ],
     },
     {
-      label: 'sViewer',
-      expanded: true,
-      controlSetRows: [
-        [
-          {
-            name: 'sviewer_url',
-            config: {
-              type: 'TextControl',
-              label: 'URL de l\'instance sViewer',
-              description: 'URL de base de votre instance sViewer, avec slash final (ex. https://mon-serveur/sviewer/)',
-              placeholder: 'https://mon-serveur/sviewer/',
-              default: '',
-              renderTrigger: false,
-            },
-          },
-        ],
-        [
-          {
-            name: 'auto_zoom',
-            config: {
-              type: 'CheckboxControl',
-              label: 'Zoom automatique sur les données',
-              description: 'Coché : recadre la carte à chaque mise à jour des données (utile pour les filtres). Non coché : recadre uniquement au premier chargement.',
-              default: false,
-              renderTrigger: false,
-            },
-          },
-        ],
-        [
-          {
-            name: 'wms_layer',
-            config: {
-              type: 'TextControl',
-              label: 'Donnée WMS (optionnel)',
-              description: 'Nom de la donnée, ex. namespace:nomcouche',
-              default: '',
-              renderTrigger: true,
-            },
-          },
-        ],
-        [
-          {
-            name: 'wms_url',
-            config: {
-              type: 'TextControl',
-              label: 'URL du service WMS (optionnel)',
-              description: "Laisser vide pour l'instance par défaut",
-              default: '',
-              renderTrigger: true,
-            },
-          },
-        ],
-        [
-          {
-            name: 'basemap',
-            config: {
-              type: 'TextControl',
-              label: 'Fond de carte (lb=)',
-              description: 'Clé de fond de carte configurée dans le customConfig sViewer',
-              default: '',
-              renderTrigger: true,
-            },
-          },
-        ],
-        [
-          {
-            name: 'theme',
-            config: {
-              type: 'SelectControl',
-              label: 'Thème',
-              default: '',
-              renderTrigger: true,
-              choices: [
-                ['', 'Auto'],
-                ['light', 'Clair'],
-                ['dark', 'Sombre'],
-              ],
-            },
-          },
-        ],
-        [
-          {
-            name: 'feature_color',
-            config: {
-              type: 'ColorPickerControl',
-              label: 'Couleur des données',
-              description: 'Couleur appliquée à toutes les géométries',
-              default: { r: 0, g: 119, b: 187, a: 1 },
-              renderTrigger: false,
-            },
-          },
-        ],
-      ],
-    },
-    {
-      label: 'Données',
+      label: 'Colonnes',
       expanded: true,
       controlSetRows: [
         [
@@ -143,13 +48,13 @@ const config: ControlPanelConfig = {
             config: {
               type: 'SelectControl',
               label: 'Mode géométrie',
+              description: 'Comment la géométrie est stockée dans le jeu de données',
               default: 'geojson',
               renderTrigger: false,
               choices: [
                 ['geojson', 'Colonne GeoJSON'],
                 ['latlon', 'Colonnes Latitude / Longitude'],
               ],
-              description: 'Comment la géométrie est stockée dans le jeu de données',
             },
           },
         ],
@@ -201,11 +106,29 @@ const config: ControlPanelConfig = {
             config: {
               type: 'SelectControl',
               label: 'Colonne libellé (optionnel)',
-              description: 'Colonne affichée comme libellé sur la carte',
+              description: 'Colonne contenant le libellé',
               default: null,
               renderTrigger: false,
               clearable: true,
               mapStateToProps: (state: ControlPanelState) => ({ choices: columnChoices(state) }),
+            },
+          },
+        ],
+      ],
+    },
+    {
+      label: 'Symbologie',
+      expanded: true,
+      controlSetRows: [
+        [
+          {
+            name: 'feature_color',
+            config: {
+              type: 'ColorPickerControl',
+              label: 'Couleur fixe',
+              description: 'Couleur appliquée à toutes les géométries (ignorée si une rampe est configurée)',
+              default: { r: 0, g: 119, b: 187, a: 1 },
+              renderTrigger: false,
             },
           },
         ],
@@ -228,7 +151,7 @@ const config: ControlPanelConfig = {
             name: 'size_mode',
             config: {
               type: 'SelectControl',
-              label: 'Mode de calcul de la taille',
+              label: 'Mode de normalisation (taille)',
               description: 'Méthode de normalisation valeur → rayon',
               default: 'sqrt',
               renderTrigger: false,
@@ -295,6 +218,37 @@ const config: ControlPanelConfig = {
               label: 'Couleur haute (rampe)',
               description: 'Couleur pour les valeurs les plus élevées',
               default: { r: 0, g: 90, b: 50, a: 1 },
+              renderTrigger: false,
+            },
+          },
+        ],
+      ],
+    },
+    {
+      label: 'Carte',
+      expanded: true,
+      controlSetRows: [
+        [
+          {
+            name: 'auto_zoom',
+            config: {
+              type: 'CheckboxControl',
+              label: 'Zoom automatique sur les données',
+              description: 'Coché : recadre la carte à chaque mise à jour des données (utile pour les filtres). Non coché : recadre uniquement au premier chargement.',
+              default: false,
+              renderTrigger: false,
+            },
+          },
+        ],
+        [
+          {
+            name: 'sviewer_url',
+            config: {
+              type: 'TextControl',
+              label: 'URL sViewer',
+              description: 'URL de base (ex. https://mon-serveur/sviewer/) ou URL de partage complète. Si vous collez une URL de partage, l\'étendue, le fond de carte et le thème sont repris automatiquement.',
+              placeholder: 'https://mon-serveur/sviewer/',
+              default: '',
               renderTrigger: false,
             },
           },

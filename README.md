@@ -9,11 +9,12 @@ sViewer affiche des cartes interactives dans un navigateur, sur téléphone, tab
 
 sViewer est fait pour les gens qui veulent une carte sans passer par un logiciel SIG, sans formation cartographique, sans compte à créer.
 
-Le cas typique : une ou deux données parmi les nombreuses données déjà publiées par les géomaticiens, à partager avec des collègues ou à afficher sur son site.
+Le cas simple : une ou deux données parmi toutes celles déjà publiées par les géomaticiens, affichées sur une carte partagée avec des collègues ou affichée sur son site web.
 
-sViewer n'est **pas** un logiciel SIG : pas de dessin, pas d'analyse spatiale, pas de gestion de "couches". Si vous cherchez un outil pour publier beaucoup de données, regardez [mviewer](https://mviewer.github.io/fr/), [mapstore](https://docs.georchestra.geo-solutions.it/fr/latest/mapstore/index.html) ou encore [georchestra](https://georchestra.org). Ceci dit, sViewer complètera parfaitement ces environnements ! Pour de l'analyse complexe, regardez [QGIS](https://qgis.org/).
+sViewer n'est **pas** un logiciel SIG : pas de dessin, pas d'analyse spatiale, pas de gestion de "couches". Si vous cherchez un outil pour publier beaucoup de données, regardez [mviewer](https://mviewer.github.io/fr/), [mapstore](https://docs.georchestra.geo-solutions.it/fr/latest/mapstore/index.html) ou encore [georchestra](https://georchestra.org). Ceci dit, sViewer complètera parfaitement ces environnements ! Pour de l'analyse complexe, regardez [QGIS](https://qgis.org/). Les données géographiques bénéficient d'un large écosystème et tout est disponible en logiciel libre : faites confiance à leurs communautés.
 
-Les données géographiques bénéficient d'un large écosystème et tout est disponible en logiciel libre : faites confiance à leurs communautés.
+Ceci dit, sViewer sait faire d'autres choses grâce aux API publiques : croiser des isochrones avec des points d'intérêt ; calculer des profils altimétriques ; éditer des géométries dans Grist ; représenter les données dans Superset ; accéder aux photos Panoramax. Le système d'extension offre de nombreuses possibilités 
+en conservant un visualiseur hyper rapide.
 
 ---
 
@@ -36,7 +37,7 @@ Que permet sViewer ?
 * **Intégrer dans n'importe quelle page** — une ligne `<iframe>` suffit
 * **API JavaScript** — intégrez et contrôlez la carte
 * **Logiciel libre, gratuit, auto-hébergeable** — licence GPL, aucun compte, aucune inscription, aucune dépendance externe
-* **Extensions** qui étendent les possibilités : par exemple édition de géométries dans [Grist](https://www.getgrist.com)
+* **Extensions** qui étendent les possibilités : par exemple l'édition de géométries dans [Grist](https://www.getgrist.com), la représentation cartographique dans[Superset](https://superset.apache.org/), la visualisation de données CSV, l'affichage des photos[Panoramax](https://panoramax.fr/).
 
 
 ![sViewer sur mobile — panneau de partage ouvert](examples/screenshot-mobile.png)
@@ -72,13 +73,14 @@ sViewer récupère automatiquement l'URL WMS et les métadonnées (titre, résum
 sViewer affiche des données via WMS — pas les fichiers directement. Deux alternatives :
 
 - **Grist** — si vos données sont dans un document Grist avec une colonne géométrie, utilisez le [widget Grist intégré](ext/grist/) : carte interactive synchronisée avec le tableau, édition de géométries depuis la carte, lien de partage autonome. → [Documentation complète du widget Grist](ext/grist/README.md)
+- **Apache Superset** — si vos données sont dans un dataset Superset avec une colonne géométrie, utilisez le [plugin Superset intégré](ext/superset/) : carte sViewer embarquée dans le tableau de bord, filtres natifs Superset propagés, symbologie graduée en taille et couleur. → [Documentation complète du plugin Superset](ext/superset/README.md)
 - **Autres formats** — parlez à votre service SIG ou utilisez un outil comme [uMap](https://umap.openstreetmap.fr/) qui accepte les imports directs.
 
 
 Composer une URL sViewer — Blueprint
 --------------------------------------
 
-**Blueprint** est un outil visuel pour composer et partager une vue sViewer en moins d'une minute, sans connaître les paramètres d'URL.
+**Blueprint** est une extension pour composer et partager une carte sViewer en moins d'une minute, sans connaître les paramètres d'URL.
 
 Accès : `https://votre-serveur/sviewer/ext/blueprint/`
 

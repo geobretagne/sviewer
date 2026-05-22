@@ -9,10 +9,6 @@ interface SviewerFormData {
   lonCol?: string | null;      lon_col?: string | null;
   labelCol?: string | null;    label_col?: string | null;
   sviewerUrl?: string;         sviewer_url?: string;
-  wmsLayer?: string;           wms_layer?: string;
-  wmsUrl?: string;             wms_url?: string;
-  basemap?: string;
-  theme?: string;
   featureColor?: RgbaColor;    feature_color?: RgbaColor;
   sizeCol?: string | null;     size_col?: string | null;
   sizeMode?: string;           size_mode?: string;
@@ -269,14 +265,26 @@ export default function transformProps(chartProps: ChartProps) {
       }
     : rawFc;
 
+  // Parse sviewer_url: accept bare base URL or full share URL.
+  // All share URL params pass through untouched; plugin enforces only ext= and title=.
+  const rawSviewerUrl: string = fd.sviewerUrl || fd.sviewer_url || '';
+  let sviewerBase = '';
+  let urlParams = new URLSearchParams();
+  if (rawSviewerUrl) {
+    try {
+      const parsed = new URL(rawSviewerUrl);
+      sviewerBase = `${parsed.origin}${parsed.pathname}`;
+      urlParams = parsed.searchParams;
+    } catch {
+      sviewerBase = rawSviewerUrl;
+    }
+  }
+
   return {
     width,
     height,
-    sviewerUrl: fd.sviewerUrl || fd.sviewer_url || '',
-    wmsLayer: fd.wmsLayer || fd.wms_layer || '',
-    wmsUrl: fd.wmsUrl || fd.wms_url || '',
-    basemap: fd.basemap || '',
-    theme: fd.theme || '',
+    sviewerUrl: sviewerBase,
+    urlParams,
     sliceName: rawFormData?.slice_name || '',
     autoZoom: !!(fd.autoZoom ?? fd.auto_zoom),
     queryError,

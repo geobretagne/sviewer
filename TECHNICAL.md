@@ -1534,6 +1534,68 @@ SViewer.init('#map', { layers: 'geor:commune' });
 
 ---
 
+## Plugin Apache Superset
+
+Plugin graphique natif (`sviewer_map`) pour Apache Superset 4.x. Pas de fork, pas de redémarrage — l'administrateur enregistre le bundle via l'interface Plugins.
+
+### Installation
+
+Activer le feature flag dans `superset_config.py` :
+
+```python
+FEATURE_FLAGS = {"DYNAMIC_PLUGINS": True}
+```
+
+Enregistrer le plugin : Paramètres → Plugins → Ajouter :
+
+```
+https://votre-serveur/sviewer/ext/superset/dist/superset-plugin-chart-sviewer.js
+```
+
+Clé : `sviewer_map`
+
+### Architecture
+
+Le plugin construit un `<iframe>` pointant vers sViewer avec `?ext=superset`. sViewer charge automatiquement `ext/superset/extension.js` (même origine).
+
+```
+Dataset Superset
+  → buildQueryContext (filtres natifs mergés côté serveur)
+    → FeatureCollection GeoJSON (transformProps)
+      → postMessage sv:geojson → iframe sViewer
+        → SViewer.loadFeatures() → carte redessinée
+```
+
+### Passthrough de l'URL de partage
+
+Le champ **URL sViewer** accepte une URL de partage complète. Tous les paramètres sont transmis intégralement à l'iframe — position, zoom, fond de carte, données WMS, thème, extensions (`s=1`, `q=1`, `ext=print`…). Le plugin ajoute uniquement `ext=superset` (s'il est absent) et `title=` (nom du graphique Superset).
+
+### Symbologie
+
+La symbologie est calculée côté plugin, injectée dans les propriétés GeoJSON :
+
+| Propriété | Rôle |
+|-----------|------|
+| `_sv_color` | Couleur CSS de l'entité (fixe ou rampe graduée) |
+| `_sv_radius` | Rayon en pixels (symboles proportionnels, points uniquement) |
+| `_label` | Libellé affiché en infobulle |
+
+Modes de normalisation disponibles : racine carrée, linéaire, logarithmique, quantile, Jenks (coupures naturelles), rang.
+
+### Build
+
+```bash
+cd ext/superset
+npm install
+npm run build   # → dist/superset-plugin-chart-sviewer.js
+```
+
+Committer `dist/` après chaque build.
+
+→ [Documentation utilisateur complète](ext/superset/README.md)
+
+---
+
 ## Ressources supplémentaires
 
 - **OpenLayers 10** : https://openlayers.org/
