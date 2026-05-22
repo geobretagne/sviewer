@@ -6,10 +6,6 @@ import buildQuery from './buildQuery';
 
 const CHART_TYPE = 'sviewer_map';
 
-// Base URL baked in at build time via SVIEWER_URL env var + DefinePlugin.
-declare const __SVIEWER_URL__: string;
-export const SVIEWER_BASE_URL: string = __SVIEWER_URL__;
-
 class SviewerChartPlugin extends ChartPlugin {
   constructor() {
     super({

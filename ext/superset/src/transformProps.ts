@@ -1,5 +1,9 @@
 import { ChartProps } from '@superset-ui/core';
-import { SVIEWER_BASE_URL } from './index';
+
+// Admin sets window.SVIEWER_URL once in Superset → Settings → Custom JS.
+function getSviewerBaseUrl(): string {
+  return (window as Window & { SVIEWER_URL?: string }).SVIEWER_URL || '';
+}
 
 interface RgbaColor { r: number; g: number; b: number; a: number; }
 
@@ -102,7 +106,7 @@ export default function transformProps(chartProps: ChartProps) {
   return {
     width,
     height,
-    sviewerUrl: fd.sviewerUrl || fd.sviewer_url || SVIEWER_BASE_URL,
+    sviewerUrl: fd.sviewerUrl || fd.sviewer_url || getSviewerBaseUrl(),
     wmsLayer: fd.wmsLayer || fd.wms_layer || '',
     wmsUrl: fd.wmsUrl || fd.wms_url || '',
     basemap: fd.basemap || '',

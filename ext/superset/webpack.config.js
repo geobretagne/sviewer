@@ -1,10 +1,4 @@
 const path = require('path');
-const webpack = require('webpack');
-
-// SVIEWER_URL: base URL of the sViewer instance serving this plugin.
-// Set at build time: SVIEWER_URL=https://my-server/sviewer/ npm run build
-// Trailing slash required.
-const SVIEWER_URL = process.env.SVIEWER_URL || '';
 
 module.exports = {
   entry: './src/index.tsx',
@@ -20,11 +14,6 @@ module.exports = {
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
   },
-  plugins: [
-    new webpack.DefinePlugin({
-      __SVIEWER_URL__: JSON.stringify(SVIEWER_URL),
-    }),
-  ],
   module: {
     rules: [
       {
