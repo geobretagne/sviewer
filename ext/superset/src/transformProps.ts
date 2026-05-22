@@ -16,6 +16,11 @@ interface SviewerFormData {
   featureColor?: RgbaColor;    feature_color?: RgbaColor;
   sizeCol?: string | null;     size_col?: string | null;
   sizeMode?: string;           size_mode?: string;
+  colorRampCol?: string | null;  color_ramp_col?: string | null;
+  colorRampMode?: string;        color_ramp_mode?: string;
+  colorRampLow?: RgbaColor;      color_ramp_low?: RgbaColor;
+  colorRampHigh?: RgbaColor;     color_ramp_high?: RgbaColor;
+  autoZoom?: boolean;            auto_zoom?: boolean;
 }
 
 interface Feature {
@@ -70,6 +75,126 @@ function buildFeatureCollection(
   return { type: 'FeatureCollection', features };
 }
 
+function lerpColor(low: RgbaColor, high: RgbaColor, t: number): string {
+  const r = Math.round(low.r + (high.r - low.r) * t);
+  const g = Math.round(low.g + (high.g - low.g) * t);
+  const b = Math.round(low.b + (high.b - low.b) * t);
+  const a = low.a + (high.a - low.a) * t;
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// Fisher-Jenks natural breaks — returns k-1 upper-bound values separating k classes.
+// Uses cumulative sums for O(n²·k) complexity.
+function jenksBreaks(sorted: number[], k: number): number[] {
+  const n = sorted.length;
+  // Fewer distinct values than classes — use value boundaries as breaks
+  if (n <= k) {
+    const seen = new Set<number>();
+    return sorted.filter(v => !seen.has(v) && seen.add(v)).slice(1);
+  }
+
+  // Precompute prefix sums for O(1) range mean/variance
+  const s1 = new Array(n + 1).fill(0);  // sum
+  const s2 = new Array(n + 1).fill(0);  // sum of squares
+  for (let i = 1; i <= n; i++) {
+    s1[i] = s1[i - 1] + sorted[i - 1];
+    s2[i] = s2[i - 1] + sorted[i - 1] ** 2;
+  }
+  // Variance of sorted[a-1..b-1] (1-indexed) via prefix sums
+  const variance = (a: number, b: number) => {
+    const cnt = b - a + 1;
+    const sum = s1[b] - s1[a - 1];
+    const sq  = s2[b] - s2[a - 1];
+    return sq - sum ** 2 / cnt;
+  };
+
+  const mat: number[][] = Array.from({ length: n + 1 }, () => new Array(k + 1).fill(0));
+  const vr: number[][] = Array.from({ length: n + 1 }, () => new Array(k + 1).fill(Infinity));
+
+  for (let j = 1; j <= k; j++) { mat[1][j] = 1; vr[1][j] = 0; }
+  for (let i = 2; i <= n; i++) { mat[i][1] = 1; vr[i][1] = variance(1, i); }
+
+  for (let j = 2; j <= k; j++) {
+    for (let i = j; i <= n; i++) {
+      for (let m = j; m <= i; m++) {
+        const v = variance(m, i);
+        const total = v + vr[m - 1][j - 1];
+        if (total < vr[i][j]) { vr[i][j] = total; mat[i][j] = m; }
+      }
+    }
+  }
+
+  const breaks: number[] = new Array(k - 1);
+  let kk = k, ii = n;
+  while (kk > 1) {
+    // upper bound of class kk-1 = element just before class kk starts
+    breaks[kk - 2] = sorted[mat[ii][kk] - 2];
+    ii = mat[ii][kk] - 1;
+    kk--;
+  }
+  return breaks;
+}
+
+function normalizeValues(values: number[], mode: string): number[] {
+  if (mode === 'rank' || mode === 'quantile') {
+    // rank: continuous percentile; quantile: same math, alias kept for UI clarity
+    const sorted = [...values].map((v, i) => ({ v, i })).sort((a, b) => a.v - b.v);
+    const result = new Array(values.length).fill(0);
+    sorted.forEach(({ i }, rank) => {
+      result[i] = values.length > 1 ? rank / (values.length - 1) : 1;
+    });
+    return result;
+  }
+
+  if (mode === 'jenks') {
+    const k = 5;
+    const sorted = [...values].sort((a, b) => a - b);
+    const breaks = jenksBreaks(sorted, k);
+    const minVal = sorted[0];
+    const maxVal = sorted[sorted.length - 1];
+    if (minVal === maxVal) return values.map(() => 0.5);
+    // cls = number of breaks strictly less than v; max value always reaches top class
+    return values.map(v => {
+      let cls = 0;
+      for (const b of breaks) { if (v > b) cls++; }
+      // clamp: max value may equal the last break upper-bound exactly
+      return Math.min(cls, k - 1) / (k - 1);
+    });
+  }
+
+  const minVal = Math.min(...values);
+  const maxVal = Math.max(...values);
+  if (minVal === maxVal) return values.map(() => 0.5);
+
+  return values.map(v => {
+    const vPos = Math.max(0, v - minVal);
+    const range = maxVal - minVal;
+    let t: number;
+    if (mode === 'log') {
+      t = Math.log1p(vPos) / Math.log1p(range);
+    } else if (mode === 'linear') {
+      t = vPos / range;
+    } else {
+      t = Math.sqrt(vPos) / Math.sqrt(range);
+    }
+    return Math.min(1, Math.max(0, t));
+  });
+}
+
+function computeColors(
+  features: Feature[],
+  colorRampCol: string,
+  colorRampMode: string,
+  low: RgbaColor,
+  high: RgbaColor,
+): string[] {
+  const values = features.map(f => {
+    const v = parseFloat(String(f.properties[colorRampCol]));
+    return isFinite(v) ? v : 0;
+  });
+  return normalizeValues(values, colorRampMode).map(t => lerpColor(low, high, t));
+}
+
 const MIN_RADIUS = 4;
 const MAX_RADIUS = 20;
 
@@ -82,36 +207,7 @@ function computeRadii(
     const v = parseFloat(String(f.properties[sizeCol]));
     return isFinite(v) ? v : 0;
   });
-
-  if (sizeMode === 'rank') {
-    // Rank-based: sort indices by value, assign radius by rank percentile
-    const sorted = [...values].map((v, i) => ({ v, i })).sort((a, b) => a.v - b.v);
-    const radii = new Array(values.length).fill(MIN_RADIUS);
-    sorted.forEach(({ i }, rank) => {
-      const t = values.length > 1 ? rank / (values.length - 1) : 1;
-      radii[i] = MIN_RADIUS + (MAX_RADIUS - MIN_RADIUS) * t;
-    });
-    return radii;
-  }
-
-  const minVal = Math.min(...values);
-  const maxVal = Math.max(...values);
-  if (minVal === maxVal) return values.map(() => (MIN_RADIUS + MAX_RADIUS) / 2);
-
-  return values.map(v => {
-    const vPos = Math.max(0, v - minVal);
-    const range = maxVal - minVal;
-    let t: number;
-    if (sizeMode === 'log') {
-      t = Math.log1p(vPos) / Math.log1p(range);
-    } else if (sizeMode === 'linear') {
-      t = vPos / range;
-    } else {
-      // sqrt (default)
-      t = Math.sqrt(vPos) / Math.sqrt(range);
-    }
-    return MIN_RADIUS + (MAX_RADIUS - MIN_RADIUS) * Math.min(1, Math.max(0, t));
-  });
+  return normalizeValues(values, sizeMode).map(t => MIN_RADIUS + (MAX_RADIUS - MIN_RADIUS) * t);
 }
 
 export default function transformProps(chartProps: ChartProps) {
@@ -135,6 +231,11 @@ export default function transformProps(chartProps: ChartProps) {
     ? `rgba(${rawColor.r},${rawColor.g},${rawColor.b},${rawColor.a})`
     : '';
 
+  const colorRampCol: string = fd.colorRampCol || fd.color_ramp_col || '';
+  const colorRampMode: string = fd.colorRampMode || fd.color_ramp_mode || 'sqrt';
+  const colorRampLow: RgbaColor = fd.colorRampLow || fd.color_ramp_low || { r: 255, g: 255, b: 204, a: 1 };
+  const colorRampHigh: RgbaColor = fd.colorRampHigh || fd.color_ramp_high || { r: 0, g: 90, b: 50, a: 1 };
+
   const rawFc = rows.length > 0
     ? buildFeatureCollection(rows, geomMode, geomCol, latCol, lonCol)
     : null;
@@ -144,14 +245,23 @@ export default function transformProps(chartProps: ChartProps) {
     ? computeRadii(rawFc.features, sizeCol, sizeMode)
     : null;
 
+  // Compute per-feature colors if color ramp column configured (overrides fixed color)
+  const rampColors = rawFc && colorRampCol
+    ? computeColors(rawFc.features, colorRampCol, colorRampMode, colorRampLow, colorRampHigh)
+    : null;
+
   // Inject _sv_color, _label, _sv_radius into feature properties
-  const needsInject = featureColorCss || labelCol || radii;
+  const needsInject = featureColorCss || colorRampCol || labelCol || radii;
   const featureCollection = rawFc && needsInject
     ? {
         ...rawFc,
         features: rawFc.features.map((f, i) => {
           const props = { ...(f as { properties: Record<string, unknown> }).properties };
-          if (featureColorCss) props._sv_color = featureColorCss;
+          if (rampColors) {
+            props._sv_color = rampColors[i];
+          } else if (featureColorCss) {
+            props._sv_color = featureColorCss;
+          }
           if (labelCol && props[labelCol] != null) props._label = props[labelCol];
           if (radii) props._sv_radius = Math.round(radii[i]);
           return { ...f, properties: props };
@@ -168,6 +278,7 @@ export default function transformProps(chartProps: ChartProps) {
     basemap: fd.basemap || '',
     theme: fd.theme || '',
     sliceName: rawFormData?.slice_name || '',
+    autoZoom: !!(fd.autoZoom ?? fd.auto_zoom),
     queryError,
     featureCollection,
   };

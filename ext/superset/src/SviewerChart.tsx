@@ -14,6 +14,7 @@ interface SviewerChartProps {
   basemap: string;
   theme: string;
   sliceName: string;
+  autoZoom: boolean;
   queryError: string;
   featureCollection: FeatureCollection | null;
 }
@@ -21,7 +22,7 @@ interface SviewerChartProps {
 export default function SviewerChart(props: SviewerChartProps) {
   const {
     width, height, sviewerUrl, wmsLayer, wmsUrl,
-    basemap, theme, sliceName, queryError, featureCollection,
+    basemap, theme, sliceName, autoZoom, queryError, featureCollection,
   } = props;
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -44,8 +45,8 @@ export default function SviewerChart(props: SviewerChartProps) {
   const sendGeoJSON = useCallback((fc: FeatureCollection) => {
     if (!iframeRef.current?.contentWindow) return;
     const targetOrigin = new URL(iframeSrc).origin;
-    iframeRef.current.contentWindow.postMessage({ type: 'sv:geojson', data: fc }, targetOrigin);
-  }, [iframeSrc]);
+    iframeRef.current.contentWindow.postMessage({ type: 'sv:geojson', data: fc, autoZoom }, targetOrigin);
+  }, [iframeSrc, autoZoom]);
 
   // Listen for messages from iframe
   useEffect(() => {

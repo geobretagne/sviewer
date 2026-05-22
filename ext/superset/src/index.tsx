@@ -14,7 +14,7 @@ class SviewerChartPlugin extends ChartPlugin {
         description: 'Visualisation cartographique — WMS, GeoJSON, OGC',
         thumbnail: '',
         useLegacyApi: false,
-        behaviors: [Behavior.InteractiveChart, Behavior.DrillToDetail],
+        behaviors: [Behavior.InteractiveChart],
         canBeAnnotationTypes: [],
         credits: [],
         exampleGallery: [],

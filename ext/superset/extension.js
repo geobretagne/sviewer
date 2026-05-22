@@ -5,9 +5,13 @@
  * Never load manually — only the Superset plugin should trigger this.
  *
  * Protocol (all messages carry { type: string, ... }):
- *   parent → iframe  sv:geojson  { data: GeoJSON FeatureCollection }
+ *   parent → iframe  sv:geojson  { data: GeoJSON FeatureCollection, autoZoom: boolean }
  *   iframe → parent  sv:ready    {}
  *   iframe → parent  sv:click    { properties: object }
+ *
+ * autoZoom behaviour:
+ *   false (default) — zoom to extent on first non-empty FC only
+ *   true            — zoom to extent on every FC update
  */
 
 (function () {
@@ -15,7 +19,8 @@
 
     var supersetOrigin = null;  // set on first valid inbound message
     var mapReady = false;
-    var pendingGeojson = null;  // GeoJSON received before map was ready
+    var pendingGeojson = null;  // buffered { fc, autoZoom } received before map ready
+    var hasZoomed = false;      // tracks whether initial zoom has fired
 
     var hasParent = window.parent !== window;
 
@@ -23,8 +28,39 @@
 
     function announceReady() {
         if (!hasParent) return;
-        // '*' target origin — parent will restrict on its side via e.source check
         window.parent.postMessage({ type: 'sv:ready' }, '*');
+    }
+
+    // --- Fit map to loaded vector layer extent ----------------------------
+
+    function fitToFeatures() {
+        var view = SViewer.getView();
+        var map = SViewer.getMap();
+        if (!view || !map) return;
+        map.getLayers().forEach(function (layer) {
+            if (layer && typeof layer.getSource === 'function') {
+                var src = layer.getSource();
+                if (src && typeof src.getExtent === 'function' && typeof src.getFeatures === 'function') {
+                    var ext = src.getExtent();
+                    // Guard against empty/unrendered source extent [Inf, Inf, -Inf, -Inf]
+                    if (ext && isFinite(ext[0]) && isFinite(ext[1]) && isFinite(ext[2]) && isFinite(ext[3])) {
+                        view.fit(ext, { maxZoom: 17, duration: 400, padding: [40, 40, 40, 40] });
+                    }
+                }
+            }
+        });
+    }
+
+    // --- Load GeoJSON and optionally zoom ---------------------------------
+
+    function applyGeoJSON(fc, autoZoom) {
+        var shouldZoom = autoZoom || !hasZoomed;
+        SViewer.loadFeatures(fc);
+        if (shouldZoom && fc.features && fc.features.length > 0) {
+            hasZoomed = true;
+            // loadFeatures is sync through bus; setTimeout(0) lets OL finish layer setup
+            setTimeout(fitToFeatures, 0);
+        }
     }
 
     // --- Receive GeoJSON from parent --------------------------------------
@@ -32,21 +68,20 @@
     window.addEventListener('message', function (e) {
         if (!e.data || typeof e.data.type !== 'string') return;
 
-        // Record parent origin on first message for outbound targeting
         if (!supersetOrigin && e.source === window.parent) {
             supersetOrigin = e.origin;
         }
 
-        // Only accept messages from direct parent
         if (e.source !== window.parent) return;
 
         if (e.data.type === 'sv:geojson') {
             var fc = e.data.data;
             if (!fc || fc.type !== 'FeatureCollection') return;
-if (mapReady) {
-                SViewer.loadFeatures(fc);
+            var autoZoom = !!e.data.autoZoom;
+            if (mapReady) {
+                applyGeoJSON(fc, autoZoom);
             } else {
-                pendingGeojson = fc;
+                pendingGeojson = { fc: fc, autoZoom: autoZoom };
             }
         }
     });
@@ -56,16 +91,13 @@ if (mapReady) {
     SViewer.onMapReady(function () {
         mapReady = true;
 
-        // Load any GeoJSON that arrived before map was ready
         if (pendingGeojson) {
-            SViewer.loadFeatures(pendingGeojson);
+            applyGeoJSON(pendingGeojson.fc, pendingGeojson.autoZoom);
             pendingGeojson = null;
         }
 
-        // Emit click events to parent for cross-filter
         SViewer.onFeatureClick(function (e) {
             if (!e || !e.properties) return;
-            // Sanitize: keep only JSON-serializable primitives
             var safe = {};
             var props = e.properties;
             Object.keys(props).forEach(function (k) {
@@ -74,12 +106,10 @@ if (mapReady) {
                 var t = typeof v;
                 if (t === 'string' || t === 'number' || t === 'boolean') safe[k] = v;
             });
-            if (!hasParent) return;
-            var target = supersetOrigin || '*';
-            window.parent.postMessage({ type: 'sv:click', properties: safe }, target);
+            if (!hasParent || !supersetOrigin) return;
+            window.parent.postMessage({ type: 'sv:click', properties: safe }, supersetOrigin);
         });
 
-        // Announce ready — after onFeatureClick registered so no race
         announceReady();
     });
 

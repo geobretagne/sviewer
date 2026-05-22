@@ -1024,9 +1024,8 @@ window.SViewer.app = (function() {
                     stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 })
                 })
             });
-            var gsStylePolyHalo  = new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#fff', width: gsStrokeWidth + 2 }) });
+            var gsStyleHalo      = new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#fff', width: gsStrokeWidth + 2 }) });
             var gsStylePoly      = new ol.style.Style({ fill: new ol.style.Fill({ color: gsFill }), stroke: new ol.style.Stroke({ color: gsColor, width: gsStrokeWidth }) });
-            var gsStyleLineHalo  = new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#fff', width: gsStrokeWidth + 2 }) });
             var gsStyleLine      = new ol.style.Style({ stroke: new ol.style.Stroke({ color: gsColor, width: gsStrokeWidth }) });
             vectorLayer = new ol.layer.Vector({
                 source: vectorSource,
@@ -1036,25 +1035,35 @@ window.SViewer.app = (function() {
                     var isPoly = type === 'Polygon' || type === 'MultiPolygon';
                     var lbl = feature.get('_label');
                     // Points: suppress labels at low zoom to avoid clutter. Polygons/lines: always show.
+                    // 19.11 m/px ≈ OL zoom 13 in Web Mercator
                     var showLabel = lbl !== undefined && lbl !== null && lbl !== '' &&
                         (isLine || isPoly || resolution <= 19.11);
 
                     // Per-feature color and radius overrides via _sv_color / _sv_radius properties
                     var svColor = feature.get('_sv_color');
                     var svRadius = feature.get('_sv_radius');
-                    var color = svColor || gsColor;
-                    var fill = ol.color.asArray(color).slice();
-                    fill[3] = gs.fillOpacity !== undefined ? gs.fillOpacity : 0.35;
+                    // Validate _sv_color — ol.color.asArray throws on unrecognised strings
+                    var validSvColor = false;
+                    if (svColor) { try { ol.color.asArray(svColor); validSvColor = true; } catch(e) { svColor = null; } }
+                    var color = validSvColor ? svColor : gsColor;
                     var pointRadius = (svRadius != null && isFinite(svRadius)) ? svRadius : 9;
-                    var stylePoint = (svColor || svRadius != null) ? new ol.style.Style({ image: new ol.style.Circle({ radius: pointRadius, fill: new ol.style.Fill({ color: color }), stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 }) }) }) : gsStylePoint;
-                    var stylePoly  = svColor ? new ol.style.Style({ fill: new ol.style.Fill({ color: fill }), stroke: new ol.style.Stroke({ color: color, width: gsStrokeWidth }) }) : gsStylePoly;
-                    var styleLine  = svColor ? new ol.style.Style({ stroke: new ol.style.Stroke({ color: color, width: gsStrokeWidth }) }) : gsStyleLine;
+                    var stylePoint = (validSvColor || svRadius != null) ? new ol.style.Style({ image: new ol.style.Circle({ radius: pointRadius, fill: new ol.style.Fill({ color: color }), stroke: new ol.style.Stroke({ color: '#fff', width: 1.5 }) }) }) : gsStylePoint;
+                    var stylePoly, styleLine;
+                    if (validSvColor) {
+                        var fill = ol.color.asArray(color).slice();
+                        fill[3] = gs.fillOpacity !== undefined ? gs.fillOpacity : 0.35;
+                        stylePoly = new ol.style.Style({ fill: new ol.style.Fill({ color: fill }), stroke: new ol.style.Stroke({ color: color, width: gsStrokeWidth }) });
+                        styleLine = new ol.style.Style({ stroke: new ol.style.Stroke({ color: color, width: gsStrokeWidth }) });
+                    } else {
+                        stylePoly = gsStylePoly;
+                        styleLine = gsStyleLine;
+                    }
 
                     var base;
                     if (isLine) {
-                        base = [gsStyleLineHalo, styleLine];
+                        base = [gsStyleHalo, styleLine];
                     } else if (isPoly) {
-                        base = [gsStylePolyHalo, stylePoly];
+                        base = [gsStyleHalo, stylePoly];
                     } else {
                         base = [stylePoint];
                     }

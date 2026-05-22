@@ -7,6 +7,7 @@ interface SviewerFormData extends QueryFormData {
   lonCol?: string;    lon_col?: string;
   labelCol?: string;  label_col?: string;
   sizeCol?: string;   size_col?: string;
+  colorRampCol?: string; color_ramp_col?: string;
   sortCol?: string;   sort_col?: string;
   sortDesc?: boolean; sort_desc?: boolean;
 }
@@ -28,7 +29,10 @@ export default function buildQuery(formData: QueryFormData) {
   const labelCol = fd.labelCol || fd.label_col;
   if (labelCol) cols.push(labelCol);
   const sizeCol = fd.sizeCol || fd.size_col;
-  if (sizeCol) cols.push(sizeCol);
+  if (sizeCol && !cols.includes(sizeCol)) cols.push(sizeCol);
+
+  const colorRampCol = fd.colorRampCol || fd.color_ramp_col;
+  if (colorRampCol && !cols.includes(colorRampCol)) cols.push(colorRampCol);
 
   const sortCol = fd.sortCol || fd.sort_col;
   const sortDesc = fd.sortDesc ?? fd.sort_desc ?? true;

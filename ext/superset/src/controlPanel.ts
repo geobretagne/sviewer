@@ -1,6 +1,6 @@
-import { ControlPanelConfig, ControlStateMapping } from '@superset-ui/chart-controls';
+import { ControlPanelConfig, ControlPanelState } from '@superset-ui/chart-controls';
 
-function columnChoices(state: ControlStateMapping) {
+function columnChoices(state: ControlPanelState) {
   const cols = (state?.datasource as { columns?: { column_name: string; verbose_name?: string }[] })?.columns;
   return (cols || []).map(c => [c.column_name, c.verbose_name || c.column_name]);
 }
@@ -22,7 +22,7 @@ const config: ControlPanelConfig = {
               default: null,
               renderTrigger: false,
               clearable: true,
-              mapStateToProps: (state: ControlStateMapping) => ({ choices: columnChoices(state) }),
+              mapStateToProps: (state: ControlPanelState) => ({ choices: columnChoices(state) }),
             },
           },
           {
@@ -51,6 +51,18 @@ const config: ControlPanelConfig = {
               description: 'URL de base de votre instance sViewer, avec slash final (ex. https://mon-serveur/sviewer/)',
               placeholder: 'https://mon-serveur/sviewer/',
               default: '',
+              renderTrigger: false,
+            },
+          },
+        ],
+        [
+          {
+            name: 'auto_zoom',
+            config: {
+              type: 'CheckboxControl',
+              label: 'Zoom automatique sur les données',
+              description: 'Coché : recadre la carte à chaque mise à jour des données (utile pour les filtres). Non coché : recadre uniquement au premier chargement.',
+              default: false,
               renderTrigger: false,
             },
           },
@@ -151,7 +163,7 @@ const config: ControlPanelConfig = {
               default: null,
               renderTrigger: false,
               clearable: true,
-              mapStateToProps: (state: ControlStateMapping) => ({ choices: columnChoices(state) }),
+              mapStateToProps: (state: ControlPanelState) => ({ choices: columnChoices(state) }),
             },
           },
         ],
@@ -165,7 +177,7 @@ const config: ControlPanelConfig = {
               default: null,
               renderTrigger: false,
               clearable: true,
-              mapStateToProps: (state: ControlStateMapping) => ({ choices: columnChoices(state) }),
+              mapStateToProps: (state: ControlPanelState) => ({ choices: columnChoices(state) }),
             },
           },
         ],
@@ -179,7 +191,7 @@ const config: ControlPanelConfig = {
               default: null,
               renderTrigger: false,
               clearable: true,
-              mapStateToProps: (state: ControlStateMapping) => ({ choices: columnChoices(state) }),
+              mapStateToProps: (state: ControlPanelState) => ({ choices: columnChoices(state) }),
             },
           },
         ],
@@ -193,7 +205,7 @@ const config: ControlPanelConfig = {
               default: null,
               renderTrigger: false,
               clearable: true,
-              mapStateToProps: (state: ControlStateMapping) => ({ choices: columnChoices(state) }),
+              mapStateToProps: (state: ControlPanelState) => ({ choices: columnChoices(state) }),
             },
           },
         ],
@@ -207,7 +219,7 @@ const config: ControlPanelConfig = {
               default: null,
               renderTrigger: false,
               clearable: true,
-              mapStateToProps: (state: ControlStateMapping) => ({ choices: columnChoices(state) }),
+              mapStateToProps: (state: ControlPanelState) => ({ choices: columnChoices(state) }),
             },
           },
         ],
@@ -224,8 +236,66 @@ const config: ControlPanelConfig = {
                 ['sqrt', 'Racine carrée (défaut)'],
                 ['linear', 'Linéaire'],
                 ['log', 'Logarithmique'],
-                ['rank', 'Rang'],
+                ['quantile', 'Quantile'],
+                ['jenks', 'Jenks (coupures naturelles)'],
+                ['rank', 'Rang (continu)'],
               ],
+            },
+          },
+        ],
+        [
+          {
+            name: 'color_ramp_col',
+            config: {
+              type: 'SelectControl',
+              label: 'Colonne rampe de couleurs (optionnel)',
+              description: 'Colonne numérique pour la couleur graduée — remplace la couleur fixe',
+              default: null,
+              renderTrigger: false,
+              clearable: true,
+              mapStateToProps: (state: ControlPanelState) => ({ choices: columnChoices(state) }),
+            },
+          },
+        ],
+        [
+          {
+            name: 'color_ramp_mode',
+            config: {
+              type: 'SelectControl',
+              label: 'Mode de normalisation (rampe)',
+              description: 'Méthode de normalisation valeur → couleur',
+              default: 'sqrt',
+              renderTrigger: false,
+              choices: [
+                ['sqrt', 'Racine carrée (défaut)'],
+                ['linear', 'Linéaire'],
+                ['log', 'Logarithmique'],
+                ['quantile', 'Quantile'],
+                ['jenks', 'Jenks (coupures naturelles)'],
+                ['rank', 'Rang (continu)'],
+              ],
+            },
+          },
+        ],
+        [
+          {
+            name: 'color_ramp_low',
+            config: {
+              type: 'ColorPickerControl',
+              label: 'Couleur basse (rampe)',
+              description: 'Couleur pour les valeurs les plus faibles',
+              default: { r: 255, g: 255, b: 204, a: 1 },
+              renderTrigger: false,
+            },
+          },
+          {
+            name: 'color_ramp_high',
+            config: {
+              type: 'ColorPickerControl',
+              label: 'Couleur haute (rampe)',
+              description: 'Couleur pour les valeurs les plus élevées',
+              default: { r: 0, g: 90, b: 50, a: 1 },
+              renderTrigger: false,
             },
           },
         ],
