@@ -47,8 +47,8 @@ const config: ControlPanelConfig = {
             name: 'sviewer_url',
             config: {
               type: 'TextControl',
-              label: 'URL sViewer',
-              description: "URL de base de votre instance sViewer (ex. https://mon-serveur/sviewer/)",
+              label: 'URL sViewer (optionnel)',
+              description: "Laisser vide pour utiliser l'instance sViewer qui héberge ce plugin",
               default: '',
               renderTrigger: true,
             },

@@ -6,6 +6,13 @@ import buildQuery from './buildQuery';
 
 const CHART_TYPE = 'sviewer_map';
 
+// Derive sViewer base URL from the plugin bundle URL at load time.
+// Bundle lives at <sviewer_root>/dist/superset-plugin-chart-sviewer.js
+const _scriptSrc = (document.currentScript as HTMLScriptElement | null)?.src || '';
+export const SVIEWER_BASE_URL = _scriptSrc
+  ? _scriptSrc.replace(/\/dist\/[^/]+\.js(\?.*)?$/, '/')
+  : '';
+
 class SviewerChartPlugin extends ChartPlugin {
   constructor() {
     super({
