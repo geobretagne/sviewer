@@ -14,7 +14,6 @@ interface SviewerChartProps {
   basemap: string;
   theme: string;
   sliceName: string;
-  labelCol: string;
   queryError: string;
   featureCollection: FeatureCollection | null;
 }

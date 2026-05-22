@@ -91,9 +91,17 @@ export default function transformProps(chartProps: ChartProps) {
     ? buildFeatureCollection(rows, geomMode, geomCol, latCol, lonCol)
     : null;
 
-  // Inject _sv_color into every feature when a color is configured
-  const featureCollection = rawFc && featureColorCss
-    ? { ...rawFc, features: rawFc.features.map(f => ({ ...f, properties: { ...(f as { properties: Record<string, unknown> }).properties, _sv_color: featureColorCss } })) }
+  // Inject _sv_color and _label into feature properties
+  const featureCollection = rawFc && (featureColorCss || labelCol)
+    ? {
+        ...rawFc,
+        features: rawFc.features.map(f => {
+          const props = { ...(f as { properties: Record<string, unknown> }).properties };
+          if (featureColorCss) props._sv_color = featureColorCss;
+          if (labelCol && props[labelCol] != null) props._label = props[labelCol];
+          return { ...f, properties: props };
+        }),
+      }
     : rawFc;
 
   return {
@@ -105,7 +113,6 @@ export default function transformProps(chartProps: ChartProps) {
     basemap: fd.basemap || '',
     theme: fd.theme || '',
     sliceName: rawFormData?.slice_name || '',
-    labelCol,
     queryError,
     featureCollection,
   };
