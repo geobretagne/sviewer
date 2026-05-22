@@ -52,6 +52,18 @@ const config: ControlPanelConfig = {
         ],
         [
           {
+            name: 'basemap',
+            config: {
+              type: 'TextControl',
+              label: 'Basemap (lb=)',
+              description: 'Basemap key configured in sViewer customConfig',
+              default: '',
+              renderTrigger: true,
+            },
+          },
+        ],
+        [
+          {
             name: 'theme',
             config: {
               type: 'SelectControl',
