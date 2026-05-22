@@ -5,11 +5,6 @@ interface FeatureCollection {
   features: object[];
 }
 
-interface DataMask {
-  extraFormData?: { filters?: { col: string; op: string; val: unknown[] }[] };
-  filterState?: { value?: unknown[] };
-}
-
 interface SviewerChartProps {
   width: number;
   height: number;
@@ -19,17 +14,15 @@ interface SviewerChartProps {
   basemap: string;
   theme: string;
   sliceName: string;
-  idCol: string;
   labelCol: string;
   queryError: string;
   featureCollection: FeatureCollection | null;
-  setDataMask?: (mask: DataMask) => void;
 }
 
 export default function SviewerChart(props: SviewerChartProps) {
   const {
     width, height, sviewerUrl, wmsLayer, wmsUrl,
-    basemap, theme, sliceName, idCol, queryError, featureCollection, setDataMask,
+    basemap, theme, sliceName, queryError, featureCollection,
   } = props;
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -70,22 +63,11 @@ export default function SviewerChart(props: SviewerChartProps) {
           pendingRef.current = null;
         }
       }
-
-      if (e.data.type === 'sv:click' && setDataMask && idCol && e.data.properties) {
-        const id = e.data.properties[idCol];
-        const idType = typeof id;
-        if (id != null && (idType === 'string' || idType === 'number')) {
-          setDataMask({
-            extraFormData: { filters: [{ col: idCol, op: 'IN', val: [id] }] },
-            filterState: { value: [id] },
-          });
-        }
-      }
     }
 
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [idCol, setDataMask, sendGeoJSON]);
+  }, [sendGeoJSON]);
 
   // Send GeoJSON when featureCollection changes
   useEffect(() => {

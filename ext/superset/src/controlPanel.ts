@@ -197,20 +197,6 @@ const config: ControlPanelConfig = {
             },
           },
         ],
-        [
-          {
-            name: 'id_col',
-            config: {
-              type: 'SelectControl',
-              label: 'Colonne ID (filtre croisé)',
-              description: 'Colonne utilisée pour le filtre croisé au clic. Laisser vide pour désactiver.',
-              default: null,
-              renderTrigger: false,
-              clearable: true,
-              mapStateToProps: (state: ControlStateMapping) => ({ choices: columnChoices(state) }),
-            },
-          },
-        ],
       ],
     },
   ],

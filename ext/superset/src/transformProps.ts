@@ -8,7 +8,6 @@ interface SviewerFormData {
   latCol?: string | null;      lat_col?: string | null;
   lonCol?: string | null;      lon_col?: string | null;
   labelCol?: string | null;    label_col?: string | null;
-  idCol?: string | null;       id_col?: string | null;
   sviewerUrl?: string;         sviewer_url?: string;
   wmsLayer?: string;           wms_layer?: string;
   wmsUrl?: string;             wms_url?: string;
@@ -82,7 +81,6 @@ export default function transformProps(chartProps: ChartProps) {
   const latCol: string = fd.latCol || fd.lat_col || '';
   const lonCol: string = fd.lonCol || fd.lon_col || '';
   const labelCol: string = fd.labelCol || fd.label_col || '';
-  const idCol: string = fd.idCol || fd.id_col || '';
 
   const rawColor = fd.featureColor || fd.feature_color;
   const featureColorCss = rawColor
@@ -107,7 +105,6 @@ export default function transformProps(chartProps: ChartProps) {
     basemap: fd.basemap || '',
     theme: fd.theme || '',
     sliceName: rawFormData?.slice_name || '',
-    idCol,
     labelCol,
     queryError,
     featureCollection,
