@@ -51,7 +51,7 @@ const config: ControlPanelConfig = {
               description: 'URL de base de votre instance sViewer, avec slash final (ex. https://mon-serveur/sviewer/)',
               placeholder: 'https://mon-serveur/sviewer/',
               default: '',
-              renderTrigger: true,
+              renderTrigger: false,
             },
           },
         ],
