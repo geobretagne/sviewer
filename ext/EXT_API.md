@@ -198,6 +198,45 @@ no error thrown.
 
 ---
 
+## Dynamic extension loading
+
+Extensions are normally loaded at boot from `customConfig.extensions` and the `?ext=` URL
+parameter. `SViewer.loadExtension(name)` loads an additional extension at runtime — useful
+for profile pickers, on-demand activation, host-page composition, or one extension activating
+another.
+
+```javascript
+// Load by name. Resolves with the extension name on success.
+SViewer.loadExtension('me')
+    .then(function(name) { /* extension active */ })
+    .catch(function(err) { /* err.code: invalid-name | manifest-fetch |
+                              manifest-parse | version-mismatch | script-load */ });
+
+// Idempotent: returns immediately if already loaded.
+// In-flight dedup: concurrent calls share one Promise.
+SViewer.hasExtension('me');         // boolean
+SViewer.loadedExtensions();         // ['me', 'print', ...] snapshot
+```
+
+The function fetches `ext/<name>/manifest.json`, checks `sviewer.minVersion` against
+`SViewer.version`, then injects `ext/<name>/extension.js`. Existing extensions need no
+modification — late-load works because:
+
+- UI extensions register via `SViewer.onMapReady(fn)`, which fires synchronously for
+  late subscribers if the map is already ready.
+- Adapter extensions call `SViewer.registerAdapter(name, adapter)` immediately at script
+  load and become available for subsequent `?geojson=` fetches.
+
+**Caveats:**
+
+- Adapters loaded late do **not** retroactively re-parse already-loaded layers. Caller must
+  trigger a refresh (e.g. update `state.geojson` or re-fetch the data).
+- Extensions that listen to early one-shot events at top scope (e.g. the `superset` extension
+  listens to parent `postMessage` frames) may miss events fired before load completes.
+  Such extensions should be documented as boot-only.
+
+---
+
 ## State (read-only)
 
 ```javascript

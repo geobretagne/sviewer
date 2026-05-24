@@ -1,6 +1,6 @@
 {
   "name": "sviewer",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "description": "simple mobile map viewer",
   "scripts": {
     "build:ol": "esbuild build/ol-custom-entry.js --bundle --minify --format=iife --outfile=static/lib/ol/ol.js",

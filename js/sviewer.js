@@ -2694,7 +2694,16 @@ if (state.label) {
         // Test runner protocol — only active when embedded in a parent frame.
         // sv:domQuery  {id, selector, prop}  → sv:domResult {id, value, found}
         // sv:domClick  {id, selector}        → sv:domResult {id, found} (after click)
+        // sv:apiCall   {id, method, args}    → sv:apiResult {id, ok, value, errCode, errMessage}
         // prop: 'textContent'|'innerHTML'|'value'|'checked'|'hidden'|attribute name (getAttribute fallback).
+        //
+        // sv:apiCall restricts to a fixed whitelist of public SViewer methods to
+        // avoid making the test harness a generic eval channel.
+        var API_TEST_WHITELIST = {
+            hasExtension:       true,
+            loadedExtensions:   true,
+            loadExtension:      true
+        };
         if (window.parent !== window) {
             window.addEventListener('message', function(e) {
                 if (!e.data || e.origin !== window.location.origin) { return; }
@@ -2714,6 +2723,27 @@ if (state.label) {
                     var target = document.querySelector(e.data.selector);
                     if (target) { target.click(); }
                     window.parent.postMessage({ type: 'sv:domResult', id: e.data.id, found: !!target }, '*');
+                } else if (e.data.type === 'sv:apiCall') {
+                    var method = e.data.method;
+                    var args   = Array.isArray(e.data.args) ? e.data.args : [];
+                    if (!API_TEST_WHITELIST[method] || typeof window.SViewer[method] !== 'function') {
+                        window.parent.postMessage({ type: 'sv:apiResult', id: e.data.id, ok: false, errCode: 'method-not-allowed', errMessage: 'Method "' + method + '" not in test whitelist' }, '*');
+                        return;
+                    }
+                    try {
+                        var ret = window.SViewer[method].apply(window.SViewer, args);
+                        if (ret && typeof ret.then === 'function') {
+                            ret.then(function(v) {
+                                window.parent.postMessage({ type: 'sv:apiResult', id: e.data.id, ok: true, value: v }, '*');
+                            }).catch(function(err) {
+                                window.parent.postMessage({ type: 'sv:apiResult', id: e.data.id, ok: false, errCode: err && err.code, errMessage: err && err.message }, '*');
+                            });
+                        } else {
+                            window.parent.postMessage({ type: 'sv:apiResult', id: e.data.id, ok: true, value: ret }, '*');
+                        }
+                    } catch (err) {
+                        window.parent.postMessage({ type: 'sv:apiResult', id: e.data.id, ok: false, errCode: err && err.code, errMessage: err && err.message }, '*');
+                    }
                 }
             });
         }
@@ -2830,13 +2860,15 @@ if (state.label) {
                 panelEl.setAttribute('aria-label', title);
                 panelEl.querySelector('.sv-panel-content').innerHTML = _sanitizeExtHtml(html);
             }
-            _panelOwner = name;
             var _alreadyOpen = (function() {
                 var s = document.getElementById('sv-sidepanel');
                 var sec = s && s.querySelector('[data-sv-section="ext-' + name + '"]');
                 return sec && sec.style.display !== 'none' && document.getElementById('sv-sidepanel').classList.contains('active');
             }());
+            // togglePanel() invokes resetPanel() which nulls _panelOwner —
+            // set ownership *after* the toggle so the extension keeps control.
             if (!_alreadyOpen) { togglePanel('ext-' + name); }
+            _panelOwner = name;
         },
         close: function() { _panelOwner = null; togglePanel(null); },
         onClose: function(name, fn) { _panelCloseCallbacks[name] = fn; },

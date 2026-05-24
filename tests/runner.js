@@ -28,19 +28,50 @@
         renderResult: renderResult,
         getBaseUrl: function() { return BASE_URL; },
         queryDOM: queryDOM,
-        clickDOM: clickDOM
+        clickDOM: clickDOM,
+        apiCall: apiCall
     };
 
     // ------ DOM query helpers ------------------------------------------------
 
     var _domQuerySeq = 0;
     var _domQueryPending = {};
+    var _apiQuerySeq = 0;
+    var _apiQueryPending = {};
 
     window.addEventListener('message', function(e) {
-        if (!e.data || e.data.type !== 'sv:domResult') { return; }
-        var cb = _domQueryPending[e.data.id];
-        if (cb) { delete _domQueryPending[e.data.id]; cb(e.data); }
+        if (!e.data) { return; }
+        if (e.data.type === 'sv:domResult') {
+            var cb = _domQueryPending[e.data.id];
+            if (cb) { delete _domQueryPending[e.data.id]; cb(e.data); }
+        } else if (e.data.type === 'sv:apiResult') {
+            var ac = _apiQueryPending[e.data.id];
+            if (ac) { delete _apiQueryPending[e.data.id]; ac(e.data); }
+        }
     });
+
+    // Call a whitelisted SViewer API method inside the iframe.
+    // Returns a Promise resolving to the method's return value (Promise-aware).
+    // Rejects with Error{code, message} on method-not-allowed / throw / promise reject.
+    function apiCall(method, args, timeoutMs) {
+        return new Promise(function(resolve, reject) {
+            var iframe = document.getElementById('sv-test-frame');
+            if (!iframe || !iframe.contentWindow) { reject(new Error('No iframe')); return; }
+            var id = ++_apiQuerySeq;
+            var timer = setTimeout(function() {
+                delete _apiQueryPending[id];
+                reject(new Error('sv:apiCall timeout for "' + method + '"'));
+            }, timeoutMs || 5000);
+            _apiQueryPending[id] = function(data) {
+                clearTimeout(timer);
+                if (data.ok) { resolve(data.value); return; }
+                var err = new Error(data.errMessage || 'apiCall failed');
+                err.code = data.errCode;
+                reject(err);
+            };
+            iframe.contentWindow.postMessage({ type: 'sv:apiCall', id: id, method: method, args: args || [] }, '*');
+        });
+    }
 
     // Query a DOM property/attribute inside the sViewer iframe.
     // selector: CSS selector, prop: 'textContent'|'innerHTML'|'value'|'checked'|'hidden'|attr name.

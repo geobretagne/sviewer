@@ -1,0 +1,22 @@
+{
+  "id":          "me",
+  "type":        "extension",
+  "version":     "0.1.0",
+  "name":        "Moi",
+  "description": "Espace personnel sViewer (local au navigateur). Première facette : Mes cartes — enregistrement de cartes sViewer avec titre, filtre par titre, restauration en un clic, export/import JSON. Évolutif vers d'autres facettes personnelles (annotations, préférences). Aucun serveur, aucun compte.",
+  "author":      "fphg",
+  "tags":        ["personnel", "favoris", "bookmarks", "sauvegarde", "permalink", "localStorage"],
+
+  "entry": "extension.js",
+
+  "sviewer": {
+    "minVersion": "0.14.1"
+  },
+
+  "examples": [
+    {
+      "title": "Activer l'espace personnel",
+      "url":   "?ext=me"
+    }
+  ]
+}

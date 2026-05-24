@@ -15,6 +15,11 @@
     "description": "Compute and display isochrone or isodistance zones using IGN Géoplateforme navigation API, with POI search via Nominatim/OSM"
   },
   {
+    "id": "me",
+    "name": "Moi",
+    "description": "Espace personnel sViewer (local au navigateur). Première facette : Mes cartes — enregistrement de cartes sViewer avec titre, filtre par titre, restauration en un clic, export/import JSON. Évolutif vers d'autres facettes personnelles (annotations, préférences). Aucun serveur, aucun compte."
+  },
+  {
     "id": "panoramax",
     "name": "Panoramax",
     "description": "Affiche la couverture photos de rue Panoramax (MVT) et ouvre un visualiseur 360° au clic"
@@ -23,10 +28,5 @@
     "id": "print",
     "name": "Print / PDF",
     "description": "Génère une impression haute résolution de la carte courante (re-rendu OL à la résolution cible). Format A4 paysage. QR code permalink optionnel (qr-creator, MIT, auto-hébergé)."
-  },
-  {
-    "id": "superset",
-    "name": "Apache Superset",
-    "description": "Plugin graphique natif pour Apache Superset. Affiche les données d'un dataset Superset sur une carte sViewer embarquée (iframe). Les filtres natifs du tableau de bord se propagent côté serveur. Symbologie graduée (taille et couleur) calculée côté plugin. Tous les paramètres de l'URL de partage sViewer (WMS, fond de carte, zoom, extensions…) sont transmis intégralement à l'iframe."
   }
 ]

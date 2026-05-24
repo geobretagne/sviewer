@@ -252,9 +252,9 @@
         <li><a class="sv-nav-link" href="#ext-csv" data-id="csv">CSV</a></li>
         <li><a class="sv-nav-link" href="#ext-grist" data-id="grist">Grist</a></li>
         <li><a class="sv-nav-link" href="#ext-isochrone" data-id="isochrone">Isochrone / Isodistance</a></li>
+        <li><a class="sv-nav-link" href="#ext-me" data-id="me">Moi</a></li>
         <li><a class="sv-nav-link" href="#ext-panoramax" data-id="panoramax">Panoramax</a></li>
         <li><a class="sv-nav-link" href="#ext-print" data-id="print">Print / PDF</a></li>
-        <li><a class="sv-nav-link" href="#ext-superset" data-id="superset">Apache Superset</a></li>
         <li><a class="sv-nav-link" href="#ext-sample" data-id="sample">Sample</a></li>
     </ul>
 </nav>
@@ -454,6 +454,30 @@
         </div>
     </article>
 
+    <article id="ext-me" class="sv-card" data-search="moi espace personnel sviewer (local au navigateur). première facette : mes cartes — enregistrement de cartes sviewer avec titre, filtre par titre, restauration en un clic, export/import json. évolutif vers d'autres facettes personnelles (annotations, préférences). aucun serveur, aucun compte. personnel favoris bookmarks sauvegarde permalink localstorage" data-type="extension" role="listitem">
+        
+        <div class="sv-card-body">
+            <div class="sv-card-head">
+                <h2><a href="me/">Moi</a></h2>
+                <span class="sv-badge sv-badge-extension">extension</span>
+            </div>
+            <p class="sv-desc">Espace personnel sViewer (local au navigateur). Première facette : Mes cartes — enregistrement de cartes sViewer avec titre, filtre par titre, restauration en un clic, export/import JSON. Évolutif vers d'autres facettes personnelles (annotations, préférences). Aucun serveur, aucun compte.</p>
+            <div class="sv-tags" aria-label="Tags"><span class="sv-tag">personnel</span><span class="sv-tag">favoris</span><span class="sv-tag">bookmarks</span><span class="sv-tag">sauvegarde</span><span class="sv-tag">permalink</span><span class="sv-tag">localStorage</span></div>
+            
+            
+            <ul class="sv-examples">
+                <li>
+                    <a href="../?ext=me">Activer l'espace personnel</a>
+                </li>
+            </ul>
+            <footer class="sv-card-footer">
+                <span>v0.1.0</span>
+                <span>sViewer ≥ 0.14.0</span>
+                <span>fphg</span>
+            </footer>
+        </div>
+    </article>
+
     <article id="ext-panoramax" class="sv-card" data-search="panoramax affiche la couverture photos de rue panoramax (mvt) et ouvre un visualiseur 360° au clic panoramax street-level photo 360 mvt" data-type="extension" role="listitem">
         
         <div class="sv-card-body">
@@ -497,25 +521,6 @@
             <footer class="sv-card-footer">
                 <span>v0.1.0</span>
                 <span>sViewer ≥ 0.13.0</span>
-                <span>fphg</span>
-            </footer>
-        </div>
-    </article>
-
-    <article id="ext-superset" class="sv-card" data-search="apache superset plugin graphique natif pour apache superset. affiche les données d'un dataset superset sur une carte sviewer embarquée (iframe). filtres natifs tableau de bord propagés. symbologie graduée taille couleur. superset dashboard bi géospatial statistiques" data-type="page" role="listitem">
-
-        <div class="sv-card-body">
-            <div class="sv-card-head">
-                <h2><a href="superset/README.md">Apache Superset</a></h2>
-                <span class="sv-badge sv-badge-page">page</span>
-            </div>
-            <p class="sv-desc">Plugin graphique natif pour Apache Superset. Affiche les données d'un dataset Superset sur une carte sViewer embarquée dans le tableau de bord. Filtres natifs propagés côté serveur. Symbologie graduée (taille et couleur). Passthrough intégral des paramètres de l'URL de partage sViewer.</p>
-            <div class="sv-tags" aria-label="Tags"><span class="sv-tag">superset</span><span class="sv-tag">dashboard</span><span class="sv-tag">BI</span><span class="sv-tag">géospatial</span><span class="sv-tag">statistiques</span><span class="sv-tag">iframe</span></div>
-
-            <footer class="sv-card-footer">
-                <span>v0.1.0</span>
-                <span>sViewer ≥ 0.14.0</span>
-                <span>Superset 4.x</span>
                 <span>fphg</span>
             </footer>
         </div>

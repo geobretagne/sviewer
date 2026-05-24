@@ -4,6 +4,23 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.14.1] - 2026-05-24
+
+### Added
+
+- **Extension `me` (Moi)** (`ext/me/`, `?ext=me`) : espace personnel local au navigateur. Première facette « Mes cartes » — enregistrement de cartes sViewer (titre + URL complète), filtre par titre, restauration en un clic ou nouvel onglet, copie d'URL, suppression, export/import JSON. Identifiant déterministe = hash djb2 de l'URL normalisée → déduplication automatique. Stockage `localStorage.sv_me_maps_v1` (max 16 entrées, éviction par date). Visuel par pastille colorée déterministe (pas de capture d'écran). Icônes SVG inlinées (auto-contenu, indépendant du subset de police sViewer). i18n complet 4 langues.
+- **`SViewer.loadExtension(name)`** : chargement dynamique d'extension après le boot. Vérifie `manifest.json.sviewer.minVersion` contre `SViewer.version` avant injection. Idempotent, déduplication des appels concurrents, codes d'erreur (`invalid-name`, `manifest-fetch`, `manifest-parse`, `version-mismatch`, `script-load`). Documenté dans `ext/EXT_API.md` (section « Dynamic extension loading »).
+- **`SViewer.hasExtension(name)`** et **`SViewer.loadedExtensions()`** : introspection du registre d'extensions chargées.
+
+### Fixed
+
+- **`SViewer.panel.open()` perdait l'ownership** : `_panelOwner` était assigné avant `togglePanel()`, mais `togglePanel→resetPanel` nullifiait l'owner juste après. Les appels `panel.update()` ultérieurs étaient ignorés silencieusement (`SViewer.panel.update: ignored — current owner is "null"`). Affectait toutes les extensions utilisant `panel.update` à l'activation. Fix : assignation de `_panelOwner` après `togglePanel()`.
+
+### Security
+
+- **`ext/me` — validation stricte des URLs** : seul HTTPS est accepté à l'ouverture/copie d'une carte enregistrée (exception : HTTP même origine, pour le dev local). Bloque `javascript:`, `data:`, et les URLs HTTP tierces injectées via import JSON malveillant. Appliqué à `loadStore()`, `open-here`/`open-new`/`copy`, et à l'import JSON.
+- **TECHNICAL.md** : nouvelle section « HTTPS obligatoire en production » avec exemple nginx (redirection 80→443, HSTS) ; nouvelle section « Durcissement de la CSP `connect-src` » pour restreindre les exfiltrations possibles depuis les extensions.
+
 ## [0.14.0] - 2026-05-22
 
 ### Added

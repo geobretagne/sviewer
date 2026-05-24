@@ -11,8 +11,8 @@
 
 (function() {
 
-    var SVIEWER_VERSION='0.14.0';
-    var SVIEWER_COMMIT='886fe0f';
+    var SVIEWER_VERSION='0.14.1';
+    var SVIEWER_COMMIT='458519d';
 
     // Internal event bus — shared with sviewer.js via window._SViewerInternals.
     // Frozen after creation to prevent host-page collision or tampering.
@@ -273,6 +273,26 @@
         instance: null
     };
 
+    // Registry of loaded extension names. Populated at boot in loadDependencies()
+    // and by SViewer.loadExtension() at runtime. Used to:
+    //  - dedupe boot vs runtime load (no double-execute)
+    //  - allow other extensions to check what's active
+    //  - return existing in-flight Promise when load is requested twice
+    var _loadedExts     = Object.create(null); // name -> true
+    var _pendingExts    = Object.create(null); // name -> Promise (in-flight loads)
+    var EXT_NAME_RE     = /^[a-z0-9_-]+$/i;
+
+    // Minimal semver compare: returns -1 / 0 / 1 (a vs b). Ignores pre-release.
+    function semverCmp(a, b) {
+        var pa = String(a || '0').split('.').map(function(n) { return parseInt(n, 10) || 0; });
+        var pb = String(b || '0').split('.').map(function(n) { return parseInt(n, 10) || 0; });
+        for (var i = 0; i < 3; i++) {
+            var x = pa[i] || 0, y = pb[i] || 0;
+            if (x !== y) { return x < y ? -1 : 1; }
+        }
+        return 0;
+    }
+
     // Resource loading helper
     function loadResource(url, type) {
         return new Promise(function(resolve, reject) {
@@ -339,11 +359,15 @@
                 // UI extensions use onMapReady() so early load is safe for both.
                 // URL param ?_ext=name adds an extension without customConfig.
                 var urlExts = (new URLSearchParams(window.location.search).get('ext') || '')
-                    .split(',').map(function(s) { return s.trim(); }).filter(function(s) { return /^[a-zA-Z0-9_-]+$/.test(s); });
+                    .split(',').map(function(s) { return s.trim(); }).filter(function(s) { return EXT_NAME_RE.test(s); });
                 var configExts = (window.customConfig && window.customConfig.extensions) || [];
                 var allExts = configExts.concat(urlExts.filter(function(e) { return !configExts.includes(e); }));
                 var extPromises = allExts
-                    .map(function(name) { return loadResource(baseUrl + 'ext/' + name + '/extension.js', 'js').catch(function() {}); });
+                    .map(function(name) {
+                        return loadResource(baseUrl + 'ext/' + name + '/extension.js', 'js')
+                            .then(function() { _loadedExts[name] = true; })
+                            .catch(function() {});
+                    });
                 return Promise.all([
                     Promise.all(extPromises),
                     loadResource(baseUrl + 'static/lib/mustache/mustache.min.js', 'js'),
@@ -460,6 +484,89 @@
             }
             console.warn('SViewer.extensionBase() called outside module scope — document.currentScript is null. Call at module scope and store the result in a variable.');
             return baseUrl + 'ext/';
+        },
+
+        // Returns true if the named extension has been loaded (at boot or via
+        // loadExtension). Does not guarantee the extension has finished its
+        // own async setup (e.g. i18n fetch) — only that its script has run.
+        hasExtension: function(name) {
+            return !!_loadedExts[name];
+        },
+
+        // Returns array of loaded extension names. Snapshot, not live.
+        loadedExtensions: function() {
+            return Object.keys(_loadedExts);
+        },
+
+        /**
+         * Programmatically load an extension after sViewer boot.
+         *
+         * Resolves with the extension name on success. Rejects with an Error
+         * carrying a `code` field on failure: 'invalid-name', 'manifest-fetch',
+         * 'manifest-parse', 'version-mismatch', 'script-load'.
+         *
+         * Behaviour:
+         *   - Idempotent: if already loaded, resolves immediately.
+         *   - In-flight dedup: concurrent calls share one Promise.
+         *   - Checks manifest.sviewer.minVersion vs SViewer.version.
+         *   - Adapter extensions: register on SViewer.adapters immediately and
+         *     apply to subsequent ?geojson= fetches. Already-loaded layers are
+         *     not retroactively re-parsed; caller must trigger refresh.
+         *   - UI extensions: SViewer.onMapReady fires synchronously for late
+         *     subscribers, so toolbar injection works without ceremony.
+         *
+         * Caveat: extensions written for boot-only initialisation (e.g.
+         * 'superset', which listens to early postMessage frames) may miss
+         * events fired before the load completes. Document this per extension.
+         */
+        loadExtension: function(name) {
+            if (typeof name !== 'string' || !EXT_NAME_RE.test(name)) {
+                var e = new Error('Invalid extension name: ' + name);
+                e.code = 'invalid-name';
+                return Promise.reject(e);
+            }
+            if (_loadedExts[name])  { return Promise.resolve(name); }
+            if (_pendingExts[name]) { return _pendingExts[name]; }
+
+            var extBase = baseUrl + 'ext/' + name + '/';
+            var p = fetch(extBase + 'manifest.json')
+                .then(function(r) {
+                    if (!r.ok) {
+                        var err = new Error('manifest fetch failed: ' + r.status);
+                        err.code = 'manifest-fetch';
+                        throw err;
+                    }
+                    return r.json().catch(function() {
+                        var err = new Error('manifest parse failed');
+                        err.code = 'manifest-parse';
+                        throw err;
+                    });
+                })
+                .then(function(manifest) {
+                    var minVersion = manifest && manifest.sviewer && manifest.sviewer.minVersion;
+                    if (minVersion && semverCmp(SVIEWER_VERSION, minVersion) < 0) {
+                        var err = new Error('sViewer ' + SVIEWER_VERSION + ' < required ' + minVersion + ' for extension "' + name + '"');
+                        err.code = 'version-mismatch';
+                        throw err;
+                    }
+                    return loadResource(extBase + 'extension.js', 'js').catch(function() {
+                        var err = new Error('script load failed for extension "' + name + '"');
+                        err.code = 'script-load';
+                        throw err;
+                    });
+                })
+                .then(function() {
+                    _loadedExts[name] = true;
+                    delete _pendingExts[name];
+                    return name;
+                })
+                .catch(function(err) {
+                    delete _pendingExts[name];
+                    throw err;
+                });
+
+            _pendingExts[name] = p;
+            return p;
         },
 
         init: function(containerSelector, options) {
