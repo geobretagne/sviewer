@@ -55,9 +55,22 @@ SViewer.loadExtension('me');
 
 Dès qu'une carte est enregistrée, un champ de recherche apparaît sous le bouton « Enregistrer ». Saisie au clavier filtre la liste par titre (sous-chaîne, insensible à la casse). Touche `Entrée` ouvre la première carte filtrée dans l'onglet courant.
 
+### Renommer une carte
+
+Le titre fait partie de l'identifiant ; il n'est pas modifiable en place. Pour changer le titre d'une carte enregistrée :
+
+1. Ouvrir la carte.
+2. Modifier le titre dans le panneau de partage sViewer.
+3. Cliquer « Enregistrer cette carte » dans Mes cartes — une nouvelle entrée est créée avec le nouveau titre.
+4. Si souhaité, supprimer l'ancienne entrée.
+
+Cela permet aussi de conserver plusieurs variantes d'une même carte (« PLU brouillon », « PLU validé »).
+
 ### Exporter / importer
 
-Le bouton « Exporter » télécharge `sviewer-mes-cartes-AAAA-MM-JJ.json` contenant un tableau de toutes les cartes enregistrées (triées par date décroissante). À ouvrir avec « Importer » sur un autre appareil ou navigateur — les doublons (même identifiant) sont ignorés, jamais écrasés.
+Le bouton « Exporter » télécharge `sviewer-mes-cartes-AAAA-MM-JJ.json` contenant un tableau de toutes les cartes enregistrées (triées par date décroissante). À ouvrir avec « Importer » sur un autre appareil ou navigateur.
+
+L'import est **additif** : les cartes existantes ne sont jamais écrasées. Les doublons (même identifiant) sont ignorés. Si l'import fait dépasser la limite de 16 cartes, la plus ancienne (par date) est supprimée pour faire de la place.
 
 ## Identité des cartes
 
