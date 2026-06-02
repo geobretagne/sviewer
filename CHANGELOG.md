@@ -4,6 +4,24 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.15.2] - 2026-06-02
+
+### Added (ext field → 0.4.0)
+
+- **Précision cible configurable** (`Précision cible (m)`, défaut 25) avec **contrôle avant enregistrement** : si le fix courant dépasse la cible, le bouton **+** passe en ambre et une confirmation est demandée avant d'enregistrer le sommet. Un point forcé est signalé « faible » et **teinté en rouge** sur la carte. Ferme le principal écart de crédibilité face aux outils terrain de référence (QField, Field Maps), qui empêchent l'enregistrement accidentel d'un point peu précis. Sert aussi de seuil de rejet dans la fenêtre d'échantillonnage GPS.
+- **Anneau de progression** sur le bouton **+** pendant la mesure (~3 s) — repère visuel « rester immobile » lisible en extérieur.
+
+### Changed (ext field)
+
+- **Confirmation d'enregistrement local explicite** : « Zone enregistrée. » s'affiche d'abord (la zone est en sécurité sur l'appareil), puis l'état de transmission.
+- **Badge d'erreur tactile** : une zone en erreur affiche `erreur ⓘ` ; un appui révèle le motif (le survol n'existe pas au doigt).
+- **Garde-fou anti-perte** : l'abandon de capture (✕ ou bouton outil) demande confirmation si des sommets ont déjà été relevés.
+- **Stabilité de la barre de capture** : largeur de lecture fixe et alerte signal-faible réduite à un glyphe `⚠` — le texte changeant ne décale plus les boutons. Décompte texte de la mesure retiré (redondant avec l'anneau).
+
+### Removed (ext field)
+
+- **Mode « suivi »** envisagé puis retiré : redondant avec le bouton « Recentrer », luttait contre le pan manuel, encombrait la barre. L'usage terrain est arrêt-puis-mesure, pas trace continue.
+
 ## [0.15.1] - 2026-06-02
 
 ### Fixed

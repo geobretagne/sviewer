@@ -32,6 +32,6 @@
   {
     "id": "field",
     "name": "Terrain",
-    "description": "Collecte terrain au GPS : Points, Ligne ou Polygone (moyenne GPS à l'ajout), attributs typés selon un schéma Grist, photos jointes (downscale client), persistance hors-ligne (IndexedDB) et transmission vers Grist au retour du réseau. Configuration par collage d'URL Grist et choix de table. Mono-backend Grist, jeton optionnel scopé document."
+    "description": "Collecte terrain au GPS : Points, Ligne ou Polygone (moyenne GPS à l'ajout, contrôle de précision cible avant enregistrement), attributs typés selon un schéma Grist, photos jointes (downscale client), persistance hors-ligne (IndexedDB) et transmission vers Grist au retour du réseau. Configuration par collage d'URL Grist et choix de table. Mono-backend Grist, jeton optionnel scopé document."
   }
 ]

@@ -70,6 +70,7 @@ Vous pouvez aussi renseigner les champs un par un :
 | Identifiant du document | `vqXTaVMqyhbc` |
 | Table | *(menu déroulant — bouton ↻ pour rafraîchir)* |
 | Colonne géométrie | `geojson` |
+| Précision cible (m) | `25` *(seuil d'alerte avant l'enregistrement d'un point)* |
 | Jeton d'accès | *(vide si document public)* |
 
 La configuration est mémorisée dans le navigateur (`localStorage`). Le jeton n'est jamais
@@ -87,10 +88,14 @@ inscrit dans une URL ni journalisé.
 2. La barre affiche la **précision GPS courante** (en mètres) et le **nombre de points**.
 3. Placez-vous sur le point voulu et tapez **+**. L'extension **moyenne plusieurs mesures GPS
    pendant ~3 secondes** pour fiabiliser le point, puis l'ajoute. Restez immobile pendant la
-   mesure.
+   mesure (l'anneau du bouton **+** se remplit pendant la mesure).
+   - Si la **précision courante dépasse la précision cible**, le bouton **+** passe à l'**ambre**
+     et une confirmation est demandée avant l'enregistrement. Le point reste possible (il est
+     alors signalé en rouge sur la carte), mais vous êtes prévenu·e.
 4. Répétez pour chaque point. La géométrie se dessine en direct sur la carte.
+   - **⌖** (mire) recentre la carte sur votre position si elle a défilé.
    - **↶** retire le dernier point.
-   - **✕** abandonne la capture.
+   - **✕** abandonne la capture (confirmation si des points ont déjà été relevés).
 5. Une fois le minimum atteint (1 point en mode Points, 2 pour une ligne, 3 pour un polygone),
    tapez **✓** pour fermer la géométrie et passer à la saisie des attributs.
 
@@ -110,7 +115,9 @@ type de saisie. Les valeurs sont converties au format attendu par Grist à l'enr
   stockage et envoi — léger pour le réseau et le stockage. Les métadonnées EXIF (dont la
   position GPS embarquée) sont retirées.
 
-Tapez **Enregistrer la zone** pour valider.
+Tapez **Enregistrer la zone** pour valider. Un message confirme d'abord l'enregistrement
+**local** (*« Zone enregistrée. »*) — la zone est en sécurité sur l'appareil — puis l'état de
+la transmission (en cours, terminée, ou hors-ligne).
 
 ## Hors-ligne et transmission
 
@@ -128,8 +135,9 @@ Tapez **Enregistrer la zone** pour valider.
 Le panneau liste les zones collectées (les plus récentes en premier) :
 
 - **Date** de capture.
-- **État** : en attente, transmise (avec l'**identifiant Grist** de la ligne), ou erreur
-  (le message au survol).
+- **État** : en attente, transmise (avec l'**identifiant Grist** de la ligne), ou erreur.
+  Une zone en **erreur** affiche un badge `erreur ⓘ` : **tapez-le** pour lire le motif
+  (utile sur mobile, où le survol n'existe pas).
 - **Attributs** (aperçu).
 - **Zoom** sur la zone, **suppression** (pour les zones non encore transmises).
 

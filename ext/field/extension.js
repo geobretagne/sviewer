@@ -38,6 +38,8 @@
     var gpsDotFeat = null, gpsAccFeat = null;
     var sampling = false;         // true while averaging fixes for a vertex
     var sampleBuf = [];           // fixes collected during the sampling window
+    var vertexMeta = [];          // parallel to vertices: { accuracy, gated } per vertex
+    var lastWeak = false;         // last committed vertex failed the accuracy gate
     var geomMode = 'Polygon';     // 'MultiPoint' | 'LineString' | 'Polygon'
     var schema   = null;          // [{ id, type, label }] — writable Grist columns
     var attachCol = null;         // id of the first Attachments column (photo target), or null
@@ -72,6 +74,7 @@
             'cfg.docId':      'Identifiant du document',
             'cfg.tableId':    'Identifiant de la table',
             'cfg.geomCol':    'Colonne géométrie',
+            'cfg.accTarget':  'Précision cible (m)',
             'cfg.token':      'Jeton d’accès (scopé document)',
             'cfg.save':       'Enregistrer la configuration',
             'cfg.reload':     'Recharger le formulaire',
@@ -91,8 +94,8 @@
             'capture.stop':   'Arrêter le GPS',
             'capture.vertex': 'Ajouter un sommet',
             'capture.recenter':'Recentrer sur ma position',
-            'capture.sampling':'Mesure en cours…',
             'capture.nogate': 'Signal faible — point au mieux disponible.',
+            'capture.accwarn':'Précision insuffisante — enregistrer ce point quand même ?',
             'capture.undo':   'Supprimer le dernier sommet',
             'capture.min':    'Au moins 3 sommets pour fermer la zone.',
             'capture.done':   'Zone fermée. Saisir les attributs.',
@@ -117,6 +120,9 @@
             'queue.offline':  'Hors ligne — la zone sera transmise au retour du réseau.',
             'sync.running':   'Transmission en cours…',
             'sync.ok':        'Transmission terminée.',
+            'capture.abort':  'Abandonner la capture et perdre les points relevés ?',
+            'form.saved':     'Zone enregistrée.',
+            'tbl.errshow':    'Voir l’erreur',
             'err.geo':        'Géolocalisation indisponible sur cet appareil.',
             'err.schema':     'Impossible de charger le formulaire depuis Grist.'
         },
@@ -129,6 +135,7 @@
             'cfg.docId':      'Document id',
             'cfg.tableId':    'Table id',
             'cfg.geomCol':    'Geometry column',
+            'cfg.accTarget':  'Target accuracy (m)',
             'cfg.token':      'Access token (document-scoped)',
             'cfg.save':       'Save configuration',
             'cfg.reload':     'Reload form',
@@ -148,8 +155,8 @@
             'capture.stop':   'Stop GPS',
             'capture.vertex': 'Add vertex',
             'capture.recenter':'Recenter on my position',
-            'capture.sampling':'Measuring…',
             'capture.nogate': 'Weak signal — best available point used.',
+            'capture.accwarn':'Accuracy below target — record this point anyway?',
             'capture.undo':   'Remove last vertex',
             'capture.min':    'At least 3 vertices to close the zone.',
             'capture.done':   'Zone closed. Fill in attributes.',
@@ -174,6 +181,9 @@
             'queue.offline':  'Offline — the zone will be sent when the network returns.',
             'sync.running':   'Transmitting…',
             'sync.ok':        'Transmission complete.',
+            'capture.abort':  'Abandon capture and lose the captured points?',
+            'form.saved':     'Zone saved.',
+            'tbl.errshow':    'Show the error',
             'err.geo':        'Geolocation unavailable on this device.',
             'err.schema':     'Could not load the form from Grist.'
         },
@@ -186,6 +196,7 @@
             'cfg.docId':      'Identificador del documento',
             'cfg.tableId':    'Identificador de la tabla',
             'cfg.geomCol':    'Columna de geometría',
+            'cfg.accTarget':  'Precisión objetivo (m)',
             'cfg.token':      'Token de acceso (ámbito documento)',
             'cfg.save':       'Guardar configuración',
             'cfg.reload':     'Recargar el formulario',
@@ -205,8 +216,8 @@
             'capture.stop':   'Detener GPS',
             'capture.vertex': 'Añadir vértice',
             'capture.recenter':'Centrar en mi posición',
-            'capture.sampling':'Midiendo…',
             'capture.nogate': 'Señal débil — se usa el mejor punto disponible.',
+            'capture.accwarn':'Precisión insuficiente — ¿registrar este punto igualmente?',
             'capture.undo':   'Eliminar último vértice',
             'capture.min':    'Al menos 3 vértices para cerrar la zona.',
             'capture.done':   'Zona cerrada. Rellenar atributos.',
@@ -231,6 +242,9 @@
             'queue.offline':  'Sin conexión — la zona se enviará al volver la red.',
             'sync.running':   'Transmitiendo…',
             'sync.ok':        'Transmisión completada.',
+            'capture.abort':  '¿Abandonar la captura y perder los puntos tomados?',
+            'form.saved':     'Zona guardada.',
+            'tbl.errshow':    'Ver el error',
             'err.geo':        'Geolocalización no disponible en este dispositivo.',
             'err.schema':     'No se pudo cargar el formulario desde Grist.'
         },
@@ -243,6 +257,7 @@
             'cfg.docId':      'Dokument-ID',
             'cfg.tableId':    'Tabellen-ID',
             'cfg.geomCol':    'Geometriespalte',
+            'cfg.accTarget':  'Zielgenauigkeit (m)',
             'cfg.token':      'Zugriffstoken (dokumentbezogen)',
             'cfg.save':       'Konfiguration speichern',
             'cfg.reload':     'Formular neu laden',
@@ -262,8 +277,8 @@
             'capture.stop':   'GPS stoppen',
             'capture.vertex': 'Eckpunkt hinzufügen',
             'capture.recenter':'Auf meine Position zentrieren',
-            'capture.sampling':'Messung läuft…',
             'capture.nogate': 'Schwaches Signal — bester verfügbarer Punkt verwendet.',
+            'capture.accwarn':'Genauigkeit unter Ziel — diesen Punkt trotzdem aufnehmen?',
             'capture.undo':   'Letzten Eckpunkt entfernen',
             'capture.min':    'Mindestens 3 Eckpunkte zum Schließen der Zone.',
             'capture.done':   'Zone geschlossen. Attribute ausfüllen.',
@@ -288,6 +303,9 @@
             'queue.offline':  'Offline — die Zone wird bei Netzrückkehr gesendet.',
             'sync.running':   'Übertrage…',
             'sync.ok':        'Übertragung abgeschlossen.',
+            'capture.abort':  'Erfassung abbrechen und erfasste Punkte verlieren?',
+            'form.saved':     'Zone gespeichert.',
+            'tbl.errshow':    'Fehler anzeigen',
             'err.geo':        'Standortbestimmung auf diesem Gerät nicht verfügbar.',
             'err.schema':     'Formular konnte nicht aus Grist geladen werden.'
         }
@@ -303,15 +321,18 @@
 
     // --- Config (localStorage) -----------------------------------------------
     function loadCfg() {
-        var empty = { apiBase: '', docId: '', tableId: '', token: '', geomCol: 'geometry' };
+        var empty = { apiBase: '', docId: '', tableId: '', token: '', geomCol: 'geometry', accTarget: ACC_GATE };
         try {
             var c = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
+            // Target accuracy (m): a fix worse than this triggers a pre-commit warning.
+            var acc = parseFloat(c.accTarget);
             return {
                 apiBase:  c.apiBase  || '',
                 docId:    c.docId    || '',
                 tableId:  c.tableId  || '',
                 token:    c.token    || '',
-                geomCol:  c.geomCol  || 'geometry'
+                geomCol:  c.geomCol  || 'geometry',
+                accTarget: (isFinite(acc) && acc > 0) ? acc : ACC_GATE
             };
         } catch (e) {
             return empty;
@@ -621,9 +642,10 @@
         removeGpsLayer();
     }
     // Capture one vertex by averaging GPS fixes over AVG_MS while the agent stands
-    // still at a corner. Fixes worse than ACC_GATE are rejected; the rest are
-    // combined by inverse-variance weighting (weight = 1/accuracy²) so better fixes
-    // dominate. Falls back to the single best fix if none pass the gate.
+    // still at a corner. Fixes worse than the target accuracy (cfg.accTarget) are
+    // rejected; the rest are combined by inverse-variance weighting (weight =
+    // 1/accuracy²) so better fixes dominate. Falls back to the single best fix if
+    // none pass the gate.
     // onProgress(remainingMs), onDone(committed:boolean, gated:boolean).
     function captureVertex(onProgress, onDone) {
         if (!lastFix) { onDone(false, false); return; }
@@ -635,19 +657,20 @@
             if (left > 0) { if (onProgress) { onProgress(left); } return; }
             clearInterval(tick);
             sampling = false;
-            var pts = sampleBuf.filter(function (f) { return f.accuracy <= ACC_GATE; });
+            var pts = sampleBuf.filter(function (f) { return f.accuracy <= cfg.accTarget; });
             var gated = pts.length > 0;
             if (!gated) {
                 // No fix passed the gate — keep the single best (lowest accuracy).
                 pts = sampleBuf.slice().sort(function (a, b) { return a.accuracy - b.accuracy; }).slice(0, 1);
             }
-            var sw = 0, slon = 0, slat = 0;
+            var sw = 0, slon = 0, slat = 0, sacc = 0;
             pts.forEach(function (f) {
                 var w = 1 / Math.max(f.accuracy * f.accuracy, 1); // 1/acc², guard /0
-                sw += w; slon += f.lon * w; slat += f.lat * w;
+                sw += w; slon += f.lon * w; slat += f.lat * w; sacc += f.accuracy;
             });
             if (sw === 0) { onDone(false, gated); return; }
             vertices.push([slon / sw, slat / sw]);
+            vertexMeta.push({ accuracy: sacc / pts.length, gated: gated }); // parallel to vertices
             sampleBuf = [];
             onDone(true, gated);
         }, 200);
@@ -701,8 +724,12 @@
                              properties: { _status: 'draft' } });
             }
             vertices.forEach(function (v, i) {
+                // Weak-signal vertices (gate fallback) are tinted red so the agent can
+                // spot and re-measure them. _sv_color/_sv_radius are honoured by core.
+                var weak = vertexMeta[i] && vertexMeta[i].gated === false;
                 feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [v[0], v[1]] },
-                             properties: { _status: 'vertex', _label: String(i + 1) } });
+                             properties: { _status: 'vertex', _label: String(i + 1),
+                                           _sv_color: weak ? '#dc3545' : '#2563eb' } });
             });
         }
         SViewer.loadFeatures({ type: 'FeatureCollection', features: feats });
@@ -763,6 +790,7 @@
             field('fld-docId',   t('cfg.docId'),   cfg.docId,   'text') +
             tableField() +
             geomField() +
+            field('fld-accTarget', t('cfg.accTarget'), cfg.accTarget, 'number') +
             field('fld-token',   t('cfg.token'),   cfg.token,   'password') +
             '<div style="display:flex;gap:.35rem;margin-top:.5rem">' +
                 '<button type="button" id="fld-cfg-save" class="btn btn-primary btn-sm">' +
@@ -1071,9 +1099,22 @@
             // status badge
             var tdSt = document.createElement('td');
             tdSt.style.cssText = 'padding:.25rem .35rem';
-            var badge = document.createElement('span');
-            badge.style.cssText = 'display:inline-block;padding:.1rem .4rem;border-radius:6px;color:#fff;font-size:.72rem;background:' + statusColor(rec.status);
-            badge.textContent = t('queue.' + rec.status) || rec.status;
+            // Error badge is a button: hover title is unreachable on touch, so a tap
+            // reveals the reason. Other statuses stay a plain (non-interactive) span.
+            var badge;
+            if (rec.status === 'error' && rec.error) {
+                badge = document.createElement('button');
+                badge.type = 'button';
+                badge.setAttribute('aria-label', t('queue.error') + ' — ' + t('tbl.errshow'));
+                badge.title = rec.error;
+                badge.style.cssText = 'border:0;cursor:pointer;display:inline-block;padding:.1rem .4rem;border-radius:6px;color:#fff;font-size:.72rem;background:' + statusColor(rec.status);
+                badge.textContent = (t('queue.error') || 'error') + ' ⓘ';
+                badge.addEventListener('click', function () { window.alert(rec.error); });
+            } else {
+                badge = document.createElement('span');
+                badge.style.cssText = 'display:inline-block;padding:.1rem .4rem;border-radius:6px;color:#fff;font-size:.72rem;background:' + statusColor(rec.status);
+                badge.textContent = t('queue.' + rec.status) || rec.status;
+            }
             tdSt.appendChild(badge);
             if (rec.status === 'synced' && rec.gristId != null) {
                 var idSpan = document.createElement('span');
@@ -1081,7 +1122,6 @@
                 idSpan.textContent = '#' + rec.gristId;
                 tdSt.appendChild(idSpan);
             }
-            if (rec.status === 'error' && rec.error) { tdSt.title = rec.error; }
             tr.appendChild(tdSt);
             // attrs preview
             var tdA = document.createElement('td');
@@ -1176,6 +1216,7 @@
             cfg.docId   = val('fld-docId').trim();
             cfg.tableId = val('fld-tableId').trim();
             cfg.geomCol = val('fld-geomCol').trim() || 'geometry';
+            cfg.accTarget = valAccTarget();
             cfg.token   = val('fld-token');
             saveCfg();
             schema = null; // force schema refetch with new config
@@ -1192,6 +1233,7 @@
             cfg.docId   = val('fld-docId').trim();
             cfg.tableId = val('fld-tableId').trim();
             cfg.geomCol = val('fld-geomCol').trim() || 'geometry';
+            cfg.accTarget = valAccTarget();
             cfg.token   = val('fld-token');
             saveCfg();
             schema = null;
@@ -1244,6 +1286,11 @@
         refreshQueueList();
     }
     function val(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+    // Parse the target-accuracy input; fall back to the default when blank/invalid.
+    function valAccTarget() {
+        var n = parseFloat(val('fld-accTarget'));
+        return (isFinite(n) && n > 0) ? n : ACC_GATE;
+    }
     function setStatus(msg) { var el = document.getElementById('fld-status'); if (el) { el.textContent = msg; } }
 
     // Read one form control and coerce its value to the Grist type, or null to skip.
@@ -1304,15 +1351,17 @@
         await idbPut(rec);            // INVARIANT: persist before any network attempt
         clearFormPhotos();
         stopWatch();
-        vertices = [];
+        resetCapture();
         view = 'idle';
         render();
+        // Confirm the local save loudly and first — the zone is safe on the device
+        // regardless of what the network does next. Sync state is appended after.
         if (navigator.onLine && cfgComplete()) {
-            setStatus(t('sync.running'));
+            setStatus(t('form.saved') + ' ' + t('sync.running'));
             await syncQueue(refreshQueueList);
-            setStatus(t('sync.ok'));
+            setStatus(t('form.saved') + ' ' + t('sync.ok'));
         } else {
-            setStatus(t('queue.offline'));
+            setStatus(t('form.saved') + ' ' + t('queue.offline'));
         }
         await refreshMapLayer();
         refreshQueueList();
@@ -1338,6 +1387,7 @@
         barEl.id = 'fld-bar';
         barEl.setAttribute('style', [
             'position:absolute', 'left:50%', 'bottom:14px', 'transform:translateX(-50%)',
+            'max-width:calc(100% - 28px)',
             'z-index:8000',                 // above map canvas; matches .sv-map-controls
             'pointer-events:auto',          // ensure taps reach the bar, not the map
             'box-sizing:border-box',
@@ -1353,9 +1403,13 @@
         barEl = null;
     }
 
-    // Bar readout: GPS accuracy + vertex count (e.g. "◎4m · ●5").
+    // Bar readout: GPS accuracy + vertex count (e.g. "◎4m · ●5"). A weak-signal
+    // fallback on the last vertex appends a compact ⚠ glyph only — keeping the
+    // readout near-constant width so it never reflows the buttons (the full reason
+    // lives in the glyph's title, and the weak vertex is tinted red on the map).
     function barStatusText() {
-        return '◎' + (lastFix ? Math.round(lastFix.accuracy) + 'm' : '…') + ' · ●' + vertices.length;
+        var base = '◎' + (lastFix ? Math.round(lastFix.accuracy) + 'm' : '…') + ' · ●' + vertices.length;
+        return lastWeak ? base + ' ⚠' : base;
     }
     // Whether a new vertex can be added now (Point mode holds a single vertex).
     function canAddVertex() {
@@ -1370,8 +1424,10 @@
         // map maximally visible. Readout = accuracy + vertex count.
         var sq = 'min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;padding:0';
         barEl.innerHTML =
-            '<span role="status" aria-live="polite" id="fld-bar-status" ' +
-                'style="font-size:.85rem;white-space:nowrap;padding:0 6px;font-variant-numeric:tabular-nums">' +
+            '<span role="status" aria-live="polite" id="fld-bar-status"' +
+                (lastWeak ? ' title="' + esc(t('capture.nogate')) + '"' : '') +
+                ' style="font-size:.85rem;white-space:nowrap;padding:0 6px;min-width:78px;' +
+                'text-align:left;font-variant-numeric:tabular-nums">' +
                 barStatusText() + '</span>' +
             '<button type="button" id="fld-bar-recenter" class="btn btn-light"' +
                 ' aria-label="' + esc(t('capture.recenter')) +
@@ -1389,31 +1445,47 @@
                 ' aria-label="' + esc(t('capture.stop')) +
                 '" title="' + esc(t('capture.stop')) + '" style="' + sq + '">' + icon('x-lg') + '</button>';
         bindBar();
+        applyVertexAccState(document.getElementById('fld-bar-vertex')); // initial amber/green state
     }
     function bindBar() {
         var on = function (id, fn) { var el = document.getElementById(id); if (el) { el.addEventListener('click', fn); } };
         on('fld-bar-vertex', function () {
             if (!lastFix || sampling) { return; }
+            // Pre-commit accuracy gate: if the current fix is worse than the target,
+            // warn before recording rather than silently averaging a bad point. The
+            // agent can override (the point is then flagged weak, tinted red on map).
+            if (lastFix.accuracy > cfg.accTarget && !window.confirm(t('capture.accwarn'))) { return; }
             var vbtn = document.getElementById('fld-bar-vertex');
             if (vbtn) { vbtn.disabled = true; }
             captureVertex(
                 function (left) {
-                    var s = document.getElementById('fld-bar-status');
-                    if (s) { s.textContent = t('capture.sampling') + ' ' + Math.ceil(left / 1000) + 's'; }
+                    // Progress ring on the + button: a conic-gradient sweeps as the
+                    // ~3s average fills — the sole "keep still" cue. The old text
+                    // countdown was redundant with the ring, so it's gone.
+                    var pct = Math.max(0, Math.min(100, (1 - left / AVG_MS) * 100));
+                    if (vbtn) {
+                        vbtn.style.background =
+                            'conic-gradient(#fff ' + pct + '%, rgba(255,255,255,.25) ' + pct + '%)';
+                    }
                 },
                 function (committed, gated) {
+                    // Remember whether this vertex was a weak-signal fallback so the
+                    // warning persists in the readout until the next vertex (it used
+                    // to flash once, then get wiped by the next GPS update).
+                    if (committed) { lastWeak = !gated; }
+                    if (vbtn) { vbtn.style.background = ''; }   // clear the progress ring
                     renderBar();          // restores normal status + re-enables button
                     refreshMapLayer();
-                    if (committed && !gated) {
-                        var s = document.getElementById('fld-bar-status');
-                        if (s) { s.textContent = t('capture.nogate'); }
-                    }
                 }
             );
         });
         on('fld-bar-recenter', recenter);
-        on('fld-bar-undo', function () { vertices.pop(); renderBar(); refreshMapLayer(); });
-        on('fld-bar-stop', function () { stopCapture(); });
+        on('fld-bar-undo', function () {
+            vertices.pop(); vertexMeta.pop();
+            lastWeak = false;                 // clear any stale weak-signal warning
+            renderBar(); refreshMapLayer();
+        });
+        on('fld-bar-stop', function () { if (confirmAbort()) { stopCapture(); } });
         on('fld-bar-close', async function () {
             if (!canFinalize()) { return; }
             try { await fetchSchema(); }
@@ -1431,29 +1503,50 @@
         });
     }
     // In-place refresh of the bar's live GPS readout on each fix (no full rebuild).
+    // Current fix is worse than the target accuracy (pre-commit warning state).
+    function overTarget() { return !!lastFix && lastFix.accuracy > cfg.accTarget; }
+    // Tint the + button amber when the current fix is below target, so the agent
+    // sees the warning before tapping (not only in the confirm dialog after).
+    function applyVertexAccState(vbtn) {
+        if (!vbtn || sampling) { return; }   // leave the progress-ring state alone
+        var warn = overTarget();
+        vbtn.classList.toggle('btn-warning', warn);
+        vbtn.classList.toggle('btn-success', !warn);
+    }
     function updateBarStatus() {
         if (!barEl) { return; }
         var vbtn = document.getElementById('fld-bar-vertex');
-        if (vbtn) { vbtn.disabled = !canAddVertex(); }
+        if (vbtn) { vbtn.disabled = !canAddVertex(); applyVertexAccState(vbtn); }
         var s = document.getElementById('fld-bar-status');
         if (s) { s.textContent = barStatusText(); }
     }
 
+    // Clear all in-progress capture state (vertices + their meta + flags).
+    function resetCapture() {
+        vertices = []; vertexMeta = []; lastWeak = false;
+    }
     // Start GPS + show the floating bar; close the panel so the map is visible.
     function startCapture() {
         firstFix = false;             // re-arm auto-zoom for this capture
         var ok = startWatch(function () { updateBarStatus(); });
         if (!ok) { setStatus(t('err.geo')); return; }
-        vertices = [];
+        resetCapture();
         showBar();                    // create the bar BEFORE closing the panel so the
         SViewer.panel.close();        // panel.onClose handler sees capture in progress
         refreshMapLayer();
+    }
+    // Guard against losing captured vertices to a stray tap. Each vertex costs the
+    // agent a ~3s stationary measurement, so an accidental abort is real lost work.
+    // No prompt when nothing is captured yet (cancelling an empty capture is free).
+    function confirmAbort() {
+        if (!vertices.length) { return true; }
+        return window.confirm(t('capture.abort'));
     }
     // Abort capture: stop GPS, drop the bar and any in-progress vertices, reopen panel.
     function stopCapture() {
         stopWatch();
         hideBar();
-        vertices = [];
+        resetCapture();
         view = 'idle';
         if (active) {
             SViewer.panel.open(PANEL, t('title'), '<p>…</p>');
@@ -1494,7 +1587,8 @@
         btnEl.addEventListener('click', function () {
             // If capture is running, the toolbar button aborts it and deactivates.
             if (barEl) {
-                stopWatch(); hideBar(); vertices = []; refreshMapLayer();
+                if (!confirmAbort()) { return; }   // protect captured vertices
+                stopWatch(); hideBar(); resetCapture(); refreshMapLayer();
                 active = false;
                 btnEl.setAttribute('aria-pressed', 'false');
                 btnEl.classList.remove('active');
