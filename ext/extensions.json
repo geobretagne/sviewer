@@ -28,5 +28,10 @@
     "id": "print",
     "name": "Print / PDF",
     "description": "Génère une impression haute résolution de la carte courante (re-rendu OL à la résolution cible). Format A4 paysage. QR code permalink optionnel (qr-creator, MIT, auto-hébergé)."
+  },
+  {
+    "id": "field",
+    "name": "Terrain",
+    "description": "Collecte terrain au GPS : Points, Ligne ou Polygone (moyenne GPS à l'ajout), attributs typés selon un schéma Grist, photos jointes (downscale client), persistance hors-ligne (IndexedDB) et transmission vers Grist au retour du réseau. Configuration par collage d'URL Grist et choix de table. Mono-backend Grist, jeton optionnel scopé document."
   }
 ]
