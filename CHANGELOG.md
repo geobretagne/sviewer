@@ -4,6 +4,21 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.15.1] - 2026-06-02
+
+### Fixed
+
+- **Carte verrouillée sur mobile quand un panneau se ferme** : `SViewer.panel.close()` (`togglePanel(null)`) ré-ajoutait la classe `sv-panel-open` après `resetPanel()`, réactivant l'overlay plein écran (`pointer-events:auto`, ≤ 600px) qui bloquait le pan tactile. Le pan était impossible pendant la capture GPS de l'extension `field` (zoom et boutons restaient cliquables, d'où le diagnostic). Garde `if (!panelName) return` après `resetPanel()`. Corrige toutes les extensions qui ferment le panneau sur mobile.
+
+### Changed (ext field)
+
+- **Colonne géométrie** proposée en liste déroulante (colonnes de la table chargées via `GET /columns`), avec pré-sélection devinée par nom — plus de saisie manuelle.
+- **Bouton « Recentrer »** (croix) sur la barre de capture : recentre la carte sur la position GPS sans changer le zoom.
+- Libellés orientés utilisateur : « Recharger le formulaire » (au lieu de « schéma »).
+- Boutons **Synchroniser** / **Configuration** repassés en icône seule (largeur mobile), libellé en `title`/`aria-label`.
+- Bouton **Synchroniser** désactivé quand rien n'est en attente ; bouton **Vider la liste** (purge avec confirmation) pour repartir sur un lot vierge.
+- Contrastes renforcés pour l'usage terrain (badges ≈ 6,5:1, texte atténué ≈ 7:1).
+
 ## [0.15.0] - 2026-06-02
 
 ### Added

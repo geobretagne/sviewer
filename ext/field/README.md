@@ -75,8 +75,8 @@ Vous pouvez aussi renseigner les champs un par un :
 La configuration est mémorisée dans le navigateur (`localStorage`). Le jeton n'est jamais
 inscrit dans une URL ni journalisé.
 
-> **Schéma modifié dans Grist ?** Ouvrez la configuration (bouton engrenage) et cliquez
-> **Recharger le schéma**. Le formulaire reflète alors les nouvelles colonnes.
+> **Colonnes modifiées dans Grist ?** Ouvrez la configuration (bouton engrenage) et cliquez
+> **Recharger le formulaire**. Celui-ci reflète alors les nouvelles colonnes.
 
 ## Collecte d'une géométrie
 
@@ -98,7 +98,7 @@ inscrit dans une URL ni journalisé.
 
 ## Attributs et photos
 
-Le formulaire est généré à partir du schéma de la table. Chaque colonne s'affiche avec le bon
+Le formulaire est généré à partir des colonnes de la table. Chaque colonne s'affiche avec le bon
 type de saisie. Les valeurs sont converties au format attendu par Grist à l'enregistrement
 (une date devient un horodatage, un nombre un nombre, etc.).
 
@@ -159,7 +159,7 @@ récentes.
 | Échec d'écriture sur document privé | jeton renseigné et valide (scopé document) |
 | GPS indisponible | l'application doit être servie en **HTTPS** (ou `localhost`) |
 | Une colonne n'apparaît pas | elle est calculée (formule), géométrie, ou Pièces jointes |
-| Schéma figé après modification Grist | bouton **Recharger le schéma** dans la configuration |
+| Formulaire figé après modification Grist | bouton **Recharger le formulaire** dans la configuration |
 | Photo non transmise | une colonne **Pièces jointes** existe-t-elle dans la table ? |
 | Géométrie absente de la carte | la colonne géométrie est bien au format GeoJSON |
 

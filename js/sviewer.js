@@ -1806,6 +1806,10 @@ if (state.label) {
             return;
         }
         resetPanel();
+        // togglePanel(null) is used as a close path (SViewer.panel.close). Without a
+        // panel name there is nothing to open — stop here, otherwise the tail below
+        // re-adds 'sv-panel-open' (the mobile map overlay) and re-locks the map.
+        if (!panelName) { return; }
         if (targetSection) { targetSection.style.display = ''; }
         if (button) { button.classList.add('active'); button.setAttribute('aria-pressed', 'true'); }
         sidepanel.classList.add('active');

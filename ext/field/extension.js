@@ -56,7 +56,8 @@
         'share':       '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.5 2.5 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5m-8.5 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m11 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3"/></svg>',
         'pentagon':    '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M7.685 1.545a.5.5 0 0 1 .63 0l6.263 5.088a.5.5 0 0 1 .161.539l-2.362 7.479a.5.5 0 0 1-.476.349H4.099a.5.5 0 0 1-.476-.35L1.26 7.173a.5.5 0 0 1 .161-.54l6.263-5.087Zm8.213 5.28a.5.5 0 0 0-.162-.54L8.316.257a.5.5 0 0 0-.631 0L.264 6.286a.5.5 0 0 0-.162.538l2.788 8.827a.5.5 0 0 0 .476.349h9.268a.5.5 0 0 0 .476-.35l2.788-8.826Z"/></svg>',
         'vector-pen':  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M10.646.646a.5.5 0 0 1 .708 0l4 4a.5.5 0 0 1 0 .708l-1.902 1.902-.829 3.313a1.5 1.5 0 0 1-1.024 1.073L1.254 14.746 4.358 4.4A1.5 1.5 0 0 1 5.43 3.377l3.313-.828zm-1.8 2.908-3.173.793a.5.5 0 0 0-.358.342l-2.57 8.565 8.567-2.57a.5.5 0 0 0 .34-.357l.794-3.174-3.6-3.6z"/><path fill-rule="evenodd" d="M2.832 13.228 8 9a1 1 0 1 0-1-1l-4.228 5.168-.026.086z"/></svg>',
-        'trash':       '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/></svg>'
+        'trash':       '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/></svg>',
+        'crosshair':   '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M8.5.5a.5.5 0 0 0-1 0v.518A7 7 0 0 0 1.018 7.5H.5a.5.5 0 0 0 0 1h.518A7 7 0 0 0 7.5 14.982v.518a.5.5 0 0 0 1 0v-.518A7 7 0 0 0 14.982 8.5h.518a.5.5 0 0 0 0-1h-.518A7 7 0 0 0 8.5 1.018zm-6.48 7A6 6 0 0 1 7.5 2.02v.48a.5.5 0 0 0 1 0v-.48a6 6 0 0 1 5.48 5.48h-.48a.5.5 0 0 0 0 1h.48a6 6 0 0 1-5.48 5.48v-.48a.5.5 0 0 0-1 0v.48A6 6 0 0 1 2.02 8.5h.48a.5.5 0 0 0 0-1zM8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4"/></svg>'
     };
     function icon(name) { return ICONS[name] || ''; }
 
@@ -73,12 +74,13 @@
             'cfg.geomCol':    'Colonne géométrie',
             'cfg.token':      'Jeton d’accès (scopé document)',
             'cfg.save':       'Enregistrer la configuration',
-            'cfg.reload':     'Recharger le schéma',
+            'cfg.reload':     'Recharger le formulaire',
             'cfg.paste':      'Coller une URL Grist',
             'cfg.pastehint':  'Remplit le serveur et le document, puis liste les tables.',
             'cfg.tablesload': 'Lister les tables',
             'cfg.tablesloaderr':'Tables introuvables :',
-            'cfg.reloaded':   'Schéma rechargé :',
+            'cfg.reloaded':   'Formulaire rechargé :',
+            'cfg.fields':     'champs',
             'cfg.reloaderr':  'Échec du rechargement :',
             'mode.point':     'Points',
             'mode.line':      'Ligne',
@@ -88,6 +90,7 @@
             'capture.min.point':'Ajoutez au moins un point.',
             'capture.stop':   'Arrêter le GPS',
             'capture.vertex': 'Ajouter un sommet',
+            'capture.recenter':'Recentrer sur ma position',
             'capture.sampling':'Mesure en cours…',
             'capture.nogate': 'Signal faible — point au mieux disponible.',
             'capture.undo':   'Supprimer le dernier sommet',
@@ -115,7 +118,7 @@
             'sync.running':   'Transmission en cours…',
             'sync.ok':        'Transmission terminée.',
             'err.geo':        'Géolocalisation indisponible sur cet appareil.',
-            'err.schema':     'Impossible de récupérer le schéma Grist.'
+            'err.schema':     'Impossible de charger le formulaire depuis Grist.'
         },
         en: {
             'title':          'Field collection',
@@ -128,12 +131,13 @@
             'cfg.geomCol':    'Geometry column',
             'cfg.token':      'Access token (document-scoped)',
             'cfg.save':       'Save configuration',
-            'cfg.reload':     'Reload schema',
+            'cfg.reload':     'Reload form',
             'cfg.paste':      'Paste a Grist URL',
             'cfg.pastehint':  'Fills server and document, then lists tables.',
             'cfg.tablesload': 'List tables',
             'cfg.tablesloaderr':'Tables not found:',
-            'cfg.reloaded':   'Schema reloaded:',
+            'cfg.reloaded':   'Form reloaded:',
+            'cfg.fields':     'fields',
             'cfg.reloaderr':  'Reload failed:',
             'mode.point':     'Points',
             'mode.line':      'Line',
@@ -143,6 +147,7 @@
             'capture.min.point':'Add at least one point.',
             'capture.stop':   'Stop GPS',
             'capture.vertex': 'Add vertex',
+            'capture.recenter':'Recenter on my position',
             'capture.sampling':'Measuring…',
             'capture.nogate': 'Weak signal — best available point used.',
             'capture.undo':   'Remove last vertex',
@@ -170,7 +175,7 @@
             'sync.running':   'Transmitting…',
             'sync.ok':        'Transmission complete.',
             'err.geo':        'Geolocation unavailable on this device.',
-            'err.schema':     'Could not fetch the Grist schema.'
+            'err.schema':     'Could not load the form from Grist.'
         },
         es: {
             'title':          'Recogida de campo',
@@ -183,12 +188,13 @@
             'cfg.geomCol':    'Columna de geometría',
             'cfg.token':      'Token de acceso (ámbito documento)',
             'cfg.save':       'Guardar configuración',
-            'cfg.reload':     'Recargar esquema',
+            'cfg.reload':     'Recargar el formulario',
             'cfg.paste':      'Pegar una URL de Grist',
             'cfg.pastehint':  'Rellena el servidor y el documento, luego lista las tablas.',
             'cfg.tablesload': 'Listar tablas',
             'cfg.tablesloaderr':'Tablas no encontradas:',
-            'cfg.reloaded':   'Esquema recargado:',
+            'cfg.reloaded':   'Formulario recargado:',
+            'cfg.fields':     'campos',
             'cfg.reloaderr':  'Error al recargar:',
             'mode.point':     'Puntos',
             'mode.line':      'Línea',
@@ -198,6 +204,7 @@
             'capture.min.point':'Añada al menos un punto.',
             'capture.stop':   'Detener GPS',
             'capture.vertex': 'Añadir vértice',
+            'capture.recenter':'Centrar en mi posición',
             'capture.sampling':'Midiendo…',
             'capture.nogate': 'Señal débil — se usa el mejor punto disponible.',
             'capture.undo':   'Eliminar último vértice',
@@ -225,7 +232,7 @@
             'sync.running':   'Transmitiendo…',
             'sync.ok':        'Transmisión completada.',
             'err.geo':        'Geolocalización no disponible en este dispositivo.',
-            'err.schema':     'No se pudo obtener el esquema Grist.'
+            'err.schema':     'No se pudo cargar el formulario desde Grist.'
         },
         de: {
             'title':          'Felderfassung',
@@ -238,12 +245,13 @@
             'cfg.geomCol':    'Geometriespalte',
             'cfg.token':      'Zugriffstoken (dokumentbezogen)',
             'cfg.save':       'Konfiguration speichern',
-            'cfg.reload':     'Schema neu laden',
+            'cfg.reload':     'Formular neu laden',
             'cfg.paste':      'Grist-URL einfügen',
             'cfg.pastehint':  'Füllt Server und Dokument, listet dann die Tabellen.',
             'cfg.tablesload': 'Tabellen auflisten',
             'cfg.tablesloaderr':'Tabellen nicht gefunden:',
-            'cfg.reloaded':   'Schema neu geladen:',
+            'cfg.reloaded':   'Formular neu geladen:',
+            'cfg.fields':     'Felder',
             'cfg.reloaderr':  'Neuladen fehlgeschlagen:',
             'mode.point':     'Punkte',
             'mode.line':      'Linie',
@@ -253,6 +261,7 @@
             'capture.min.point':'Mindestens einen Punkt hinzufügen.',
             'capture.stop':   'GPS stoppen',
             'capture.vertex': 'Eckpunkt hinzufügen',
+            'capture.recenter':'Auf meine Position zentrieren',
             'capture.sampling':'Messung läuft…',
             'capture.nogate': 'Schwaches Signal — bester verfügbarer Punkt verwendet.',
             'capture.undo':   'Letzten Eckpunkt entfernen',
@@ -280,7 +289,7 @@
             'sync.running':   'Übertrage…',
             'sync.ok':        'Übertragung abgeschlossen.',
             'err.geo':        'Standortbestimmung auf diesem Gerät nicht verfügbar.',
-            'err.schema':     'Grist-Schema konnte nicht abgerufen werden.'
+            'err.schema':     'Formular konnte nicht aus Grist geladen werden.'
         }
     };
     function lang() {
@@ -366,6 +375,26 @@
     // Doc-level Grist URL (no table) for endpoints like /tables.
     function gristUrl0(suffix) {
         return safeApiBase(cfg.apiBase) + '/api/docs/' + encodeURIComponent(cfg.docId) + suffix;
+    }
+    // GET /tables/{tableId}/columns → all column ids (unfiltered — includes the
+    // geometry column, since this feeds the geometry-column picker).
+    async function fetchColumnIds(tableId) {
+        var url = safeApiBase(cfg.apiBase) + '/api/docs/' + encodeURIComponent(cfg.docId) +
+                  '/tables/' + encodeURIComponent(tableId) + '/columns';
+        var res = await fetch(url, { headers: authHeaders() });
+        if (!res.ok) { throw new Error('HTTP ' + res.status); }
+        var data = await res.json();
+        return (data.columns || []).map(function (c) { return c.id; });
+    }
+    // Guess the geometry column from a list of ids (name heuristic, in order).
+    function guessGeomCol(ids) {
+        var cands = ['geojson', 'geometry', 'geom', 'geo', 'shape', 'wkt', 'wkb_geometry'];
+        var lower = ids.map(function (i) { return i.toLowerCase(); });
+        for (var k = 0; k < cands.length; k++) {
+            var idx = lower.indexOf(cands[k]);
+            if (idx !== -1) { return ids[idx]; }
+        }
+        return '';
     }
 
     // --- IndexedDB queue -----------------------------------------------------
@@ -581,6 +610,11 @@
             duration: 400
         });
     }
+    // Recenter on the current fix without changing zoom (user "find me" button).
+    function recenter() {
+        if (!mapRef || !lastFix) { return; }
+        mapRef.getView().animate({ center: ol.proj.fromLonLat([lastFix.lon, lastFix.lat]), duration: 300 });
+    }
     function stopWatch() {
         if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
         sampling = false; sampleBuf = [];
@@ -728,7 +762,7 @@
             field('fld-apiBase', t('cfg.apiBase'), cfg.apiBase, 'url', 'https://grist.example.org') +
             field('fld-docId',   t('cfg.docId'),   cfg.docId,   'text') +
             tableField() +
-            field('fld-geomCol', t('cfg.geomCol'), cfg.geomCol, 'text') +
+            geomField() +
             field('fld-token',   t('cfg.token'),   cfg.token,   'password') +
             '<div style="display:flex;gap:.35rem;margin-top:.5rem">' +
                 '<button type="button" id="fld-cfg-save" class="btn btn-primary btn-sm">' +
@@ -777,6 +811,46 @@
             if (id === cur) { o.selected = true; }
             sel.appendChild(o);
         });
+    }
+
+    // Geometry-column picker: a <select> of the selected table's columns. Filled
+    // from GET /columns; starts with the saved value so the config holds before load.
+    function geomField() {
+        var cur = cfg.geomCol;
+        var opt = cur ? '<option value="' + esc(cur) + '" selected>' + esc(cur) + '</option>'
+                      : '<option value=""></option>';
+        return '<div style="margin:.35rem 0">' +
+            '<label for="fld-geomCol" style="display:block;font-size:.85rem">' + esc(t('cfg.geomCol')) + '</label>' +
+            '<select id="fld-geomCol" class="form-select form-select-sm">' + opt + '</select>' +
+        '</div>';
+    }
+    // Fill the geometry-column <select>. Keeps the current value if present;
+    // otherwise pre-selects a name-guessed geometry column.
+    function fillGeomOptions(ids) {
+        var sel = document.getElementById('fld-geomCol');
+        if (!sel) { return; }
+        var cur = sel.value || cfg.geomCol;
+        if (!cur || ids.indexOf(cur) === -1) { cur = guessGeomCol(ids) || cur; }
+        sel.innerHTML = '';
+        if (cur && ids.indexOf(cur) === -1) { ids = [cur].concat(ids); }
+        ids.forEach(function (id) {
+            var o = document.createElement('option');
+            o.value = id; o.textContent = id;
+            if (id === cur) { o.selected = true; }
+            sel.appendChild(o);
+        });
+    }
+    // Fetch the selected table's columns and fill the geometry picker.
+    async function loadGeomCols() {
+        cfg.apiBase = safeApiBase(val('fld-apiBase'));
+        cfg.docId   = val('fld-docId').trim();
+        cfg.token   = val('fld-token');
+        var tableId = val('fld-tableId').trim();
+        if (!cfg.apiBase || !cfg.docId || !tableId) { return; }
+        try {
+            var ids = await fetchColumnIds(tableId);
+            fillGeomOptions(ids);
+        } catch (e) { /* leave the saved value as-is */ }
     }
 
     // Panel "idle" view: not capturing. Three mode buttons (each starts a capture)
@@ -921,11 +995,11 @@
         return '<div id="fld-queue">' +
             '<div style="display:flex;gap:.35rem;align-items:center;margin-bottom:.4rem">' +
                 '<button type="button" id="fld-sync" class="btn btn-primary btn-sm" ' +
-                    'style="display:inline-flex;align-items:center;gap:.3rem">' +
-                    icon('arrow-repeat') + esc(t('queue.sync')) + '</button>' +
+                    'style="display:inline-flex;align-items:center" aria-label="' + esc(t('queue.sync')) +
+                    '" title="' + esc(t('queue.sync')) + '">' + icon('arrow-repeat') + '</button>' +
                 '<button type="button" id="fld-config" class="btn btn-secondary btn-sm" ' +
-                    'style="display:inline-flex;align-items:center;gap:.3rem" title="' +
-                    esc(t('cfg.btn')) + '">' + icon('gear') + esc(t('cfg.btn')) + '</button>' +
+                    'style="display:inline-flex;align-items:center" aria-label="' + esc(t('cfg.btn')) +
+                    '" title="' + esc(t('cfg.btn')) + '">' + icon('gear') + '</button>' +
                 '<span id="fld-queue-count" style="font-size:.8rem;color:#555;margin-left:auto"></span>' +
                 '<button type="button" id="fld-purge" class="btn btn-secondary btn-sm" ' +
                     'style="display:inline-flex;align-items:center" aria-label="' + esc(t('queue.purge')) +
@@ -1073,6 +1147,7 @@
             var ids = await fetchTables();
             fillTableOptions(ids);
             if (msg) { msg.textContent = ids.length + ' ' + t('cfg.tableId'); }
+            await loadGeomCols();   // populate geometry-column picker for the selected table
         } catch (e) {
             if (msg) { msg.textContent = t('cfg.tablesloaderr') + ' ' + (e.message || e); }
         }
@@ -1092,6 +1167,9 @@
             if (parsed.docId) { loadTablesInto(); }          // populate the table dropdown
         });
         on('fld-tables-load', 'click', loadTablesInto);
+        on('fld-tableId', 'change', loadGeomCols);  // table picked → refresh geometry-column list
+        // On opening config with an existing table, populate the column pickers.
+        if (document.getElementById('fld-geomCol') && val('fld-tableId').trim()) { loadGeomCols(); }
 
         on('fld-cfg-save', 'click', function () {
             cfg.apiBase = safeApiBase(val('fld-apiBase'));
@@ -1119,7 +1197,7 @@
             schema = null;
             try {
                 var cols = await fetchSchema();
-                if (msg) { msg.textContent = t('cfg.reloaded') + ' ' + cols.length; }
+                if (msg) { msg.textContent = t('cfg.reloaded') + ' ' + cols.length + ' ' + t('cfg.fields'); }
             } catch (e) {
                 if (msg) { msg.textContent = t('cfg.reloaderr') + ' ' + (e.message || e); }
             }
@@ -1295,6 +1373,9 @@
             '<span role="status" aria-live="polite" id="fld-bar-status" ' +
                 'style="font-size:.85rem;white-space:nowrap;padding:0 6px;font-variant-numeric:tabular-nums">' +
                 barStatusText() + '</span>' +
+            '<button type="button" id="fld-bar-recenter" class="btn btn-light"' +
+                ' aria-label="' + esc(t('capture.recenter')) +
+                '" title="' + esc(t('capture.recenter')) + '" style="' + sq + '">' + icon('crosshair') + '</button>' +
             '<button type="button" id="fld-bar-vertex" class="btn btn-success"' +
                 (canAdd ? '' : ' disabled') + ' aria-label="' + esc(t('capture.vertex')) +
                 '" title="' + esc(t('capture.vertex')) + '" style="' + sq + '">' + icon('plus-circle') + '</button>' +
@@ -1330,6 +1411,7 @@
                 }
             );
         });
+        on('fld-bar-recenter', recenter);
         on('fld-bar-undo', function () { vertices.pop(); renderBar(); refreshMapLayer(); });
         on('fld-bar-stop', function () { stopCapture(); });
         on('fld-bar-close', async function () {
