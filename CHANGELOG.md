@@ -4,6 +4,16 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.15.0] - 2026-06-02
+
+### Added
+
+- **Extension `field` (Terrain)** (`ext/field/`, `?ext=field`) : collecte de données sur le terrain au GPS, hors-ligne d'abord, vers un document Grist. Trois modes de saisie — **Points** (MultiPoint), **Ligne**, **Polygone** — démarrés en un bouton ; un sommet par appui, avec **moyenne GPS pondérée** (échantillonnage ~3 s, rejet des fixes > 25 m, pondération en 1/précision²) pour fiabiliser chaque point. Barre flottante de capture (carte toujours visible), couche GPS dédiée (position + cercle de précision), auto-zoom au premier fix, aperçu de la géométrie en direct.
+- **Field — formulaire d'attributs typé** depuis le schéma Grist : nombre, date, date-heure, case à cocher, liste de choix, choix multiple — avec conversion au bon format à l'écriture (Date → epoch secondes, etc.). Colonnes calculées et géométrie exclues automatiquement.
+- **Field — photos** : colonne *Pièces jointes* auto-détectée, capture appareil photo, **redimensionnement client** (1600 px, JPEG, EXIF supprimé) avant stockage, upload via l'API Attachments Grist avant l'écriture de la ligne.
+- **Field — hors-ligne** : file IndexedDB en **cache systématique** (écriture locale avant tout appel réseau), conservation bornée des zones transmises, vidage automatique au retour du réseau et bouton de synchronisation. Tableau des zones (date, état + identifiant Grist, attributs, zoom, suppression, purge).
+- **Field — configuration** par collage d'une URL Grist (remplit serveur + document) et choix de la table dans une liste (`GET /tables`). Jeton optionnel scopé document ; en-tête `X-Requested-With` sur les écritures. i18n complet 4 langues, WCAG 2.1 AA (contrastes renforcés pour l'usage terrain). Géométrie stockée en GeoJSON EPSG:4326, relisible par l'adaptateur `grist`.
+
 ## [0.14.1] - 2026-05-24
 
 ### Added
