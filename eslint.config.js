@@ -65,7 +65,7 @@ export default [
         },
         rules: {
             'no-var': 'off',
-            'eqeqeq': ['warn', 'always'],
+            'eqeqeq': ['warn', 'always', { null: 'ignore' }],
             'no-eval': 'error'
         }
     }
