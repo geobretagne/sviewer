@@ -811,37 +811,41 @@ window.SViewer.app = (function() {
      * Method: setPermalink
      * keeps permalinks synchronized with the map extent
      */
+    // Builds the canonical sViewer permalink for the current map state. Single
+    // source of truth used by the share panel AND exposed as SViewer.getPermalink()
+    // so extensions (e.g. `me`) store the exact same URL the share panel produces —
+    // no parallel permalink logic, no title drift.
+    function buildPermalink() {
+        var c = view.getCenter();
+        var linkParams = {};
+        linkParams.x = encodeURIComponent(Math.round(c[0]));
+        linkParams.y = encodeURIComponent(Math.round(c[1]));
+        linkParams.z = encodeURIComponent(view.getZoom());
+        if (state.gficoord && state.gfiok) { linkParams.q = '1'; }
+        linkParams.lb = encodeURIComponent(state.lb);
+        if (config.customConfigName) { linkParams.c = config.customConfigName; }
+        if (state.search) { linkParams.s = '1'; }
+        if (config.layersQueryString) { linkParams.layers = config.layersQueryString; }
+        if (config.metadataIds && config.metadataIds.length && !config.layersQueryString) { linkParams.md = config.metadataIds.join(','); }
+        if (state.theme && state.theme !== 'light') { linkParams.theme = state.theme; }
+        if (state.position) { linkParams.position = '1'; }
+        if (state.opacity !== null && state.opacity !== 1) { linkParams.opacity = state.opacity; }
+        if (state.geojson) { linkParams.geojson = state.geojson; }
+        if (qs.ext) { linkParams.ext = qs.ext; }
+        if (state.label) { linkParams.label = state.label; }
+        if (config.title) { linkParams.title = config.title; }
+        // In embed mode, permalink must point to the standalone sViewer, not the host page
+        var standaloneBase = window.SViewer.baseUrl
+            ? window.SViewer.baseUrl + 'index.html'
+            : window.location.origin + window.location.pathname;
+        return standaloneBase + "?" + new URLSearchParams(linkParams);
+    }
+
     function setPermalink () {
         // permalink, social links & QR code update only if share panel is visible
         var _sharePanel = document.getElementById('sv-panel-share');
         if (_sharePanel && _sharePanel.style.display !== 'none') {
-            var permalinkQuery;
-            var c = view.getCenter();
-            var linkParams = {};
-            linkParams.x = encodeURIComponent(Math.round(c[0]));
-            linkParams.y = encodeURIComponent(Math.round(c[1]));
-            linkParams.z = encodeURIComponent(view.getZoom());
-            if (state.gficoord && state.gfiok) {
-                linkParams.q = '1';
-            }
-            linkParams.lb = encodeURIComponent(state.lb);
-            if (config.customConfigName) { linkParams.c = config.customConfigName; }
-            if (state.search) { linkParams.s = '1'; }
-            if (config.layersQueryString) { linkParams.layers = config.layersQueryString; }
-            if (config.metadataIds && config.metadataIds.length && !config.layersQueryString) { linkParams.md = config.metadataIds.join(','); }
-            if (state.theme && state.theme !== 'light') { linkParams.theme = state.theme; }
-            if (state.position) { linkParams.position = '1'; }
-            if (state.opacity !== null && state.opacity !== 1) { linkParams.opacity = state.opacity; }
-            if (state.geojson) { linkParams.geojson = state.geojson; }
-            if (qs.ext) { linkParams.ext = qs.ext; }
-            if (state.label) { linkParams.label = state.label; }
-            if (config.title) { linkParams.title = config.title; }
-            // In embed mode, permalink must point to the standalone sViewer, not the host page
-            var standaloneBase = window.SViewer.baseUrl
-                ? window.SViewer.baseUrl + 'index.html'
-                : window.location.origin + window.location.pathname;
-            permalinkQuery = standaloneBase + "?" + new URLSearchParams(linkParams);
-
+            var permalinkQuery = buildPermalink();
             var _purl = document.getElementById('sv-permalink-url');
             _purl.href = permalinkQuery;
             _purl.target = '_blank';
@@ -1790,6 +1794,7 @@ if (state.label) {
         var sidepanel = document.getElementById('sv-sidepanel');
         sidepanel.querySelectorAll('.sv-panel-section').forEach(function(s) { s.style.display = 'none'; });
         sidepanel.classList.remove('active');
+        sidepanel.classList.remove('sv-panel-fullscreen');
         document.querySelectorAll('#sv-panel-controls .sv-panel-toggle').forEach(function(btn) {
             btn.classList.remove('active');
             btn.setAttribute('aria-pressed', 'false');
@@ -1831,17 +1836,18 @@ if (state.label) {
     }
 
    // updates title
-   function setTitle(title, silent) {
+    function setTitle(title, silent) {
         config.title = typeof title === 'string' ? title.trim() : title;
         document.title = config.title;
-       if (config.title!=='') {
-            document.getElementById('sv-panel-share-title').textContent = config.title;
-       }
+        // Keep the panel-button label in sync — including when the title is cleared
+        // (previously it kept stale text on an empty title).
+        var _btn = document.getElementById('sv-panel-share-title');
+        if (_btn) { _btn.textContent = config.title; }
         var _shareTitle = document.getElementById('sv-share-title');
         if (_shareTitle && _shareTitle.value === '') {
             _shareTitle.value = config.title;
         }
-        if (!silent) { _emit('sv:titleChange', { title: title }); }
+        if (!silent) { _emit('sv:titleChange', { title: config.title }); }
     }
 
     // updates title on keypress
@@ -2762,6 +2768,8 @@ if (state.label) {
     this.getView = function() { return view; };
     this.getConfig = function() { return config; };
     this.getState = function() { return state; };
+    // Canonical permalink for the current map — the exact URL the share panel builds.
+    this.getPermalink = function() { return buildPermalink(); };
     // Update the geojson URL in state for share/embed permalinks.
     // Does not load or render the layer — caller owns rendering.
     // setPermalink() is intentionally omitted: panel may be closed, and
@@ -2827,7 +2835,11 @@ if (state.label) {
     var _panelOwner = null;
     var _panelCloseCallbacks = {};
     this.panel = {
-        open: function(name, title, html) {
+        // open(name, title, html, opts?) — opts.fullscreen:true asks the host to
+        // display this panel fullscreen on small screens. Core stays extension-
+        // agnostic: it exposes the generic 'sv-panel-fullscreen' marker and the
+        // extension opts in; core CSS never names individual extensions.
+        open: function(name, title, html, opts) {
             var panelId = 'sv-panel-ext-' + name;
             if (!document.getElementById(panelId)) {
                 var section = document.createElement('div');
@@ -2873,6 +2885,12 @@ if (state.label) {
             // set ownership *after* the toggle so the extension keeps control.
             if (!_alreadyOpen) { togglePanel('ext-' + name); }
             _panelOwner = name;
+            // Generic fullscreen marker (opt-in by the extension). togglePanel()
+            // does not touch it, so set/clear it here after the toggle.
+            var sidepanel = document.getElementById('sv-sidepanel');
+            if (sidepanel) {
+                sidepanel.classList.toggle('sv-panel-fullscreen', !!(opts && opts.fullscreen));
+            }
         },
         close: function() { _panelOwner = null; togglePanel(null); },
         onClose: function(name, fn) { _panelCloseCallbacks[name] = fn; },

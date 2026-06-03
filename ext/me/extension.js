@@ -123,44 +123,17 @@
         return u.origin + u.pathname + '?' + sp.toString();
     }
 
-    // --- Permalink (independent of share panel) ------------------------------
-    /**
-     * Reads sViewer state directly to build a permalink. The built-in
-     * setPermalink() only runs when the share panel is visible — we cannot
-     * rely on #sv-permalink-url.href being current.
-     */
-    function buildPermalink(overrideTitle) {
-        var view   = SViewer.getView();
-        var config = SViewer.config || {};
-        var state  = SViewer.state  || {};
-        var qs     = parseQueryString();
-        var c      = view.getCenter();
-
-        var p = {};
-        p.x = Math.round(c[0]);
-        p.y = Math.round(c[1]);
-        p.z = view.getZoom();
-        if (state.lb !== undefined && state.lb !== null) { p.lb = state.lb; }
-        if (config.customConfigName)                     { p.c = config.customConfigName; }
-        if (config.layersQueryString)                    { p.layers = config.layersQueryString; }
-        if (config.metadataIds && config.metadataIds.length && !config.layersQueryString) {
-            p.md = config.metadataIds.join(',');
+    // --- Permalink -----------------------------------------------------------
+    // Use sViewer's OWN canonical permalink (the exact URL the share panel builds),
+    // so a saved map mirrors share behaviour precisely — including the map title.
+    // The save-as name is the bookmark label only; it never touches the permalink.
+    function buildPermalink() {
+        if (typeof SViewer.getPermalink === 'function') {
+            var url = SViewer.getPermalink();
+            if (url) { return url; }
         }
-        if (state.theme && state.theme !== 'light')      { p.theme = state.theme; }
-        if (state.position)                              { p.position = '1'; }
-        if (state.opacity !== null && state.opacity !== undefined && state.opacity !== 1) { p.opacity = state.opacity; }
-        if (state.geojson)                               { p.geojson = state.geojson; }
-        if (state.label)                                 { p.label = state.label; }
-        // Preserve full ?ext= list — including 'me' itself so restored maps
-        // keep access to the personal panel without manual re-activation.
-        if (qs.ext) { p.ext = qs.ext; }
-        var titleVal = (typeof overrideTitle === 'string') ? overrideTitle.trim() : (config.title || '');
-        if (titleVal) { p.title = titleVal; }
-
-        var base = window.SViewer.baseUrl
-            ? window.SViewer.baseUrl + 'index.html'
-            : window.location.origin + window.location.pathname;
-        return base + '?' + new URLSearchParams(p).toString();
+        // Fallback for older cores: current location (best effort).
+        return window.location.href;
     }
 
     function parseQueryString() {
@@ -267,6 +240,48 @@
         });
     }
 
+    // Whether the in-app config-URL loader should appear: only when running as an
+    // installed standalone app. SViewer.isInstalled is provided by embed.js and is
+    // fail-closed; guard for older cores that lack it.
+    function showLoader() {
+        return typeof SViewer.isInstalled === 'function' && SViewer.isInstalled();
+    }
+
+    // The "load a map by URL" block — rendered only in installed standalone mode.
+    function loadBlockHtml() {
+        if (!showLoader()) { return ''; }
+        return [
+            '<label for="sv-me-load" style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.2rem">' + escHtml(t('label.load')) + '</label>',
+            '<div style="display:flex;gap:.35rem">',
+            '<input id="sv-me-load" type="url" inputmode="url" class="form-control form-control-sm"',
+            '       placeholder="' + escAttr(t('placeholder.load')) + '"',
+            '       autocomplete="off" style="color:var(--sv-panel-fg);background-color:var(--sv-panel-input-bg)">',
+            '<button id="sv-me-load-btn" class="btn btn-sm btn-primary" type="button" style="white-space:nowrap">',
+            escHtml(t('btn.load')),
+            '</button>',
+            '</div>',
+            '<div style="font-size:.7rem;color:var(--sv-panel-fg-muted);margin:.2rem 0 .6rem">' + escHtml(t('label.load_hint')) + '</div>'
+        ].join('');
+    }
+
+    // Validate a pasted config URL and, if safe, navigate the installed app to it.
+    // Reuses isSafeUrl (same-origin https, or same-origin http for localhost dev) so
+    // a pasted link can never bounce the standalone app off-origin. Forces `me` into
+    // the ext list so the personal hub survives the navigation.
+    function onLoadUrl() {
+        var input = document.getElementById('sv-me-load');
+        var raw = (input && input.value || '').trim();
+        if (!raw) { return; }
+        if (!isSafeUrl(raw)) { pendingMsg = t('msg.load_invalid'); refresh(); return; }
+        var u;
+        try { u = new URL(raw, window.location.origin); } catch (e) { pendingMsg = t('msg.load_invalid'); refresh(); return; }
+        // Keep the `me` hub available after reload.
+        var ext = (u.searchParams.get('ext') || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+        if (ext.indexOf('me') === -1) { ext.push('me'); }
+        u.searchParams.set('ext', ext.join(','));
+        window.location.assign(u.href);
+    }
+
     function panelHtml() {
         var store    = loadStore();
         var fullList = entriesByDate(store);
@@ -281,28 +296,33 @@
         var head = [
             '<div style="padding:0.75rem;display:flex;flex-direction:column;gap:0.6rem">',
 
-            '<div id="sv-me-save-block" style="position:sticky;top:0;z-index:2;background:#fff;padding-bottom:.5rem;border-bottom:1px solid #dee2e6;margin:-0.75rem -0.75rem 0;padding:0.75rem">',
+            '<div id="sv-me-save-block" style="position:sticky;top:0;z-index:2;background:var(--sv-panel-bg);padding-bottom:.5rem;border-bottom:1px solid var(--sv-panel-border);margin:-0.75rem -0.75rem 0;padding:0.75rem">',
+            // Installed standalone app only: a config-URL input replaces the missing
+            // address bar — paste a sViewer link to load its configuration in-app.
+            // Hidden in browser tabs (address bar exists) and embeds (would navigate
+            // away the host). Gated by SViewer.isInstalled() (fail-closed).
+            loadBlockHtml(),
             '<label for="sv-me-title" style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.2rem">' + escHtml(t('label.title')) + '</label>',
             '<input id="sv-me-title" type="text" class="form-control form-control-sm"',
-            '       placeholder="' + escHtml(t('label.title')) + '"',
+            '       placeholder="' + escHtml(t('placeholder.title')) + '"',
             '       value="' + escHtml(currentTitle()) + '"',
-            '       style="color:#212529;background-color:#fff">',
-            '<div style="font-size:.7rem;color:var(--bs-secondary);margin-top:.2rem">' + escHtml(t('label.title_hint')) + '</div>',
+            '       style="color:var(--sv-panel-fg);background-color:var(--sv-panel-input-bg)">',
+            '<div style="font-size:.7rem;color:var(--sv-panel-fg-muted);margin-top:.2rem">' + escHtml(t('label.title_hint')) + '</div>',
             '<button id="sv-me-save" class="btn btn-sm btn-primary w-100" style="margin-top:.4rem">',
             icon('bookmark-plus') + ' ' + escHtml(t('btn.save')),
             '</button>',
-            msg ? '<div id="sv-me-msg" style="font-size:.8rem;color:var(--bs-secondary);margin-top:.4rem">' + escHtml(msg) + '</div>' : '',
+            msg ? '<div id="sv-me-msg" style="font-size:.8rem;color:var(--sv-panel-fg-muted);margin-top:.4rem">' + escHtml(msg) + '</div>' : '',
             // Filter input — only shown when at least one entry exists
             fullList.length > 0 ? [
                 '<div style="position:relative;margin-top:.5rem">',
                 '<label for="sv-me-filter" class="visually-hidden">' + escHtml(t('placeholder.filter')) + '</label>',
-                '<span aria-hidden="true" style="position:absolute;left:.5rem;top:50%;transform:translateY(-50%);color:#6c757d;pointer-events:none">' + icon('search') + '</span>',
+                '<span aria-hidden="true" style="position:absolute;left:.5rem;top:50%;transform:translateY(-50%);color:var(--sv-panel-fg-muted);pointer-events:none">' + icon('search') + '</span>',
                 '<input id="sv-me-filter" type="search" class="form-control form-control-sm"',
                 '       placeholder="' + escHtml(t('placeholder.filter')) + '"',
                 '       value="' + escHtml(filterTerm) + '"',
                 '       autocomplete="off"',
                 '       aria-label="' + escAttr(t('placeholder.filter')) + '"',
-                '       style="color:#212529;background-color:#fff;padding-left:1.8rem">',
+                '       style="color:var(--sv-panel-fg);background-color:var(--sv-panel-input-bg);padding-left:1.8rem">',
                 '</div>'
             ].join('') : '',
             '</div>'
@@ -310,11 +330,11 @@
 
         var body;
         if (fullList.length === 0) {
-            body = ['<div style="font-size:.85rem;color:var(--bs-secondary);text-align:center;padding:1rem 0">' + escHtml(t('msg.empty')) + '</div>'];
+            body = ['<div style="font-size:.85rem;color:var(--sv-panel-fg-muted);text-align:center;padding:1rem 0">' + escHtml(t('msg.empty')) + '</div>'];
         } else if (list.length === 0) {
-            body = ['<div style="font-size:.85rem;color:var(--bs-secondary);text-align:center;padding:1rem 0">' + escHtml(t('msg.no_match')) + '</div>'];
+            body = ['<div style="font-size:.85rem;color:var(--sv-panel-fg-muted);text-align:center;padding:1rem 0">' + escHtml(t('msg.no_match')) + '</div>'];
         } else {
-            body = ['<div style="display:flex;flex-direction:column;gap:.5rem">'];
+            body = ['<div style="display:flex;flex-direction:column">'];
             list.forEach(function (e) {
                 body.push(renderEntry(e));
             });
@@ -322,7 +342,7 @@
         }
 
         var footer = [
-            '<div style="position:sticky;bottom:0;z-index:2;background:#fff;display:flex;gap:.4rem;border-top:1px solid #dee2e6;margin:0 -0.75rem -0.75rem;padding:0.6rem 0.75rem">',
+            '<div style="position:sticky;bottom:0;z-index:2;background:var(--sv-panel-bg);display:flex;gap:.4rem;border-top:1px solid var(--sv-panel-border);margin:0 -0.75rem -0.75rem;padding:0.6rem 0.75rem">',
             '<button id="sv-me-export" class="btn btn-sm btn-outline-secondary flex-fill" type="button">',
             icon('download') + ' ' + escHtml(t('btn.export')),
             '</button>',
@@ -343,21 +363,32 @@
             { year: 'numeric', month: 'short', day: 'numeric' }
         ) : '';
 
+        // Flat row, primary area opens the map. The avatar + title + date form one
+        // big clickable target (data-act="open-here") — matching the instinct to tap
+        // the largest element — so no separate "open here" button is needed. Secondary
+        // actions sit at the right edge; their clicks stop propagation so they don't
+        // also open the map.
+        var open = escAttr(t('btn.open_here'));
         return [
             '<div class="sv-me-card" data-id="' + escAttr(e.id) + '"',
-            '     style="display:flex;gap:.5rem;align-items:center;padding:.4rem;border:1px solid #dee2e6;border-radius:4px;background:#fff">',
+            '     style="display:flex;gap:.6rem;align-items:center;padding:.5rem .25rem;border-bottom:1px solid var(--sv-panel-border)">',
+            // Primary clickable area: avatar + title + date → open here.
+            '<div class="sv-me-open" role="button" tabindex="0" data-act="open-here"',
+            '     aria-label="' + open + ' — ' + escAttr(e.title || '') + '" title="' + open + '"',
+            '     style="display:flex;gap:.6rem;align-items:center;flex:1;min-width:0;cursor:pointer;border-radius:6px;padding:.15rem;margin:-.15rem">',
             avatarHtml(e),
             '<div style="flex:1;min-width:0">',
             '<div style="font-weight:600;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + escAttr(e.title) + '">',
             escHtml(e.title || '(sans titre)'),
             '</div>',
-            '<div style="font-size:.7rem;color:var(--bs-secondary)">' + escHtml(dateStr) + '</div>',
-            '<div style="display:flex;gap:.2rem;margin-top:.2rem;flex-wrap:wrap">',
-            actionBtn('open-here', 'arrow-right-circle', t('btn.open_here')),
+            '<div style="font-size:.7rem;color:var(--sv-panel-fg-muted)">' + escHtml(dateStr) + '</div>',
+            '</div>',
+            '</div>',
+            // Secondary actions, right edge.
+            '<div style="display:flex;gap:.2rem;flex:none">',
             actionBtn('open-new',  'box-arrow-up-right', t('btn.open_new')),
             actionBtn('copy',      'clipboard',          t('btn.copy_url')),
             actionBtn('delete',    'trash',              t('btn.delete')),
-            '</div>',
             '</div>',
             '</div>'
         ].join('');
@@ -371,7 +402,10 @@
     }
 
     function openPanel() {
-        SViewer.panel.open(PANEL, t('panel.title'), panelHtml());
+        // 'me' is a self-contained list/config panel — no live map interaction —
+        // so it opts into fullscreen on small screens for readability. Core stays
+        // agnostic; this is the extension declaring its own display preference.
+        SViewer.panel.open(PANEL, t('panel.title'), panelHtml(), { fullscreen: true });
         wireEvents();
     }
 
@@ -381,6 +415,15 @@
     }
 
     function wireEvents() {
+        var loadBtn = document.getElementById('sv-me-load-btn');
+        if (loadBtn) { loadBtn.addEventListener('click', onLoadUrl); }
+        var loadInput = document.getElementById('sv-me-load');
+        if (loadInput) {
+            loadInput.addEventListener('keydown', function (ev) {
+                if (ev.key === 'Enter') { ev.preventDefault(); onLoadUrl(); }
+            });
+        }
+
         var save = document.getElementById('sv-me-save');
         if (save) { save.addEventListener('click', onSave); }
 
@@ -418,16 +461,32 @@
             });
         }
 
-        // Delegated action buttons on cards
-        var cards = document.querySelectorAll('.sv-me-card [data-act]');
-        cards.forEach(function (b) {
-            b.addEventListener('click', function (ev) {
+        // Card actions: the primary open-here area and the secondary buttons all
+        // carry data-act. Buttons stop propagation so a click never bubbles to the
+        // row. The open-here area is role="button" → also responds to Enter/Space.
+        var acts = document.querySelectorAll('.sv-me-card [data-act]');
+        acts.forEach(function (b) {
+            var run = function (ev) {
+                ev.stopPropagation();
                 var card = ev.target.closest('.sv-me-card');
                 if (!card) { return; }
-                var id  = card.getAttribute('data-id');
-                var act = ev.currentTarget.getAttribute('data-act');
-                onAction(act, id);
-            });
+                onAction(b.getAttribute('data-act'), card.getAttribute('data-id'));
+            };
+            b.addEventListener('click', run);
+            if (b.getAttribute('role') === 'button') {
+                b.addEventListener('keydown', function (ev) {
+                    if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); run(ev); }
+                });
+                // Hover/focus affordance without a stylesheet (me injects no <style>):
+                // tint the open-here row on pointer/keyboard focus so it reads as
+                // interactive and the focus ring is visible (a11y).
+                var hl = function () { b.style.background = 'var(--sv-panel-input-bg)'; };
+                var un = function () { b.style.background = ''; };
+                b.addEventListener('mouseenter', hl);
+                b.addEventListener('mouseleave', un);
+                b.addEventListener('focus', hl);
+                b.addEventListener('blur', un);
+            }
         });
     }
 
@@ -442,8 +501,11 @@
             return;
         }
 
-        var url   = buildPermalink(title);
-        var id    = djb2(normalizeUrl(url));
+        // `title` is the bookmark NAME (list label) — it does NOT go into the
+        // permalink (the map keeps its own title). It is part of the entry identity
+        // so the same map can be saved under several names.
+        var url   = buildPermalink();
+        var id    = djb2(normalizeUrl(url) + '|' + title);
         var store = loadStore();
 
         if (store[id]) {

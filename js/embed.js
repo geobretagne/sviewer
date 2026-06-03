@@ -37,6 +37,24 @@
 
     var debug = /[?&]debug=1/.test(window.location.search);
 
+    // True only when sViewer runs as an INSTALLED standalone app (PWA/WebAPK) at the
+    // top level — never in a browser tab, an embed div, or a Grist/Superset iframe.
+    // Fail-closed: any uncertainty returns false. Used to enable installed-only UI
+    // (e.g. the in-app config-URL input in the `me` extension), which must never
+    // appear in embedded modes where navigating would destroy the host page.
+    function isInstalledStandalone() {
+        try {
+            var mm = window.matchMedia;
+            var standalone = (mm && (mm('(display-mode: standalone)').matches ||
+                                     mm('(display-mode: minimal-ui)').matches ||
+                                     mm('(display-mode: fullscreen)').matches)) ||
+                             navigator.standalone === true;        // iOS home-screen app
+            return !!standalone && window.self === window.top;     // top-level only
+        } catch (_e) {
+            return false;                                          // fail-closed
+        }
+    }
+
     // Queue for addClickHandler calls made before SViewerApp is ready.
     // Drained on sv:mapReady so extensions calling addClickHandler at module scope work correctly.
     var _clickHandlerQueue = [];
@@ -362,6 +380,12 @@
                     .split(',').map(function(s) { return s.trim(); }).filter(function(s) { return EXT_NAME_RE.test(s); });
                 var configExts = (window.customConfig && window.customConfig.extensions) || [];
                 var allExts = configExts.concat(urlExts.filter(function(e) { return !configExts.includes(e); }));
+                // Installed standalone app → always load `me` as the persistent hub:
+                // it provides the in-app config-URL input + saved-maps picker that
+                // replace the missing address bar. No effect in tabs/embeds/iframes.
+                if (isInstalledStandalone() && allExts.indexOf('me') === -1) {
+                    allExts.push('me');
+                }
                 var extPromises = allExts
                     .map(function(name) {
                         return loadResource(baseUrl + 'ext/' + name + '/extension.js', 'js')
@@ -471,6 +495,10 @@
         commit: SVIEWER_COMMIT,
         baseUrl: baseUrl,
         embedded: true,
+
+        // True only when running as an installed standalone app (PWA/WebAPK) at the
+        // top level. Extensions use this to gate installed-only UI. Fail-closed.
+        isInstalled: isInstalledStandalone,
 
         // Returns the base URL of the calling extension's directory (trailing slash).
         // Call at module scope inside extension.js — relies on document.currentScript.
@@ -621,6 +649,13 @@
             return window.SViewer.app ? window.SViewer.app.getView() : null;
         },
 
+        // Canonical permalink for the current map — identical to what the share
+        // panel produces. Extensions use this to store/share the exact URL.
+        getPermalink: function() {
+            return (window.SViewer.app && window.SViewer.app.getPermalink)
+                ? window.SViewer.app.getPermalink() : null;
+        },
+
         // Set the geojson URL baked into share/embed permalinks without rendering a layer.
         setGeojsonUrl: function(url) {
             if (window.SViewer.app && window.SViewer.app.setGeojsonUrl) {
@@ -727,8 +762,8 @@
 
         // Open / update / close an extension sidepanel.
         panel: {
-            open: function(name, title, html) {
-                if (window.SViewer.app && window.SViewer.app.panel) { window.SViewer.app.panel.open(name, title, html); }
+            open: function(name, title, html, opts) {
+                if (window.SViewer.app && window.SViewer.app.panel) { window.SViewer.app.panel.open(name, title, html, opts); }
             },
             close: function() {
                 if (window.SViewer.app && window.SViewer.app.panel) { window.SViewer.app.panel.close(); }

@@ -1498,7 +1498,7 @@
             hideBar();
             clearFormPhotos();        // fresh photo set for this zone
             view = 'form';
-            SViewer.panel.open(PANEL, t('title'), '<p>…</p>');
+            SViewer.panel.open(PANEL, t('title'), '<p>…</p>', { fullscreen: true });
             render();
         });
     }
@@ -1549,7 +1549,7 @@
         resetCapture();
         view = 'idle';
         if (active) {
-            SViewer.panel.open(PANEL, t('title'), '<p>…</p>');
+            SViewer.panel.open(PANEL, t('title'), '<p>…</p>', { fullscreen: true });
             render();
         }
         refreshMapLayer();
@@ -1559,7 +1559,7 @@
     function open() {
         active = true;
         view = cfgComplete() ? 'idle' : 'config';
-        SViewer.panel.open(PANEL, t('title'), '<p>…</p>');
+        SViewer.panel.open(PANEL, t('title'), '<p>…</p>', { fullscreen: true });
         render();
         refreshMapLayer();
     }
