@@ -38,9 +38,9 @@ SViewer.loadExtension('me');
 ## Utilisation
 
 1. Configurer la carte (donnée, zoom, filtres, etc.) puis cliquer l'icône « Moi » (personne) dans la barre d'outils.
-2. Saisir un titre dans le champ — le titre fait partie de l'identifiant de la carte (hash de l'URL complète, titre compris). **Choisir le bon titre dès la première sauvegarde** : il ne sera plus modifiable.
+2. Saisir un **nom** dans le champ *Enregistrer sous* — c'est le libellé de la carte enregistrée (pas le titre de la carte : le titre de la carte, défini dans le panneau Configuration, est préservé tel quel). **Choisir le bon nom dès la première sauvegarde** : il ne sera plus modifiable (supprimer et réenregistrer pour le changer).
 3. Cliquer « Enregistrer cette carte ».
-4. La carte apparaît dans la liste, identifiée par une pastille colorée déterministe (couleur dérivée de l'identifiant + initiale du titre).
+4. La carte apparaît dans la liste, identifiée par une pastille colorée déterministe. **Taper la ligne** (pastille + nom) ouvre la carte ; les actions secondaires sont à droite.
 
 ### Actions par carte
 
@@ -53,18 +53,24 @@ SViewer.loadExtension('me');
 
 ### Filtre
 
-Dès qu'une carte est enregistrée, un champ de recherche apparaît sous le bouton « Enregistrer ». Saisie au clavier filtre la liste par titre (sous-chaîne, insensible à la casse). Touche `Entrée` ouvre la première carte filtrée dans l'onglet courant.
+Dès qu'une carte est enregistrée, un champ de recherche apparaît sous le bouton « Enregistrer ». Saisie au clavier filtre la liste par nom (sous-chaîne, insensible à la casse). Touche `Entrée` ouvre la première carte filtrée dans l'onglet courant.
 
-### Renommer une carte
+### Application installée (PWA) — charger une carte sans barre d'adresse
 
-Le titre fait partie de l'identifiant ; il n'est pas modifiable en place. Pour changer le titre d'une carte enregistrée :
+Quand sViewer est **installé** sur le téléphone (mode standalone), « Moi » se charge automatiquement comme hub d'accueil et ajoute, en haut du panneau, deux moyens d'ouvrir une carte — l'application installée n'ayant pas de barre d'adresse :
 
-1. Ouvrir la carte.
-2. Modifier le titre dans le panneau de partage sViewer.
-3. Cliquer « Enregistrer cette carte » dans Mes cartes — une nouvelle entrée est créée avec le nouveau titre.
-4. Si souhaité, supprimer l'ancienne entrée.
+- **Coller une URL** sViewer dans le champ dédié, puis « Charger ».
+- **Scanner un QR code** (bouton caméra) : viser un QR code sViewer affiché sur un autre écran ou imprimé. Idéal pour passer une carte du bureau au terrain sans saisie ni copier-coller. Le QR code d'une carte se génère depuis le panneau **Partager** de sViewer.
 
-Cela permet aussi de conserver plusieurs variantes d'une même carte (« PLU brouillon », « PLU validé »).
+Décodage : `BarcodeDetector` natif quand disponible (Chrome Android, zéro dépendance), sinon `jsQR` (auto-hébergé, Apache-2.0, chargé à la demande — iOS, autres navigateurs). La caméra requiert HTTPS et une autorisation ; elle est systématiquement arrêtée à la fermeture.
+
+**Sécurité :** l'URL chargée (collée ou scannée) doit être de **même origine** que sViewer — un lien tiers (ou un QR malveillant) est refusé. Le jeton ou les paramètres ne quittent jamais l'origine.
+
+Ces contrôles n'apparaissent **qu'en mode installé** : dans un onglet de navigateur (barre d'adresse présente) ou en intégration tierce, ils sont masqués.
+
+### Renommer une carte enregistrée
+
+Le **nom** d'une carte enregistrée fait partie de son identité ; il n'est pas modifiable en place. Pour renommer : supprimer l'entrée et réenregistrer la carte sous un nouveau nom. La même carte peut être enregistrée sous plusieurs noms (« PLU brouillon », « PLU validé ») — autant d'entrées distinctes. Le **titre de la carte** (panneau Configuration) est, lui, indépendant et préservé : le nom d'enregistrement ne le modifie jamais.
 
 ### Exporter / importer
 
@@ -75,14 +81,16 @@ L'import est **additif** : les cartes existantes ne sont jamais écrasées. Les 
 ## Identité des cartes
 
 ```
-id = djb2( normalize(url) )
+id = djb2( normalize(url) + '|' + nom )
 normalize(url) = origin + pathname + params triés alphabétiquement
 ```
 
+L'URL est le **permalink canonique** de sViewer (identique à celui du panneau Partager, via `SViewer.getPermalink()`) — le titre de la carte y est préservé tel quel. Le **nom** d'enregistrement n'est PAS dans l'URL ; il entre seulement dans l'identité.
+
 Deux conséquences :
 
-- Sauvegarder deux fois la même URL = même identifiant = pas de doublon (le second clic affiche « Cette carte existe déjà »).
-- Modifier le titre = nouvelle URL (le titre est dans le `?title=` de l'URL) = nouvel identifiant = nouvelle entrée. Pas de renommage en place, mais possibilité de sauvegarder plusieurs variantes d'une même carte (« PLU brouillon », « PLU validé », « PLU final »).
+- Sauvegarder deux fois la même carte sous le même nom = même identifiant = pas de doublon (le second clic affiche « Cette carte existe déjà »).
+- Sauvegarder la même carte sous un nom différent = nouvel identifiant = nouvelle entrée. La carte gardera son propre titre ; seul le libellé de la liste change (« PLU brouillon », « PLU validé », « PLU final »).
 
 ## Modèle de stockage
 

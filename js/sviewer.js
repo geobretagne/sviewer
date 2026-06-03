@@ -1227,6 +1227,8 @@ window.SViewer.app = (function() {
             var ext = vectorLayer.getSource().getExtent();
             if (ext && isFinite(ext[0])) { view.fit(ext, { maxZoom: 16, duration: 400, padding: [40,40,40,40] }); }
         }
+        _hasFeatures = features.length > 0;
+        updatePanelAvailability();
         _emit('sv:featuresLoaded', { features: features, count: features.length });
         log('loadFeatureObjects: loaded', features.length, 'features');
     }
@@ -1288,6 +1290,8 @@ if (state.label) {
         _buildVectorLayer(features, {});
         _bindVectorClick();
         _renderGeoJSONInfoPanel(features.length, sourceUrl || state.geojson, adapter);
+        _hasFeatures = features.length > 0;
+        updatePanelAvailability();
         _emit('sv:featuresLoaded', { features: features, count: features.length });
         // q=1: auto-query feature closest to map centre after load.
         // setTimeout lets OL complete the render cycle before hit-testing.
@@ -1833,6 +1837,26 @@ if (state.label) {
         if (panelName) {
             togglePanel(panelName);
         }
+    }
+
+    // Enable/disable the legend and query panel buttons based on whether their data
+    // exists, so they aren't dead controls on a bare or GeoJSON-only map.
+    //   legend → needs at least one WMS layer
+    //   query  → needs a WMS layer OR loaded vector features (GeoJSON)
+    // Called at boot (after layers init) and whenever features load. A disabled
+    // open panel is also closed so it can't stay visible with nothing to show.
+    var _hasFeatures = false;
+    function updatePanelAvailability() {
+        var hasWms = config.layersQueryable && config.layersQueryable.length > 0;
+        var avail = { legend: !!hasWms, query: !!hasWms || _hasFeatures };
+        Object.keys(avail).forEach(function(name) {
+            var btn = document.querySelector('[data-sv-panel="' + name + '"]');
+            if (!btn) { return; }
+            btn.disabled = !avail[name];
+            btn.setAttribute('aria-disabled', String(!avail[name]));
+            // If a now-unavailable panel is open, close it.
+            if (!avail[name] && btn.classList.contains('active')) { resetPanel(); }
+        });
     }
 
    // updates title
@@ -2647,6 +2671,9 @@ if (state.label) {
         if (config.searchPlaceholder) {
             document.getElementById('sv-search-input').placeholder = config.searchPlaceholder;
         }
+
+        // Grey out legend/query when there's no data for them (bare/GeoJSON-only map).
+        updatePanelAvailability();
 
         // Auto-open legend panel when a layer is loaded and screen is wide enough.
         // Below 600px the panel covers the map entirely — too disorienting on first load.

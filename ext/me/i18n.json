@@ -31,7 +31,12 @@
     "label.load_hint":  "Collez un lien sViewer pour ouvrir sa configuration dans l'application.",
     "placeholder.load": "https://…/sviewer/?…",
     "btn.load":         "Charger",
-    "msg.load_invalid": "Lien invalide : seul un lien sViewer de cette origine est accepté."
+    "msg.load_invalid": "Lien invalide : seul un lien sViewer de cette origine est accepté.",
+    "btn.scan":         "Scanner un QR code",
+    "scan.hint":        "Visez un QR code sViewer",
+    "scan.no_camera":   "Aucune caméra disponible.",
+    "scan.denied":      "Accès caméra refusé.",
+    "scan.cancel":      "Annuler"
   },
   "en": {
     "btn.label":        "Me",
@@ -65,7 +70,12 @@
     "label.load_hint":  "Paste a sViewer link to open its configuration in the app.",
     "placeholder.load": "https://…/sviewer/?…",
     "btn.load":         "Load",
-    "msg.load_invalid": "Invalid link: only a sViewer link from this origin is accepted."
+    "msg.load_invalid": "Invalid link: only a sViewer link from this origin is accepted.",
+    "btn.scan":         "Scan a QR code",
+    "scan.hint":        "Point at a sViewer QR code",
+    "scan.no_camera":   "No camera available.",
+    "scan.denied":      "Camera access denied.",
+    "scan.cancel":      "Cancel"
   },
   "es": {
     "btn.label":        "Yo",
@@ -99,7 +109,12 @@
     "label.load_hint":  "Pegue un enlace sViewer para abrir su configuración en la aplicación.",
     "placeholder.load": "https://…/sviewer/?…",
     "btn.load":         "Cargar",
-    "msg.load_invalid": "Enlace no válido: solo se acepta un enlace sViewer de este origen."
+    "msg.load_invalid": "Enlace no válido: solo se acepta un enlace sViewer de este origen.",
+    "btn.scan":         "Escanear un QR",
+    "scan.hint":        "Apunte a un código QR de sViewer",
+    "scan.no_camera":   "No hay cámara disponible.",
+    "scan.denied":      "Acceso a la cámara denegado.",
+    "scan.cancel":      "Cancelar"
   },
   "de": {
     "btn.label":        "Ich",
@@ -133,6 +148,11 @@
     "label.load_hint":  "Fügen Sie einen sViewer-Link ein, um seine Konfiguration in der App zu öffnen.",
     "placeholder.load": "https://…/sviewer/?…",
     "btn.load":         "Laden",
-    "msg.load_invalid": "Ungültiger Link: nur ein sViewer-Link dieses Ursprungs wird akzeptiert."
+    "msg.load_invalid": "Ungültiger Link: nur ein sViewer-Link dieses Ursprungs wird akzeptiert.",
+    "btn.scan":         "QR-Code scannen",
+    "scan.hint":        "Auf einen sViewer-QR-Code richten",
+    "scan.no_camera":   "Keine Kamera verfügbar.",
+    "scan.denied":      "Kamerazugriff verweigert.",
+    "scan.cancel":      "Abbrechen"
   }
 }

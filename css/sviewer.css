@@ -31,9 +31,11 @@
     --sv-btn-bg-glass:         rgb(244 244 245 / 85%);
     --sv-btn-bg-glass-hover:   rgb(228 228 231 / 92%);
     --sv-btn-fg:               #18181b;
-    --sv-btn-border:           rgb(0 0 0 / 12%);
-    --sv-btn-box-shadow:       inset 0 0 0 1px rgb(0 0 0 / 8%), 0 1px 2px rgb(0 0 0 / 10%);
-    --sv-btn-box-shadow-hover: inset 0 0 0 1px rgb(0 0 0 / 10%), 0 2px 6px rgb(0 0 0 / 12%);
+    --sv-btn-border:           rgb(0 0 0 / 18%);
+    /* Dual-tone edge so the button reads on ANY map tile: an outer light ring lifts
+       it off dark tiles, an inner dark ring + drop shadow lift it off bright tiles. */
+    --sv-btn-box-shadow:       0 0 0 1px rgb(255 255 255 / 65%), inset 0 0 0 1px rgb(0 0 0 / 18%), 0 1px 3px rgb(0 0 0 / 28%);
+    --sv-btn-box-shadow-hover: 0 0 0 1px rgb(255 255 255 / 70%), inset 0 0 0 1px rgb(0 0 0 / 22%), 0 2px 6px rgb(0 0 0 / 30%);
     --sv-btn-focus-ring:       0 0 0 2px rgb(0 0 0 / 15%), 0 0 0 4px var(--sv-accent);
     --sv-btn-active-bg:        rgb(0 0 0 / 8%);
 
@@ -193,6 +195,29 @@
 .sv-map-btn:focus-visible {
     outline: none;
     box-shadow: var(--sv-btn-focus-ring);
+}
+
+/* Disabled panel button: still visible (the affordance stays discoverable) but
+   clearly inert — used for legend/query when there is no data to show.
+   Bootstrap's `.sv-scope .btn:disabled` (0,3,0) forces its own disabled bg/color
+   and a 0.65 element opacity, which on light theme washed the icon into the map.
+   We override at matching specificity (source order wins) — keep our glass surface
+   and theme foreground, and dim only the icon so it stays readable on BOTH themes. */
+.sv-scope .btn-dark.sv-map-btn:disabled,
+.sv-scope .btn-dark.sv-map-btn[disabled] {
+    cursor: not-allowed;
+    color: var(--sv-btn-fg);
+    background-color: var(--sv-btn-bg-glass);
+    border-color: var(--sv-btn-border);
+    box-shadow: var(--sv-btn-box-shadow);
+    opacity: 1;
+}
+
+.sv-scope .btn-dark.sv-map-btn:disabled svg,
+.sv-scope .btn-dark.sv-map-btn:disabled i,
+.sv-scope .btn-dark.sv-map-btn[disabled] svg,
+.sv-scope .btn-dark.sv-map-btn[disabled] i {
+    opacity: 0.45;
 }
 
 .sv-scope .sv-panel-toggle.active,
@@ -1388,9 +1413,11 @@
     --sv-btn-bg-glass:         rgb(24 24 27 / 85%);
     --sv-btn-bg-glass-hover:   rgb(39 39 42 / 92%);
     --sv-btn-fg:               #fafafa;
-    --sv-btn-border:           rgb(255 255 255 / 22%);
-    --sv-btn-box-shadow:       inset 0 0 0 1px rgb(0 0 0 / 35%), 0 1px 2px rgb(0 0 0 / 25%);
-    --sv-btn-box-shadow-hover: inset 0 0 0 1px rgb(0 0 0 / 35%), 0 2px 6px rgb(0 0 0 / 30%);
+    --sv-btn-border:           rgb(255 255 255 / 32%);
+    /* Dual-tone: light outer ring lifts the dark-glass button off dark tiles,
+       inner dark ring + drop give depth over bright tiles. */
+    --sv-btn-box-shadow:       0 0 0 1px rgb(255 255 255 / 30%), inset 0 0 0 1px rgb(0 0 0 / 40%), 0 1px 3px rgb(0 0 0 / 35%);
+    --sv-btn-box-shadow-hover: 0 0 0 1px rgb(255 255 255 / 40%), inset 0 0 0 1px rgb(0 0 0 / 40%), 0 2px 6px rgb(0 0 0 / 40%);
     --sv-btn-focus-ring:       0 0 0 2px rgb(255 255 255 / 95%), 0 0 0 4px var(--sv-accent);
     --sv-btn-active-bg:        rgb(255 255 255 / 96%);
 
@@ -1408,6 +1435,16 @@
 .sv-scope[data-theme="dark"] #sv-query-content,
 :root[data-theme="dark"] .sv-scope #sv-query-content {
     background-color: var(--sv-panel-input-bg);
+}
+
+/* scale line + attribution sit on the map and use --sv-surface-glass, which stays
+   light (a readable badge over bright tiles). In dark theme give them a dark glass
+   so they match the rest of the dark UI instead of showing a light patch. */
+.sv-scope[data-theme="dark"] .ol-scale-line,
+.sv-scope[data-theme="dark"] .ol-attribution,
+:root[data-theme="dark"] .sv-scope .ol-scale-line,
+:root[data-theme="dark"] .sv-scope .ol-attribution {
+    background-color: rgb(24 24 27 / 82%);
 }
 
 .sv-scope[data-theme="dark"] .sv-feature-props th,

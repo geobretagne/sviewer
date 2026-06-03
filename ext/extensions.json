@@ -17,7 +17,7 @@
   {
     "id": "me",
     "name": "Moi",
-    "description": "Espace personnel sViewer (local au navigateur). Première facette : Mes cartes — enregistrement de cartes sViewer avec titre, filtre par titre, restauration en un clic, export/import JSON. Évolutif vers d'autres facettes personnelles (annotations, préférences). Aucun serveur, aucun compte."
+    "description": "Espace personnel sViewer (local au navigateur). Mes cartes — enregistrement de cartes sViewer (nom, filtre, restauration en un tap, export/import JSON). En mode application installée : devient le hub d'accueil, avec chargement d'une carte par collage d'URL ou par scan d'un QR code (caméra), pour pallier l'absence de barre d'adresse. Aucun serveur, aucun compte."
   },
   {
     "id": "panoramax",

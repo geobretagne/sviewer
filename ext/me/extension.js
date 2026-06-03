@@ -39,6 +39,11 @@
     var btnEl  = null;
     var pendingMsg = '';
     var filterTerm = '';
+    // QR scanner state
+    var scanStream = null;     // active MediaStream (camera) — must be stopped on exit
+    var scanRAF    = null;     // requestAnimationFrame id of the decode loop
+    var scanEl     = null;     // overlay DOM element
+    var jsqrReady  = false;    // jsQR fallback loaded
 
     // --- Inline SVG icons (Bootstrap Icons, MIT) -----------------------------
     // Extensions cannot rely on sViewer's font subset — inline SVG keeps the
@@ -52,7 +57,8 @@
         'trash':             '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/></svg>',
         'download':          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/></svg>',
         'upload':            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>',
-        'search':            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></svg>'
+        'search':            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></svg>',
+        'qr-scan':           '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0zm12 0a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5M.5 12a.5.5 0 0 1 .5.5V15h2.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H15v-2.5a.5.5 0 0 1 .5-.5M4 4h1v1H4z"/><path d="M7 2H2v5h5zM3 3h3v3H3zm2 8H4v1h1z"/><path d="M7 9H2v5h5zm-4 1h3v3H3zm8-6h1v1h-1z"/><path d="M9 2h5v5H9zm1 1v3h3V3zM8 8v2h1v1H8v1h2v-2h1v2h1v-1h2v-1h-3V8zm2 2H9V9h1zm4 2h-1v1h-2v1h3zm-4 2v-1H8v1z"/><path d="M12 9h2V8h-2z"/></svg>'
     };
     function icon(name) { return ICONS[name] || ''; }
 
@@ -93,6 +99,7 @@
 
         SViewer.panel.onClose(PANEL, function () {
             active = false;
+            stopScan();   // never leave the camera running when the panel closes
             btnEl.setAttribute('aria-pressed', 'false');
             btnEl.classList.remove('active');
         });
@@ -259,6 +266,12 @@
             '<button id="sv-me-load-btn" class="btn btn-sm btn-primary" type="button" style="white-space:nowrap">',
             escHtml(t('btn.load')),
             '</button>',
+            // Scan a QR code — the friction-free way to bring a sViewer URL into an
+            // installed app that has no address bar (point at a QR shown on another
+            // screen or printed).
+            '<button id="sv-me-scan-btn" class="btn btn-sm btn-secondary" type="button"',
+            '        aria-label="' + escAttr(t('btn.scan')) + '" title="' + escAttr(t('btn.scan')) + '"',
+            '        style="display:inline-flex;align-items:center">' + icon('qr-scan') + '</button>',
             '</div>',
             '<div style="font-size:.7rem;color:var(--sv-panel-fg-muted);margin:.2rem 0 .6rem">' + escHtml(t('label.load_hint')) + '</div>'
         ].join('');
@@ -268,18 +281,150 @@
     // Reuses isSafeUrl (same-origin https, or same-origin http for localhost dev) so
     // a pasted link can never bounce the standalone app off-origin. Forces `me` into
     // the ext list so the personal hub survives the navigation.
-    function onLoadUrl() {
-        var input = document.getElementById('sv-me-load');
-        var raw = (input && input.value || '').trim();
-        if (!raw) { return; }
-        if (!isSafeUrl(raw)) { pendingMsg = t('msg.load_invalid'); refresh(); return; }
+    // Validate a sViewer URL (same-origin only) and navigate to it, keeping the `me`
+    // hub in the ext list. Shared by the paste field and the QR scanner. Returns
+    // false (with a pending error message) if the URL is rejected.
+    function loadUrlString(raw) {
+        raw = (raw || '').trim();
+        if (!raw) { return false; }
+        if (!isSafeUrl(raw)) { pendingMsg = t('msg.load_invalid'); refresh(); return false; }
         var u;
-        try { u = new URL(raw, window.location.origin); } catch (e) { pendingMsg = t('msg.load_invalid'); refresh(); return; }
+        try { u = new URL(raw, window.location.origin); } catch (e) { pendingMsg = t('msg.load_invalid'); refresh(); return false; }
         // Keep the `me` hub available after reload.
         var ext = (u.searchParams.get('ext') || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
         if (ext.indexOf('me') === -1) { ext.push('me'); }
         u.searchParams.set('ext', ext.join(','));
         window.location.assign(u.href);
+        return true;
+    }
+    function onLoadUrl() {
+        var input = document.getElementById('sv-me-load');
+        loadUrlString(input && input.value);
+    }
+
+    // --- QR scanner ----------------------------------------------------------
+    // Opens the camera and decodes a QR code, then loads the URL it contains.
+    // The decoded URL goes through loadUrlString → isSafeUrl, so a hostile QR can
+    // only ever point at this same origin (never off-site). Decoder: native
+    // BarcodeDetector when available (Android Chrome, zero weight), else lazy-loaded
+    // jsQR (iOS/others). Camera tracks are always stopped on exit.
+
+    function stopScan() {
+        if (scanRAF) { cancelAnimationFrame(scanRAF); scanRAF = null; }
+        if (scanStream) { scanStream.getTracks().forEach(function (tr) { tr.stop(); }); scanStream = null; }
+        if (scanEl && scanEl.parentNode) { scanEl.parentNode.removeChild(scanEl); }
+        scanEl = null;
+    }
+
+    function loadJsqr(cb) {
+        if (jsqrReady || window.jsQR) { jsqrReady = true; cb(); return; }
+        var s = document.createElement('script');
+        s.src = BASE + 'jsqr.min.js';
+        s.onload  = function () { jsqrReady = true; cb(); };
+        s.onerror = function () { cb(new Error('jsqr-load-failed')); };
+        document.head.appendChild(s);
+    }
+
+    function scanStatus(msg) {
+        var el = scanEl && scanEl.querySelector('.sv-me-scan-status');
+        if (el) { el.textContent = msg; }
+    }
+
+    // Build the camera overlay (video + aiming frame + cancel) and append to body.
+    function buildScanOverlay(video) {
+        var el = document.createElement('div');
+        el.setAttribute('style', [
+            'position:fixed', 'inset:0', 'z-index:10000', 'background:#000',
+            'display:flex', 'flex-direction:column', 'align-items:center', 'justify-content:center'
+        ].join(';'));
+        video.setAttribute('playsinline', '');
+        video.setAttribute('muted', '');
+        video.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0';
+        var frame = document.createElement('div');
+        frame.style.cssText = 'position:relative;width:70vmin;height:70vmin;border:3px solid rgba(255,255,255,.85);border-radius:12px;box-shadow:0 0 0 100vmax rgba(0,0,0,.45)';
+        var status = document.createElement('div');
+        status.className = 'sv-me-scan-status';
+        status.setAttribute('role', 'status');
+        status.style.cssText = 'position:absolute;bottom:12%;left:0;right:0;text-align:center;color:#fff;font-size:.95rem;padding:0 1rem';
+        status.textContent = t('scan.hint');
+        var cancel = document.createElement('button');
+        cancel.type = 'button';
+        cancel.className = 'btn btn-light';
+        cancel.textContent = t('scan.cancel');
+        cancel.style.cssText = 'position:absolute;top:12px;right:12px;z-index:1';
+        cancel.addEventListener('click', stopScan);
+        el.appendChild(video);
+        el.appendChild(frame);
+        el.appendChild(status);
+        el.appendChild(cancel);
+        return el;
+    }
+
+    async function startScan() {
+        if (scanStream) { return; } // already scanning
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            pendingMsg = t('scan.no_camera'); refresh(); return;
+        }
+        var video = document.createElement('video');
+        try {
+            scanStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }, audio: false
+            });
+        } catch (e) {
+            scanStream = null;
+            pendingMsg = (e && e.name === 'NotAllowedError') ? t('scan.denied') : t('scan.no_camera');
+            refresh();
+            return;
+        }
+        scanEl = buildScanOverlay(video);
+        document.body.appendChild(scanEl);
+        video.srcObject = scanStream;
+        try { await video.play(); } catch (e) { /* autoplay; playsinline set */ }
+
+        // Native BarcodeDetector path (no library).
+        var detector = null;
+        if (window.BarcodeDetector) {
+            try { detector = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { detector = null; }
+        }
+
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        var onDecoded = function (text) {
+            if (!text) { return false; }
+            // loadUrlString navigates on success; on rejection it sets pendingMsg.
+            stopScan();
+            if (!loadUrlString(text)) { /* invalid/off-origin — message already set */ }
+            return true;
+        };
+
+        var tick = function () {
+            if (!scanStream) { return; }            // stopped
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                if (detector) {
+                    detector.detect(video).then(function (codes) {
+                        if (codes && codes.length && codes[0].rawValue) { onDecoded(codes[0].rawValue); }
+                    }).catch(function () { /* transient */ });
+                } else if (window.jsQR) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    var code = window.jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+                    if (code && code.data) { onDecoded(code.data); }
+                }
+            }
+            if (scanStream) { scanRAF = requestAnimationFrame(tick); }
+        };
+
+        if (detector) {
+            scanRAF = requestAnimationFrame(tick);
+        } else {
+            loadJsqr(function (err) {
+                if (err || !window.jsQR) { stopScan(); pendingMsg = t('scan.no_camera'); refresh(); return; }
+                scanRAF = requestAnimationFrame(tick);
+            });
+        }
     }
 
     function panelHtml() {
@@ -289,18 +434,15 @@
         var msg      = pendingMsg;
         pendingMsg = '';
 
-        // Sticky save block (top) + sticky footer (bottom) + naturally-scrolling
-        // list in between. One scrollbar (the panel's own); no nested overflow.
-        // 'position:sticky' on direct children of the scroll container does the
-        // trick without JS or fixed heights.
+        // Flat layout: save section, a horizontal rule, then the registry (list).
+        // No boxed/sticky save block — the panel is one scrolling surface; sections
+        // are told apart by a simple <hr>, matching sViewer's flat idiom.
+        var hr = '<hr style="border:0;border-top:1px solid var(--sv-panel-border);margin:.4rem 0 .6rem">';
         var head = [
             '<div style="padding:0.75rem;display:flex;flex-direction:column;gap:0.6rem">',
 
-            '<div id="sv-me-save-block" style="position:sticky;top:0;z-index:2;background:var(--sv-panel-bg);padding-bottom:.5rem;border-bottom:1px solid var(--sv-panel-border);margin:-0.75rem -0.75rem 0;padding:0.75rem">',
-            // Installed standalone app only: a config-URL input replaces the missing
-            // address bar — paste a sViewer link to load its configuration in-app.
-            // Hidden in browser tabs (address bar exists) and embeds (would navigate
-            // away the host). Gated by SViewer.isInstalled() (fail-closed).
+            // Save section. In an installed app the loader (paste URL / scan QR) sits
+            // on top — it replaces the missing address bar (gated by isInstalled()).
             loadBlockHtml(),
             '<label for="sv-me-title" style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.2rem">' + escHtml(t('label.title')) + '</label>',
             '<input id="sv-me-title" type="text" class="form-control form-control-sm"',
@@ -312,9 +454,12 @@
             icon('bookmark-plus') + ' ' + escHtml(t('btn.save')),
             '</button>',
             msg ? '<div id="sv-me-msg" style="font-size:.8rem;color:var(--sv-panel-fg-muted);margin-top:.4rem">' + escHtml(msg) + '</div>' : '',
+
+            // Separator between the save section and the registry below.
+            fullList.length > 0 ? hr : '',
             // Filter input — only shown when at least one entry exists
             fullList.length > 0 ? [
-                '<div style="position:relative;margin-top:.5rem">',
+                '<div style="position:relative">',
                 '<label for="sv-me-filter" class="visually-hidden">' + escHtml(t('placeholder.filter')) + '</label>',
                 '<span aria-hidden="true" style="position:absolute;left:.5rem;top:50%;transform:translateY(-50%);color:var(--sv-panel-fg-muted);pointer-events:none">' + icon('search') + '</span>',
                 '<input id="sv-me-filter" type="search" class="form-control form-control-sm"',
@@ -324,8 +469,7 @@
                 '       aria-label="' + escAttr(t('placeholder.filter')) + '"',
                 '       style="color:var(--sv-panel-fg);background-color:var(--sv-panel-input-bg);padding-left:1.8rem">',
                 '</div>'
-            ].join('') : '',
-            '</div>'
+            ].join('') : ''
         ];
 
         var body;
@@ -342,7 +486,8 @@
         }
 
         var footer = [
-            '<div style="position:sticky;bottom:0;z-index:2;background:var(--sv-panel-bg);display:flex;gap:.4rem;border-top:1px solid var(--sv-panel-border);margin:0 -0.75rem -0.75rem;padding:0.6rem 0.75rem">',
+            hr,
+            '<div style="display:flex;gap:.4rem">',
             '<button id="sv-me-export" class="btn btn-sm btn-outline-secondary flex-fill" type="button">',
             icon('download') + ' ' + escHtml(t('btn.export')),
             '</button>',
@@ -417,6 +562,8 @@
     function wireEvents() {
         var loadBtn = document.getElementById('sv-me-load-btn');
         if (loadBtn) { loadBtn.addEventListener('click', onLoadUrl); }
+        var scanBtn = document.getElementById('sv-me-scan-btn');
+        if (scanBtn) { scanBtn.addEventListener('click', function () { startScan(); }); }
         var loadInput = document.getElementById('sv-me-load');
         if (loadInput) {
             loadInput.addEventListener('keydown', function (ev) {
