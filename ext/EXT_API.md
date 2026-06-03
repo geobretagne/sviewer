@@ -179,6 +179,17 @@ const app  = SViewer.getApp();   // SViewer.app instance (internal, unstable)
 SViewer.version   // semver string, e.g. '0.10.0'
 SViewer.commit    // short git hash, e.g. 'f285337'
 
+// Canonical permalink for the current map — the exact URL the share panel builds
+// (same params, same title handling). Use it to store/share the current map state
+// instead of assembling a URL yourself.
+const url = SViewer.getPermalink();   // 'https://…/index.html?x=…&y=…&z=…&title=…'
+
+// True only when running as an INSTALLED standalone app (PWA/WebAPK) at the top
+// level — never a browser tab, an embed, or a Grist/Superset iframe. Fail-closed.
+// Use to gate installed-only UI (e.g. an in-app config-URL input that replaces the
+// missing address bar). Must NOT navigate the page in embedded modes.
+const installed = SViewer.isInstalled();   // boolean
+
 // Base URL of the calling extension's directory (trailing slash).
 // Use this instead of manually scanning script tags.
 const BASE = SViewer.extensionBase();  // e.g. 'https://example.com/ext/my-ext/'
@@ -352,8 +363,16 @@ document.head.appendChild(link);
 // id    : unique extension identifier (e.g. 'panoramax') — becomes owner of the panel
 // title : displayed in the panel header
 // html  : injected into the panel body (innerHTML)
+// opts  : optional { fullscreen: true } — on small screens (≤600px) the panel fills
+//         the viewport instead of floating, for content-heavy / no-map-interaction
+//         panels (lists, forms, settings). Core stays extension-agnostic: it toggles
+//         the generic 'sv-panel-fullscreen' marker; you only pass the flag. Leave it
+//         off for map-coupled panels (the user needs to see the map while it's open).
 // No toolbar button is injected — extensions control their own trigger UI.
-SViewer.panel.open(id, title, html);
+SViewer.panel.open(id, title, html, opts);
+
+// Example: a self-contained list panel that should be fullscreen on mobile.
+SViewer.panel.open('my-ext', 'My list', html, { fullscreen: true });
 
 // Replace panel body HTML without changing title or triggering open animation.
 // Use for streaming / progressive content updates.

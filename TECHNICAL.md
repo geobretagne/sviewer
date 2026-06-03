@@ -1119,6 +1119,33 @@ Configuration dans `manifest.json` :
 - `icons` : PNG 192x192 et 512x512
 - `theme_color` + `background_color` : Couleurs barre d'adresse/splash
 
+### Application installée et persistance par URL
+
+La persistance de sViewer **est** l'URL. Mais Android lie l'installation (WebAPK) au
+`start_url` du manifeste (`/sviewer/`, nu) : une carte configurée par permalien s'installe
+nue, et l'app installée n'a **pas de barre d'adresse** pour en charger une autre. (Une
+réécriture du manifeste à l'exécution a été essayée puis abandonnée : le navigateur évalue le
+manifeste avant le script — non fiable.)
+
+**Réponse — l'extension `me` comme hub installé.** Le cœur expose deux primitives,
+extension-agnostiques :
+
+- `SViewer.isInstalled()` — vrai uniquement en application installée autonome (PWA/WebAPK) au
+  niveau supérieur ; faux en onglet, embed, iframe Grist/Superset. *Fail-closed* (toute
+  incertitude → faux). Détection : `matchMedia('(display-mode: standalone|minimal-ui|
+  fullscreen)')` + `navigator.standalone` (iOS) + `window.self === window.top`.
+- `SViewer.getPermalink()` — le permalien canonique de la carte (identique au panneau
+  Partager).
+
+À partir de là, **embed.js charge automatiquement l'extension `me`** quand `isInstalled()` est
+vrai. `me` devient le hub d'accueil et fournit, en mode installé seulement, de quoi charger une
+carte sans barre d'adresse : **coller une URL** ou **scanner un QR code** (caméra +
+`BarcodeDetector` natif, repli `jsQR` auto-hébergé). L'URL chargée passe par une validation
+**même origine** (`isSafeUrl`) — un lien tiers ou un QR malveillant est refusé.
+
+Le QR code d'une carte se **génère** depuis le panneau Partager ; on le **scanne** depuis `me`
+installé → transfert bureau→terrain sans saisie.
+
 ---
 
 ## Fonctionnalités mobiles
