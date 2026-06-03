@@ -166,7 +166,7 @@
                 clearTimeout(timer);
                 window.removeEventListener('message', onMessage);
                 try {
-                    var result = test.assert ? test.assert(event.data.hardConfig, event, queryDOM, clickDOM) : undefined;
+                    var result = test.assert ? test.assert(event.data.hardConfig, event, queryDOM, clickDOM, apiCall) : undefined;
                     // assert may return a Promise (for fetch-based checks or queryDOM calls)
                     if (result && typeof result.then === 'function') {
                         result.then(function() { resolve('ok'); }).catch(reject);

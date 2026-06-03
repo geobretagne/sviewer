@@ -4,6 +4,49 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.16.0] - 2026-06-03
+
+### Added
+
+- **Application installée autonome (PWA) self-suffisante.** En mode installé (pas de barre
+  d'adresse), l'extension **`me`** est chargée automatiquement comme hub d'accueil et permet de
+  charger une carte sans saisie : **coller une URL** sViewer ou **scanner un QR code** (caméra,
+  `BarcodeDetector` natif avec repli `jsQR` auto-hébergé, Apache-2.0). L'URL chargée est validée
+  **même origine** (un lien tiers ou QR malveillant est refusé). Résout le transfert d'une carte
+  configurée du bureau vers le terrain.
+- **`SViewer.isInstalled()`** — détection fiable (*fail-closed*) du mode application installée
+  autonome (PWA/WebAPK, niveau supérieur ; faux en onglet/embed/iframe). Pour conditionner une
+  UI réservée à l'app installée.
+- **`SViewer.getPermalink()`** — permalien canonique de la carte courante (identique au panneau
+  Partager) ; source unique de vérité réutilisée par les extensions.
+- **`SViewer.panel.open(id, title, html, { fullscreen })`** — option d'affichage plein écran sur
+  petit écran, extension-agnostique (marqueur générique `sv-panel-fullscreen`). Adoptée par les
+  panneaux `me` et `field` (formulaires/listes sans interaction carte).
+
+### Changed
+
+- **Boutons Légende / Interroger désactivés sans données** : la légende exige une donnée WMS ;
+  l'interrogation exige une donnée WMS ou des entités vectorielles chargées. Plus de boutons
+  morts sur une carte nue (icône grisée, `aria-disabled`, réactivés au chargement de données).
+- **Extension `me`** (→ 0.2.0) : panneau plein écran sur mobile, mise en page à plat (séparateurs
+  `<hr>` au lieu de boîtes), ligne de carte cliquable pour ouvrir (avatar + nom), libellé
+  « Enregistrer sous » distinct du titre de la carte. Le nom d'enregistrement n'écrase plus le
+  `?title=` de la carte (le titre de la carte est préservé). Thème sombre corrigé (texte/surfaces).
+
+### Fixed
+
+- **`SViewer.panel.open` perdait le 4ᵉ argument** (proxy embed.js tronqué à 3 paramètres) — les
+  options (dont `fullscreen`) n'atteignaient jamais le cœur.
+- **`setTitle`** : libellé du bouton synchronisé même titre vidé ; événement `sv:titleChange`
+  émet la valeur normalisée.
+- **Mode sombre** : ligne d'échelle + attribution OpenLayers en verre sombre (étaient claires).
+- **Bouton de carte désactivé** : icône grisée lisible en thème clair (l'opacité globale +
+  override Bootstrap le rendaient invisible).
+- **Bordures des boutons de carte** : contour bi-ton (anneau clair externe + sombre interne) pour
+  une visibilité sur tout fond de carte (clair/sombre/chargé).
+- **Icône PWA** : régénérée depuis `icon.svg` (globe + repère) — les PNG étaient des carrés
+  sombres pleins, invisibles en thème sombre.
+
 ## [0.15.2] - 2026-06-02
 
 ### Added (ext field → 0.4.0)

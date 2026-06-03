@@ -1,33 +1,38 @@
 /* Suite 08 — Panel toggle DOM state (click-driven)
  * Guards jQuery→vanilla migration of togglePanel/closePanel.
  * assert(hardConfig, event, queryDOM, clickDOM)
+ *
+ * Uses the always-available panels (share, locate) so the toggle MECHANISM is
+ * tested without a data dependency. Legend/query are now disabled when no WMS or
+ * features are loaded (see suite 15), so they aren't suitable for a bare-map
+ * mechanism test.
  */
 
-// Click legend button → sidepanel gets .active, button gets aria-pressed=true
+// Click share button → sidepanel gets .active, button gets aria-pressed=true
 SV_TESTS.push({
-    id: 'panel-open-legend',
-    label: 'Panel — click legend button opens sidepanel (.active)',
+    id: 'panel-open-share',
+    label: 'Panel — click share button opens sidepanel (.active)',
     group: 'Panel',
     type: 'visual',
     params: {},
     assert: function(hc, ev, queryDOM, clickDOM) {
-        return clickDOM('[data-sv-panel="legend"]').then(function() {
+        return clickDOM('[data-sv-panel="share"]').then(function() {
             return Promise.all([
                 queryDOM('#sv-sidepanel', 'className'),
-                queryDOM('[data-sv-panel="legend"]', 'aria-pressed')
+                queryDOM('[data-sv-panel="share"]', 'aria-pressed')
             ]);
         }).then(function(results) {
             if (!results[0].value || results[0].value.indexOf('active') === -1) {
                 throw new Error('sidepanel missing .active after open: ' + results[0].value);
             }
             if (results[1].value !== 'true') {
-                throw new Error('legend button aria-pressed not true: ' + results[1].value);
+                throw new Error('share button aria-pressed not true: ' + results[1].value);
             }
         });
     }
 });
 
-// Click legend button twice → sidepanel closes (no .active), button aria-pressed=false
+// Click share button twice → sidepanel closes (no .active), button aria-pressed=false
 SV_TESTS.push({
     id: 'panel-close-on-second-click',
     label: 'Panel — second click on same button closes sidepanel',
@@ -35,25 +40,25 @@ SV_TESTS.push({
     type: 'visual',
     params: {},
     assert: function(hc, ev, queryDOM, clickDOM) {
-        return clickDOM('[data-sv-panel="legend"]')
-        .then(function() { return clickDOM('[data-sv-panel="legend"]'); })
+        return clickDOM('[data-sv-panel="share"]')
+        .then(function() { return clickDOM('[data-sv-panel="share"]'); })
         .then(function() {
             return Promise.all([
                 queryDOM('#sv-sidepanel', 'className'),
-                queryDOM('[data-sv-panel="legend"]', 'aria-pressed')
+                queryDOM('[data-sv-panel="share"]', 'aria-pressed')
             ]);
         }).then(function(results) {
             if (results[0].value && results[0].value.indexOf('active') !== -1) {
                 throw new Error('sidepanel still .active after second click');
             }
             if (results[1].value === 'true') {
-                throw new Error('legend button aria-pressed still true after close');
+                throw new Error('share button aria-pressed still true after close');
             }
         });
     }
 });
 
-// Open legend, then click query → legend button loses aria-pressed, query button gains it
+// Open share, then click locate → share button loses aria-pressed, locate gains it
 SV_TESTS.push({
     id: 'panel-switch-active-button',
     label: 'Panel — switching panels updates aria-pressed on both buttons',
@@ -61,19 +66,19 @@ SV_TESTS.push({
     type: 'visual',
     params: {},
     assert: function(hc, ev, queryDOM, clickDOM) {
-        return clickDOM('[data-sv-panel="legend"]')
-        .then(function() { return clickDOM('[data-sv-panel="query"]'); })
+        return clickDOM('[data-sv-panel="share"]')
+        .then(function() { return clickDOM('[data-sv-panel="locate"]'); })
         .then(function() {
             return Promise.all([
-                queryDOM('[data-sv-panel="legend"]', 'aria-pressed'),
-                queryDOM('[data-sv-panel="query"]', 'aria-pressed')
+                queryDOM('[data-sv-panel="share"]', 'aria-pressed'),
+                queryDOM('[data-sv-panel="locate"]', 'aria-pressed')
             ]);
         }).then(function(results) {
             if (results[0].value === 'true') {
-                throw new Error('legend button still aria-pressed=true after switching to query');
+                throw new Error('share button still aria-pressed=true after switching to locate');
             }
             if (results[1].value !== 'true') {
-                throw new Error('query button aria-pressed not true after switch');
+                throw new Error('locate button aria-pressed not true after switch');
             }
         });
     }
@@ -87,7 +92,7 @@ SV_TESTS.push({
     type: 'visual',
     params: {},
     assert: function(hc, ev, queryDOM, clickDOM) {
-        return clickDOM('[data-sv-panel="legend"]').then(function() {
+        return clickDOM('[data-sv-panel="share"]').then(function() {
             return queryDOM('#sv-frame-map', 'className');
         }).then(function(r) {
             if (!r.value || r.value.indexOf('sv-panel-open') === -1) {
@@ -105,7 +110,7 @@ SV_TESTS.push({
     type: 'visual',
     params: {},
     assert: function(hc, ev, queryDOM, clickDOM) {
-        return clickDOM('[data-sv-panel="legend"]')
+        return clickDOM('[data-sv-panel="share"]')
         .then(function() { return clickDOM('.sv-sidepanel-close'); })
         .then(function() {
             return queryDOM('#sv-sidepanel', 'className');

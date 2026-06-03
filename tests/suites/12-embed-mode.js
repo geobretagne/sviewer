@@ -132,17 +132,18 @@ embedTest(
 );
 
 // 6. Panel opens via click (DOM interaction works through embed DOM)
+// Uses the always-available share panel — legend is disabled with no WMS loaded.
 embedTest(
     'embed-panel-open',
-    'Embed — legend panel opens on button click',
+    'Embed — share panel opens on button click',
     {},
     function(hc, ev, queryDOM, clickDOM) {
-        return clickDOM('[data-sv-panel="legend"]').then(function() {
+        return clickDOM('[data-sv-panel="share"]').then(function() {
             return queryDOM('#sv-sidepanel', 'className');
         }).then(function(r) {
             if (!r.found) { throw new Error('#sv-sidepanel not found'); }
             if (!r.value || r.value.indexOf('active') === -1) {
-                throw new Error('sidepanel missing .active after legend click in embed mode');
+                throw new Error('sidepanel missing .active after share click in embed mode');
             }
         });
     }

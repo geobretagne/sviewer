@@ -2739,7 +2739,9 @@ if (state.label) {
         var API_TEST_WHITELIST = {
             hasExtension:       true,
             loadedExtensions:   true,
-            loadExtension:      true
+            loadExtension:      true,
+            isInstalled:        true,
+            getPermalink:       true
         };
         if (window.parent !== window) {
             window.addEventListener('message', function(e) {
