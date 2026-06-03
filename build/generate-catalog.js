@@ -71,8 +71,14 @@ function renderCard(m) {
                 </li>`).join('')}
             </ul>` : '';
 
+    const imgSrc = hasScreenshot ? `${esc(m._dir)}/${esc(m.screenshot)}` : '';
     const img = hasScreenshot
-        ? `<img src="${esc(m._dir)}/${esc(m.screenshot)}" alt="${esc(m.name)} screenshot" class="sv-card-img" loading="lazy">`
+        ? `<button type="button" class="sv-card-thumb" data-full="${imgSrc}" aria-label="Agrandir la capture de ${esc(m.name)}">
+            <span class="sv-phone">
+                <span class="sv-phone-notch"></span>
+                <img src="${imgSrc}" alt="Capture de ${esc(m.name)}" loading="lazy">
+            </span>
+        </button>`
         : '';
 
     const typeClass = { extension: 'sv-badge-extension', page: 'sv-badge-page', demo: 'sv-badge-demo' }[m.type] || 'sv-badge-extension';
@@ -208,6 +214,8 @@ function buildCatalog(items) {
 
         /* Cards */
         .sv-card {
+            display: flex;
+            align-items: stretch;
             background: #fff;
             border: 1px solid #dde2e8;
             border-radius: 8px;
@@ -216,14 +224,52 @@ function buildCatalog(items) {
             scroll-margin-top: 1.25rem;
         }
         .sv-card[hidden] { display: none; }
-        .sv-card-img {
+
+        /* Left thumbnail — rendered as a phone (sViewer is mobile-first) */
+        .sv-card-thumb {
+            flex-shrink: 0;
+            align-self: stretch;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            border: none;
+            border-right: 1px solid #dde2e8;
+            background: #eef1f5;
+            cursor: zoom-in;
+        }
+        /* Phone bezel drawn in pure CSS, screenshot fills the screen */
+        .sv-phone {
+            position: relative;
+            display: block;
+            width: 104px;
+            aspect-ratio: 9 / 19.5;
+            background: #14161a;
+            border-radius: 16px;
+            padding: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.06);
+        }
+        .sv-phone-notch {
+            position: absolute;
+            top: 9px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 34px;
+            height: 4px;
+            background: #2c2f36;
+            border-radius: 3px;
+            z-index: 2;
+        }
+        .sv-phone img {
             width: 100%;
-            height: 160px;
+            height: 100%;
             object-fit: cover;
             display: block;
-            border-bottom: 1px solid #dde2e8;
+            border-radius: 10px;
         }
-        .sv-card-body { padding: 1rem; }
+        .sv-card-thumb:focus { outline: 2px solid #1a3a5c; outline-offset: -2px; }
+        .sv-card-thumb:hover .sv-phone { box-shadow: 0 4px 14px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.08); }
+        .sv-card-body { flex: 1; min-width: 0; padding: 1rem; }
         .sv-card-head {
             display: flex;
             align-items: baseline;
@@ -341,6 +387,45 @@ function buildCatalog(items) {
         /* No results */
         #sv-noresults { display: none; color: #888; font-size: .9rem; padding: 2rem 0; text-align: center; }
 
+        /* Lightbox */
+        #sv-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(10,18,30,.88);
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        #sv-lightbox.open { display: flex; }
+        /* Large phone in the lightbox — height-driven so it fits the viewport */
+        .sv-phone-lg {
+            width: auto;
+            height: min(85vh, 720px);
+            padding: 10px;
+            border-radius: 28px;
+            box-shadow: 0 8px 40px rgba(0,0,0,.5);
+        }
+        .sv-phone-lg .sv-phone-notch { top: 14px; width: 52px; height: 6px; }
+        .sv-phone-lg img { border-radius: 20px; }
+        #sv-lightbox-close {
+            position: absolute;
+            top: 1rem;
+            right: 1.25rem;
+            width: 40px;
+            height: 40px;
+            font-size: 1.6rem;
+            line-height: 1;
+            color: #fff;
+            background: rgba(255,255,255,.12);
+            border: 1px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        #sv-lightbox-close:hover { background: rgba(255,255,255,.22); }
+        #sv-lightbox-close:focus { outline: 2px solid #fff; outline-offset: 2px; }
+
         @media (max-width: 600px) {
             .sv-header { padding: .75rem 1rem; gap: 1rem; }
             .sv-search-wrap { max-width: 100%; }
@@ -348,6 +433,10 @@ function buildCatalog(items) {
             .sv-nav { width: 100%; position: static; }
             .sv-nav ul { display: flex; flex-wrap: wrap; gap: .3rem; }
             .sv-nav-link { font-size: .8rem; padding: .2rem .5rem; border: 1px solid #dde2e8; }
+
+            /* Phone thumb stays beside text, just smaller */
+            .sv-card-thumb { padding: .6rem; }
+            .sv-phone { width: 78px; }
         }
     </style>
 </head>
@@ -376,6 +465,14 @@ ${cards}
         </div>
         <p id="sv-noresults" role="status">Aucune extension trouvée.</p>
     </div>
+</div>
+
+<div id="sv-lightbox" role="dialog" aria-modal="true" aria-label="Capture agrandie">
+    <button type="button" id="sv-lightbox-close" aria-label="Fermer">&times;</button>
+    <span class="sv-phone sv-phone-lg">
+        <span class="sv-phone-notch"></span>
+        <img id="sv-lightbox-img" src="" alt="">
+    </span>
 </div>
 
 <script>
@@ -438,6 +535,37 @@ ${cards}
     window.addEventListener('scroll', onScroll, { passive: true });
     update();
     onScroll();
+
+    // --- Lightbox: click a thumbnail to enlarge its screenshot ---
+    var box      = document.getElementById('sv-lightbox');
+    var boxImg   = document.getElementById('sv-lightbox-img');
+    var boxClose = document.getElementById('sv-lightbox-close');
+    var lastFocus = null;
+
+    function openBox(src, alt) {
+        boxImg.src = src;
+        boxImg.alt = alt || '';
+        box.classList.add('open');
+        lastFocus = document.activeElement;
+        boxClose.focus();
+    }
+    function closeBox() {
+        box.classList.remove('open');
+        boxImg.src = '';
+        if (lastFocus) { lastFocus.focus(); }
+    }
+
+    document.querySelectorAll('.sv-card-thumb').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var img = btn.querySelector('img');
+            openBox(btn.dataset.full, img ? img.alt : '');
+        });
+    });
+    boxClose.addEventListener('click', closeBox);
+    box.addEventListener('click', function(e) { if (e.target === box) { closeBox(); } });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && box.classList.contains('open')) { closeBox(); }
+    });
 }());
 </script>
 

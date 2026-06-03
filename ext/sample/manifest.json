@@ -1,56 +1,29 @@
 {
   "id": "sample",
   "type": "demo",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "name": "Sample",
-  "description": "Implémentation de référence annotée pour auteurs d'extensions — charge un tableau JSON plat comme données vectorielles",
+  "description": "Implémentation de référence annotée pour auteurs d'extensions — bouton de barre d'outils, panneau latéral (plein écran mobile), chargement de données et événements",
   "author": "fphg",
-  "tags": ["référence", "template", "développement"],
+  "screenshot": "screenshot.png",
+  "tags": ["référence", "template", "développement", "panneau", "api"],
 
   "entry": "extension.js",
 
-  "params": [
-    {
-      "name": "_format",
-      "type": "string",
-      "description": "Requis — active cet adaptateur",
-      "enum": ["sample"],
-      "example": "_format=sample"
-    },
-    {
-      "name": "_collat",
-      "type": "string",
-      "description": "Nom de colonne latitude (défaut: latitude)",
-      "example": "_collat=lat"
-    },
-    {
-      "name": "_collon",
-      "type": "string",
-      "description": "Nom de colonne longitude (défaut: longitude)",
-      "example": "_collon=lng"
-    },
-    {
-      "name": "_labelcol",
-      "type": "string",
-      "description": "Colonne utilisée comme étiquette sur la carte",
-      "example": "_labelcol=name"
-    }
-  ],
-
   "sviewer": {
-    "minVersion": "0.10.0"
+    "minVersion": "0.16.0"
   },
 
   "seo": {
     "title": "Sample extension — référence pour développeurs sViewer",
-    "metaDescription": "Adaptateur de référence annoté pour créer une extension sViewer. Démontre match(), convert(), lecture des hints URL et construction d'un GeoJSON FeatureCollection."
+    "metaDescription": "Extension de référence annotée pour sViewer. Démontre l'API 0.16 : bouton de barre d'outils (aria + sv-alt-toggle), panneau latéral avec mode plein écran, panel.onClose, isInstalled(), getPermalink(), chargement d'entités et événements."
   },
 
   "examples": [
     {
-      "title": "Tableau JSON plat",
-      "url": "?geojson=https://example.com/data.json&_format=sample",
-      "description": "Tableau [{latitude, longitude, …}, …]"
+      "title": "Activer l'extension de référence",
+      "url": "?ext=sample",
+      "description": "Bouton ⭐ dans la barre d'outils → ouvre le panneau de démonstration"
     }
   ]
 }

@@ -5,6 +5,7 @@
   "name":        "Terrain",
   "description": "Collecte terrain au GPS : Points, Ligne ou Polygone (moyenne GPS à l'ajout, contrôle de précision cible avant enregistrement), attributs typés selon un schéma Grist, photos jointes (downscale client), persistance hors-ligne (IndexedDB) et transmission vers Grist au retour du réseau. Configuration par collage d'URL Grist et choix de table. Mono-backend Grist, jeton optionnel scopé document.",
   "author":      "fphg",
+  "screenshot":  "screenshot.png",
   "tags":        ["terrain", "gps", "collecte", "grist", "hors-ligne", "points", "ligne", "polygone", "photo", "field"],
 
   "entry": "extension.js",

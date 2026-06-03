@@ -3,9 +3,10 @@
   "type":        "page",
   "version":     "0.1.0",
   "name":        "Blueprint",
-  "description": "Compose and share an sViewer URL in under 60 seconds — build, preview, copy, modify",
+  "description": "Composer et partager une URL sViewer en moins de 60 secondes — construire, prévisualiser, copier, modifier",
   "author":      "fphg",
-  "tags":        ["builder", "url", "share", "composer", "tool"],
+  "screenshot":  "screenshot.png",
+  "tags":        ["builder", "url", "partage", "composer", "outil"],
 
   "entry": "index.html",
 
@@ -15,9 +16,9 @@
 
   "examples": [
     {
-      "title": "Blueprint (open builder)",
+      "title": "Blueprint (ouvrir le constructeur)",
       "url":   "blueprint/",
-      "description": "Standalone builder — open directly, not via ?ext="
+      "description": "Constructeur autonome — ouvrir directement, pas via ?ext="
     }
   ]
 }

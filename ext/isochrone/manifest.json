@@ -3,8 +3,9 @@
   "type":        "extension",
   "version":     "1.1.0",
   "name":        "Isochrone / Isodistance",
-  "description": "Compute and display isochrone or isodistance zones using IGN Géoplateforme navigation API, with POI search via Nominatim/OSM",
+  "description": "Calcule et affiche des zones isochrones ou isodistances via l'API navigation IGN Géoplateforme, avec recherche de lieux via Nominatim/OSM",
   "author":      "fphg",
+  "screenshot":  "screenshot.png",
   "tags":        ["isochrone", "isodistance", "navigation", "IGN", "Géoplateforme", "POI", "OSM"],
 
   "entry": "extension.js",

@@ -5,6 +5,7 @@
   "name":        "Moi",
   "description": "Espace personnel sViewer (local au navigateur). Mes cartes — enregistrement de cartes sViewer (nom, filtre, restauration en un tap, export/import JSON). En mode application installée : devient le hub d'accueil, avec chargement d'une carte par collage d'URL ou par scan d'un QR code (caméra), pour pallier l'absence de barre d'adresse. Aucun serveur, aucun compte.",
   "author":      "fphg",
+  "screenshot":  "screenshot.png",
   "tags":        ["personnel", "favoris", "bookmarks", "sauvegarde", "permalink", "localStorage", "qr", "pwa"],
 
   "entry": "extension.js",

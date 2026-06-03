@@ -91,6 +91,8 @@
 
         /* Cards */
         .sv-card {
+            display: flex;
+            align-items: stretch;
             background: #fff;
             border: 1px solid #dde2e8;
             border-radius: 8px;
@@ -99,14 +101,52 @@
             scroll-margin-top: 1.25rem;
         }
         .sv-card[hidden] { display: none; }
-        .sv-card-img {
+
+        /* Left thumbnail — rendered as a phone (sViewer is mobile-first) */
+        .sv-card-thumb {
+            flex-shrink: 0;
+            align-self: stretch;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            border: none;
+            border-right: 1px solid #dde2e8;
+            background: #eef1f5;
+            cursor: zoom-in;
+        }
+        /* Phone bezel drawn in pure CSS, screenshot fills the screen */
+        .sv-phone {
+            position: relative;
+            display: block;
+            width: 104px;
+            aspect-ratio: 9 / 19.5;
+            background: #14161a;
+            border-radius: 16px;
+            padding: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.06);
+        }
+        .sv-phone-notch {
+            position: absolute;
+            top: 9px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 34px;
+            height: 4px;
+            background: #2c2f36;
+            border-radius: 3px;
+            z-index: 2;
+        }
+        .sv-phone img {
             width: 100%;
-            height: 160px;
+            height: 100%;
             object-fit: cover;
             display: block;
-            border-bottom: 1px solid #dde2e8;
+            border-radius: 10px;
         }
-        .sv-card-body { padding: 1rem; }
+        .sv-card-thumb:focus { outline: 2px solid #1a3a5c; outline-offset: -2px; }
+        .sv-card-thumb:hover .sv-phone { box-shadow: 0 4px 14px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.08); }
+        .sv-card-body { flex: 1; min-width: 0; padding: 1rem; }
         .sv-card-head {
             display: flex;
             align-items: baseline;
@@ -224,6 +264,45 @@
         /* No results */
         #sv-noresults { display: none; color: #888; font-size: .9rem; padding: 2rem 0; text-align: center; }
 
+        /* Lightbox */
+        #sv-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(10,18,30,.88);
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        #sv-lightbox.open { display: flex; }
+        /* Large phone in the lightbox — height-driven so it fits the viewport */
+        .sv-phone-lg {
+            width: auto;
+            height: min(85vh, 720px);
+            padding: 10px;
+            border-radius: 28px;
+            box-shadow: 0 8px 40px rgba(0,0,0,.5);
+        }
+        .sv-phone-lg .sv-phone-notch { top: 14px; width: 52px; height: 6px; }
+        .sv-phone-lg img { border-radius: 20px; }
+        #sv-lightbox-close {
+            position: absolute;
+            top: 1rem;
+            right: 1.25rem;
+            width: 40px;
+            height: 40px;
+            font-size: 1.6rem;
+            line-height: 1;
+            color: #fff;
+            background: rgba(255,255,255,.12);
+            border: 1px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        #sv-lightbox-close:hover { background: rgba(255,255,255,.22); }
+        #sv-lightbox-close:focus { outline: 2px solid #fff; outline-offset: 2px; }
+
         @media (max-width: 600px) {
             .sv-header { padding: .75rem 1rem; gap: 1rem; }
             .sv-search-wrap { max-width: 100%; }
@@ -231,6 +310,10 @@
             .sv-nav { width: 100%; position: static; }
             .sv-nav ul { display: flex; flex-wrap: wrap; gap: .3rem; }
             .sv-nav-link { font-size: .8rem; padding: .2rem .5rem; border: 1px solid #dde2e8; }
+
+            /* Phone thumb stays beside text, just smaller */
+            .sv-card-thumb { padding: .6rem; }
+            .sv-phone { width: 78px; }
         }
     </style>
 </head>
@@ -270,7 +353,12 @@
         <div id="sv-list" role="list">
 
     <article id="ext-altitude" class="sv-card" data-search="altitude altitude ponctuelle et profil altimétrique via l'api ign géoplateforme. deux modes : clic pour mesurer l'altitude d'un point, ou tracé d'un itinéraire pour obtenir un profil en long. altimétrie altitude profil dénivelé ign géoplateforme" data-type="extension" role="listitem">
-        
+        <button type="button" class="sv-card-thumb" data-full="altitude/screenshot.png" aria-label="Agrandir la capture de Altitude">
+            <span class="sv-phone">
+                <span class="sv-phone-notch"></span>
+                <img src="altitude/screenshot.png" alt="Capture de Altitude" loading="lazy">
+            </span>
+        </button>
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="altitude/">Altitude</a></h2>
@@ -295,20 +383,20 @@
         </div>
     </article>
 
-    <article id="ext-blueprint" class="sv-card" data-search="blueprint compose and share an sviewer url in under 60 seconds — build, preview, copy, modify builder url share composer tool" data-type="page" role="listitem">
+    <article id="ext-blueprint" class="sv-card" data-search="blueprint composer et partager une url sviewer en moins de 60 secondes — construire, prévisualiser, copier, modifier builder url partage composer outil" data-type="page" role="listitem">
         
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="blueprint/">Blueprint</a></h2>
                 <span class="sv-badge sv-badge-page">page</span>
             </div>
-            <p class="sv-desc">Compose and share an sViewer URL in under 60 seconds — build, preview, copy, modify</p>
-            <div class="sv-tags" aria-label="Tags"><span class="sv-tag">builder</span><span class="sv-tag">url</span><span class="sv-tag">share</span><span class="sv-tag">composer</span><span class="sv-tag">tool</span></div>
+            <p class="sv-desc">Composer et partager une URL sViewer en moins de 60 secondes — construire, prévisualiser, copier, modifier</p>
+            <div class="sv-tags" aria-label="Tags"><span class="sv-tag">builder</span><span class="sv-tag">url</span><span class="sv-tag">partage</span><span class="sv-tag">composer</span><span class="sv-tag">outil</span></div>
             
             
             <ul class="sv-examples">
                 <li>
-                    <a href="blueprint/">Blueprint (open builder)</a> <span class="sv-ex-desc">— Standalone builder — open directly, not via ?ext=</span>
+                    <a href="blueprint/">Blueprint (ouvrir le constructeur)</a> <span class="sv-ex-desc">— Constructeur autonome — ouvrir directement, pas via ?ext=</span>
                 </li>
             </ul>
             <footer class="sv-card-footer">
@@ -431,14 +519,19 @@
         </div>
     </article>
 
-    <article id="ext-isochrone" class="sv-card" data-search="isochrone / isodistance compute and display isochrone or isodistance zones using ign géoplateforme navigation api, with poi search via nominatim/osm isochrone isodistance navigation ign géoplateforme poi osm" data-type="extension" role="listitem">
-        
+    <article id="ext-isochrone" class="sv-card" data-search="isochrone / isodistance calcule et affiche des zones isochrones ou isodistances via l'api navigation ign géoplateforme, avec recherche de lieux via nominatim/osm isochrone isodistance navigation ign géoplateforme poi osm" data-type="extension" role="listitem">
+        <button type="button" class="sv-card-thumb" data-full="isochrone/screenshot.png" aria-label="Agrandir la capture de Isochrone / Isodistance">
+            <span class="sv-phone">
+                <span class="sv-phone-notch"></span>
+                <img src="isochrone/screenshot.png" alt="Capture de Isochrone / Isodistance" loading="lazy">
+            </span>
+        </button>
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="isochrone/">Isochrone / Isodistance</a></h2>
                 <span class="sv-badge sv-badge-extension">extension</span>
             </div>
-            <p class="sv-desc">Compute and display isochrone or isodistance zones using IGN Géoplateforme navigation API, with POI search via Nominatim/OSM</p>
+            <p class="sv-desc">Calcule et affiche des zones isochrones ou isodistances via l'API navigation IGN Géoplateforme, avec recherche de lieux via Nominatim/OSM</p>
             <div class="sv-tags" aria-label="Tags"><span class="sv-tag">isochrone</span><span class="sv-tag">isodistance</span><span class="sv-tag">navigation</span><span class="sv-tag">IGN</span><span class="sv-tag">Géoplateforme</span><span class="sv-tag">POI</span><span class="sv-tag">OSM</span></div>
             
             
@@ -456,7 +549,12 @@
     </article>
 
     <article id="ext-me" class="sv-card" data-search="moi espace personnel sviewer (local au navigateur). mes cartes — enregistrement de cartes sviewer (nom, filtre, restauration en un tap, export/import json). en mode application installée : devient le hub d'accueil, avec chargement d'une carte par collage d'url ou par scan d'un qr code (caméra), pour pallier l'absence de barre d'adresse. aucun serveur, aucun compte. personnel favoris bookmarks sauvegarde permalink localstorage qr pwa" data-type="extension" role="listitem">
-        
+        <button type="button" class="sv-card-thumb" data-full="me/screenshot.png" aria-label="Agrandir la capture de Moi">
+            <span class="sv-phone">
+                <span class="sv-phone-notch"></span>
+                <img src="me/screenshot.png" alt="Capture de Moi" loading="lazy">
+            </span>
+        </button>
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="me/">Moi</a></h2>
@@ -480,7 +578,12 @@
     </article>
 
     <article id="ext-panoramax" class="sv-card" data-search="panoramax affiche la couverture photos de rue panoramax (mvt) et ouvre un visualiseur 360° au clic panoramax street-level photo 360 mvt" data-type="extension" role="listitem">
-        
+        <button type="button" class="sv-card-thumb" data-full="panoramax/screenshot.png" aria-label="Agrandir la capture de Panoramax">
+            <span class="sv-phone">
+                <span class="sv-phone-notch"></span>
+                <img src="panoramax/screenshot.png" alt="Capture de Panoramax" loading="lazy">
+            </span>
+        </button>
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="panoramax/">Panoramax</a></h2>
@@ -504,7 +607,12 @@
     </article>
 
     <article id="ext-print" class="sv-card" data-search="print / pdf génère une impression haute résolution de la carte courante (re-rendu ol à la résolution cible). format a4 paysage. qr code permalink optionnel (qr-creator, mit, auto-hébergé). impression pdf export print" data-type="extension" role="listitem">
-        
+        <button type="button" class="sv-card-thumb" data-full="print/screenshot.png" aria-label="Agrandir la capture de Print / PDF">
+            <span class="sv-phone">
+                <span class="sv-phone-notch"></span>
+                <img src="print/screenshot.png" alt="Capture de Print / PDF" loading="lazy">
+            </span>
+        </button>
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="print/">Print / PDF</a></h2>
@@ -527,50 +635,25 @@
         </div>
     </article>
 
-    <article id="ext-sample" class="sv-card" data-search="sample implémentation de référence annotée pour auteurs d'extensions — charge un tableau json plat comme données vectorielles référence template développement" data-type="demo" role="listitem">
+    <article id="ext-sample" class="sv-card" data-search="sample implémentation de référence annotée pour auteurs d'extensions — bouton de barre d'outils, panneau latéral (plein écran mobile), chargement de données et événements référence template développement panneau api" data-type="demo" role="listitem">
         
         <div class="sv-card-body">
             <div class="sv-card-head">
                 <h2><a href="sample/">Sample</a></h2>
                 <span class="sv-badge sv-badge-demo">demo</span>
             </div>
-            <p class="sv-desc">Implémentation de référence annotée pour auteurs d'extensions — charge un tableau JSON plat comme données vectorielles</p>
-            <div class="sv-tags" aria-label="Tags"><span class="sv-tag">référence</span><span class="sv-tag">template</span><span class="sv-tag">développement</span></div>
+            <p class="sv-desc">Implémentation de référence annotée pour auteurs d'extensions — bouton de barre d'outils, panneau latéral (plein écran mobile), chargement de données et événements</p>
+            <div class="sv-tags" aria-label="Tags"><span class="sv-tag">référence</span><span class="sv-tag">template</span><span class="sv-tag">développement</span><span class="sv-tag">panneau</span><span class="sv-tag">api</span></div>
             
-            <details class="sv-params">
-                <summary>Paramètres URL <span class="sv-param-count">4</span></summary>
-                <table>
-                    <thead><tr><th>Paramètre</th><th>Exemple</th><th>Description</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td><code>_format</code></td>
-                            <td><code>_format=sample</code></td>
-                            <td>Requis — active cet adaptateur <span class="sv-enum">sample</span></td>
-                        </tr><tr>
-                            <td><code>_collat</code></td>
-                            <td><code>_collat=lat</code></td>
-                            <td>Nom de colonne latitude (défaut: latitude)</td>
-                        </tr><tr>
-                            <td><code>_collon</code></td>
-                            <td><code>_collon=lng</code></td>
-                            <td>Nom de colonne longitude (défaut: longitude)</td>
-                        </tr><tr>
-                            <td><code>_labelcol</code></td>
-                            <td><code>_labelcol=name</code></td>
-                            <td>Colonne utilisée comme étiquette sur la carte</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </details>
             
             <ul class="sv-examples">
                 <li>
-                    <a href="../?geojson=https://example.com/data.json&_format=sample">Tableau JSON plat</a> <span class="sv-ex-desc">— Tableau [{latitude, longitude, …}, …]</span>
+                    <a href="../?ext=sample">Activer l'extension de référence</a> <span class="sv-ex-desc">— Bouton ⭐ dans la barre d'outils → ouvre le panneau de démonstration</span>
                 </li>
             </ul>
             <footer class="sv-card-footer">
-                <span>v1.0.0</span>
-                <span>sViewer ≥ 0.10.0</span>
+                <span>v2.0.0</span>
+                <span>sViewer ≥ 0.16.0</span>
                 <span>fphg</span>
             </footer>
         </div>
@@ -602,6 +685,14 @@
         </div>
         <p id="sv-noresults" role="status">Aucune extension trouvée.</p>
     </div>
+</div>
+
+<div id="sv-lightbox" role="dialog" aria-modal="true" aria-label="Capture agrandie">
+    <button type="button" id="sv-lightbox-close" aria-label="Fermer">&times;</button>
+    <span class="sv-phone sv-phone-lg">
+        <span class="sv-phone-notch"></span>
+        <img id="sv-lightbox-img" src="" alt="">
+    </span>
 </div>
 
 <script>
@@ -664,6 +755,37 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     update();
     onScroll();
+
+    // --- Lightbox: click a thumbnail to enlarge its screenshot ---
+    var box      = document.getElementById('sv-lightbox');
+    var boxImg   = document.getElementById('sv-lightbox-img');
+    var boxClose = document.getElementById('sv-lightbox-close');
+    var lastFocus = null;
+
+    function openBox(src, alt) {
+        boxImg.src = src;
+        boxImg.alt = alt || '';
+        box.classList.add('open');
+        lastFocus = document.activeElement;
+        boxClose.focus();
+    }
+    function closeBox() {
+        box.classList.remove('open');
+        boxImg.src = '';
+        if (lastFocus) { lastFocus.focus(); }
+    }
+
+    document.querySelectorAll('.sv-card-thumb').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var img = btn.querySelector('img');
+            openBox(btn.dataset.full, img ? img.alt : '');
+        });
+    });
+    boxClose.addEventListener('click', closeBox);
+    box.addEventListener('click', function(e) { if (e.target === box) { closeBox(); } });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && box.classList.contains('open')) { closeBox(); }
+    });
 }());
 </script>
 

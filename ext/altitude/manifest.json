@@ -5,6 +5,7 @@
   "name":        "Altitude",
   "description": "Altitude ponctuelle et profil altimétrique via l'API IGN Géoplateforme. Deux modes : clic pour mesurer l'altitude d'un point, ou tracé d'un itinéraire pour obtenir un profil en long.",
   "author":      "fphg",
+  "screenshot":  "screenshot.png",
   "tags":        ["altimétrie", "altitude", "profil", "dénivelé", "IGN", "Géoplateforme"],
 
   "entry": "extension.js",
