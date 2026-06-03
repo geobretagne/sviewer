@@ -57,6 +57,10 @@ self.addEventListener('fetch', event => {
         });
       }
       return response;
-    }).catch(() => caches.match(request))
+    }).catch(() => caches.match(request).then(cached => {
+      // Network failed AND not in cache → must still return a Response.
+      // Returning undefined here throws "Failed to convert value to 'Response'".
+      return cached || Response.error();
+    }))
   );
 });

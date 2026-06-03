@@ -3,6 +3,11 @@
 <head>
     <title>sViewer</title>
     <meta charset="utf-8">
+    <!-- Send only the origin (no path/query) as Referer. A long permalink (e.g. the
+         annotation ?draw= payload) would otherwise leak into every same-origin
+         sub-resource's Referer header and overflow server header buffers
+         (CONNECTION_CLOSED). Must stay before any resource fetch. -->
+    <meta name="referrer" content="origin">
     <meta name="description" content="Visualiseur de cartes simple pour consulter rapidement une donnée en flux WMS">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="mobile-web-app-capable" content="yes">
