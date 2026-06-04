@@ -129,8 +129,8 @@
             </div>
 
             <div id="sv-panel-controls" class="sv-map-panels" role="group" aria-label="Side panels">
-                <button type="button" accesskey="m" id="sv-btn-panel-share" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-sv-panel="share" title="Map" data-i18n-title="btn.panel_map" aria-label="Map panel" aria-pressed="false">
-                    <span id="sv-panel-share-title">Map</span><span class="d-none">&nbsp;</span>
+                <button type="button" accesskey="m" id="sv-btn-panel-share" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-sv-panel="share" title="Map" data-i18n-title="btn.panel_map" aria-pressed="false">
+                    <span id="sv-panel-share-title" class="i18n" data-i18n="btn.panel_map">Map</span><span class="d-none">&nbsp;</span>
                     <i class="bi bi-gear" aria-hidden="true"></i>
                 </button>
                 <button type="button" accesskey="i" id="sv-btn-panel-legend" class="i18n btn btn-dark sv-map-btn sv-panel-toggle" data-sv-panel="legend" title="Legend" data-i18n-title="btn.panel_legend" aria-label="Legend panel" aria-pressed="false">

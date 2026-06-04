@@ -1911,9 +1911,11 @@ if (state.label) {
         config.title = typeof title === 'string' ? title.trim() : title;
         document.title = config.title;
         // Keep the panel-button label in sync — including when the title is cleared
-        // (previously it kept stale text on an empty title).
+        // (previously it kept stale text on an empty title). On an empty title,
+        // fall back to the localized "Map" label so the button is never nameless
+        // (WCAG: the visible text is also its accessible name — no aria-label).
         var _btn = document.getElementById('sv-panel-share-title');
-        if (_btn) { _btn.textContent = config.title; }
+        if (_btn) { _btn.textContent = config.title || tr('btn.panel_map'); }
         var _shareTitle = document.getElementById('sv-share-title');
         if (_shareTitle && _shareTitle.value === '') {
             _shareTitle.value = config.title;
