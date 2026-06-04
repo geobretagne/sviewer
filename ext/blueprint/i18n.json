@@ -65,7 +65,11 @@
     "ok.wms_url": "Service WMS disponible",
     "ok.layer_name": "Donnée trouvée",
     "ok.md": "Service WMS trouvé",
-    "ok.geojson": "URL accessible"
+    "ok.geojson": "URL accessible",
+    "check.credential": "Identifiant détecté dans l'URL. Une URL partagée est publique : retirez tout jeton/mot de passe. L'authentification se fait dans l'outil, à l'usage.",
+    "check.url_long": "URL longue : peut être tronquée par certains e-mails, QR codes ou serveurs.",
+    "check.url_too_long": "URL très longue : risque élevé de casse au partage (e-mail, QR code, en-tête serveur). Réduisez les paramètres.",
+    "check.cors": "Ce service ne semble pas autoriser l'accès tiers (CORS). L'aperçu fonctionne chez vous mais peut échouer chez vos destinataires."
   },
   "en": {
     "page.title": "sViewer Blueprint",
@@ -133,7 +137,11 @@
     "ok.wms_url": "WMS service reachable",
     "ok.layer_name": "Layer found",
     "ok.md": "WMS service found",
-    "ok.geojson": "URL reachable"
+    "ok.geojson": "URL reachable",
+    "check.credential": "Credential detected in the URL. A shared URL is public: remove any token/password. Authentication belongs inside the tool, at use time.",
+    "check.url_long": "Long URL: may be truncated by some e-mails, QR codes or servers.",
+    "check.url_too_long": "Very long URL: high risk of breaking when shared (e-mail, QR code, server header). Trim the parameters.",
+    "check.cors": "This service does not seem to allow third-party access (CORS). The preview works for you but may fail for your recipients."
   },
   "es": {
     "page.title": "sViewer Blueprint",
@@ -201,7 +209,11 @@
     "ok.wms_url": "Servicio WMS accesible",
     "ok.layer_name": "Dato encontrado",
     "ok.md": "Servicio WMS encontrado",
-    "ok.geojson": "URL accesible"
+    "ok.geojson": "URL accesible",
+    "check.credential": "Credencial detectada en la URL. Una URL compartida es pública: quite cualquier token/contraseña. La autenticación va dentro de la herramienta, al usarla.",
+    "check.url_long": "URL larga: puede ser truncada por algunos correos, códigos QR o servidores.",
+    "check.url_too_long": "URL muy larga: alto riesgo de fallo al compartir (correo, código QR, cabecera del servidor). Reduzca los parámetros.",
+    "check.cors": "Este servicio no parece permitir el acceso de terceros (CORS). La vista previa funciona para usted pero puede fallar para sus destinatarios."
   },
   "de": {
     "page.title": "sViewer Blueprint",
@@ -269,6 +281,10 @@
     "ok.wms_url": "WMS-Dienst erreichbar",
     "ok.layer_name": "Datensatz gefunden",
     "ok.md": "WMS-Dienst gefunden",
-    "ok.geojson": "URL erreichbar"
+    "ok.geojson": "URL erreichbar",
+    "check.credential": "Anmeldedaten in der URL erkannt. Eine geteilte URL ist öffentlich: Token/Passwort entfernen. Authentifizierung gehört ins Werkzeug, zur Nutzungszeit.",
+    "check.url_long": "Lange URL: kann von manchen E-Mails, QR-Codes oder Servern abgeschnitten werden.",
+    "check.url_too_long": "Sehr lange URL: hohes Risiko beim Teilen (E-Mail, QR-Code, Server-Header). Parameter kürzen.",
+    "check.cors": "Dieser Dienst erlaubt offenbar keinen Drittzugriff (CORS). Die Vorschau funktioniert bei Ihnen, kann aber bei Empfängern fehlschlagen."
   }
 }

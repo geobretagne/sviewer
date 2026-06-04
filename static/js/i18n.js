@@ -73,7 +73,10 @@ Object.assign(window.SViewer.hardConfig, {
             'msg.wms_error':            'WMS service unavailable: {0}',
             'msg.geojson_load_error':   'Data could not be loaded (network or CORS error)',
             'msg.geojson_http_error':   'Data could not be loaded ({0})',
-            'msg.geojson_no_data':      'No data found at this URL'
+            'msg.geojson_no_data':      'No data found at this URL',
+            'msg.hint_click':           'Click a feature on the map for details',
+            'btn.hint_dismiss':         'Dismiss',
+            'msg.trust_badge':          'Self-hosted, no tracker, no cookie.'
         },
         fr: {
             'btn.initial_view':  'vue initiale',
@@ -143,7 +146,10 @@ Object.assign(window.SViewer.hardConfig, {
             'msg.wms_error':            'Service WMS indisponible : {0}',
             'msg.geojson_load_error':   'Impossible de charger les données (erreur réseau ou CORS)',
             'msg.geojson_http_error':   'Impossible de charger les données ({0})',
-            'msg.geojson_no_data':      'Aucune donnée trouvée à cette URL'
+            'msg.geojson_no_data':      'Aucune donnée trouvée à cette URL',
+            'msg.hint_click':           'Cliquez un objet sur la carte pour le détail',
+            'btn.hint_dismiss':         'Fermer',
+            'msg.trust_badge':          'Auto-hébergé, sans traceur, sans cookie.'
         },
         es: {
             'btn.initial_view':  'Vista inicial',
@@ -213,7 +219,10 @@ Object.assign(window.SViewer.hardConfig, {
             'msg.wms_error':            'Servicio WMS no disponible: {0}',
             'msg.geojson_load_error':   'No se pudieron cargar los datos (error de red o CORS)',
             'msg.geojson_http_error':   'No se pudieron cargar los datos ({0})',
-            'msg.geojson_no_data':      'No se encontraron datos en esta URL'
+            'msg.geojson_no_data':      'No se encontraron datos en esta URL',
+            'msg.hint_click':           'Haga clic en un elemento del mapa para ver el detalle',
+            'btn.hint_dismiss':         'Cerrar',
+            'msg.trust_badge':          'Autoalojado, sin rastreador, sin cookie.'
         },
         de: {
             'btn.initial_view':  'Startansicht',
@@ -283,7 +292,10 @@ Object.assign(window.SViewer.hardConfig, {
             'msg.wms_error':            'WMS-Dienst nicht verfügbar: {0}',
             'msg.geojson_load_error':   'Daten konnten nicht geladen werden (Netzwerk- oder CORS-Fehler)',
             'msg.geojson_http_error':   'Daten konnten nicht geladen werden ({0})',
-            'msg.geojson_no_data':      'Keine Daten unter dieser URL gefunden'
+            'msg.geojson_no_data':      'Keine Daten unter dieser URL gefunden',
+            'msg.hint_click':           'Klicken Sie ein Objekt auf der Karte für Details',
+            'btn.hint_dismiss':         'Schließen',
+            'msg.trust_badge':          'Selbst gehostet, kein Tracker, kein Cookie.'
         }
     }
 });

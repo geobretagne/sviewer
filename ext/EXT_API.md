@@ -311,6 +311,11 @@ SViewer.refreshWMS();
 // Update the GeoJSON URL stored in share/embed permalinks without reloading data.
 SViewer.setGeojsonUrl(url);
 
+// Show a transient toast for action feedback that has no button of its own
+// (saved, loading, error). Single shared live region — a11y-announced.
+// opts.type: 'info' (default) | 'success' | 'error'. opts.duration: ms (default 3000).
+SViewer.toast('Saved', { type: 'success' });
+
 // User-edited map title via the share panel.
 // Not fired for programmatic title changes (map init, WFS/MD auto-title).
 // fn({ title })
