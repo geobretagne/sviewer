@@ -331,6 +331,7 @@
     <nav class="sv-nav" aria-label="Extensions">
     <ul>
         <li><a class="sv-nav-link" href="#ext-altitude" data-id="altitude">Altitude</a></li>
+        <li><a class="sv-nav-link" href="#ext-annotation" data-id="annotation">Annoter</a></li>
         <li><a class="sv-nav-link" href="#ext-blueprint" data-id="blueprint">Blueprint</a></li>
         <li><a class="sv-nav-link" href="#ext-csv" data-id="csv">CSV</a></li>
         <li><a class="sv-nav-link" href="#ext-grist" data-id="grist">Grist</a></li>
@@ -378,6 +379,43 @@
             <footer class="sv-card-footer">
                 <span>v2.0.0</span>
                 <span>sViewer ≥ 0.11.1</span>
+                <span>fphg</span>
+            </footer>
+        </div>
+    </article>
+
+    <article id="ext-annotation" class="sv-card" data-search="annoter tracez des repères, des traits et des zones à la souris ou au doigt, annotez-les (libellé, couleur, note), puis partagez le tout en un lien — sans logiciel sig, sans compte, sans serveur. sauvegarde locale automatique, partage par url ou export geojson. dessin annotation repère partage croquis geojson" data-type="extension" role="listitem">
+        
+        <div class="sv-card-body">
+            <div class="sv-card-head">
+                <h2><a href="annotation/">Annoter</a></h2>
+                <span class="sv-badge sv-badge-extension">extension</span>
+            </div>
+            <p class="sv-desc">Tracez des repères, des traits et des zones à la souris ou au doigt, annotez-les (libellé, couleur, note), puis partagez le tout en un lien — sans logiciel SIG, sans compte, sans serveur. Sauvegarde locale automatique, partage par URL ou export GeoJSON.</p>
+            <div class="sv-tags" aria-label="Tags"><span class="sv-tag">dessin</span><span class="sv-tag">annotation</span><span class="sv-tag">repère</span><span class="sv-tag">partage</span><span class="sv-tag">croquis</span><span class="sv-tag">geojson</span></div>
+            
+            <details class="sv-params">
+                <summary>Paramètres URL <span class="sv-param-count">1</span></summary>
+                <table>
+                    <thead><tr><th>Paramètre</th><th>Exemple</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><code>draw</code></td>
+                            <td><code>draw=eyJ0eXBlIjoi…</code></td>
+                            <td>Dessin encodé (GeoJSON compressé) — généré par le bouton Partager, à ne pas écrire à la main</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </details>
+            
+            <ul class="sv-examples">
+                <li>
+                    <a href="../?ext=annotation">Activer l'annotation</a> <span class="sv-ex-desc">— Bouton ✏ dans la barre d'outils → choisir une action et tracer</span>
+                </li>
+            </ul>
+            <footer class="sv-card-footer">
+                <span>v0.1.0</span>
+                <span>sViewer ≥ 0.16.0</span>
                 <span>fphg</span>
             </footer>
         </div>
