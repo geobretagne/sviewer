@@ -178,26 +178,82 @@
         var layer  = new ol.layer.Vector({ source: source, zIndex: 950, style: styleFor });
         map.addLayer(layer);
 
+        // Click an annotation on the map → select it and open its form (the same
+        // destination as tapping its row in the list). Standard map interaction,
+        // works on touch too. Own layer → use addClickHandler + a layer filter,
+        // and consume the click so core GFI / vector select does not also fire.
+        // Active only while the panel is open (annotation mode on).
+        // Works whenever annotations exist — not only while the panel is open: the
+        // natural flow is "looking at the map, tap a feature". Tapping opens the
+        // panel on its form. Skipped only while a draw is armed (taps add vertices).
+        SViewer.addClickHandler(function (evt) {
+            if (draw || !items.length) { return; }
+            var hitId = null;
+            map.forEachFeatureAtPixel(evt.pixel, function (feature, lyr) {
+                if (hitId !== null || lyr !== layer) { return; }
+                hitId = feature.get('id');
+            }, { hitTolerance: 8 });
+            if (hitId === null) { return; }      // miss → let core handle (deselect/GFI)
+            if (!active) { open(); }             // bring up the panel to show the form
+            selectItem(hitId, false);            // sets selId, renders the form (no zoom)
+            return true;                         // consume the click
+        });
+
+        // Style with a white "casing" (halo) under the coloured stroke — the same
+        // trick pro map drawing uses (Google My Maps, uMap) to stay crisp on any
+        // background. OL renders a style array bottom-to-top per feature, so the
+        // wide white halo sits beneath the colour. Rounded caps/joins remove the
+        // scratchy "bad sketch" look.
         function styleFor(feature) {
             var color = feature.get('color') || COLORS[0];
-            var selected = feature.get('id') === selId;
-            var width = selected ? 4 : 2.5;
-            return new ol.style.Style({
-                image: new ol.style.Circle({
-                    radius: selected ? 9 : 7,
-                    fill:   new ol.style.Fill({ color: color }),
-                    stroke: new ol.style.Stroke({ color: '#fff', width: 2 })
+            var sel   = feature.get('id') === selId;
+            var w     = sel ? 5 : 4;            // coloured line width
+            var halo  = w + 4;                  // white casing width
+            var styles = [
+                // 1. casing (halo) under lines/polygon edges
+                new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: 'rgba(255,255,255,0.9)', width: halo,
+                        lineCap: 'round', lineJoin: 'round'
+                    })
                 }),
-                stroke: new ol.style.Stroke({ color: color, width: width }),
-                fill:   new ol.style.Fill({ color: hexA(color, selected ? 0.25 : 0.15) }),
-                text: feature.get('label') ? new ol.style.Text({
-                    text: feature.get('label'),
-                    offsetY: -14,
-                    font: '12px system-ui, sans-serif',
-                    fill:   new ol.style.Fill({ color: '#222' }),
-                    stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
-                }) : undefined
-            });
+                // 2. coloured line + soft fill on top
+                new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: color, width: w,
+                        lineCap: 'round', lineJoin: 'round'
+                    }),
+                    fill: new ol.style.Fill({ color: hexA(color, sel ? 0.28 : 0.18) })
+                })
+            ];
+            // Point: layered disc — white outer halo, colour fill, thin white inner ring.
+            styles.push(new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: sel ? 10 : 8,
+                    fill:   new ol.style.Fill({ color: color }),
+                    stroke: new ol.style.Stroke({ color: '#fff', width: sel ? 3 : 2.5 })
+                })
+            }));
+            // Halo ring around the point for contrast on dark backgrounds.
+            styles.push(new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: (sel ? 10 : 8) + 2,
+                    stroke: new ol.style.Stroke({ color: 'rgba(255,255,255,0.55)', width: 2 })
+                })
+            }));
+            if (feature.get('label')) {
+                styles.push(new ol.style.Style({
+                    text: new ol.style.Text({
+                        text: feature.get('label'),
+                        offsetY: -16,
+                        font: '600 13px system-ui, sans-serif',
+                        fill:   new ol.style.Fill({ color: '#1a1a1a' }),
+                        stroke: new ol.style.Stroke({ color: 'rgba(255,255,255,0.95)', width: 4 }),
+                        overflow: true
+                    })
+                }));
+            }
+            return styles;
         }
         function hexA(hex, a) {
             var n = parseInt(hex.slice(1), 16);
@@ -367,7 +423,13 @@
         btn.setAttribute('aria-pressed', 'false');
         btn.setAttribute('aria-label', t('btn.title'));
         btn.title = t('btn.title');
-        btn.innerHTML = '<i class="bi bi-pencil" aria-hidden="true"></i>';
+        // Inline SVG (bi-pencil is not in the core Bootstrap Icons subset; an ext
+        // must stay self-contained rather than force a new glyph into the subset).
+        // currentColor → inherits the .btn-dark white. Bootstrap Icons path, MIT.
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" ' +
+            'viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">' +
+            '<path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>' +
+            '</svg>';
         toolbar.appendChild(btn);
         btn.addEventListener('click', function () {
             if (active) { SViewer.panel.close(); } else { open(); }
