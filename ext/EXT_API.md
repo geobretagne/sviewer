@@ -363,16 +363,23 @@ document.head.appendChild(link);
 // id    : unique extension identifier (e.g. 'panoramax') — becomes owner of the panel
 // title : displayed in the panel header
 // html  : injected into the panel body (innerHTML)
-// opts  : optional { fullscreen: true } — on small screens (≤600px) the panel fills
-//         the viewport instead of floating, for content-heavy / no-map-interaction
-//         panels (lists, forms, settings). Core stays extension-agnostic: it toggles
-//         the generic 'sv-panel-fullscreen' marker; you only pass the flag. Leave it
-//         off for map-coupled panels (the user needs to see the map while it's open).
+// opts  : optional layout hints. Core stays extension-agnostic — it toggles a
+//         generic marker class; you only pass the flag. Core CSS never names an
+//         extension. Two markers, mutually exclusive in practice:
+//         { fullscreen: true }   — on small screens (≤600px) the panel fills the
+//             viewport instead of floating. For content-heavy / no-map-interaction
+//             panels (lists, forms, settings). Marker: 'sv-panel-fullscreen'.
+//         { dock: 'bottom' }     — a full-width strip across the bottom, ~1/3
+//             viewport height, on any screen size. For wide, horizontally-read
+//             content like time-series charts. Marker: 'sv-panel-dock'.
+//         Leave both off for map-coupled panels (the user needs the map visible).
 // No toolbar button is injected — extensions control their own trigger UI.
 SViewer.panel.open(id, title, html, opts);
 
 // Example: a self-contained list panel that should be fullscreen on mobile.
 SViewer.panel.open('my-ext', 'My list', html, { fullscreen: true });
+// Example: a wide chart panel docked to the bottom third.
+SViewer.panel.open('my-ext', 'My chart', html, { dock: 'bottom' });
 
 // Replace panel body HTML without changing title or triggering open animation.
 // Use for streaming / progressive content updates.

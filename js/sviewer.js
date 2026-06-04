@@ -1799,6 +1799,7 @@ if (state.label) {
         sidepanel.querySelectorAll('.sv-panel-section').forEach(function(s) { s.style.display = 'none'; });
         sidepanel.classList.remove('active');
         sidepanel.classList.remove('sv-panel-fullscreen');
+        sidepanel.classList.remove('sv-panel-dock');
         document.querySelectorAll('#sv-panel-controls .sv-panel-toggle').forEach(function(btn) {
             btn.classList.remove('active');
             btn.setAttribute('aria-pressed', 'false');
@@ -2863,6 +2864,65 @@ if (state.label) {
     // onClose(name, fn) registers a callback fired only when the named panel is closed while visible.
     var _panelOwner = null;
     var _panelCloseCallbacks = {};
+
+    // Bottom-dock resize: a drag handle on the dock's top edge lets the user set
+    // its height (more height = a taller chart, less flat). Persisted. On settle,
+    // emits 'sv:panelResize' so an extension can resize its content (e.g. a chart).
+    // Extension-agnostic: core owns the handle + height; the extension just listens.
+    var DOCK_H_KEY = 'sv_dock_height';
+    var _dockResizeInit = false;
+    function _initDockResize(sidepanel) {
+        // Apply any stored height each time the dock opens.
+        var stored = parseInt(localStorage.getItem(DOCK_H_KEY), 10);
+        if (isFinite(stored)) {
+            sidepanel.style.height = Math.max(140, Math.min(stored, window.innerHeight * 0.96)) + 'px';
+        }
+        if (_dockResizeInit) { return; }
+        _dockResizeInit = true;
+
+        var handle = document.createElement('div');
+        handle.className = 'sv-dock-handle';
+        handle.setAttribute('role', 'separator');
+        handle.setAttribute('aria-label', 'Resize panel');
+        handle.setAttribute('aria-orientation', 'horizontal');
+        sidepanel.appendChild(handle);
+
+        var dragging = false;
+        var _raf = 0;
+        function onMove(clientY) {
+            var h = Math.max(140, Math.min(window.innerHeight - clientY, window.innerHeight * 0.96));
+            sidepanel.style.height = h + 'px';
+            // Live resize: let the content (e.g. a chart) track the drag, throttled.
+            if (!_raf) {
+                _raf = requestAnimationFrame(function () {
+                    _raf = 0;
+                    _emit('sv:panelResize', { height: sidepanel.offsetHeight });
+                });
+            }
+        }
+        function start(e) {
+            if (!sidepanel.classList.contains('sv-panel-dock')) { return; }
+            dragging = true;
+            sidepanel.classList.add('sv-dock-resizing');   // suppress height transition
+            e.preventDefault();
+        }
+        function end() {
+            if (!dragging) { return; }
+            dragging = false;
+            sidepanel.classList.remove('sv-dock-resizing');
+            try { localStorage.setItem(DOCK_H_KEY, String(parseInt(sidepanel.style.height, 10))); } catch (_e2) { /* */ }
+            _emit('sv:panelResize', { height: sidepanel.offsetHeight });
+        }
+        handle.addEventListener('mousedown', start);
+        handle.addEventListener('touchstart', start, { passive: false });
+        window.addEventListener('mousemove', function (e) { if (dragging) { onMove(e.clientY); } });
+        window.addEventListener('touchmove', function (e) {
+            if (dragging && e.touches[0]) { onMove(e.touches[0].clientY); e.preventDefault(); }
+        }, { passive: false });
+        window.addEventListener('mouseup', end);
+        window.addEventListener('touchend', end);
+    }
+
     this.panel = {
         // open(name, title, html, opts?) — opts.fullscreen:true asks the host to
         // display this panel fullscreen on small screens. Core stays extension-
@@ -2914,11 +2974,19 @@ if (state.label) {
             // set ownership *after* the toggle so the extension keeps control.
             if (!_alreadyOpen) { togglePanel('ext-' + name); }
             _panelOwner = name;
-            // Generic fullscreen marker (opt-in by the extension). togglePanel()
-            // does not touch it, so set/clear it here after the toggle.
+            // Generic layout markers (opt-in by the extension). togglePanel()
+            // does not touch them, so set/clear them here after the toggle.
+            // Core stays extension-agnostic: it exposes the markers, the
+            // extension opts in; core CSS never names individual extensions.
+            //   opts.fullscreen  → 'sv-panel-fullscreen' (fills the viewport, ≤600px)
+            //   opts.dock:'bottom' → 'sv-panel-dock' (full-width bottom strip,
+            //                        ~1/3 height — suits wide/time-series content)
             var sidepanel = document.getElementById('sv-sidepanel');
             if (sidepanel) {
                 sidepanel.classList.toggle('sv-panel-fullscreen', !!(opts && opts.fullscreen));
+                var isDock = !!(opts && opts.dock === 'bottom');
+                sidepanel.classList.toggle('sv-panel-dock', isDock);
+                if (isDock) { _initDockResize(sidepanel); }
             }
         },
         close: function() { _panelOwner = null; togglePanel(null); },

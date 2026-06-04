@@ -1,0 +1,44 @@
+{
+  "id":          "sensors",
+  "type":        "extension",
+  "version":     "0.1.0",
+  "name":        "Capteurs",
+  "description": "Affiche un service OGC SensorThings : les stations sur la carte, et au clic, leurs mesures sous forme de graphique temporel interactif (survol date/valeur, zoom par glissement sur une période). Graphique uPlot (libre), sans backend.",
+  "author":      "fphg",
+  "screenshot":  "screenshot.png",
+  "tags":        ["sensorthings", "ogc", "capteurs", "iot", "série temporelle", "graphique", "frost"],
+
+  "entry": "extension.js",
+
+  "params": [
+    {
+      "name":        "sta",
+      "type":        "string",
+      "description": "URL du service SensorThings (se termine par /v1.1/)",
+      "example":     "sta=https://frost.geosas.fr/station_meteo_hydro_agro/v1.1/"
+    },
+    {
+      "name":        "sta_pagination",
+      "type":        "string",
+      "description": "Charge plus de 2000 observations par mesure en suivant la pagination. Un nombre = plafond d'observations ; 1 / true / all = plafond maximal.",
+      "example":     "sta_pagination=20000"
+    }
+  ],
+
+  "sviewer": {
+    "minVersion": "0.16.0"
+  },
+
+  "seo": {
+    "title":           "Capteurs SensorThings — visualisation de séries temporelles dans sViewer",
+    "metaDescription": "Extension sViewer pour OGC SensorThings (STA) : stations sur la carte, mesures et graphiques temporels au clic. Compatible FROST, sans dépendance ni CDN."
+  },
+
+  "examples": [
+    {
+      "title":       "Stations météo-hydro (FROST geOSAS)",
+      "url":         "?ext=sensors&sta=https://frost.geosas.fr/station_meteo_hydro_agro/v1.1/",
+      "description": "Service SensorThings de démonstration — cliquez une station pour voir ses mesures"
+    }
+  ]
+}

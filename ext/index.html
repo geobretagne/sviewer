@@ -333,6 +333,7 @@
         <li><a class="sv-nav-link" href="#ext-altitude" data-id="altitude">Altitude</a></li>
         <li><a class="sv-nav-link" href="#ext-annotation" data-id="annotation">Annoter</a></li>
         <li><a class="sv-nav-link" href="#ext-blueprint" data-id="blueprint">Blueprint</a></li>
+        <li><a class="sv-nav-link" href="#ext-sensors" data-id="sensors">Capteurs</a></li>
         <li><a class="sv-nav-link" href="#ext-csv" data-id="csv">CSV</a></li>
         <li><a class="sv-nav-link" href="#ext-grist" data-id="grist">Grist</a></li>
         <li><a class="sv-nav-link" href="#ext-isochrone" data-id="isochrone">Isochrone / Isodistance</a></li>
@@ -440,6 +441,52 @@
             <footer class="sv-card-footer">
                 <span>v0.1.0</span>
                 <span>sViewer ≥ 0.12.0</span>
+                <span>fphg</span>
+            </footer>
+        </div>
+    </article>
+
+    <article id="ext-sensors" class="sv-card" data-search="capteurs affiche un service ogc sensorthings : les stations sur la carte, et au clic, leurs mesures sous forme de graphique temporel interactif (survol date/valeur, zoom par glissement sur une période). graphique uplot (libre), sans backend. sensorthings ogc capteurs iot série temporelle graphique frost" data-type="extension" role="listitem">
+        <button type="button" class="sv-card-thumb" data-full="sensors/screenshot.png" aria-label="Agrandir la capture de Capteurs">
+            <span class="sv-phone">
+                <span class="sv-phone-notch"></span>
+                <img src="sensors/screenshot.png" alt="Capture de Capteurs" loading="lazy">
+            </span>
+        </button>
+        <div class="sv-card-body">
+            <div class="sv-card-head">
+                <h2><a href="sensors/">Capteurs</a></h2>
+                <span class="sv-badge sv-badge-extension">extension</span>
+            </div>
+            <p class="sv-desc">Affiche un service OGC SensorThings : les stations sur la carte, et au clic, leurs mesures sous forme de graphique temporel interactif (survol date/valeur, zoom par glissement sur une période). Graphique uPlot (libre), sans backend.</p>
+            <div class="sv-tags" aria-label="Tags"><span class="sv-tag">sensorthings</span><span class="sv-tag">ogc</span><span class="sv-tag">capteurs</span><span class="sv-tag">iot</span><span class="sv-tag">série temporelle</span><span class="sv-tag">graphique</span><span class="sv-tag">frost</span></div>
+            
+            <details class="sv-params">
+                <summary>Paramètres URL <span class="sv-param-count">2</span></summary>
+                <table>
+                    <thead><tr><th>Paramètre</th><th>Exemple</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><code>sta</code></td>
+                            <td><code>sta=https://frost.geosas.fr/station_meteo_hydro_agro/v1.1/</code></td>
+                            <td>URL du service SensorThings (se termine par /v1.1/)</td>
+                        </tr><tr>
+                            <td><code>sta_pagination</code></td>
+                            <td><code>sta_pagination=20000</code></td>
+                            <td>Charge plus de 2000 observations par mesure en suivant la pagination. Un nombre = plafond d'observations ; 1 / true / all = plafond maximal.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </details>
+            
+            <ul class="sv-examples">
+                <li>
+                    <a href="../?ext=sensors&sta=https://frost.geosas.fr/station_meteo_hydro_agro/v1.1/">Stations météo-hydro (FROST geOSAS)</a> <span class="sv-ex-desc">— Service SensorThings de démonstration — cliquez une station pour voir ses mesures</span>
+                </li>
+            </ul>
+            <footer class="sv-card-footer">
+                <span>v0.1.0</span>
+                <span>sViewer ≥ 0.16.0</span>
                 <span>fphg</span>
             </footer>
         </div>

@@ -513,6 +513,93 @@
     box-shadow: -10px 0 32px rgb(0 0 0 / 35%);
 }
 
+/* Bottom-dock panel (opt-in via panel.open(..., { dock: 'bottom' })). A
+   full-width strip across the bottom, ~1/3 viewport height — suited to wide,
+   horizontally-read content like time-series charts. Extension-AGNOSTIC: core
+   exposes the 'sv-panel-dock' marker, panels opt in; core CSS never names an
+   extension. Height-animated (vs the side panel's width). */
+.sv-sidepanel.sv-panel-dock {
+    inset: auto 0 0;            /* bottom, full width */
+    top: auto;
+    right: 0;
+    width: 100% !important;
+    max-width: 100%;
+    height: 0;
+    max-height: 100vh;          /* drag governs height; allow up to full screen */
+    border-left: 0;
+    border-top: 1px solid var(--sv-panel-border);
+    border-radius: 0;
+    box-shadow: 0 -8px 24px rgb(0 0 0 / 25%);
+    transition: height var(--sv-duration) var(--sv-ease),
+                box-shadow var(--sv-duration) var(--sv-ease);
+}
+
+.sv-sidepanel.active.sv-panel-dock {
+    width: 100% !important;
+    height: 34vh;
+    box-shadow: 0 -10px 32px rgb(0 0 0 / 35%);
+}
+
+/* Drag handle on the dock's top edge to resize its height. Only shown in dock
+   mode. While dragging, 'sv-dock-resizing' kills the height transition so the
+   panel tracks the cursor without lag. */
+.sv-dock-handle {
+    display: none;
+}
+
+.sv-panel-dock .sv-dock-handle {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 10px;
+    cursor: ns-resize;
+    z-index: 1;
+    touch-action: none;
+}
+
+.sv-panel-dock .sv-dock-handle::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--sv-panel-border);
+}
+
+.sv-sidepanel.sv-dock-resizing {
+    transition: none;
+    user-select: none;
+}
+
+/* Vertical space is scarce in a short dock — trim the panel chrome so the
+   content (e.g. a chart) gets the height. Generic: applies to any docked panel. */
+.sv-sidepanel.sv-panel-dock .sv-panel-section {
+    padding: 12px 12px 6px;   /* extra top clears the drag handle */
+    /* Fill the dock height so flex children (chart) can grow into it.
+       (Base .sv-panel-section is height:auto = content-sized.) */
+    flex: 1;
+    height: 0;
+    min-height: 0;
+}
+
+.sv-sidepanel.sv-panel-dock .sv-panel-header {
+    padding: 0;
+    min-height: 0;
+}
+
+.sv-sidepanel.sv-panel-dock .sv-panel-title {
+    font-size: 1rem;
+}
+
+.sv-sidepanel.sv-panel-dock .sv-panel-content {
+    gap: 4px;
+}
+
 /* Safari < 14 / Firefox without backdrop-filter: fall back to opaque surface */
 @supports not (backdrop-filter: blur(1px)) {
     .sv-sidepanel {

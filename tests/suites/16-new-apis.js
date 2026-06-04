@@ -78,3 +78,24 @@ SV_TESTS.push({
         });
     }
 });
+
+// panel.open({dock:'bottom'}) adds the generic sv-panel-dock marker.
+// Loads the 'sensors' extension (a dock opt-in panel) and opens it.
+SV_TESTS.push({
+    id: 'api-panel-dock-marker',
+    label: 'API — dock panel adds sv-panel-dock class',
+    group: 'API',
+    type: 'visual',
+    params: { ext: 'sensors' },
+    assert: function(hc, ev, queryDOM, clickDOM, apiCall) {
+        return apiCall('loadedExtensions', []).then(function() {
+            return clickDOM('.sv-alt-toggle');   // sensors' toolbar button
+        }).then(function() {
+            return queryDOM('#sv-sidepanel', 'className');
+        }).then(function(r) {
+            if (!r.value || r.value.indexOf('sv-panel-dock') === -1) {
+                throw new Error('sidepanel missing sv-panel-dock after opening sensors: ' + r.value);
+            }
+        });
+    }
+});

@@ -13,7 +13,7 @@ Le cas simple : une ou deux données parmi toutes celles déjà publiées par le
 
 sViewer n'est **pas** un logiciel SIG : pas de dessin, pas d'analyse spatiale, pas de gestion de "couches". Si vous cherchez un outil pour publier beaucoup de données, regardez [mviewer](https://mviewer.github.io/fr/), [mapstore](https://docs.georchestra.geo-solutions.it/fr/latest/mapstore/index.html) ou encore [georchestra](https://georchestra.org). Ceci dit, sViewer complètera parfaitement ces environnements ! Pour de l'analyse complexe, regardez [QGIS](https://qgis.org/). Les données géographiques bénéficient d'un large écosystème et tout est disponible en logiciel libre : faites confiance à leurs communautés.
 
-Ceci dit, sViewer sait faire d'autres choses grâce aux API publiques : croiser des isochrones avec des points d'intérêt ; calculer des profils altimétriques ; éditer des géométries dans Grist ; représenter les données dans Superset ; accéder aux photos Panoramax. Le système d'extension offre de nombreuses possibilités 
+Ceci dit, sViewer sait faire d'autres choses grâce aux API publiques : croiser des isochrones avec des points d'intérêt ; calculer des profils altimétriques ; éditer des géométries dans Grist ; représenter les données dans Superset ; accéder aux photos Panoramax ; tracer et partager des annotations ; afficher des capteurs SensorThings et leurs séries temporelles. Le système d'extension offre de nombreuses possibilités 
 en conservant un visualiseur hyper rapide.
 
 ---
@@ -37,7 +37,7 @@ Que permet sViewer ?
 * **Intégrer dans n'importe quelle page** — une ligne `<iframe>` suffit
 * **API JavaScript** — intégrez et contrôlez la carte
 * **Logiciel libre, gratuit, auto-hébergeable** — licence GPL, aucun compte, aucune inscription, aucune dépendance externe
-* **Extensions** qui étendent les possibilités : par exemple l'édition de géométries dans [Grist](https://www.getgrist.com), la représentation cartographique dans[Superset](https://superset.apache.org/), la visualisation de données CSV, l'affichage des photos[Panoramax](https://panoramax.fr/).
+* **Extensions** qui étendent les possibilités : par exemple l'édition de géométries dans [Grist](https://www.getgrist.com), la représentation cartographique dans [Superset](https://superset.apache.org/), la visualisation de données CSV, l'affichage des photos [Panoramax](https://panoramax.fr/), l'annotation (tracer et partager des repères, traits et zones), ou l'affichage de capteurs [OGC SensorThings](https://www.ogc.org/standard/sensorthings/) avec graphiques temporels interactifs.
 
 
 ![sViewer sur mobile — panneau de partage ouvert](examples/screenshot-mobile.png)

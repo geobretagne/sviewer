@@ -4,6 +4,37 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Extension `annotation` — tracer et partager.** Trace des repères, traits et zones à la
+  souris ou au doigt, avec libellé / couleur / note (mini-formulaire typé). Sauvegarde locale
+  automatique ; **partage en un lien** (`?ext=annotation&draw=…`, GeoJSON encodé dans l'URL,
+  auto-activant) ou export GeoJSON. Sans backend (persistance Grist envisagée). Sélection par
+  liste **ou** par clic sur la carte. Cinq règles UX anti-jargon (voir `ext/annotation/SPEC.md`).
+- **Extension `sensors` — OGC SensorThings.** Affiche les stations (`/Locations`) d'un service
+  SensorThings sur la carte ; au clic, les **mesures** de la station (boutons) et un **graphique
+  temporel interactif** (zoom par glissement sur une période, survol date/valeur). Configuration
+  par `?sta=<URL>` ou collage. Graphique via **uPlot** (MIT, auto-hébergé, chargé paresseusement).
+  Géométries `location` standard **et** non-standard acceptées ; pagination des observations
+  (bouton « Charger plus », plafond de session ; `?sta_pagination` pour le défaut admin).
+- **`SViewer.panel.open(id, title, html, { dock: 'bottom' })`** — affichage en **bandeau bas
+  pleine largeur**, **redimensionnable** (poignée sur le bord haut), adapté au contenu large/
+  horizontal (séries temporelles). Extension-agnostique (marqueur générique `sv-panel-dock`).
+  Émet **`sv:panelResize`** quand l'utilisateur change la hauteur, pour que l'extension ajuste
+  son contenu (ex. un graphique).
+- **Robustesse permalien long** : `<meta name="referrer" content="origin">` — un permalien
+  volumineux (ex. `?draw=`) ne fuite plus dans l'en-tête `Referer` des sous-ressources (évite des
+  `CONNECTION_CLOSED` par dépassement de buffer serveur). Correctif `sw.js` associé.
+
+### Changed
+
+- **Extension `sample`** réécrite comme référence complète de l'API 0.16 (bouton + panneau
+  `{fullscreen}` + `onClose` + `isInstalled` + `getPermalink`).
+- **Catalogue d'extensions** : vignettes en cadre de téléphone (mobile-first), lightbox au clic,
+  unification en français.
+
 ## [0.16.0] - 2026-06-03
 
 ### Added
