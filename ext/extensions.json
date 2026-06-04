@@ -5,6 +5,11 @@
     "description": "Altitude ponctuelle et profil altimétrique via l'API IGN Géoplateforme. Deux modes : clic pour mesurer l'altitude d'un point, ou tracé d'un itinéraire pour obtenir un profil en long."
   },
   {
+    "id": "annotation",
+    "name": "Annoter",
+    "description": "Tracez des repères, des traits et des zones à la souris ou au doigt, annotez-les (libellé, couleur, note), puis partagez le tout en un lien — sans logiciel SIG, sans compte, sans serveur. Sauvegarde locale automatique, partage par URL ou export GeoJSON."
+  },
+  {
     "id": "csv",
     "name": "CSV",
     "description": "Charge un fichier CSV distant comme données vectorielles — géométrie auto-détectée depuis les noms de colonnes"
