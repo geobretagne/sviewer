@@ -88,9 +88,16 @@
         </div>
 
         <div id="sv-frame-map" class="sv-framemap">
+            <div id="sv-toast" class="sv-toast" role="status" aria-live="polite" aria-atomic="true"></div>
             <div id="sv-ol-map" class="sv-map" tabindex="-1" role="region" aria-label="Interactive map">
                 <div id="sv-marker"></div>
                 <div id="sv-loading-bar" class="sv-loading-bar" aria-hidden="true" style="display:none;"></div>
+                <div id="sv-hint" class="sv-hint" role="note" hidden>
+                    <span id="sv-hint-text" class="sv-hint-text"></span>
+                    <button type="button" id="sv-hint-close" class="sv-hint-close i18n" data-i18n-title="btn.hint_dismiss" title="Dismiss" aria-label="Dismiss hint">
+                        <i class="bi bi-x" aria-hidden="true"></i>
+                    </button>
+                </div>
             </div>
 
             <div id="sv-ext-toolbar" class="sv-map-controls" role="group" aria-label="Extension controls"></div>
@@ -170,6 +177,10 @@
                                 <span class="i18n" data-i18n="btn.snapshot_label">Image</span>
                             </button>
                         </div>
+                        <p class="sv-trust-badge">
+                            <i class="bi bi-shield-lock sv-trust-icon" aria-hidden="true"></i>
+                            <span class="i18n" data-i18n="msg.trust_badge">Self-hosted, no tracker, no cookie.</span>
+                        </p>
                         <div class="mt-3 text-end" style="font-size:0.7em;opacity:0.4;user-select:none;" aria-hidden="true">
                             <a href="https://github.com/geobretagne/sviewer/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">sViewer ` + SVIEWER_VERSION + `</a> <span style="font-family:monospace">` + SVIEWER_COMMIT + `</span>
                         </div>

@@ -208,6 +208,29 @@
         .bp-ac-item[aria-selected="true"] .bp-ac-item-desc { color: rgba(255,255,255,.8); }
 
         /* ── Sticky bottom bar ── */
+        #bp-warnings {
+            position: fixed;
+            bottom: 49px;
+            left: 0;
+            width: 380px;
+            box-sizing: border-box;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        #bp-warnings:empty { display: none; }
+        .bp-warn {
+            padding: 6px 12px;
+            font-size: 12.5px;
+            line-height: 1.35;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+        .bp-warn .bi { flex: none; margin-top: 1px; }
+        .bp-warn-amber { background: #7a5a00; color: #ffe9b0; }
+        .bp-warn-red   { background: #7a1d22; color: #ffd6da; }
         #bp-bar {
             position: fixed;
             bottom: 0;
@@ -430,6 +453,7 @@
 </div><!-- /bp-main -->
 
 <!-- Sticky bottom bar -->
+<div id="bp-warnings" role="status" aria-live="polite"></div>
 <div id="bp-bar">
     <a id="bp-url-display" href="#" target="_blank" rel="noopener"></a>
     <a id="bp-url-open" href="#" target="_blank" rel="noopener" title="Ouvrir dans sViewer"><i class="bi bi-box-arrow-up-right"></i></a>
@@ -852,6 +876,71 @@
         el.textContent = url;
         el.href = url;
         document.getElementById('bp-url-open').href = url;
+        runStaticChecks(url);
+    }
+
+    /* ── Trust checks ──
+       Three honest warnings so the shared URL doesn't lie:
+       1. length   — a long URL breaks at share (e-mail, QR, server header).
+       2. credential — a secret in a public URL leaks forever.
+       3. CORS     — a service that blocks third parties works for the creator
+                     but fails for every recipient (checked on preview only).
+       These are creator-side guidance, not security controls — the consuming
+       sViewer is the real boundary. */
+    var BP_URL_AMBER = 2000, BP_URL_RED = 8000;
+    /* token=, apikey=, access_token=, key=…, or user:pass@ in a host */
+    var BP_CRED_RE = /([?&#]\$?(?:api[_-]?key|access[_-]?token|token|key|password|passwd|pwd|secret|auth|signature|sig)=)|(:\/\/[^/@\s]*:[^/@\s]+@)/i;
+
+    function bpWarn(level, key) {
+        var div = document.createElement('div');
+        div.className = 'bp-warn bp-warn-' + level;
+        var icon = level === 'red' ? 'bi-exclamation-octagon' : 'bi-exclamation-triangle';
+        var i = document.createElement('i');
+        i.className = 'bi ' + icon;
+        i.setAttribute('aria-hidden', 'true');
+        var span = document.createElement('span');   /* textContent → no injection */
+        span.textContent = t(key);
+        div.appendChild(i);
+        div.appendChild(span);
+        return div;
+    }
+
+    /* Runs on every edit — cheap, no network. */
+    function runStaticChecks(url) {
+        var box = document.getElementById('bp-warnings');
+        box.innerHTML = '';
+        if (BP_CRED_RE.test(url)) { box.appendChild(bpWarn('red', 'check.credential')); }
+        var len = url.length;
+        if (len > BP_URL_RED)        { box.appendChild(bpWarn('red',   'check.url_too_long')); }
+        else if (len > BP_URL_AMBER) { box.appendChild(bpWarn('amber', 'check.url_long')); }
+    }
+
+    /* Network check, preview-time only: does the WMS host allow third-party
+       (CORS) access? Creator's browser is the probe; failure = recipients break.
+       Best-effort: a no-cors opaque fetch can't read the result, so we use a
+       real CORS GetCapabilities-ish HEAD and treat a thrown/blocked fetch as
+       "likely CORS-blocked". Never blocks preview — only adds a warning. */
+    function runCorsCheck(url) {
+        var wmsUrl;
+        try {
+            var layers = new URL(url).searchParams.get('layers') || '';
+            var at = layers.lastIndexOf('@');
+            if (at === -1) { return; }
+            wmsUrl = layers.slice(at + 1);
+            if (!/^https?:\/\//i.test(wmsUrl)) { return; }
+        } catch (e) { return; }
+        /* GetCapabilities is a safe, cacheable GET that any WMS answers. */
+        var probe = wmsUrl + (wmsUrl.indexOf('?') === -1 ? '?' : '&') +
+                    'SERVICE=WMS&REQUEST=GetCapabilities';
+        fetch(probe, { method: 'GET', mode: 'cors' })
+            .then(function (r) { /* reachable + CORS-allowed → ok, no warning */ })
+            .catch(function () {
+                var box = document.getElementById('bp-warnings');
+                if (box.querySelector('.bp-cors')) { return; }
+                var w = bpWarn('amber', 'check.cors');
+                w.classList.add('bp-cors');
+                box.appendChild(w);
+            });
     }
 
     /* ── preview ── */
@@ -863,6 +952,8 @@
         el.href = url;
         document.getElementById('bp-url-open').href = url;
         document.getElementById('bp-iframe').src = url;
+        runStaticChecks(url);
+        runCorsCheck(url);
     }
 
     /* ── copy ── */

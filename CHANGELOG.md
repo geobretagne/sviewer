@@ -4,7 +4,7 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.17.0] - 2026-06-05
 
 ### Added
 
@@ -27,6 +27,20 @@ Versioning: [Semantic Versioning](https://semver.org/).
 - **Robustesse permalien long** : `<meta name="referrer" content="origin">` — un permalien
   volumineux (ex. `?draw=`) ne fuite plus dans l'en-tête `Referer` des sous-ressources (évite des
   `CONNECTION_CLOSED` par dépassement de buffer serveur). Correctif `sw.js` associé.
+- **Repère de prise en main** : sur une carte avec données cliquables (WMS interrogeable ou
+  objets vectoriels), une bulle « Cliquez un objet… » apprend à l'utilisateur non spécialiste que
+  la carte est interactive. Affichée une fois par session, fermable, jamais sur un fond seul.
+- **`SViewer.toast(msg, opts)`** — message transitoire pour les retours d'action sans bouton
+  propre (enregistré, erreur, chargement). Région *live* unique, annoncée aux lecteurs d'écran.
+  `opts.type` : `info` (défaut) | `success` | `error`.
+- **Mention de confiance** dans le panneau de partage : « Auto-hébergé, sans traceur, sans
+  cookie. » — rend visible l'atout RGPD/vie privée de sViewer au moment du partage.
+- **Blueprint — garde-fous de partage.** Trois avertissements honnêtes pour que l'URL partagée ne
+  mente pas : **longueur** (URL longue → risque de casse e-mail/QR/serveur), **identifiant**
+  (jeton/mot de passe dans une URL publique = fuite — refus visible), **CORS** (à l'aperçu, si le
+  service WMS n'autorise pas l'accès tiers, l'aperçu marche pour le créateur mais échoue chez les
+  destinataires). Guidage créateur, pas un contrôle de sécurité (le sViewer consommateur reste la
+  frontière réelle).
 
 ### Changed
 

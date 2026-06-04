@@ -134,6 +134,22 @@ window.SViewer.app = (function() {
         };
     }());
 
+    // Transient toast for actions without their own button feedback
+    // (loading, error, saved…). Single live region, auto-dismiss.
+    // Exposed as SViewer.toast(msg, opts). opts.type: 'info'|'success'|'error'.
+    var _toastTimer = null;
+    function showToast(msg, opts) {
+        opts = opts || {};
+        var el = document.getElementById('sv-toast');
+        if (!el || !msg) { return; }
+        el.textContent = String(msg);
+        el.className = 'sv-toast show sv-toast-' + (opts.type || 'info');
+        if (_toastTimer) { clearTimeout(_toastTimer); }
+        _toastTimer = setTimeout(function() {
+            el.classList.remove('show');
+        }, opts.duration || 3000);
+    }
+
     // Toggle inert on modal show/hide so focus is never trapped behind
     // an inert/aria-hidden ancestor (WCAG a11y requirement).
     function bindModalInert(modalEl) {
@@ -1858,7 +1874,37 @@ if (state.label) {
             // If a now-unavailable panel is open, close it.
             if (!avail[name] && btn.classList.contains('active')) { resetPanel(); }
         });
+        maybeShowHint();
     }
+
+   // First-run hint: teach the consumer the map is interactive.
+   // Shown once per browser (sessionStorage flag) when there is clickable data
+   // (WMS queryable or vector features), so a novice knows to click a feature.
+   // Dismissible; never shown on a bare basemap (nothing to click).
+   var _hintShown = false;
+   function maybeShowHint() {
+       if (_hintShown) { return; }
+       var hintEl = document.getElementById('sv-hint');
+       if (!hintEl) { return; }
+       var hasWms = config.layersQueryable && config.layersQueryable.length > 0;
+       var hasData = hasWms || _hasFeatures;
+       if (!hasData) { return; }
+       var seen;
+       try { seen = sessionStorage.getItem('sv_hint_click'); } catch(_e) { seen = '1'; }
+       if (seen) { _hintShown = true; return; }
+       _hintShown = true;
+       var txt = document.getElementById('sv-hint-text');
+       if (txt) { txt.textContent = tr('msg.hint_click'); }
+       hintEl.hidden = false;
+       var dismiss = function() {
+           hintEl.hidden = true;
+           try { sessionStorage.setItem('sv_hint_click', '1'); } catch(_e) { /* storage blocked */ }
+       };
+       var closeBtn = document.getElementById('sv-hint-close');
+       if (closeBtn) { closeBtn.addEventListener('click', dismiss, { once: true }); }
+       // Auto-dismiss on the first map click — the lesson is learned.
+       if (_bus) { _bus.on('sv:featureClick', dismiss); _bus.on('sv:viewChange', dismiss); }
+   }
 
    // updates title
     function setTitle(title, silent) {
@@ -2834,6 +2880,9 @@ if (state.label) {
     this.off = function(event, fn) { if (_bus) { _bus.off(event, fn); } };
     // Convenience alias — extensions use SViewer.onMapReady(fn) as entry point.
     this.onMapReady = function(fn) { if (_bus) { _bus.on('sv:mapReady', fn); } };
+    // Show a transient toast. opts.type: 'info'|'success'|'error'; opts.duration ms.
+    // For action feedback that has no button of its own (saved, loading, error).
+    this.toast = function(msg, opts) { showToast(msg, opts); };
     // Register a map click handler. fn({ coordinate, pixel, olEvent }).
     // Use getMap().forEachFeatureAtPixel(pixel, ...) to hit-test your own layers.
     this.addClickHandler    = function(fn) { if (typeof fn === 'function') { _clickHandlers.push(fn); } };
