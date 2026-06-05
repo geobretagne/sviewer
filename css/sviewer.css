@@ -31,11 +31,14 @@
     --sv-btn-bg-glass:         rgb(244 244 245 / 85%);
     --sv-btn-bg-glass-hover:   rgb(228 228 231 / 92%);
     --sv-btn-fg:               #18181b;
-    --sv-btn-border:           rgb(0 0 0 / 18%);
-    /* Dual-tone edge so the button reads on ANY map tile: an outer light ring lifts
-       it off dark tiles, an inner dark ring + drop shadow lift it off bright tiles. */
-    --sv-btn-box-shadow:       0 0 0 1px rgb(255 255 255 / 65%), inset 0 0 0 1px rgb(0 0 0 / 18%), 0 1px 3px rgb(0 0 0 / 28%);
-    --sv-btn-box-shadow-hover: 0 0 0 1px rgb(255 255 255 / 70%), inset 0 0 0 1px rgb(0 0 0 / 22%), 0 2px 6px rgb(0 0 0 / 30%);
+    --sv-btn-border:           rgb(0 0 0 / 22%);
+    /* Single solid edge so every button shows the SAME border thickness over any
+       map tile. (The former dual translucent rings — outer white + inset dark —
+       flipped visibility with the tile behind each button, making borders look
+       uneven across the row.) The 1px border carries the edge; the box-shadow is
+       now only a drop shadow for lift. */
+    --sv-btn-box-shadow:       0 1px 3px rgb(0 0 0 / 28%);
+    --sv-btn-box-shadow-hover: 0 2px 6px rgb(0 0 0 / 30%);
     --sv-btn-focus-ring:       0 0 0 2px rgb(0 0 0 / 15%), 0 0 0 4px var(--sv-accent);
     --sv-btn-active-bg:        rgb(0 0 0 / 8%);
 
@@ -249,18 +252,14 @@
 .sv-map-btn[aria-pressed="true"] {
     background-color: #198754;
     color: #fff;
-    box-shadow: none;
+    /* Keep the same drop shadow as inactive buttons (just the lift, no glass
+       rings on the filled state) so the apparent border thickness stays equal
+       across the whole control row — active buttons no longer look thinner. */
+    box-shadow: 0 1px 3px rgb(0 0 0 / 28%);
 }
 
-.sv-map-btn.active i,
-.sv-map-btn[aria-pressed="true"] i {
-    animation: sv-gps-pulse 1.4s ease-in-out infinite;
-}
-
-@keyframes sv-gps-pulse {
-    0%, 100% { opacity: 1;   transform: scale(1); }
-    50%       { opacity: 0.4; transform: scale(0.85); }
-}
+/* Active state = green fill + white icon already reads clearly; no pulse needed
+   (blinking added motion without information). */
 
 .sv-map-btn-group {
     display: flex;
@@ -279,8 +278,10 @@
     display: inline;
     flex-shrink: 0;
     margin-right: 4px;
+    /* Bootstrap-Icons paths are fill-only; a stroke on top bolded the inline-SVG
+       extension icons heavier than the font glyphs (uneven weight across the
+       row). Fill alone keeps every icon at the same optical weight. */
     fill: var(--sv-btn-fg);
-    stroke: var(--sv-btn-fg);
     transition: var(--transition);
 }
 
@@ -574,10 +575,13 @@
 .sv-sidepanel {
     position: absolute;
     right: 5px;
-    top: 55px;
+    /* Top gap = right gap (5px): buttons are top:4 + 44px tall = 48px bottom,
+       + 5px = 53px, so the panel sits the same distance below the button bar as
+       it sits from the right edge. max-height keeps an equal 5px gap at bottom. */
+    top: 53px;
     width: 0;
     height: auto;
-    max-height: calc(100% - 60px);
+    max-height: calc(100% - 58px);
     background-color: var(--sv-panel-bg);
     color: var(--sv-panel-fg);
     backdrop-filter: var(--sv-backdrop);
@@ -800,6 +804,20 @@
     font-size: 14px;
     padding: 8px 12px;
     transition: var(--sv-transition);
+    /* Neutralize the browser's native search-field appearance so a
+       type="search" input (place search) matches a type="text" input (map
+       title) — same radius/height, no pill shape or native decorations. */
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Drop WebKit's native clear (×) and the result/cancel pseudo-buttons that
+   give type="search" its distinct look. */
+.sv-sidepanel .form-control::-webkit-search-decoration,
+.sv-sidepanel .form-control::-webkit-search-cancel-button,
+.sv-sidepanel .form-control::-webkit-search-results-button {
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .sv-sidepanel .form-control::placeholder,
