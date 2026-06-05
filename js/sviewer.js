@@ -1910,12 +1910,16 @@ if (state.label) {
     function setTitle(title, silent) {
         config.title = typeof title === 'string' ? title.trim() : title;
         document.title = config.title;
-        // Keep the panel-button label in sync — including when the title is cleared
-        // (previously it kept stale text on an empty title). On an empty title,
-        // fall back to the localized "Map" label so the button is never nameless
-        // (WCAG: the visible text is also its accessible name — no aria-label).
+        // Keep the panel-button label in sync with a user-set title. When no real
+        // title is set (empty, or the unset 'sViewer' default), show the localized
+        // panel label ("Carte"/"Map") instead — a generic button name, and never
+        // nameless (WCAG: the visible text is also its accessible name, no
+        // aria-label). The document.title keeps the 'sViewer' default separately.
         var _btn = document.getElementById('sv-panel-share-title');
-        if (_btn) { _btn.textContent = config.title || tr('btn.panel_map'); }
+        if (_btn) {
+            var hasUserTitle = config.title && config.title !== 'sViewer';
+            _btn.textContent = hasUserTitle ? config.title : tr('btn.panel_map');
+        }
         var _shareTitle = document.getElementById('sv-share-title');
         if (_shareTitle && _shareTitle.value === '') {
             _shareTitle.value = config.title;
