@@ -146,6 +146,17 @@
             return s.charAt(s.length - 1) === '/' ? s : s + '/';
         } catch (e) { return null; }
     }
+    // Validate an @iot.id taken from a URL param before it goes into an OData
+    // path segment (Locations(<id>) / Datastreams(<id>)). STA ids are integers
+    // or single-quoted strings; accept those two shapes only, reject anything
+    // that could break out of the path. Returns the cleaned id or null.
+    function validId(v) {
+        if (v == null) { return null; }
+        v = String(v).trim();
+        if (/^[0-9]+$/.test(v)) { return v; }                 // integer id
+        if (/^'[^'"\\<>()\s]+'$/.test(v)) { return v; }       // quoted string id
+        return null;
+    }
 
     SViewer.onMapReady(function (ctx) {
         var map = ctx.map;
@@ -157,6 +168,7 @@
         var selDs = null;        // selected datastream id
         var fetchSeq = 0;        // stale-response guard
         var maxObs = DEF_MAX;    // observation ceiling (raised by ?sta_pagination=)
+        var autoDsPending = null; // deep-link datastream id, consumed once by openStation
 
         var geojsonFmt = new ol.format.GeoJSON();
 
@@ -192,7 +204,11 @@
         }
 
         // --- Step 2: Locations → station features -----------------------------
-        function loadStations(url) {
+        // auto = { station, ds } — optional deep-link target from KVP params.
+        // After stations load, auto-select that station (and datastream), opening
+        // the panel straight on the chart. A missing id falls back gracefully to
+        // the normal station view (no crash, no empty panel).
+        function loadStations(url, auto) {
             var svc = validService(url);
             if (!svc) { showError(t('err.url')); return; }
             service = svc;
@@ -203,9 +219,29 @@
                 rebuildStations();
                 if (stations.length) { fitStations(); }
                 renderStationList();
+                if (auto && auto.station) { autoSelect(auto); }
             }).catch(function (e) {
                 showError(/sta|json|unexpected/i.test(String(e)) ? t('err.nosta') : t('err.fetch'));
             });
+        }
+        // Deep-link: select the station whose id matches, centre on it, and if a
+        // datastream id is given, chart it (otherwise openStation defaults to the
+        // first mesure, mviewer-style). Unknown ids degrade to the normal view.
+        function autoSelect(auto) {
+            var st = null;
+            for (var i = 0; i < stations.length; i++) {
+                if (String(stations[i].id) === String(auto.station)) { st = stations[i]; break; }
+            }
+            if (!st) { return; }   // station not in this service → leave normal view
+            map.getView().animate({
+                center: geojsonFmt.readGeometry({ type: 'Point', coordinates: st.coords },
+                    { dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857' }).getCoordinates(),
+                duration: 350
+            });
+            // openStation loads datastreams then selects one; stash the requested
+            // ds so it picks that instead of the first (consumed once, in openStation).
+            autoDsPending = auto.ds || null;
+            openStation(st);
         }
         // SensorThings "location" comes in two shapes in the wild:
         //   standard:     { geometry: { type:'Point', coordinates:[...] }, ... }  (GeoJSON Feature)
@@ -271,7 +307,13 @@
                     });
                 });
                 renderStationDetail();
-                if (datastreams.length) { selectDatastream(datastreams[0].id); }  // mviewer default
+                if (datastreams.length) {
+                    // Deep-link ds if requested AND present in this station, else the
+                    // first mesure (mviewer default). autoDsPending consumed here.
+                    var want = autoDsPending; autoDsPending = null;
+                    var wantDs = want && dsById(want);
+                    selectDatastream(wantDs ? wantDs.id : datastreams[0].id);
+                }
             }).catch(function () { if (seq === fetchSeq) { showError(t('err.fetch')); } });
         }
 
@@ -326,7 +368,11 @@
             if (selDs != null) { selectDatastream(selDs); }
         }
         function dsById(id) {
-            for (var i = 0; i < datastreams.length; i++) { if (datastreams[i].id === id) { return datastreams[i]; } }
+            // Loose String() compare: @iot.id may be a number from JSON while a
+            // URL-param / data-attr id is a string ("42" vs 42).
+            for (var i = 0; i < datastreams.length; i++) {
+                if (String(datastreams[i].id) === String(id)) { return datastreams[i]; }
+            }
             return null;
         }
 
@@ -614,7 +660,14 @@
         var sta = params.get('sta');
         if (sta) {
             var svc = validService(sta);
-            if (svc) { loadStations(svc); }
+            // Deep-link: ?sta_station=<@iot.id> opens that station; with
+            // ?sta_ds=<@iot.id> it charts that mesure and opens the panel
+            // straight on it. IDs validated (OData-path-safe); unknown ids
+            // degrade to the normal station view.
+            var auto = null;
+            var stId = validId(params.get('sta_station'));
+            if (stId) { auto = { station: stId, ds: validId(params.get('sta_ds')) }; }
+            if (svc) { loadStations(svc, auto); }
         }
     });
 }());

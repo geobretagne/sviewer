@@ -1,7 +1,7 @@
 {
   "id":          "sensors",
   "type":        "extension",
-  "version":     "0.1.0",
+  "version":     "0.2.0",
   "name":        "Capteurs",
   "description": "Affiche un service OGC SensorThings : les stations sur la carte, et au clic, leurs mesures sous forme de graphique temporel interactif (survol date/valeur, zoom par glissement sur une période). Graphique uPlot (libre), sans backend.",
   "author":      "fphg",
@@ -22,6 +22,18 @@
       "type":        "string",
       "description": "Charge plus de 2000 observations par mesure en suivant la pagination. Un nombre = plafond d'observations ; 1 / true / all = plafond maximal.",
       "example":     "sta_pagination=20000"
+    },
+    {
+      "name":        "sta_station",
+      "type":        "string",
+      "description": "Ouvre directement une station (son @iot.id de Location) : centre la carte dessus et affiche ses mesures. Sans sta_ds, charge la première mesure.",
+      "example":     "sta_station=1"
+    },
+    {
+      "name":        "sta_ds",
+      "type":        "string",
+      "description": "Avec sta_station : ouvre le panneau directement sur cette mesure (son @iot.id de Datastream). Lien profond pour partager ou embarquer un graphique précis.",
+      "example":     "sta_ds=4"
     }
   ],
 
@@ -39,6 +51,11 @@
       "title":       "Stations météo-hydro (FROST geOSAS)",
       "url":         "?ext=sensors&sta=https://frost.geosas.fr/station_meteo_hydro_agro/v1.1/",
       "description": "Service SensorThings de démonstration — cliquez une station pour voir ses mesures"
+    },
+    {
+      "title":       "Lien profond — station + mesure",
+      "url":         "?ext=sensors&sta=https://frost.geosas.fr/station_meteo_hydro_agro/v1.1/&sta_station=1&sta_ds=4",
+      "description": "Ouvre directement le graphique d'une mesure précise — idéal pour partager ou embarquer une vue"
     }
   ]
 }

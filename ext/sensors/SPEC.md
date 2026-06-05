@@ -9,15 +9,28 @@ Service de référence : `https://frost.geosas.fr/station_meteo_hydro_agro/v1.1/
 ## Portée v1 (scope B — un graphique à la fois)
 
 1. **Config** — `?ext=sensors&sta=<URL service>` OU collage de l'URL dans le panneau.
+   - **Lien profond (KVP)** — `&sta_station=<@iot.id Location>` ouvre directement
+     cette station (centre la carte, charge ses mesures) ; ajouter
+     `&sta_ds=<@iot.id Datastream>` ouvre le panneau **droit sur ce graphique**.
+     Le créateur partage un lien vers *une mesure précise* ; en embarqué, c'est un
+     widget « un graphique » sans interaction. `sta_station` seul → première mesure
+     (défaut mviewer). **IDs validés** (`validId` : entier ou chaîne quotée) avant
+     insertion dans le chemin OData `Locations(<id>)` / `Datastreams(<id>)` — un id
+     inconnu retombe proprement sur la vue station normale (pas de plantage, pas de
+     panneau vide). Lien **entrant** uniquement en v1 ; le partage sortant
+     (« Partager » qui rejoue la station/mesure ouverte) reste à faire — il faudrait
+     un point d'extension côté cœur pour qu'une extension contribue des KVP au
+     permalien (réutilisable par annotation/field).
 2. **Stations** — `GET {sta}/Locations` → géométrie ajoutée en couche vectorielle
    propre (indépendante de `?geojson=`), avec `@iot.id`+`name`. **Deux formes de
    `location` acceptées** (la non-standard est majoritaire) :
    - standard : `{ geometry: { type:'Point', coordinates:[...] } }` (Feature) ;
    - non-standard : `{ type:'Point', coordinates:[...] }` (géométrie en ligne).
    `pointGeom()` déballe l'une ou l'autre.
-3. **Clic station** → `GET {sta}/Locations(id)/Things?$select=...&$expand=Datastreams($select=name,description,id,unitOfMeasurement)`
-   → panneau : nom station + **liste des mesures** (nom + unité + **dernière
-   valeur**, ex. « Température — 14.2 °C »).
+3. **Clic station** (ou lien profond) → `GET {sta}/Locations(id)/Things?$select=id&$expand=Datastreams($select=name,id,unitOfMeasurement)`
+   → panneau : nom station + **boutons radio des mesures** (nom + unité). Pas de
+   « dernière valeur » : un relevé sans horodatage est ininterprétable et un fetch
+   par capteur ralentit l'ouverture ; les valeurs (horodatées) sont dans le graphique.
 4. **Graphique** — au clic station, charge d'office la **1re mesure** (défaut
    mviewer) ; taper une autre mesure échange le graphique.
    `GET {sta}/Datastreams(id)/Observations?$top=2000&$select=result,phenomenonTime&$orderby=phenomenonTime desc`
