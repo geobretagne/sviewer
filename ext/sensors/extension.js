@@ -50,6 +50,7 @@
             'loading':      'Chargement…',
             'stations.count': 'station(s)',
             'station.measures': 'Mesures',
+            'list.map_hint': 'Cliquez une station sur la carte ou dans la liste.',
             'measures.none': 'Aucune mesure pour cette station.',
             'obs.none':     'Aucune donnée pour cette mesure.',
             'back':         '‹ Stations',
@@ -71,6 +72,7 @@
             'loading':      'Loading…',
             'stations.count': 'station(s)',
             'station.measures': 'Measures',
+            'list.map_hint': 'Click a station on the map or in the list.',
             'measures.none': 'No measure for this station.',
             'obs.none':     'No data for this measure.',
             'back':         '‹ Stations',
@@ -92,6 +94,7 @@
             'loading':      'Cargando…',
             'stations.count': 'estación(es)',
             'station.measures': 'Medidas',
+            'list.map_hint': 'Haga clic en una estación en el mapa o en la lista.',
             'measures.none': 'Ninguna medida para esta estación.',
             'obs.none':     'Sin datos para esta medida.',
             'back':         '‹ Estaciones',
@@ -113,6 +116,7 @@
             'loading':      'Lädt…',
             'stations.count': 'Station(en)',
             'station.measures': 'Messungen',
+            'list.map_hint': 'Klicken Sie eine Station auf der Karte oder in der Liste.',
             'measures.none': 'Keine Messung für diese Station.',
             'obs.none':     'Keine Daten für diese Messung.',
             'back':         '‹ Stationen',
@@ -582,19 +586,31 @@
 
         function renderStationList() {
             var r = root(); if (!r) { return; }
+            // Stations = navigable list (drill into a place — also clickable on the
+            // map). Rows carry a chevron so they read as "go to", distinct from the
+            // sensor chips (in-place toggle). Both share the same selected/hover
+            // design system; the role difference (navigate vs toggle) is the point.
             var list = stations.length
-                ? '<ul class="sv-sensors-list">' + stations.map(function (s) {
-                    return '<li class="sv-sensors-row" data-id="' + esc(s.id) + '">' + esc(s.name) + '</li>';
+                ? '<p class="sv-sensors-hint">' + esc(t('list.map_hint')) + '</p>' +
+                  '<ul class="sv-sensors-list" role="list">' + stations.map(function (s) {
+                    return '<li class="sv-sensors-row" role="button" tabindex="0" data-id="' + esc(s.id) + '">' +
+                        '<span class="sv-sensors-row-name">' + esc(s.name) + '</span>' +
+                        '<span class="sv-sensors-row-go" aria-hidden="true">›</span></li>';
                   }).join('') + '</ul><p class="sv-sensors-count">' + stations.length + ' ' + esc(t('stations.count')) + '</p>'
                 : '<p class="sv-sensors-msg">0 ' + esc(t('stations.count')) + '</p>';
             r.innerHTML = list + '<hr>' + configFormHtml();
             r.querySelectorAll('[data-id]').forEach(function (row) {
-                row.addEventListener('click', function () {
+                var go = function () {
                     var st = stations.filter(function (s) { return String(s.id) === row.getAttribute('data-id'); })[0];
                     if (st) {
                         map.getView().animate({ center: ol.proj.fromLonLat(st.coords), duration: 350 });
                         openStation(st);
                     }
+                };
+                row.addEventListener('click', go);
+                // Keyboard: a role=button row activates on Enter/Space.
+                row.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
                 });
             });
             bindConfig();
@@ -602,10 +618,13 @@
 
         function renderStationDetail() {
             var r = root(); if (!r || !curStation) { return; }
-            // Horizontal chips (one per mesure) rather than a <select>: all
-            // options are visible = discoverable, and a horizontal row uses the
-            // wide dock's WIDTH, not its scarce height. Latest value rides in each
-            // chip. role=radiogroup — exactly one selected at a time.
+            // Sensors = in-place toggle: horizontal chips (one per mesure), a
+            // segmented control that switches the chart facet. Chips (not a list)
+            // because they're few + switched often while reading, and a horizontal
+            // row uses the wide dock's WIDTH, not its scarce height. role=radiogroup
+            // — exactly one selected at a time. Visually paired with the station
+            // list (same selected/hover system) but a distinct role: toggle vs
+            // navigate.
             var picker = datastreams.length
                 ? '<div class="sv-sensors-chips" role="radiogroup" aria-label="' + esc(t('station.measures')) + '">' +
                   datastreams.map(function (ds) {
@@ -658,9 +677,17 @@
                 P + '.sv-sensors-err{font-size:.85rem;color:#c0392b;margin:.3rem 0 .6rem}',
                 P + '.sv-sensors-lbl{display:block;font-size:.82rem;color:#555;margin:.5rem 0}',
                 P + '.sv-sensors-lbl input{display:block;width:100%;margin-top:.2rem;padding:.35rem .5rem;font-size:.9rem;border:1px solid var(--sv-panel-border,#ccc);border-radius:4px;background:var(--sv-panel-bg,#fff);color:inherit}',
-                P + '.sv-sensors-list{list-style:none;margin:0 0 .4rem;padding:0}',
-                P + '.sv-sensors-row{padding:.45rem .25rem;border-bottom:1px solid var(--sv-panel-border,#e0e0e0);cursor:pointer}',
-                P + '.sv-sensors-row:hover{background:rgba(127,127,127,.08)}',
+                P + '.sv-sensors-list{list-style:none;margin:0 0 .4rem;padding:0;display:flex;flex-direction:column;gap:.25rem}',
+                // Station row = navigable item. Rounded like the chips (one design
+                // system), but a full-width row with a chevron = "drill in", not a
+                // toggle pill. Selected/hover share the chip accent language.
+                P + '.sv-sensors-row{display:flex;align-items:center;gap:.5rem;padding:.45rem .6rem;border:1px solid var(--sv-panel-border,#ccc);border-radius:8px;background:var(--sv-panel-bg,#fff);color:inherit;cursor:pointer}',
+                P + '.sv-sensors-row:hover{background:rgba(127,127,127,.1)}',
+                P + '.sv-sensors-row:focus-visible{outline:2px solid #0d6efd;outline-offset:1px}',
+                P + '.sv-sensors-row-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+                P + '.sv-sensors-row-go{flex:none;color:#0d6efd;font-size:1.1rem;line-height:1}',
+                P + '.sv-sensors-row.sel{background:#0d6efd;border-color:#0d6efd;color:#fff;font-weight:600}',
+                P + '.sv-sensors-row.sel .sv-sensors-row-go{color:#fff}',
                 P + '.sv-sensors-count{font-size:.78rem;color:#666;margin:.2rem 0}',
                 // Compact horizontal toolbar (back + station name + mesure select).
                 P + '.sv-sensors-bar{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;flex-shrink:0}',
