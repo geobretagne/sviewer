@@ -4,6 +4,23 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.17.2] - 2026-06-05
+
+### Fixed
+
+- **Bouton « Carte » resynchronisé avec le titre.** Régression du correctif a11y
+  (2.5.3) : le libellé du bouton de partage portait `class="i18n"`, donc la
+  retraduction l'écrasait en « Carte » et cassait la synchro avec le titre de la
+  carte. Le libellé suit de nouveau le titre saisi ; sans titre, il affiche
+  l'étiquette localisée (« Carte / Map / Karte »), le `document.title` gardant
+  « sViewer ». Le nom accessible reste le texte visible (pas d'`aria-label`),
+  donc le correctif 2.5.3 tient (Lighthouse a11y 100, 0 « name mismatch »).
+- **Catalogue d'extensions : lien de titre mort retiré.** Le titre de chaque
+  extension pointait vers `ext/<dir>/`, qui n'existe que pour les extensions de
+  type page (blueprint) — pour la majorité (`extension.js` seul), il ne menait
+  nulle part. Titre en texte simple ; les liens « essayer » des exemples (vrais
+  permaliens `?ext=`) sont conservés.
+
 ## [0.17.1] - 2026-06-05
 
 ### Added
