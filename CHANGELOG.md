@@ -4,6 +4,42 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.17.3] - 2026-06-06
+
+### Fixed
+
+- **Panneau d'extension bloqué en mode « actif ».** `SViewer.panel.close()`
+  remettait `_panelOwner` à `null` avant `resetPanel()`, qui ne déclenche le
+  `onClose` du propriétaire que s'il est défini — l'extension ne réinitialisait
+  donc ni son drapeau actif ni son bouton. Le bouton restait « actif » sans accès
+  au panneau (reproductible en jonglant entre `annotation` et `field`). Corrigé :
+  `resetPanel()` remet le propriétaire à `null` lui-même, après le `onClose`.
+- **Isochrone — contrôles lisibles en thème clair.** Le `select` POI et le champ
+  durée avaient des couleurs sombres en dur ; ils suivent désormais les variables
+  de thème (`--sv-panel-input-bg/-fg/-border`).
+- **Recherche — taille du texte d'aide alignée.** « Tapez au moins 3 caractères »
+  (et les messages « aucun résultat » / géolocalisation) héritaient de la taille
+  par défaut ; désormais `0.85rem` atténué, comme les autres panneaux.
+
+### Changed
+
+- **Cohérence des icônes.** Les extensions n'utilisent plus la police Bootstrap
+  Icons mais des SVG en ligne (la police reste réservée au cœur) ; `print` et
+  `sample` convertis, les 29 SVG d'extension vérifiés conformes aux données
+  officielles Bootstrap Icons (3 copies dérivées corrigées). Bouton `field` :
+  stylo → épingle sur carte ; `me` : silhouette pleine → contour.
+- **Cohérence des boutons.** Règle de variantes documentée dans `EXT_API.md`
+  (un seul `btn-primary` par vue, `btn-secondary` par défaut,
+  `btn-outline-secondary` pour les bascules, `*-danger` pour le destructif).
+  Appliquée aux panneaux **Carte** (Lien = primaire, Embarquer/Image =
+  secondaires) et **Terrain**, et aux extensions `annotation` / `field`.
+- **Finitions barre d'outils carte.** Bordures de boutons uniformes (une seule
+  bordure pleine, plus de doubles anneaux dépendant du fond), suppression du
+  clignotement de l'icône active, icônes toutes en contour
+  (info-circle, geo-alt), poids de trait homogène. Panneau latéral repositionné
+  pour un écart haut égal à la marge droite. Champ de recherche normalisé
+  (plus de style « champ de recherche » natif).
+
 ## [0.17.2] - 2026-06-05
 
 ### Fixed
