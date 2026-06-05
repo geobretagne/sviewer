@@ -331,10 +331,13 @@
             var seq = ++fetchSeq;
             var ds = dsById(id);
             var host = document.getElementById('sv-sensors-chart');
-            if (host) { host.textContent = t('loading'); }
+            // Determinate progress bar: observations stream page by page
+            // (@iot.nextLink) up to maxObs, so count/maxObs is a real fraction.
+            // A static "loading…" hid that a big mesure takes many pages.
+            var progress = host ? showProgress(host) : null;
             var first = service + 'Datastreams(' + encodeURIComponent(id) + ')/Observations' +
                 '?$top=' + PAGE_OBS + '&$select=result,phenomenonTime&$orderby=phenomenonTime desc';
-            fetchObservations(first, [], seq).then(function (res) {
+            fetchObservations(first, [], seq, progress).then(function (res) {
                 if (seq !== fetchSeq) { return; }
                 res.obs.sort(function (a, b) { return a.t - b.t; });   // ascending for the chart
                 renderChart(res.obs, ds, seq, res.hasMore);
@@ -346,15 +349,16 @@
         // Follow @iot.nextLink until maxObs is reached. Returns { obs, hasMore }
         // where hasMore = more pages exist beyond the current ceiling (drives the
         // in-panel "load more" button — pagination from the UI, not just the URL).
-        function fetchObservations(url, acc, seq) {
+        function fetchObservations(url, acc, seq, progress) {
             return staGet(url).then(function (j) {
                 if (seq !== fetchSeq) { return { obs: acc, hasMore: false }; }
                 (j.value || []).forEach(function (o) {
                     var t0 = Date.parse(o.phenomenonTime), v = parseFloat(o.result);
                     if (isFinite(t0) && isFinite(v)) { acc.push({ t: t0, v: v }); }
                 });
+                if (progress) { progress(acc.length); }
                 var next = j['@iot.nextLink'];
-                if (next && acc.length < maxObs) { return fetchObservations(next, acc, seq); }
+                if (next && acc.length < maxObs) { return fetchObservations(next, acc, seq, progress); }
                 return { obs: acc, hasMore: !!next };   // next link left = more available
             });
         }
@@ -530,6 +534,31 @@
         // --- Render ----------------------------------------------------------
         function root() { return document.getElementById('sv-sensors-root'); }
         function showLoading() { var r = root(); if (r) { r.innerHTML = '<p class="sv-sensors-msg">' + esc(t('loading')) + '</p>'; } }
+        // Determinate progress bar for observation streaming. Builds a labelled
+        // bar inside `host` and returns update(count) → sets width + a11y value
+        // (count of maxObs). Used while paging @iot.nextLink — a big mesure is
+        // many pages, so a real fraction beats a static "loading…".
+        function showProgress(host) {
+            host.innerHTML =
+                '<div class="sv-sensors-prog">' +
+                  '<div class="sv-sensors-prog-label">' + esc(t('loading')) + '</div>' +
+                  '<div class="sv-sensors-prog-track" role="progressbar" aria-valuemin="0" ' +
+                       'aria-valuemax="100" aria-valuenow="0" aria-label="' + esc(t('loading')) + '">' +
+                    '<div class="sv-sensors-prog-fill" style="width:0%"></div>' +
+                  '</div>' +
+                  '<div class="sv-sensors-prog-count" aria-hidden="true">0</div>' +
+                '</div>';
+            var track = host.querySelector('.sv-sensors-prog-track');
+            var fill  = host.querySelector('.sv-sensors-prog-fill');
+            var label = host.querySelector('.sv-sensors-prog-count');
+            return function (count) {
+                if (!fill) { return; }
+                var pct = maxObs > 0 ? Math.min(100, Math.round(count / maxObs * 100)) : 0;
+                fill.style.width = pct + '%';
+                if (track) { track.setAttribute('aria-valuenow', String(pct)); }
+                if (label) { label.textContent = count.toLocaleString(); }
+            };
+        }
         function showError(msg) { var r = root(); if (r) { r.innerHTML = '<p class="sv-sensors-err">' + esc(msg) + '</p>' + configFormHtml(); bindConfig(); } }
 
         function configFormHtml() {
@@ -645,7 +674,14 @@
                 P + '.sv-sensors-chart{flex:1;min-height:0;margin-top:.4rem;display:flex;flex-direction:column}',
                 P + '.sv-sensors-foot{font-size:.78rem;color:#666;margin:.3rem 0 0;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;flex-shrink:0}',
                 P + '.sv-sensors-readout{flex:1;min-width:0;color:#0d6efd;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-                P + '.sv-sensors-zoomhint{font-size:.72rem;color:#999;margin:.2rem 0 0;flex-shrink:0}'
+                P + '.sv-sensors-zoomhint{font-size:.72rem;color:#999;margin:.2rem 0 0;flex-shrink:0}',
+                // Determinate progress bar (observation streaming).
+                P + '.sv-sensors-prog{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:.4rem;padding:1rem}',
+                P + '.sv-sensors-prog-label{font-size:.85rem;color:#666}',
+                P + '.sv-sensors-prog-track{width:min(100%,420px);height:8px;border-radius:4px;background:rgba(127,127,127,.18);overflow:hidden}',
+                P + '.sv-sensors-prog-fill{height:100%;background:#0d6efd;border-radius:4px;transition:width .15s linear}',
+                '@media (prefers-reduced-motion:reduce){' + P + '.sv-sensors-prog-fill{transition:none}}',
+                P + '.sv-sensors-prog-count{font-size:.78rem;color:#999;font-variant-numeric:tabular-nums}'
             ].join('');
             var style = document.createElement('style');
             style.id = 'sv-sensors-style';
