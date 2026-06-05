@@ -234,14 +234,14 @@
             '<label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem">' + t('label.duration') + '</label>',
             '<div style="display:flex;gap:.5rem;align-items:center">',
             '<input id="sv-iso-slider" type="range" min="1" max="60" value="10" style="flex:1">',
-            '<input id="sv-iso-value" type="number" min="1" max="9999" value="10" aria-label="' + t('label.duration') + '" style="width:4rem;text-align:right;background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:2px 4px">',
+            '<input id="sv-iso-value" type="number" min="1" max="9999" value="10" aria-label="' + t('label.duration') + '" style="width:4rem;text-align:right;background:var(--sv-panel-input-bg);color:var(--sv-panel-fg);border:1px solid var(--sv-panel-border);border-radius:4px;padding:2px 4px">',
             '</div>',
             '</div>',
 
             // POI selector
             '<div>',
             '<label for="sv-iso-poi" style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem">' + t('label.poi') + '</label>',
-            '<select id="sv-iso-poi" style="width:100%;background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:3px 6px;font-size:.8rem">',
+            '<select id="sv-iso-poi" style="width:100%;background:var(--sv-panel-input-bg);color:var(--sv-panel-fg);border:1px solid var(--sv-panel-border);border-radius:4px;padding:3px 6px;font-size:.8rem">',
             optionsHtml,
             '</select>',
             '<div id="sv-iso-poi-note" style="font-size:.72rem;color:var(--sv-panel-fg-muted);margin-top:.2rem">' + t('poi.note') + '</div>',

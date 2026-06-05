@@ -1278,6 +1278,14 @@
     color: var(--sv-fg-muted);
 }
 
+/* Search/locate status line (hint, "no result", geolocation error): match the
+   muted, smaller text used by other panels' hints — it was inheriting the full
+   body size, so "Tapez au moins 3 caractères" looked larger than sibling notes. */
+#sv-locate-msg {
+    font-size: 0.85rem;
+    color: var(--sv-fg-muted);
+}
+
 .sv-key {
     color: var(--sv-panel-fg-muted);
     font-size: small;
