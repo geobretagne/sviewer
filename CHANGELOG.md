@@ -4,6 +4,37 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Extension `sensors` → 0.3.0.** Lien profond KVP : `?sta_station=<@iot.id>`
+  ouvre directement une station (centre la carte, charge ses mesures),
+  `&sta_ds=<@iot.id>` ouvre le graphique droit sur cette mesure — partage d'une
+  mesure précise ou widget « un graphique » embarqué. IDs validés (`validId`,
+  chemin OData sûr) ; un id inconnu retombe sur la vue station normale.
+- **`sensors` — barre de progression déterminée** pendant le chargement des
+  observations (pagination `@iot.nextLink`) : la fraction reflète l'avancement
+  réel, là où « Chargement… » statique ne disait rien sur une grosse mesure.
+
+### Changed
+
+- **`sensors` — « Charger plus » incrémental.** Reprend depuis le curseur
+  `@iot.nextLink` et **ajoute** les observations suivantes au lieu de tout
+  recharger depuis la 1re page (avant : ajouter 4000 re-téléchargeait l'ensemble).
+- **`sensors` — graphique en heures 24 h (`HH:MM`) et dates `JJ/MM/AA`**,
+  indépendamment de la locale (via `uPlot.fmtDate`) ; l'axe et le survol ne
+  suivent plus le format en-US (am/pm, MM/JJ).
+- **`sensors` — système visuel unifié** entre la liste de stations (navigation,
+  chevron) et les boutons de mesure (bascule en place) : même langage
+  sélection/survol, rôles distincts et lisibles ; indice « cliquez une station
+  sur la carte ou dans la liste ».
+- **Règle de nommage des paramètres d'URL d'extension** documentée
+  (`EXT_API.md`) : `<extid>_<nom>` (namespacé par l'extension, anti-collision) ;
+  le préfixe `_` est réservé aux propriétés GeoJSON injectées (`_sv_color`,
+  `_label`), jamais aux paramètres d'URL ; noms permanents (alias, pas de
+  renommage). Commentaire `?_ext=` obsolète corrigé en `?ext=`.
+
 ## [0.17.0] - 2026-06-05
 
 ### Added

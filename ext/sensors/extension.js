@@ -50,6 +50,7 @@
             'loading':      'Chargement…',
             'stations.count': 'station(s)',
             'station.measures': 'Mesures',
+            'list.map_hint': 'Cliquez une station sur la carte ou dans la liste.',
             'measures.none': 'Aucune mesure pour cette station.',
             'obs.none':     'Aucune donnée pour cette mesure.',
             'back':         '‹ Stations',
@@ -71,6 +72,7 @@
             'loading':      'Loading…',
             'stations.count': 'station(s)',
             'station.measures': 'Measures',
+            'list.map_hint': 'Click a station on the map or in the list.',
             'measures.none': 'No measure for this station.',
             'obs.none':     'No data for this measure.',
             'back':         '‹ Stations',
@@ -92,6 +94,7 @@
             'loading':      'Cargando…',
             'stations.count': 'estación(es)',
             'station.measures': 'Medidas',
+            'list.map_hint': 'Haga clic en una estación en el mapa o en la lista.',
             'measures.none': 'Ninguna medida para esta estación.',
             'obs.none':     'Sin datos para esta medida.',
             'back':         '‹ Estaciones',
@@ -113,6 +116,7 @@
             'loading':      'Lädt…',
             'stations.count': 'Station(en)',
             'station.measures': 'Messungen',
+            'list.map_hint': 'Klicken Sie eine Station auf der Karte oder in der Liste.',
             'measures.none': 'Keine Messung für diese Station.',
             'obs.none':     'Keine Daten für diese Messung.',
             'back':         '‹ Stationen',
@@ -146,6 +150,17 @@
             return s.charAt(s.length - 1) === '/' ? s : s + '/';
         } catch (e) { return null; }
     }
+    // Validate an @iot.id taken from a URL param before it goes into an OData
+    // path segment (Locations(<id>) / Datastreams(<id>)). STA ids are integers
+    // or single-quoted strings; accept those two shapes only, reject anything
+    // that could break out of the path. Returns the cleaned id or null.
+    function validId(v) {
+        if (v == null) { return null; }
+        v = String(v).trim();
+        if (/^[0-9]+$/.test(v)) { return v; }                 // integer id
+        if (/^'[^'"\\<>()\s]+'$/.test(v)) { return v; }       // quoted string id
+        return null;
+    }
 
     SViewer.onMapReady(function (ctx) {
         var map = ctx.map;
@@ -155,8 +170,11 @@
         var curStation = null;   // selected station object
         var datastreams = [];    // current station's [{ id, name, unit }]
         var selDs = null;        // selected datastream id
+        var curObs = [];         // observations already loaded for selDs (ascending after sort)
+        var curCursor = null;    // @iot.nextLink where the last fetch stopped (null = exhausted)
         var fetchSeq = 0;        // stale-response guard
         var maxObs = DEF_MAX;    // observation ceiling (raised by ?sta_pagination=)
+        var autoDsPending = null; // deep-link datastream id, consumed once by openStation
 
         var geojsonFmt = new ol.format.GeoJSON();
 
@@ -192,7 +210,11 @@
         }
 
         // --- Step 2: Locations → station features -----------------------------
-        function loadStations(url) {
+        // auto = { station, ds } — optional deep-link target from KVP params.
+        // After stations load, auto-select that station (and datastream), opening
+        // the panel straight on the chart. A missing id falls back gracefully to
+        // the normal station view (no crash, no empty panel).
+        function loadStations(url, auto) {
             var svc = validService(url);
             if (!svc) { showError(t('err.url')); return; }
             service = svc;
@@ -203,9 +225,29 @@
                 rebuildStations();
                 if (stations.length) { fitStations(); }
                 renderStationList();
+                if (auto && auto.station) { autoSelect(auto); }
             }).catch(function (e) {
                 showError(/sta|json|unexpected/i.test(String(e)) ? t('err.nosta') : t('err.fetch'));
             });
+        }
+        // Deep-link: select the station whose id matches, centre on it, and if a
+        // datastream id is given, chart it (otherwise openStation defaults to the
+        // first mesure, mviewer-style). Unknown ids degrade to the normal view.
+        function autoSelect(auto) {
+            var st = null;
+            for (var i = 0; i < stations.length; i++) {
+                if (String(stations[i].id) === String(auto.station)) { st = stations[i]; break; }
+            }
+            if (!st) { return; }   // station not in this service → leave normal view
+            map.getView().animate({
+                center: geojsonFmt.readGeometry({ type: 'Point', coordinates: st.coords },
+                    { dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857' }).getCoordinates(),
+                duration: 350
+            });
+            // openStation loads datastreams then selects one; stash the requested
+            // ds so it picks that instead of the first (consumed once, in openStation).
+            autoDsPending = auto.ds || null;
+            openStation(st);
         }
         // SensorThings "location" comes in two shapes in the wild:
         //   standard:     { geometry: { type:'Point', coordinates:[...] }, ... }  (GeoJSON Feature)
@@ -271,7 +313,13 @@
                     });
                 });
                 renderStationDetail();
-                if (datastreams.length) { selectDatastream(datastreams[0].id); }  // mviewer default
+                if (datastreams.length) {
+                    // Deep-link ds if requested AND present in this station, else the
+                    // first mesure (mviewer default). autoDsPending consumed here.
+                    var want = autoDsPending; autoDsPending = null;
+                    var wantDs = want && dsById(want);
+                    selectDatastream(wantDs ? wantDs.id : datastreams[0].id);
+                }
             }).catch(function () { if (seq === fetchSeq) { showError(t('err.fetch')); } });
         }
 
@@ -286,47 +334,71 @@
                 c.setAttribute('aria-checked', on);
                 c.tabIndex = on ? 0 : -1;   // roving tabindex follows selection
             });
-            var seq = ++fetchSeq;
             var ds = dsById(id);
-            var host = document.getElementById('sv-sensors-chart');
-            if (host) { host.textContent = t('loading'); }
+            // Fresh datastream → fresh fetch from page 1; reset the running buffer
+            // + cursor so "load more" later appends instead of reloading.
+            curObs = [];
+            curCursor = null;
             var first = service + 'Datastreams(' + encodeURIComponent(id) + ')/Observations' +
                 '?$top=' + PAGE_OBS + '&$select=result,phenomenonTime&$orderby=phenomenonTime desc';
-            fetchObservations(first, [], seq).then(function (res) {
+            runObsFetch(first, ds, maxObs);
+        }
+        // Drive a fetch (initial or incremental), wire the progress bar, store the
+        // running buffer + leftover cursor, and render. `limit` = target total
+        // length for this run; `curObs`/`curCursor` carry state across "load more".
+        function runObsFetch(url, ds, limit) {
+            var seq = ++fetchSeq;
+            var host = document.getElementById('sv-sensors-chart');
+            // Tear down the current chart before the bar replaces the host
+            // (showProgress wipes innerHTML) — avoids orphaning the uPlot instance.
+            destroyChart();
+            // Determinate bar counts the running buffer (curObs grows in place)
+            // toward this run's limit.
+            var progress = host ? showProgress(host, limit) : null;
+            fetchObservations(url, curObs, seq, progress, limit).then(function (res) {
                 if (seq !== fetchSeq) { return; }
-                res.obs.sort(function (a, b) { return a.t - b.t; });   // ascending for the chart
-                renderChart(res.obs, ds, seq, res.hasMore);
+                curObs = res.obs;
+                curCursor = res.next;                                  // resume point for load-more
+                curObs.sort(function (a, b) { return a.t - b.t; });    // ascending for the chart
+                renderChart(curObs, ds, seq, res.hasMore);
             }).catch(function () {
                 var h = document.getElementById('sv-sensors-chart');
                 if (h && seq === fetchSeq) { h.textContent = t('obs.none'); }
             });
         }
-        // Follow @iot.nextLink until maxObs is reached. Returns { obs, hasMore }
-        // where hasMore = more pages exist beyond the current ceiling (drives the
-        // in-panel "load more" button — pagination from the UI, not just the URL).
-        function fetchObservations(url, acc, seq) {
+        // Follow @iot.nextLink, appending into `acc`, until acc reaches `limit` or
+        // there are no more pages. Returns { obs, next, hasMore } where `next` is
+        // the cursor where we stopped (for incremental "load more") and `hasMore`
+        // says more pages exist beyond `limit`.
+        function fetchObservations(url, acc, seq, progress, limit) {
             return staGet(url).then(function (j) {
-                if (seq !== fetchSeq) { return { obs: acc, hasMore: false }; }
+                if (seq !== fetchSeq) { return { obs: acc, next: null, hasMore: false }; }
                 (j.value || []).forEach(function (o) {
                     var t0 = Date.parse(o.phenomenonTime), v = parseFloat(o.result);
                     if (isFinite(t0) && isFinite(v)) { acc.push({ t: t0, v: v }); }
                 });
-                var next = j['@iot.nextLink'];
-                if (next && acc.length < maxObs) { return fetchObservations(next, acc, seq); }
-                return { obs: acc, hasMore: !!next };   // next link left = more available
+                if (progress) { progress(acc.length); }
+                var next = j['@iot.nextLink'] || null;
+                if (next && acc.length < limit) { return fetchObservations(next, acc, seq, progress, limit); }
+                return { obs: acc, next: next, hasMore: !!next };
             });
         }
-        // "Load more" raises the ceiling for THIS SESSION (users examine the same
-        // period across stations/mesures, so the depth sticks while the page is
-        // open), then reloads the current mesure. NOT persisted to localStorage —
-        // a reload returns to the fast default, so a deep cap can never become a
-        // permanent trap.
+        // "Load more" = incremental: resume from the saved cursor and append the
+        // next LOAD_MORE_STEP observations to the buffer already loaded — it does
+        // NOT reload from page 1 (that re-downloaded everything just to add a
+        // little). Raises maxObs too so a later mesure switch keeps the same depth.
+        // Session-only, not persisted — a reload returns to the fast default.
         function loadMore() {
+            if (selDs == null || !curCursor) { return; }
             maxObs = Math.min(maxObs + LOAD_MORE_STEP, HARD_MAX);
-            if (selDs != null) { selectDatastream(selDs); }
+            runObsFetch(curCursor, dsById(selDs), curObs.length + LOAD_MORE_STEP);
         }
         function dsById(id) {
-            for (var i = 0; i < datastreams.length; i++) { if (datastreams[i].id === id) { return datastreams[i]; } }
+            // Loose String() compare: @iot.id may be a number from JSON while a
+            // URL-param / data-attr id is a string ("42" vs 42).
+            for (var i = 0; i < datastreams.length; i++) {
+                if (String(datastreams[i].id) === String(id)) { return datastreams[i]; }
+            }
             return null;
         }
 
@@ -362,7 +434,12 @@
                 // uPlot wants [ xs(seconds), ys ] column arrays.
                 var xs = obs.map(function (o) { return o.t / 1000; });
                 var ys = obs.map(function (o) { return o.v; });
-                var loc = lang();
+                // Fixed European formats, locale-independent (no am/pm, no MM/DD):
+                // 24-hour HH:MM(:SS) for time, DD/MM/YY for dates.
+                var fmtTime    = uPlot.fmtDate('{HH}:{mm}');
+                var fmtTimeSec = uPlot.fmtDate('{HH}:{mm}:{ss}');
+                var fmtDay     = uPlot.fmtDate('{DD}/{MM}/{YY}');
+                var fmtFull    = uPlot.fmtDate('{DD}/{MM}/{YY} {HH}:{mm}:{ss}');
                 // Fill the available box (dock is wide + short). Reserve room for
                 // uPlot's legend row (~34px) + the footer line below.
                 var availW = h.clientWidth || 300;
@@ -399,7 +476,12 @@
                         { stroke: '#0d6efd', width: 1.5, points: { show: false } }
                     ],
                     axes: [
-                        { stroke: '#888', grid: { stroke: 'rgba(127,127,127,.18)' } },
+                        { stroke: '#888', grid: { stroke: 'rgba(127,127,127,.18)' },
+                          // 24h time within a day, DD/MM/YY once ticks span days+.
+                          values: function (u, splits, ai, space, incr) {
+                              var fmt = incr < 86400 ? (incr < 60 ? fmtTimeSec : fmtTime) : fmtDay;
+                              return splits.map(function (s) { return fmt(new Date(s * 1000)); });
+                          } },
                         { stroke: '#888', grid: { stroke: 'rgba(127,127,127,.18)' },
                           values: function (u, vals) { return vals.map(function (v) { return trimNum(v) + (unit ? ' ' + unit : ''); }); } }
                     ],
@@ -409,7 +491,7 @@
                             if (i == null) { readout.textContent = ''; return; }
                             var x = u.data[0][i], y = u.data[1][i];
                             readout.textContent = y == null ? '' :
-                                new Date(x * 1000).toLocaleString(loc) + ' — ' + trimNum(y) + (unit ? ' ' + unit : '');
+                                fmtFull(new Date(x * 1000)) + ' — ' + trimNum(y) + (unit ? ' ' + unit : '');
                         }]
                     }
                 };
@@ -474,6 +556,33 @@
         // --- Render ----------------------------------------------------------
         function root() { return document.getElementById('sv-sensors-root'); }
         function showLoading() { var r = root(); if (r) { r.innerHTML = '<p class="sv-sensors-msg">' + esc(t('loading')) + '</p>'; } }
+        // Determinate progress bar for observation streaming. Builds a labelled
+        // bar inside `host` and returns update(count) → sets width + a11y value
+        // (count of `target`). Used while paging @iot.nextLink — a big mesure is
+        // many pages, so a real fraction beats a static "loading…". `target` is
+        // this run's ceiling (maxObs on a fresh fetch, or the higher incremental
+        // limit on "load more"), so the % reflects the actual run.
+        function showProgress(host, target) {
+            host.innerHTML =
+                '<div class="sv-sensors-prog">' +
+                  '<div class="sv-sensors-prog-label">' + esc(t('loading')) + '</div>' +
+                  '<div class="sv-sensors-prog-track" role="progressbar" aria-valuemin="0" ' +
+                       'aria-valuemax="100" aria-valuenow="0" aria-label="' + esc(t('loading')) + '">' +
+                    '<div class="sv-sensors-prog-fill" style="width:0%"></div>' +
+                  '</div>' +
+                  '<div class="sv-sensors-prog-count" aria-hidden="true">0</div>' +
+                '</div>';
+            var track = host.querySelector('.sv-sensors-prog-track');
+            var fill  = host.querySelector('.sv-sensors-prog-fill');
+            var label = host.querySelector('.sv-sensors-prog-count');
+            return function (count) {
+                if (!fill) { return; }
+                var pct = target > 0 ? Math.min(100, Math.round(count / target * 100)) : 0;
+                fill.style.width = pct + '%';
+                if (track) { track.setAttribute('aria-valuenow', String(pct)); }
+                if (label) { label.textContent = count.toLocaleString(); }
+            };
+        }
         function showError(msg) { var r = root(); if (r) { r.innerHTML = '<p class="sv-sensors-err">' + esc(msg) + '</p>' + configFormHtml(); bindConfig(); } }
 
         function configFormHtml() {
@@ -497,19 +606,31 @@
 
         function renderStationList() {
             var r = root(); if (!r) { return; }
+            // Stations = navigable list (drill into a place — also clickable on the
+            // map). Rows carry a chevron so they read as "go to", distinct from the
+            // sensor chips (in-place toggle). Both share the same selected/hover
+            // design system; the role difference (navigate vs toggle) is the point.
             var list = stations.length
-                ? '<ul class="sv-sensors-list">' + stations.map(function (s) {
-                    return '<li class="sv-sensors-row" data-id="' + esc(s.id) + '">' + esc(s.name) + '</li>';
+                ? '<p class="sv-sensors-hint">' + esc(t('list.map_hint')) + '</p>' +
+                  '<ul class="sv-sensors-list" role="list">' + stations.map(function (s) {
+                    return '<li class="sv-sensors-row" role="button" tabindex="0" data-id="' + esc(s.id) + '">' +
+                        '<span class="sv-sensors-row-name">' + esc(s.name) + '</span>' +
+                        '<span class="sv-sensors-row-go" aria-hidden="true">›</span></li>';
                   }).join('') + '</ul><p class="sv-sensors-count">' + stations.length + ' ' + esc(t('stations.count')) + '</p>'
                 : '<p class="sv-sensors-msg">0 ' + esc(t('stations.count')) + '</p>';
             r.innerHTML = list + '<hr>' + configFormHtml();
             r.querySelectorAll('[data-id]').forEach(function (row) {
-                row.addEventListener('click', function () {
+                var go = function () {
                     var st = stations.filter(function (s) { return String(s.id) === row.getAttribute('data-id'); })[0];
                     if (st) {
                         map.getView().animate({ center: ol.proj.fromLonLat(st.coords), duration: 350 });
                         openStation(st);
                     }
+                };
+                row.addEventListener('click', go);
+                // Keyboard: a role=button row activates on Enter/Space.
+                row.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
                 });
             });
             bindConfig();
@@ -517,10 +638,13 @@
 
         function renderStationDetail() {
             var r = root(); if (!r || !curStation) { return; }
-            // Horizontal chips (one per mesure) rather than a <select>: all
-            // options are visible = discoverable, and a horizontal row uses the
-            // wide dock's WIDTH, not its scarce height. Latest value rides in each
-            // chip. role=radiogroup — exactly one selected at a time.
+            // Sensors = in-place toggle: horizontal chips (one per mesure), a
+            // segmented control that switches the chart facet. Chips (not a list)
+            // because they're few + switched often while reading, and a horizontal
+            // row uses the wide dock's WIDTH, not its scarce height. role=radiogroup
+            // — exactly one selected at a time. Visually paired with the station
+            // list (same selected/hover system) but a distinct role: toggle vs
+            // navigate.
             var picker = datastreams.length
                 ? '<div class="sv-sensors-chips" role="radiogroup" aria-label="' + esc(t('station.measures')) + '">' +
                   datastreams.map(function (ds) {
@@ -573,9 +697,17 @@
                 P + '.sv-sensors-err{font-size:.85rem;color:#c0392b;margin:.3rem 0 .6rem}',
                 P + '.sv-sensors-lbl{display:block;font-size:.82rem;color:#555;margin:.5rem 0}',
                 P + '.sv-sensors-lbl input{display:block;width:100%;margin-top:.2rem;padding:.35rem .5rem;font-size:.9rem;border:1px solid var(--sv-panel-border,#ccc);border-radius:4px;background:var(--sv-panel-bg,#fff);color:inherit}',
-                P + '.sv-sensors-list{list-style:none;margin:0 0 .4rem;padding:0}',
-                P + '.sv-sensors-row{padding:.45rem .25rem;border-bottom:1px solid var(--sv-panel-border,#e0e0e0);cursor:pointer}',
-                P + '.sv-sensors-row:hover{background:rgba(127,127,127,.08)}',
+                P + '.sv-sensors-list{list-style:none;margin:0 0 .4rem;padding:0;display:flex;flex-direction:column;gap:.25rem}',
+                // Station row = navigable item. Rounded like the chips (one design
+                // system), but a full-width row with a chevron = "drill in", not a
+                // toggle pill. Selected/hover share the chip accent language.
+                P + '.sv-sensors-row{display:flex;align-items:center;gap:.5rem;padding:.45rem .6rem;border:1px solid var(--sv-panel-border,#ccc);border-radius:8px;background:var(--sv-panel-bg,#fff);color:inherit;cursor:pointer}',
+                P + '.sv-sensors-row:hover{background:rgba(127,127,127,.1)}',
+                P + '.sv-sensors-row:focus-visible{outline:2px solid #0d6efd;outline-offset:1px}',
+                P + '.sv-sensors-row-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+                P + '.sv-sensors-row-go{flex:none;color:#0d6efd;font-size:1.1rem;line-height:1}',
+                P + '.sv-sensors-row.sel{background:#0d6efd;border-color:#0d6efd;color:#fff;font-weight:600}',
+                P + '.sv-sensors-row.sel .sv-sensors-row-go{color:#fff}',
                 P + '.sv-sensors-count{font-size:.78rem;color:#666;margin:.2rem 0}',
                 // Compact horizontal toolbar (back + station name + mesure select).
                 P + '.sv-sensors-bar{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;flex-shrink:0}',
@@ -589,7 +721,14 @@
                 P + '.sv-sensors-chart{flex:1;min-height:0;margin-top:.4rem;display:flex;flex-direction:column}',
                 P + '.sv-sensors-foot{font-size:.78rem;color:#666;margin:.3rem 0 0;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;flex-shrink:0}',
                 P + '.sv-sensors-readout{flex:1;min-width:0;color:#0d6efd;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-                P + '.sv-sensors-zoomhint{font-size:.72rem;color:#999;margin:.2rem 0 0;flex-shrink:0}'
+                P + '.sv-sensors-zoomhint{font-size:.72rem;color:#999;margin:.2rem 0 0;flex-shrink:0}',
+                // Determinate progress bar (observation streaming).
+                P + '.sv-sensors-prog{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:.4rem;padding:1rem}',
+                P + '.sv-sensors-prog-label{font-size:.85rem;color:#666}',
+                P + '.sv-sensors-prog-track{width:min(100%,420px);height:8px;border-radius:4px;background:rgba(127,127,127,.18);overflow:hidden}',
+                P + '.sv-sensors-prog-fill{height:100%;background:#0d6efd;border-radius:4px;transition:width .15s linear}',
+                '@media (prefers-reduced-motion:reduce){' + P + '.sv-sensors-prog-fill{transition:none}}',
+                P + '.sv-sensors-prog-count{font-size:.78rem;color:#999;font-variant-numeric:tabular-nums}'
             ].join('');
             var style = document.createElement('style');
             style.id = 'sv-sensors-style';
@@ -614,7 +753,14 @@
         var sta = params.get('sta');
         if (sta) {
             var svc = validService(sta);
-            if (svc) { loadStations(svc); }
+            // Deep-link: ?sta_station=<@iot.id> opens that station; with
+            // ?sta_ds=<@iot.id> it charts that mesure and opens the panel
+            // straight on it. IDs validated (OData-path-safe); unknown ids
+            // degrade to the normal station view.
+            var auto = null;
+            var stId = validId(params.get('sta_station'));
+            if (stId) { auto = { station: stId, ds: validId(params.get('sta_ds')) }; }
+            if (svc) { loadStations(svc, auto); }
         }
     });
 }());
