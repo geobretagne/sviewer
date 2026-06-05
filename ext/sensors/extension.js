@@ -170,6 +170,8 @@
         var curStation = null;   // selected station object
         var datastreams = [];    // current station's [{ id, name, unit }]
         var selDs = null;        // selected datastream id
+        var curObs = [];         // observations already loaded for selDs (ascending after sort)
+        var curCursor = null;    // @iot.nextLink where the last fetch stopped (null = exhausted)
         var fetchSeq = 0;        // stale-response guard
         var maxObs = DEF_MAX;    // observation ceiling (raised by ?sta_pagination=)
         var autoDsPending = null; // deep-link datastream id, consumed once by openStation
@@ -332,48 +334,64 @@
                 c.setAttribute('aria-checked', on);
                 c.tabIndex = on ? 0 : -1;   // roving tabindex follows selection
             });
-            var seq = ++fetchSeq;
             var ds = dsById(id);
-            var host = document.getElementById('sv-sensors-chart');
-            // Determinate progress bar: observations stream page by page
-            // (@iot.nextLink) up to maxObs, so count/maxObs is a real fraction.
-            // A static "loading…" hid that a big mesure takes many pages.
-            var progress = host ? showProgress(host) : null;
+            // Fresh datastream → fresh fetch from page 1; reset the running buffer
+            // + cursor so "load more" later appends instead of reloading.
+            curObs = [];
+            curCursor = null;
             var first = service + 'Datastreams(' + encodeURIComponent(id) + ')/Observations' +
                 '?$top=' + PAGE_OBS + '&$select=result,phenomenonTime&$orderby=phenomenonTime desc';
-            fetchObservations(first, [], seq, progress).then(function (res) {
+            runObsFetch(first, ds, maxObs);
+        }
+        // Drive a fetch (initial or incremental), wire the progress bar, store the
+        // running buffer + leftover cursor, and render. `limit` = target total
+        // length for this run; `curObs`/`curCursor` carry state across "load more".
+        function runObsFetch(url, ds, limit) {
+            var seq = ++fetchSeq;
+            var host = document.getElementById('sv-sensors-chart');
+            // Tear down the current chart before the bar replaces the host
+            // (showProgress wipes innerHTML) — avoids orphaning the uPlot instance.
+            destroyChart();
+            // Determinate bar counts the running buffer (curObs grows in place)
+            // toward this run's limit.
+            var progress = host ? showProgress(host, limit) : null;
+            fetchObservations(url, curObs, seq, progress, limit).then(function (res) {
                 if (seq !== fetchSeq) { return; }
-                res.obs.sort(function (a, b) { return a.t - b.t; });   // ascending for the chart
-                renderChart(res.obs, ds, seq, res.hasMore);
+                curObs = res.obs;
+                curCursor = res.next;                                  // resume point for load-more
+                curObs.sort(function (a, b) { return a.t - b.t; });    // ascending for the chart
+                renderChart(curObs, ds, seq, res.hasMore);
             }).catch(function () {
                 var h = document.getElementById('sv-sensors-chart');
                 if (h && seq === fetchSeq) { h.textContent = t('obs.none'); }
             });
         }
-        // Follow @iot.nextLink until maxObs is reached. Returns { obs, hasMore }
-        // where hasMore = more pages exist beyond the current ceiling (drives the
-        // in-panel "load more" button — pagination from the UI, not just the URL).
-        function fetchObservations(url, acc, seq, progress) {
+        // Follow @iot.nextLink, appending into `acc`, until acc reaches `limit` or
+        // there are no more pages. Returns { obs, next, hasMore } where `next` is
+        // the cursor where we stopped (for incremental "load more") and `hasMore`
+        // says more pages exist beyond `limit`.
+        function fetchObservations(url, acc, seq, progress, limit) {
             return staGet(url).then(function (j) {
-                if (seq !== fetchSeq) { return { obs: acc, hasMore: false }; }
+                if (seq !== fetchSeq) { return { obs: acc, next: null, hasMore: false }; }
                 (j.value || []).forEach(function (o) {
                     var t0 = Date.parse(o.phenomenonTime), v = parseFloat(o.result);
                     if (isFinite(t0) && isFinite(v)) { acc.push({ t: t0, v: v }); }
                 });
                 if (progress) { progress(acc.length); }
-                var next = j['@iot.nextLink'];
-                if (next && acc.length < maxObs) { return fetchObservations(next, acc, seq, progress); }
-                return { obs: acc, hasMore: !!next };   // next link left = more available
+                var next = j['@iot.nextLink'] || null;
+                if (next && acc.length < limit) { return fetchObservations(next, acc, seq, progress, limit); }
+                return { obs: acc, next: next, hasMore: !!next };
             });
         }
-        // "Load more" raises the ceiling for THIS SESSION (users examine the same
-        // period across stations/mesures, so the depth sticks while the page is
-        // open), then reloads the current mesure. NOT persisted to localStorage —
-        // a reload returns to the fast default, so a deep cap can never become a
-        // permanent trap.
+        // "Load more" = incremental: resume from the saved cursor and append the
+        // next LOAD_MORE_STEP observations to the buffer already loaded — it does
+        // NOT reload from page 1 (that re-downloaded everything just to add a
+        // little). Raises maxObs too so a later mesure switch keeps the same depth.
+        // Session-only, not persisted — a reload returns to the fast default.
         function loadMore() {
+            if (selDs == null || !curCursor) { return; }
             maxObs = Math.min(maxObs + LOAD_MORE_STEP, HARD_MAX);
-            if (selDs != null) { selectDatastream(selDs); }
+            runObsFetch(curCursor, dsById(selDs), curObs.length + LOAD_MORE_STEP);
         }
         function dsById(id) {
             // Loose String() compare: @iot.id may be a number from JSON while a
@@ -540,9 +558,11 @@
         function showLoading() { var r = root(); if (r) { r.innerHTML = '<p class="sv-sensors-msg">' + esc(t('loading')) + '</p>'; } }
         // Determinate progress bar for observation streaming. Builds a labelled
         // bar inside `host` and returns update(count) → sets width + a11y value
-        // (count of maxObs). Used while paging @iot.nextLink — a big mesure is
-        // many pages, so a real fraction beats a static "loading…".
-        function showProgress(host) {
+        // (count of `target`). Used while paging @iot.nextLink — a big mesure is
+        // many pages, so a real fraction beats a static "loading…". `target` is
+        // this run's ceiling (maxObs on a fresh fetch, or the higher incremental
+        // limit on "load more"), so the % reflects the actual run.
+        function showProgress(host, target) {
             host.innerHTML =
                 '<div class="sv-sensors-prog">' +
                   '<div class="sv-sensors-prog-label">' + esc(t('loading')) + '</div>' +
@@ -557,7 +577,7 @@
             var label = host.querySelector('.sv-sensors-prog-count');
             return function (count) {
                 if (!fill) { return; }
-                var pct = maxObs > 0 ? Math.min(100, Math.round(count / maxObs * 100)) : 0;
+                var pct = target > 0 ? Math.min(100, Math.round(count / target * 100)) : 0;
                 fill.style.width = pct + '%';
                 if (track) { track.setAttribute('aria-valuenow', String(pct)); }
                 if (label) { label.textContent = count.toLocaleString(); }
