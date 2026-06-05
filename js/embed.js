@@ -11,8 +11,8 @@
 
 (function() {
 
-    var SVIEWER_VERSION='0.17.1';
-    var SVIEWER_COMMIT='72d55c6';
+    var SVIEWER_VERSION='0.17.2';
+    var SVIEWER_COMMIT='a5c02a0';
 
     // Internal event bus — shared with sviewer.js via window._SViewerInternals.
     // Frozen after creation to prevent host-page collision or tampering.
