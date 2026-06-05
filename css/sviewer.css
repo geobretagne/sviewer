@@ -807,18 +807,19 @@
     /* Neutralize the browser's native search-field appearance so a
        type="search" input (place search) matches a type="text" input (map
        title) — same radius/height, no pill shape or native decorations. */
-    -webkit-appearance: none;
     appearance: none;
 }
 
 /* Drop WebKit's native clear (×) and the result/cancel pseudo-buttons that
-   give type="search" its distinct look. */
+   give type="search" its distinct look. These are WebKit-only constructs, so
+   the prefixed property is required here. */
+/* stylelint-disable property-no-vendor-prefix */
 .sv-sidepanel .form-control::-webkit-search-decoration,
 .sv-sidepanel .form-control::-webkit-search-cancel-button,
 .sv-sidepanel .form-control::-webkit-search-results-button {
     -webkit-appearance: none;
-    appearance: none;
 }
+/* stylelint-enable property-no-vendor-prefix */
 
 .sv-sidepanel .form-control::placeholder,
 .sv-scope .modal .form-control::placeholder {
