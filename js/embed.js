@@ -386,7 +386,7 @@
             .then(function() {
                 // Load all extensions before map init — adapters register on SViewer.adapters,
                 // UI extensions use onMapReady() so early load is safe for both.
-                // URL param ?_ext=name adds an extension without customConfig.
+                // URL param ?ext=name[,name2] adds extensions without customConfig.
                 var urlExts = (new URLSearchParams(window.location.search).get('ext') || '')
                     .split(',').map(function(s) { return s.trim(); }).filter(function(s) { return EXT_NAME_RE.test(s); });
                 var configExts = (window.customConfig && window.customConfig.extensions) || [];

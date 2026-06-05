@@ -21,6 +21,16 @@ The extension entry point is `SViewer.onMapReady()`.
 Use an adapter (see [Data adapter](#data-adapter-optional) below) to convert a non-GeoJSON API
 response for `?geojson=` fetches. An extension can register an adapter — they are not exclusive.
 
+**URL parameter naming.** Read your params from `new URLSearchParams(location.search)`.
+Every extension URL param **must be prefixed with the extension id**: `<extid>_<name>`
+(e.g. `sensors` reads `sta`, `sta_station`, `sta_ds`). This prevents collisions with
+core params (`x`, `y`, `z`, `ext`, `layers`, `geojson`, `title`, …) and with other
+extensions, and makes a shared link self-identifying. **Do not** use a leading `_`:
+that prefix is reserved for sViewer-injected GeoJSON *feature-property* names
+(`_sv_color`, `_label`), not URL params. Validate every param — it is untrusted input
+(see the `validId()` pattern in `ext/sensors`). A shipped param name is permanent: a
+shared/embedded URL is forever, so add an alias, never rename or remove one.
+
 ---
 
 ## Lifecycle
@@ -471,12 +481,11 @@ Used by `npm run build:catalog` to generate `ext/index.html`.
   // "url": "https://…",            // demo: external URL instead of entry
 
   "params": [                        // URL params the extension reads — catalog display only
-    {
-      "name":        "_format",      // param name (without ?)
+    {                                // name them <extid>_<param> (here: myext_*)
+      "name":        "myext_source", // param name (without ?), namespaced by ext id
       "type":        "string",       // string | integer | boolean
-      "description": "Force extension activation",
-      "enum":        ["my-ext"],     // optional — allowed values shown as pills
-      "example":     "_format=my-ext"
+      "description": "Service URL the extension reads",
+      "example":     "myext_source=https://example.org/api/"
     }
   ],
 
