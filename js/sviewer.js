@@ -3044,7 +3044,14 @@ if (state.label) {
                 if (isDock) { _initDockResize(sidepanel); }
             }
         },
-        close: function() { _panelOwner = null; togglePanel(null); },
+        // Close the current extension panel. Do NOT null _panelOwner here first:
+        // resetPanel() (via togglePanel) needs the owner set so it can fire that
+        // extension's onClose callback — which is how the extension resets its own
+        // active flag + toolbar button. Nulling early skipped onClose, leaving the
+        // button stuck "active" with no way back into the panel (worse with two
+        // extensions both calling panel.close()). resetPanel() nulls the owner
+        // itself, after firing onClose.
+        close: function() { togglePanel(null); },
         onClose: function(name, fn) { _panelCloseCallbacks[name] = fn; },
         update: function(name, html) {
             if (name !== _panelOwner) {
