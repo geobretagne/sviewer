@@ -335,6 +335,36 @@ SViewer.offTitleChange(fn);
 
 ---
 
+## Icons and buttons
+
+**Icons.** Core (sViewer shell) uses the self-hosted Bootstrap-Icons **webfont**
+(`<i class="bi bi-…">`). **Extensions use inline `<svg>`**, never the font — the
+font subset is fixed for core, and adding a glyph for an extension means a
+resubset. Copy the path data verbatim from
+`node_modules/bootstrap-icons/icons/<name>.svg` (real Bootstrap-Icons data,
+16-viewBox, `fill="currentColor"`, fill-only — no `stroke`), so inline SVGs match
+the font glyphs exactly. Size with `width="1em" height="1em"`.
+
+**Button variants.** Use Bootstrap variants by **emphasis tier and meaning**, not
+decoration. One clear rule keeps panels consistent across extensions:
+
+| Variant | Use |
+|---|---|
+| `btn-primary` | **The** main action of the view — **exactly one** (Save, Apply, Search, Generate). More than one = no hierarchy. |
+| `btn-secondary` | Normal neutral actions — the **default** for most buttons. |
+| `btn-outline-secondary` | Tertiary / low-emphasis / repeated sets (mode toggles, optional). |
+| `btn-outline-danger` / `btn-danger` | Destructive (delete, purge, abort). Outline = soft, solid = hard. **Never** style a destructive action as primary. |
+| `btn-link` | Navigation / "‹ back" / inline low-weight links. |
+| `btn-light` | Only on dark or photo surfaces (overlays). |
+| `btn-dark` | Map-control buttons only (`sv-map-btn`); extensions rarely need it. |
+
+Rules: (1) **one `btn-primary` per panel view**; (2) pick solid **or** outline per
+tier and stay consistent — don't mix them for the same emphasis; (3) destructive =
+`*-danger`, never primary; (4) avoid `btn-success` / `btn-warning` — the primary
+already signals the main action, and warnings belong in a note or `toast()`.
+
+---
+
 ## CSS and embed safety
 
 sViewer uses a `.sv-scope` wrapper in embed mode to isolate its own styles from the host page.

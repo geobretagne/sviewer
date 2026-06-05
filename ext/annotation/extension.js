@@ -504,9 +504,9 @@
         function listHtml() {
             var actions =
                 '<div class="sv-anno-modes">' +
-                '<button type="button" class="btn btn-outline-primary btn-sm" data-mode="point">' + esc(t('mode.point')) + '</button>' +
-                '<button type="button" class="btn btn-outline-primary btn-sm" data-mode="line">' + esc(t('mode.line')) + '</button>' +
-                '<button type="button" class="btn btn-outline-primary btn-sm" data-mode="zone">' + esc(t('mode.zone')) + '</button>' +
+                '<button type="button" class="btn btn-outline-secondary btn-sm" data-mode="point">' + esc(t('mode.point')) + '</button>' +
+                '<button type="button" class="btn btn-outline-secondary btn-sm" data-mode="line">' + esc(t('mode.line')) + '</button>' +
+                '<button type="button" class="btn btn-outline-secondary btn-sm" data-mode="zone">' + esc(t('mode.zone')) + '</button>' +
                 '</div>';
             var list;
             if (!items.length) {
@@ -523,7 +523,7 @@
             }
             var share = items.length
                 ? '<div class="sv-anno-actions">' +
-                  '<button type="button" class="btn btn-success btn-sm" data-act="share">' + esc(t('act.share')) + '</button>' +
+                  '<button type="button" class="btn btn-primary btn-sm" data-act="share">' + esc(t('act.share')) + '</button>' +
                   '<button type="button" class="btn btn-outline-secondary btn-sm" data-act="export">' + esc(t('act.export')) + '</button>' +
                   '<button type="button" class="btn btn-outline-danger btn-sm" data-act="clear">' + esc(t('act.clear')) + '</button>' +
                   '</div><p class="sv-anno-msg" id="sv-anno-msg" aria-live="polite"></p>'
