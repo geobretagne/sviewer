@@ -889,7 +889,7 @@
         // Each button starts a capture directly in its geometry mode — the mode
         // choice IS the start action (no separate Start button).
         var modeBtn = function (mode, label, ic) {
-            return '<button type="button" class="btn btn-primary" data-mode="' + mode +
+            return '<button type="button" class="btn btn-secondary" data-mode="' + mode +
                 '" style="flex:1;padding:.55rem .3rem;font-size:.95rem;display:flex;flex-direction:column;align-items:center;gap:.2rem">' +
                 ic + '<span>' + esc(label) + '</span></button>';
         };
@@ -1440,7 +1440,7 @@
             '<button type="button" id="fld-bar-undo" class="btn btn-light"' +
                 (vertices.length ? '' : ' disabled') + ' aria-label="' + esc(t('capture.undo')) +
                 '" title="' + esc(t('capture.undo')) + '" style="' + sq + '">' + icon('arrow-undo') + '</button>' +
-            '<button type="button" id="fld-bar-close" class="btn btn-primary"' +
+            '<button type="button" id="fld-bar-close" class="btn btn-light"' +
                 (canClose ? '' : ' disabled') + ' aria-label="' + esc(t('capture.done')) +
                 '" title="' + esc(t('capture.done')) + '" style="' + sq + '">' + icon('check2') + '</button>' +
             '<button type="button" id="fld-bar-stop" class="btn btn-outline-light"' +

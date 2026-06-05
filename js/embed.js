@@ -164,15 +164,15 @@
                             </div>
                         </div>
                         <div class="sv-share-grid">
-                            <button type="button" id="sv-btn-permalink" class="i18n btn btn-secondary" title="Link to this map" data-i18n-title="btn.permalink">
+                            <button type="button" id="sv-btn-permalink" class="i18n btn btn-primary" title="Link to this map" data-i18n-title="btn.permalink">
                                 <i class="bi bi-link" aria-hidden="true"></i>
                                 <span class="i18n" data-i18n="btn.permalink_label">Link</span>
                             </button>
-                            <button type="button" class="sv-embed-btn i18n btn btn-info" title="Embed" data-i18n-title="btn.embed">
+                            <button type="button" class="sv-embed-btn i18n btn btn-secondary" title="Embed" data-i18n-title="btn.embed">
                                 <i class="bi bi-code" aria-hidden="true"></i>
                                 <span class="i18n" data-i18n="btn.embed_label">Embed</span>
                             </button>
-                            <button type="button" id="sv-btn-snapshot" class="i18n btn btn-success" title="Download map as image" data-i18n-title="btn.snapshot">
+                            <button type="button" id="sv-btn-snapshot" class="i18n btn btn-secondary" title="Download map as image" data-i18n-title="btn.snapshot">
                                 <i class="bi bi-camera" aria-hidden="true"></i>
                                 <span class="i18n" data-i18n="btn.snapshot_label">Image</span>
                             </button>
