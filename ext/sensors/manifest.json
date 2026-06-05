@@ -1,7 +1,7 @@
 {
   "id":          "sensors",
   "type":        "extension",
-  "version":     "0.2.0",
+  "version":     "0.3.0",
   "name":        "Capteurs",
   "description": "Affiche un service OGC SensorThings : les stations sur la carte, et au clic, leurs mesures sous forme de graphique temporel interactif (survol date/valeur, zoom par glissement sur une période). Graphique uPlot (libre), sans backend.",
   "author":      "fphg",
