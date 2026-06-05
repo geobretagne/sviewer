@@ -363,7 +363,7 @@
         </button>
         <div class="sv-card-body">
             <div class="sv-card-head">
-                <h2><a href="altitude/">Altitude</a></h2>
+                <h2>Altitude</h2>
                 <span class="sv-badge sv-badge-extension">extension</span>
             </div>
             <p class="sv-desc">Altitude ponctuelle et profil altimétrique via l'API IGN Géoplateforme. Deux modes : clic pour mesurer l'altitude d'un point, ou tracé d'un itinéraire pour obtenir un profil en long.</p>
@@ -389,7 +389,7 @@
         
         <div class="sv-card-body">
             <div class="sv-card-head">
-                <h2><a href="annotation/">Annoter</a></h2>
+                <h2>Annoter</h2>
                 <span class="sv-badge sv-badge-extension">extension</span>
             </div>
             <p class="sv-desc">Tracez des repères, des traits et des zones à la souris ou au doigt, annotez-les (libellé, couleur, note), puis partagez le tout en un lien — sans logiciel SIG, sans compte, sans serveur. Sauvegarde locale automatique, partage par URL ou export GeoJSON.</p>
@@ -426,7 +426,7 @@
         
         <div class="sv-card-body">
             <div class="sv-card-head">
-                <h2><a href="blueprint/">Blueprint</a></h2>
+                <h2>Blueprint</h2>
                 <span class="sv-badge sv-badge-page">page</span>
             </div>
             <p class="sv-desc">Composer et partager une URL sViewer en moins de 60 secondes — construire, prévisualiser, copier, modifier</p>
@@ -455,14 +455,14 @@
         </button>
         <div class="sv-card-body">
             <div class="sv-card-head">
-                <h2><a href="sensors/">Capteurs</a></h2>
+                <h2>Capteurs</h2>
                 <span class="sv-badge sv-badge-extension">extension</span>
             </div>
             <p class="sv-desc">Affiche un service OGC SensorThings : les stations sur la carte, et au clic, leurs mesures sous forme de graphique temporel interactif (survol date/valeur, zoom par glissement sur une période). Graphique uPlot (libre), sans backend.</p>
             <div class="sv-tags" aria-label="Tags"><span class="sv-tag">sensorthings</span><span class="sv-tag">ogc</span><span class="sv-tag">capteurs</span><span class="sv-tag">iot</span><span class="sv-tag">série temporelle</span><span class="sv-tag">graphique</span><span class="sv-tag">frost</span></div>
             
             <details class="sv-params">
-                <summary>Paramètres URL <span class="sv-param-count">2</span></summary>
+                <summary>Paramètres URL <span class="sv-param-count">4</span></summary>
                 <table>
                     <thead><tr><th>Paramètre</th><th>Exemple</th><th>Description</th></tr></thead>
                     <tbody>
@@ -474,6 +474,14 @@
                             <td><code>sta_pagination</code></td>
                             <td><code>sta_pagination=20000</code></td>
                             <td>Charge plus de 2000 observations par mesure en suivant la pagination. Un nombre = plafond d'observations ; 1 / true / all = plafond maximal.</td>
+                        </tr><tr>
+                            <td><code>sta_station</code></td>
+                            <td><code>sta_station=1</code></td>
+                            <td>Ouvre directement une station (son @iot.id de Location) : centre la carte dessus et affiche ses mesures. Sans sta_ds, charge la première mesure.</td>
+                        </tr><tr>
+                            <td><code>sta_ds</code></td>
+                            <td><code>sta_ds=4</code></td>
+                            <td>Avec sta_station : ouvre le panneau directement sur cette mesure (son @iot.id de Datastream). Lien profond pour partager ou embarquer un graphique précis.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -482,10 +490,12 @@
             <ul class="sv-examples">
                 <li>
                     <a href="../?ext=sensors&sta=https://frost.geosas.fr/station_meteo_hydro_agro/v1.1/">Stations météo-hydro (FROST geOSAS)</a> <span class="sv-ex-desc">— Service SensorThings de démonstration — cliquez une station pour voir ses mesures</span>
+                </li><li>
+                    <a href="../?ext=sensors&sta=https://frost.geosas.fr/station_meteo_hydro_agro/v1.1/&sta_station=1&sta_ds=4">Lien profond — station + mesure</a> <span class="sv-ex-desc">— Ouvre directement le graphique d'une mesure précise — idéal pour partager ou embarquer une vue</span>
                 </li>
             </ul>
             <footer class="sv-card-footer">
-                <span>v0.1.0</span>
+                <span>v0.3.0</span>
                 <span>sViewer ≥ 0.16.0</span>
                 <span>fphg</span>
             </footer>
@@ -496,7 +506,7 @@
         
         <div class="sv-card-body">
             <div class="sv-card-head">
-                <h2><a href="csv/">CSV</a></h2>
+                <h2>CSV</h2>
                 <span class="sv-badge sv-badge-extension">extension</span>
             </div>
             <p class="sv-desc">Charge un fichier CSV distant comme données vectorielles — géométrie auto-détectée depuis les noms de colonnes</p>
@@ -555,7 +565,7 @@
         
         <div class="sv-card-body">
             <div class="sv-card-head">
-                <h2><a href="grist/">Grist</a></h2>
+                <h2>Grist</h2>
                 <span class="sv-badge sv-badge-page">page</span>
             </div>
             <p class="sv-desc">Carte synchronisée avec une table Grist — affichage, sélection et édition des géométries</p>
@@ -613,7 +623,7 @@
         </button>
         <div class="sv-card-body">
             <div class="sv-card-head">
-                <h2><a href="isochrone/">Isochrone / Isodistance</a></h2>
+                <h2>Isochrone / Isodistance</h2>
                 <span class="sv-badge sv-badge-extension">extension</span>
             </div>
             <p class="sv-desc">Calcule et affiche des zones isochrones ou isodistances via l'API navigation IGN Géoplateforme, avec recherche de lieux via Nominatim/OSM</p>
@@ -642,7 +652,7 @@
         </button>
         <div class="sv-card-body">
             <div class="sv-card-head">
-                <h2><a href="me/">Moi</a></h2>
+                <h2>Moi</h2>
                 <span class="sv-badge sv-badge-extension">extension</span>
             </div>
             <p class="sv-desc">Espace personnel sViewer (local au navigateur). Mes cartes — enregistrement de cartes sViewer (nom, filtre, restauration en un tap, export/import JSON). En mode application installée : devient le hub d'accueil, avec chargement d'une carte par collage d'URL ou par scan d'un QR code (caméra), pour pallier l'absence de barre d'adresse. Aucun serveur, aucun compte.</p>
@@ -671,7 +681,7 @@
         </button>
         <div class="sv-card-body">
             <div class="sv-card-head">
-                <h2><a href="panoramax/">Panoramax</a></h2>
+                <h2>Panoramax</h2>
                 <span class="sv-badge sv-badge-extension">extension</span>
             </div>
             <p class="sv-desc">Affiche la couverture photos de rue Panoramax (MVT) et ouvre un visualiseur 360° au clic</p>
@@ -700,7 +710,7 @@
         </button>
         <div class="sv-card-body">
             <div class="sv-card-head">
-                <h2><a href="print/">Print / PDF</a></h2>
+                <h2>Print / PDF</h2>
                 <span class="sv-badge sv-badge-extension">extension</span>
             </div>
             <p class="sv-desc">Génère une impression haute résolution de la carte courante (re-rendu OL à la résolution cible). Format A4 paysage. QR code permalink optionnel (qr-creator, MIT, auto-hébergé).</p>
@@ -724,7 +734,7 @@
         
         <div class="sv-card-body">
             <div class="sv-card-head">
-                <h2><a href="sample/">Sample</a></h2>
+                <h2>Sample</h2>
                 <span class="sv-badge sv-badge-demo">demo</span>
             </div>
             <p class="sv-desc">Implémentation de référence annotée pour auteurs d'extensions — bouton de barre d'outils, panneau latéral (plein écran mobile), chargement de données et événements</p>
@@ -748,7 +758,7 @@
         
         <div class="sv-card-body">
             <div class="sv-card-head">
-                <h2><a href="field/">Terrain</a></h2>
+                <h2>Terrain</h2>
                 <span class="sv-badge sv-badge-extension">extension</span>
             </div>
             <p class="sv-desc">Collecte terrain au GPS : Points, Ligne ou Polygone (moyenne GPS à l'ajout, contrôle de précision cible avant enregistrement), attributs typés selon un schéma Grist, photos jointes (downscale client), persistance hors-ligne (IndexedDB) et transmission vers Grist au retour du réseau. Configuration par collage d'URL Grist et choix de table. Mono-backend Grist, jeton optionnel scopé document.</p>

@@ -88,7 +88,7 @@ function renderCard(m) {
         ${img}
         <div class="sv-card-body">
             <div class="sv-card-head">
-                <h2><a href="${esc(m._dir)}/">${esc(m.name)}</a></h2>
+                <h2>${esc(m.name)}</h2>
                 <span class="sv-badge ${typeClass}">${esc(m.type)}</span>
             </div>
             <p class="sv-desc">${esc(m.description)}</p>
