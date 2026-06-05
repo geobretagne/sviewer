@@ -408,7 +408,12 @@
                 // uPlot wants [ xs(seconds), ys ] column arrays.
                 var xs = obs.map(function (o) { return o.t / 1000; });
                 var ys = obs.map(function (o) { return o.v; });
-                var loc = lang();
+                // Fixed European formats, locale-independent (no am/pm, no MM/DD):
+                // 24-hour HH:MM(:SS) for time, DD/MM/YY for dates.
+                var fmtTime    = uPlot.fmtDate('{HH}:{mm}');
+                var fmtTimeSec = uPlot.fmtDate('{HH}:{mm}:{ss}');
+                var fmtDay     = uPlot.fmtDate('{DD}/{MM}/{YY}');
+                var fmtFull    = uPlot.fmtDate('{DD}/{MM}/{YY} {HH}:{mm}:{ss}');
                 // Fill the available box (dock is wide + short). Reserve room for
                 // uPlot's legend row (~34px) + the footer line below.
                 var availW = h.clientWidth || 300;
@@ -445,7 +450,12 @@
                         { stroke: '#0d6efd', width: 1.5, points: { show: false } }
                     ],
                     axes: [
-                        { stroke: '#888', grid: { stroke: 'rgba(127,127,127,.18)' } },
+                        { stroke: '#888', grid: { stroke: 'rgba(127,127,127,.18)' },
+                          // 24h time within a day, DD/MM/YY once ticks span days+.
+                          values: function (u, splits, ai, space, incr) {
+                              var fmt = incr < 86400 ? (incr < 60 ? fmtTimeSec : fmtTime) : fmtDay;
+                              return splits.map(function (s) { return fmt(new Date(s * 1000)); });
+                          } },
                         { stroke: '#888', grid: { stroke: 'rgba(127,127,127,.18)' },
                           values: function (u, vals) { return vals.map(function (v) { return trimNum(v) + (unit ? ' ' + unit : ''); }); } }
                     ],
@@ -455,7 +465,7 @@
                             if (i == null) { readout.textContent = ''; return; }
                             var x = u.data[0][i], y = u.data[1][i];
                             readout.textContent = y == null ? '' :
-                                new Date(x * 1000).toLocaleString(loc) + ' — ' + trimNum(y) + (unit ? ' ' + unit : '');
+                                fmtFull(new Date(x * 1000)) + ' — ' + trimNum(y) + (unit ? ' ' + unit : '');
                         }]
                     }
                 };
