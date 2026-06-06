@@ -516,7 +516,11 @@
                         // keeping the last locked value.
                         setCursor: [function (u) {
                             if (u.cursor.idx != null) { setIdx(u.cursor.idx, true); }
-                        }]
+                        }],
+                        // Red "now" marker: a fixed vertical line at the current
+                        // clock time, drawn only when "now" falls inside the day's
+                        // range. Distinct from the (movable) scrub cursor.
+                        draw: [drawNowLine]
                     }
                 };
                 chart = new uPlot(opts, [xs, ys], host);
@@ -566,6 +570,29 @@
             var left = chart.valToPos(tide.points[curIdx].t / 1000, 'x', true);
             var top  = chart.valToPos(Number(tide.points[curIdx].h), 'y', true);
             chart.setCursor({ left: left, top: top });
+        }
+        // Red vertical "now" marker drawn on the plot canvas. Fires from uPlot's
+        // `draw` hook (after the series render). Skipped when the current time is
+        // outside the shown day. canvas coords are device px → use the un-scaled
+        // valToPos (over=false) and uPlot's own bbox.
+        function drawNowLine(u) {
+            if (!tide || !tide.points.length) { return; }
+            var nowS = Date.now() / 1000;
+            var x0 = u.data[0][0], x1 = u.data[0][u.data[0].length - 1];
+            if (nowS < x0 || nowS > x1) { return; }   // now outside the day → no line
+            var cx = Math.round(u.valToPos(nowS, 'x', true) * u.pxRatio);
+            var ctx = u.ctx;
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+            ctx.clip();
+            ctx.strokeStyle = '#e02424';   // red, fixed (theme-independent overlay)
+            ctx.lineWidth = 1.5 * u.pxRatio;
+            ctx.beginPath();
+            ctx.moveTo(cx, u.bbox.top);
+            ctx.lineTo(cx, u.bbox.top + u.bbox.height);
+            ctx.stroke();
+            ctx.restore();
         }
         // The selected instant, in both datums. waterIGN69 = h_ZH + S (the whole
         // datum correction, shown to the user, never hidden).
