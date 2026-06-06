@@ -250,6 +250,7 @@
         var floodLayer = null; // OL WMS layer painting the flood (own, removed on close)
         var floodSrc   = null; // its ol.source.ImageWMS
         var debugLevel = null; // M4 throwaway manual override (null = use waterIGN69)
+        var floodTimer = null; // debounce handle for the flood WMS request
 
         // --- RAM nearest-port fetch ------------------------------------------
         // Query the open RAM WFS for ports within a bbox around the map centre,
@@ -680,11 +681,20 @@
         // Re-render the flood at the current water level. M4 uses debugLevel if set
         // (throwaway slider); otherwise the cursor-derived waterIGN69(). Updating
         // SLD_BODY via updateParams re-requests the image at the new threshold.
-        function updateFlood() {
+        // updateFlood is DEBOUNCED: dragging the slider (M4) or scrubbing the
+        // cursor (M5) fires on every input/keypress — without this each one would
+        // launch a WMS GetMap. Coalesce to the last value after a short idle so a
+        // fast drag = one request, not dozens.
+        var FLOOD_DEBOUNCE = 160;   // ms idle before the WMS request
+        function applyFlood() {
             var level = debugLevel != null ? debugLevel : waterIGN69();
             if (level == null) { return; }
             ensureFloodLayer();
             floodSrc.updateParams({ SLD_BODY: floodSLD(level) });
+        }
+        function updateFlood() {
+            if (floodTimer) { clearTimeout(floodTimer); }
+            floodTimer = setTimeout(function () { floodTimer = null; applyFlood(); }, FLOOD_DEBOUNCE);
         }
 
         // --- Toolbar button + zoom gate --------------------------------------
@@ -726,7 +736,9 @@
             findPort();
         }
         SViewer.panel.onClose(PANEL, function () {
-            active = false; destroyChart(); removeFloodLayer(); debugLevel = null;
+            active = false; destroyChart();
+            if (floodTimer) { clearTimeout(floodTimer); floodTimer = null; }
+            removeFloodLayer(); debugLevel = null;
             btn.setAttribute('aria-pressed', 'false'); btn.classList.remove('active');
         });
 
