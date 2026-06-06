@@ -431,7 +431,7 @@
                   // so the map flags grounding zones for a boat of this draft.
                   '<div class="sv-tide-draft">' +
                     '<label for="sv-tide-draft-range">' + esc(t('draft.label')) + '</label>' +
-                    '<input type="range" id="sv-tide-draft-range" min="0" max="10" step="0.1" value="' + draft + '" ' +
+                    '<input type="range" id="sv-tide-draft-range" min="0" max="3" step="0.1" value="' + draft + '" ' +
                          'aria-describedby="sv-tide-draft-out">' +
                     '<output id="sv-tide-draft-out" for="sv-tide-draft-range">' + draft.toFixed(1) + ' m</output>' +
                   '</div>' +
