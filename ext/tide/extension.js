@@ -86,7 +86,10 @@
             'curve.coef':  'coef. {c}',
             'curve.fixture':'Données synthétiques (démonstration) — à remplacer par les prédictions SHOM.',
             'err.curve':   'Courbe de marée indisponible.',
-            'soon':        'Sélection d’une heure et inondation sur la carte : prochaines étapes.'
+            'cursor.label':'Heure sélectionnée (flèches gauche/droite pour ajuster)',
+            'read.zh':     'sur le zéro hydrographique',
+            'read.ign':    'en altitude IGN69',
+            'soon':        'Inondation sur la carte : prochaine étape.'
         },
         en: {
             'btn.title':   'Tide (predicted water extent)',
@@ -113,7 +116,10 @@
             'curve.coef':  'coef. {c}',
             'curve.fixture':'Synthetic data (demo) — to be replaced by SHOM predictions.',
             'err.curve':   'Tide curve unavailable.',
-            'soon':        'Pick an hour and flood the map: next steps.'
+            'cursor.label':'Selected time (left/right arrows to adjust)',
+            'read.zh':     'above chart datum',
+            'read.ign':    'IGN69 altitude',
+            'soon':        'Flood the map: next step.'
         },
         es: {
             'btn.title':   'Marea (extensión de agua prevista)',
@@ -140,7 +146,10 @@
             'curve.coef':  'coef. {c}',
             'curve.fixture':'Datos sintéticos (demostración) — a sustituir por las predicciones del SHOM.',
             'err.curve':   'Curva de marea no disponible.',
-            'soon':        'Elegir una hora e inundación en el mapa: próximos pasos.'
+            'cursor.label':'Hora seleccionada (flechas izquierda/derecha para ajustar)',
+            'read.zh':     'sobre el cero hidrográfico',
+            'read.ign':    'en altitud IGN69',
+            'soon':        'Inundación en el mapa: próximo paso.'
         },
         de: {
             'btn.title':   'Gezeiten (vorhergesagte Wasserausdehnung)',
@@ -167,7 +176,10 @@
             'curve.coef':  'Koef. {c}',
             'curve.fixture':'Synthetische Daten (Demo) — durch SHOM-Vorhersagen zu ersetzen.',
             'err.curve':   'Gezeitenkurve nicht verfügbar.',
-            'soon':        'Uhrzeit wählen und Karte überfluten: nächste Schritte.'
+            'cursor.label':'Gewählte Uhrzeit (Pfeiltasten links/rechts zum Anpassen)',
+            'read.zh':     'über Seekartennull',
+            'read.ign':    'IGN69-Höhe',
+            'soon':        'Karte überfluten: nächster Schritt.'
         }
     };
     function lang() {
@@ -203,6 +215,7 @@
         var wantPort = null;   // ?tide_port= preselection (by name)
         var tide     = null;   // loaded tide series { points, highs, lows, date, source, ... }
         var chart    = null;   // active uPlot instance
+        var curIdx   = 0;      // selected sample index in tide.points (cursor position)
 
         // --- RAM nearest-port fetch ------------------------------------------
         // Query the open RAM WFS for ports within a bbox around the map centre,
@@ -324,6 +337,11 @@
                 '<div class="sv-tide-curve" id="sv-tide-curve">' +
                   '<div class="sv-tide-curve-head" id="sv-tide-curve-head"></div>' +
                   '<div class="sv-tide-plot" id="sv-tide-plot"></div>' +
+                  // Cursor readout — focusable (role=slider) so arrow keys scrub
+                  // the time without a mouse (WCAG). Shows the selected instant in
+                  // BOTH datums (ZH and the computed IGN69) — no hidden number.
+                  '<div class="sv-tide-readout" id="sv-tide-readout" tabindex="0" role="slider" ' +
+                       'aria-label="' + esc(t('cursor.label')) + '"></div>' +
                   '<p class="sv-tide-prov sv-tide-curve-foot" id="sv-tide-curve-foot"></p>' +
                 '</div>';
         }
@@ -392,12 +410,15 @@
                 var ys = tide.points.map(function (p) { return Number(p.h); });
                 var unit = tide.unit || 'm';
                 var fmtTime = uPlot.fmtDate('{HH}:{mm}');
-                var fmtFull = uPlot.fmtDate('{HH}:{mm}');
                 var w = host.clientWidth || 320;
                 var h = Math.max(120, host.clientHeight || 160);
                 var opts = {
                     width: w, height: h,
-                    cursor: { drag: { x: false, y: false } },   // M3 adds the scrub cursor
+                    cursor: {
+                        drag: { x: false, y: false },
+                        // Hover/click → adopt that sample as the selected instant.
+                        points: { show: true }
+                    },
                     scales: { x: { time: true } },
                     legend: { show: false },
                     series: [
@@ -412,12 +433,105 @@
                           } },
                         { stroke: '#888', grid: { stroke: 'rgba(127,127,127,.15)' },
                           values: function (u, vals) { return vals.map(function (v) { return v + ' ' + unit; }); } }
-                    ]
+                    ],
+                    hooks: {
+                        // Mouse scrub: as uPlot moves its cursor, follow its index
+                        // (only when the pointer is actually over the plot — idx is
+                        // null otherwise, which we ignore to keep the locked value).
+                        setCursor: [function (u) {
+                            if (u.cursor.idx != null) { setIdx(u.cursor.idx); }
+                        }]
+                    }
                 };
                 chart = new uPlot(opts, [xs, ys], host);
+                // Default selection = current time, clamped into the series' day.
+                curIdx = nearestIdxToNow();
+                lockCursor();
+                bindReadoutKeys();
+                updateReadout();
             }).catch(function () {
                 var h = document.getElementById('sv-tide-curve-head');
                 if (h) { h.innerHTML = '<span class="sv-tide-err">' + esc(t('err.curve')) + '</span>'; }
+            });
+        }
+        // --- Cursor / readout (M3) -------------------------------------------
+        // Index of the sample nearest to "now"; clamps to the series ends when the
+        // current clock is outside the fixture's day.
+        function nearestIdxToNow() {
+            if (!tide || !tide.points.length) { return 0; }
+            var now = Date.now(), best = 0, bestD = Infinity;
+            tide.points.forEach(function (p, i) {
+                var d = Math.abs(p.t - now);
+                if (d < bestD) { bestD = d; best = i; }
+            });
+            return best;
+        }
+        function setIdx(i) {
+            if (!tide) { return; }
+            var n = tide.points.length;
+            i = Math.max(0, Math.min(n - 1, i | 0));
+            if (i === curIdx) { return; }
+            curIdx = i;
+            updateReadout();
+            // M5 will re-flood the map here from waterIGN69().
+        }
+        // Pin uPlot's visual cursor to curIdx (so keyboard moves show on the plot).
+        // Only x matters for the vertical cursor line; top is the data y so the
+        // hover point sits on the curve. valToPos returns CSS px (over: true).
+        function lockCursor() {
+            if (!chart || !tide) { return; }
+            var left = chart.valToPos(tide.points[curIdx].t / 1000, 'x', true);
+            var top  = chart.valToPos(Number(tide.points[curIdx].h), 'y', true);
+            chart.setCursor({ left: left, top: top });
+        }
+        // The selected instant, in both datums. waterIGN69 = h_ZH + S (the whole
+        // datum correction, shown to the user, never hidden).
+        function selected() {
+            if (!tide || !tide.points[curIdx]) { return null; }
+            var p = tide.points[curIdx];
+            var hZH = Number(p.h);
+            var S   = port ? Number(port.S) : 0;
+            return { t: p.t, hZH: hZH, ign: hZH + S, S: S };
+        }
+        function waterIGN69() { var s = selected(); return s ? s.ign : null; }
+        function updateReadout() {
+            var el = document.getElementById('sv-tide-readout');
+            var s  = selected();
+            if (!el || !s) { return; }
+            el.innerHTML =
+                '<span class="sv-tide-read-time">' + esc(hhmm(s.t)) + '</span>' +
+                '<span class="sv-tide-read-val">' + esc(s.hZH.toFixed(2)) + ' m ' +
+                    '<span class="sv-tide-read-ref">' + esc(t('read.zh')) + '</span></span>' +
+                '<span class="sv-tide-read-arrow" aria-hidden="true">→</span>' +
+                '<span class="sv-tide-read-val sv-tide-read-ign">' + esc(s.ign.toFixed(2)) + ' m ' +
+                    '<span class="sv-tide-read-ref">' + esc(t('read.ign')) + '</span></span>';
+            // ARIA slider state — announce the selected time + IGN69 level.
+            el.setAttribute('aria-valuemin', '0');
+            el.setAttribute('aria-valuemax', String(tide.points.length - 1));
+            el.setAttribute('aria-valuenow', String(curIdx));
+            el.setAttribute('aria-valuetext', hhmm(s.t) + ' — ' + s.ign.toFixed(2) + ' m IGN69');
+            lockCursor();
+        }
+        function bindReadoutKeys() {
+            var el = document.getElementById('sv-tide-readout');
+            if (!el || el._tideBound) { return; }
+            el._tideBound = true;
+            // Arrow keys = ±1 sample; Home/End = day ends; PageUp/Down = ±1 hour.
+            el.addEventListener('keydown', function (e) {
+                if (!tide) { return; }
+                var step = Math.max(1, Math.round(60 / (tide.step || 10)));   // samples per hour
+                var d = 0;
+                switch (e.key) {
+                    case 'ArrowRight': case 'ArrowUp':   d = 1; break;
+                    case 'ArrowLeft':  case 'ArrowDown': d = -1; break;
+                    case 'PageUp':   d = step; break;
+                    case 'PageDown': d = -step; break;
+                    case 'Home': setIdx(0); e.preventDefault(); return;
+                    case 'End':  setIdx(tide.points.length - 1); e.preventDefault(); return;
+                    default: return;
+                }
+                e.preventDefault();
+                setIdx(curIdx + d);
             });
         }
         function hhmm(ms) {
@@ -495,6 +609,16 @@
                 P + '.sv-tide-mark-pm{background:rgba(13,110,253,.14);color:#0d6efd}',
                 P + '.sv-tide-mark-bm{background:rgba(127,127,127,.16);color:#555}',
                 P + '.sv-tide-plot{flex:1;min-height:120px}',
+                // Cursor readout strip — selected instant in both datums. Focusable
+                // slider; visible focus ring (keyboard scrub). Hardcoded colors are
+                // fine here (panel, not a map overlay).
+                P + '.sv-tide-readout{flex:none;display:flex;align-items:center;flex-wrap:wrap;gap:.4rem;margin-top:.35rem;padding:.3rem .5rem;border:1px solid var(--sv-panel-border,#ccc);border-radius:6px;background:rgba(13,110,253,.06);font-variant-numeric:tabular-nums;cursor:ew-resize}',
+                P + '.sv-tide-readout:focus-visible{outline:2px solid #0d6efd;outline-offset:1px}',
+                P + '.sv-tide-read-time{font-weight:700;font-size:.95rem;color:#0d6efd}',
+                P + '.sv-tide-read-val{font-size:.9rem;color:#333}',
+                P + '.sv-tide-read-ign{font-weight:600}',
+                P + '.sv-tide-read-ref{font-size:.72rem;color:#888;font-weight:400}',
+                P + '.sv-tide-read-arrow{color:#888}',
                 P + '.sv-tide-curve-foot{flex:none;margin-top:.25rem}',
                 '@media (max-width:640px){' + P + '#sv-tide-root{flex-direction:column;overflow:auto}' +
                     P + '.sv-tide-info{flex:none}' + P + '.sv-tide-curve{min-height:200px}}',
