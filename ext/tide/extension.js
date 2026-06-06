@@ -115,6 +115,10 @@
             'err.fetch':   'Service RAM (SHOM) injoignable.',
             'curve.label': 'Marée prévue',
             'curve.date':  'Hauteurs d’eau sur le zéro hydrographique — {date}',
+            'date.prev':   'Jour précédent',
+            'date.next':   'Jour suivant',
+            'date.today':  'Aujourd’hui',
+            'date.nodata': 'Pas de prévision pour cette date (au-delà de l’horizon du modèle).',
             'curve.pm':    'PM',
             'curve.bm':    'BM',
             'curve.coef':  'coef. {c}',
@@ -149,6 +153,10 @@
             'err.fetch':   'RAM service (SHOM) unreachable.',
             'curve.label': 'Predicted tide',
             'curve.date':  'Water heights above chart datum — {date}',
+            'date.prev':   'Previous day',
+            'date.next':   'Next day',
+            'date.today':  'Today',
+            'date.nodata': 'No forecast for this date (beyond the model horizon).',
             'curve.pm':    'HW',
             'curve.bm':    'LW',
             'curve.coef':  'coef. {c}',
@@ -183,6 +191,10 @@
             'err.fetch':   'Servicio RAM (SHOM) inaccesible.',
             'curve.label': 'Marea prevista',
             'curve.date':  'Alturas de agua sobre el cero hidrográfico — {date}',
+            'date.prev':   'Día anterior',
+            'date.next':   'Día siguiente',
+            'date.today':  'Hoy',
+            'date.nodata': 'Sin previsión para esta fecha (más allá del horizonte del modelo).',
             'curve.pm':    'PM',
             'curve.bm':    'BM',
             'curve.coef':  'coef. {c}',
@@ -217,6 +229,10 @@
             'err.fetch':   'RAM-Dienst (SHOM) nicht erreichbar.',
             'curve.label': 'Vorhergesagte Gezeit',
             'curve.date':  'Wasserhöhen über Seekartennull — {date}',
+            'date.prev':   'Vorheriger Tag',
+            'date.next':   'Nächster Tag',
+            'date.today':  'Heute',
+            'date.nodata': 'Keine Vorhersage für dieses Datum (über den Modellhorizont hinaus).',
             'curve.pm':    'HW',
             'curve.bm':    'NW',
             'curve.coef':  'Koef. {c}',
@@ -444,12 +460,15 @@
         // no key, no proxy.
         function loadTide() {
             if (!port) { return; }
-            var seq = fetchSeq;
+            var seq = ++fetchSeq;                 // invalidate any in-flight day/port fetch
+            var date = isoDate(curDate);
+            // Cache hit (deterministic per port+day) → render instantly, no fetch.
+            var cached = tideCache[cacheKey(date)];
+            if (cached) { tide = cached; renderCurve(); return; }
             var head = document.getElementById('sv-tide-curve-head');
             if (head) { head.textContent = t('loading'); }
             // port.x/.y are EPSG:3857 → lon/lat for the API.
             var ll = ol.proj.toLonLat([port.x, port.y]);
-            var date = isoDate(curDate);
             var url = OM_URL +
                 '?latitude=' + encodeURIComponent(ll[1].toFixed(4)) +
                 '&longitude=' + encodeURIComponent(ll[0].toFixed(4)) +
@@ -459,9 +478,13 @@
             fetch(url, { headers: { Accept: 'application/json' } })
                 .then(function (r) { return r.ok ? r.json() : Promise.reject('HTTP ' + r.status); })
                 .then(function (j) {
-                    if (seq !== fetchSeq) { return; }            // map moved → stale
+                    if (seq !== fetchSeq) { return; }            // superseded → drop
                     var series = buildSeries(j, date);
-                    if (!series) { return Promise.reject('empty'); }
+                    // Empty = date outside Open-Meteo's forecast horizon (far
+                    // future). Keep the date nav so the user can step back; show a
+                    // "no data" note. NOT a hard error.
+                    if (!series) { showNoData(date); return; }
+                    tideCache[cacheKey(date)] = series;
                     tide = series;
                     renderCurve();
                 })
@@ -470,6 +493,26 @@
                     var h = document.getElementById('sv-tide-curve-head');
                     if (h) { h.innerHTML = '<span class="sv-tide-err">' + esc(t('err.curve')) + '</span>'; }
                 });
+        }
+        // No tide data for a date (beyond the forecast horizon). Render the date
+        // nav + a note, clear the plot, so the user can navigate back.
+        function showNoData(date) {
+            destroyChart();
+            tide = null;
+            var head = document.getElementById('sv-tide-curve-head');
+            var plot = document.getElementById('sv-tide-plot');
+            if (plot) { plot.innerHTML = ''; }
+            if (head) {
+                head.innerHTML =
+                    '<div class="sv-tide-datenav">' +
+                      '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-datebtn" id="sv-tide-prev" aria-label="' + esc(t('date.prev')) + '" title="' + esc(t('date.prev')) + '">‹</button>' +
+                      '<span class="sv-tide-curve-title">' + esc(date) + '</span>' +
+                      '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-datebtn" id="sv-tide-next" aria-label="' + esc(t('date.next')) + '" title="' + esc(t('date.next')) + '">›</button>' +
+                      '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-today" id="sv-tide-today">' + esc(t('date.today')) + '</button>' +
+                    '</div>' +
+                    '<p class="sv-tide-msg">' + esc(t('date.nodata')) + '</p>';
+                bindDateNav();
+            }
         }
         // Convert Open-Meteo MSL heights → our ZH-equivalent series, calibrated to
         // RAM. Returns { port, date, tz, step, datum, unit, source, points, highs,
@@ -502,6 +545,26 @@
                 points: points, highs: ex.highs, lows: ex.lows
             };
         }
+        // Date navigation: shift curDate by ±1 day (or back to today) and reload.
+        // Predictions are deterministic per (port, day) → cache the built series by
+        // "site|date" so revisiting a day is instant and offline-friendly.
+        var tideCache = {};
+        function cacheKey(date) { return (port ? port.site : '?') + '|' + date; }
+        function shiftDate(days) {
+            var d = new Date(curDate);
+            d.setDate(d.getDate() + days);
+            curDate = d;
+            loadTide();
+        }
+        function goToday() { curDate = new Date(); loadTide(); }
+        function bindDateNav() {
+            var prev = document.getElementById('sv-tide-prev');
+            var next = document.getElementById('sv-tide-next');
+            var today = document.getElementById('sv-tide-today');
+            if (prev)  { prev.addEventListener('click', function () { shiftDate(-1); }); }
+            if (next)  { next.addEventListener('click', function () { shiftDate(1); }); }
+            if (today) { today.addEventListener('click', goToday); }
+        }
         // Local minima/maxima of the height series → PM (highs) / BM (lows). No
         // coef (the free model doesn't provide SHOM coefficients).
         function extrema(points) {
@@ -531,8 +594,17 @@
                         esc(hhmm(lo.t)) + ' · ' + esc(Number(lo.h).toFixed(2)) + ' m</span>';
                 });
                 head.innerHTML =
-                    '<div class="sv-tide-curve-title">' + esc(t('curve.date', { date: tide.date || '' })) + '</div>' +
+                    '<div class="sv-tide-datenav">' +
+                      '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-datebtn" id="sv-tide-prev"' +
+                        ' aria-label="' + esc(t('date.prev')) + '" title="' + esc(t('date.prev')) + '">‹</button>' +
+                      '<span class="sv-tide-curve-title">' + esc(t('curve.date', { date: tide.date || '' })) + '</span>' +
+                      '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-datebtn" id="sv-tide-next"' +
+                        ' aria-label="' + esc(t('date.next')) + '" title="' + esc(t('date.next')) + '">›</button>' +
+                      '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-today" id="sv-tide-today">' +
+                        esc(t('date.today')) + '</button>' +
+                    '</div>' +
                     '<div class="sv-tide-marks">' + marks + '</div>';
+                bindDateNav();
             }
             // Footer: provenance of the curve (source + date) + a "modelled,
             // not navigation-grade" disclaimer (Open-Meteo model, calibrated to
@@ -890,7 +962,10 @@
                 P + '.sv-tide-info{flex:0 0 260px;min-width:0;overflow:auto;display:flex;flex-direction:column;gap:.4rem;padding-right:.3rem}',
                 P + '.sv-tide-curve{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}',
                 P + '.sv-tide-curve-head{flex:none}',
-                P + '.sv-tide-curve-title{font-size:.85rem;font-weight:600;color:#333}',
+                P + '.sv-tide-datenav{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap}',
+                P + '.sv-tide-curve-title{font-size:.85rem;font-weight:600;color:#333;flex:1;min-width:0;text-align:center}',
+                P + '.sv-tide-datebtn{padding:.1rem .5rem;line-height:1.2;font-weight:700}',
+                P + '.sv-tide-today{padding:.1rem .5rem;font-size:.74rem}',
                 P + '.sv-tide-marks{display:flex;flex-wrap:wrap;gap:.3rem;margin:.2rem 0}',
                 P + '.sv-tide-mark{font-size:.74rem;padding:.1rem .45rem;border-radius:10px;font-variant-numeric:tabular-nums;white-space:nowrap}',
                 P + '.sv-tide-mark-pm{background:rgba(13,110,253,.14);color:#0d6efd}',
