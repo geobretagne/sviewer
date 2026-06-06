@@ -53,6 +53,10 @@ valeur) est affichée à l'utilisateur. Aucun nombre caché.
   −0,62…1,75 m vs SHOM −0,73…1,65 m (~5-10 cm).
 - **Bathymétrie** — WMS GeoServer GéoBretagne `shom:bathy_5m`. Pixel = altitude du
   fond en IGN69 (`GRAY_INDEX`), nodata −99999. Recoloré à la volée par SLD inline.
+- **Courants de marée** — WMTS SHOM `COURANTS2D_WMTS_*_3857` (atlas Courants 2D),
+  **sans clé, CORS ouvert, PNG transparent**. Superposition automatique selon
+  l'instant (voir ci-dessous). Couvre Manche/Atlantique, référencé Brest, niveaux
+  de tuiles 0–13 (champ régional grossier ; au-delà OL sur-zoome la tuile z13).
 
 SHOM SPM (prédictions officielles) écarté : clé liée à un Referer + endpoint
 `hlt` en 403 sur l'offre gratuite. WorldTides écarté : pas de cache multi-
@@ -63,20 +67,34 @@ utilisateur (licence). Open-Meteo : non commercial, attribution CC-BY-4.0.
 Dock bas pleine largeur, deux onglets (tablist WCAG, flèches ←/→) :
 
 - **Marée** — contrôles vivants + graphe :
-  - bouton **« Port le plus proche ici »** (le port est choisi à l'ouverture, ne
-    suit PAS les déplacements ; ce bouton re-sélectionne ; un avertissement
-    apparaît si l'on s'éloigne de > 10 km).
-  - **curseur tirant d'eau** (0–3 m) : abaisse la limite bleu/orange de cette
-    valeur → signale les zones d'échouage pour un bateau.
-  - **navigation de date** ‹ jour ›, « Aujourd'hui ».
+  - **ligne compacte** en haut : bouton **re-sélection du port** (icône seule) ·
+    nom du port · **navigation de date** ‹ date › « Aujourd'hui » · **curseur
+    tirant d'eau** (0–3 m). Le port est choisi à l'ouverture, ne suit PAS les
+    déplacements ; le bouton re-sélectionne le plus proche ; un avertissement
+    apparaît si l'on s'éloigne de > 10 km. Le tirant d'eau abaisse la limite
+    bleu/orange → signale les zones d'échouage.
   - **courbe** uPlot : surface hauteur(t), repères PM/BM, **ligne rouge = maintenant**,
     **ligne orange = instant sélectionné**.
   - **lecture** sous le graphe : instant sélectionné dans les **deux** référentiels
     (ZH et IGN69 calculé) — rien de caché.
   - **spinner** pendant le chargement de la carte WMS.
 - **Données** — port + nom, **séparation de datum + formule**, niveaux
-  caractéristiques (PHMA/PMVE/NM), bathymétrie, **toute la provenance** (source +
-  date sous chaque bloc).
+  caractéristiques (PHMA/PMVE/NM), bathymétrie, **courants**, **toute la
+  provenance** (source + date sous chaque bloc).
+
+### Couches carte
+
+- **Mer** (WMS bathymétrie, SLD) — bleu/orange, suit le curseur (débounce 160 ms),
+  zIndex 850.
+- **Courants** (WMTS SHOM) — **superposition automatique, sans bouton ni sélecteur**
+  (les flèches n'encombrent pas la carte). La couche est déduite de l'instant :
+  - **vive-eau / morte-eau** d'après le marnage du jour à **Brest** (≥ 4,5 m →
+    vive-eau, sinon morte-eau) ;
+  - **décalage** = arrondi(instant − pleine mer de Brest la plus proche), borné
+    ±6 h → `PM` / `APn` (après) / `AVn` (avant).
+  - La courbe de Brest provient d'un appel Open-Meteo supplémentaire par fenêtre
+    (mis en cache par jour). zIndex 855, opacité 0,85 ; échouée silencieusement
+    (bonus, ne bloque jamais la marée).
 
 ### Interaction graphe → carte
 
@@ -93,8 +111,11 @@ Dock bas pleine largeur, deux onglets (tablist WCAG, flèches ←/→) :
 - **Debounce** : navigation de date 250 ms, requête mer WMS 160 ms.
 - Limites Open-Meteo (600/min, 10000/jour, **par IP visiteur** — non partagées) :
   intenables en usage normal.
-- WMS en **`ol.source.ImageWMS`** (une image par vue, pas de tuiles → pas de trou
-  si une tuile manque).
+- WMS mer en **`ol.source.ImageWMS`** (une image par vue, pas de tuiles → pas de
+  trou si une tuile manque). Courants en WMTS (tuiles, mais transparentes).
+- **Gate de zoom** (`tide_minzoom`, défaut 13) : ne bloque que l'**ouverture** de
+  l'outil quand on est trop dézoomé. Un panneau déjà ouvert reste ouvert au
+  dézoom (port, date, tirant d'eau, graphe conservés) — re-zoomer ne recharge rien.
 
 ## Paramètres d'URL (permanents, jamais renommés)
 
@@ -120,9 +141,14 @@ paramètres et en ajoutant `ext=tide`. Un lien partagé rouvre à l'identique.
   couvre que la terre au-dessus de la plus basse mer, laissant la mer vide).
 - **Horizon de prévision** ~2 semaines (Open-Meteo) : au-delà, « Pas de prévision ».
 - Pas de coefficient de marée (l'offre gratuite du modèle ne le fournit pas).
+- **Courants** : l'atlas SHOM ne distingue que **deux régimes** (coef 45 / 95,
+  morte/vive-eau) et des pas **horaires** ±6 h ; notre choix vive/morte par
+  marnage est donc approximatif au voisinage du seuil. Référencé **Brest** →
+  Manche/Atlantique uniquement (la Méditerranée utilise d'autres ports de
+  référence, hors périmètre). Niveaux de tuiles 0–13 (champ grossier).
 
 ## Dépendances
 
 - **uPlot** (MIT, vendored `uplot.min.{js,css}`, lazy au premier graphe).
-- **OpenLayers 10** (cœur sViewer) pour la couche WMS.
+- **OpenLayers 10** (cœur sViewer) pour les couches WMS (mer) et WMTS (courants).
 - Aucune autre : pas de CDN, pas de clé d'API, pas de backend.
