@@ -17,7 +17,8 @@
     'use strict';
 
     var PANEL = 'field';
-    var CFG_KEY = 'sv_field_cfg_v1';
+    var CFG_KEY    = 'sv_field_cfg_v1';
+    var SCHEMA_KEY = 'sv_field_schema_v1';
     var DB_NAME = 'sv_field';
     var DB_STORE = 'queue';
     var MAX_SYNCED = 50;          // cap on retained synced records (oldest evicted)
@@ -491,39 +492,66 @@
         return h;
     }
     // GET /columns → [{ id, type, label }] excluding the geometry column.
+    // Persisted to localStorage keyed by doc+table so the form renders offline.
+    function schemaStorageKey() {
+        return SCHEMA_KEY + '.' + cfg.docId + '.' + cfg.tableId;
+    }
+    function loadCachedSchema() {
+        try {
+            var raw = localStorage.getItem(schemaStorageKey());
+            if (!raw) { return null; }
+            var saved = JSON.parse(raw);
+            schema    = saved.schema;
+            attachCol = saved.attachCol || null;
+            return schema;
+        } catch (e) { return null; }
+    }
+    function saveCachedSchema() {
+        try {
+            localStorage.setItem(schemaStorageKey(),
+                JSON.stringify({ schema: schema, attachCol: attachCol }));
+        } catch (e) { /* quota — ignore */ }
+    }
     async function fetchSchema() {
         if (schema) { return schema; }
-        var res = await fetch(gristUrl('/columns'), { headers: authHeaders() });
-        if (!res.ok) { throw new Error('HTTP ' + res.status); }
-        var data = await res.json();
-        // First Attachments column = photo target (excluded from the normal form).
-        attachCol = null;
-        (data.columns || []).some(function (c) {
-            if (c.fields && baseType(c.fields.type) === 'Attachments' && c.id !== cfg.geomCol) {
-                attachCol = c.id; return true;
-            }
-            return false;
-        });
-        var cols = (data.columns || []).map(function (c) {
-            var f = c.fields || {};
-            // Choice / ChoiceList store their options in widgetOptions JSON.
-            var choices = null;
-            if (f.widgetOptions) {
-                try { choices = (JSON.parse(f.widgetOptions) || {}).choices || null; } catch (e) { /* ignore */ }
-            }
-            // Read-only only if it's a real computed formula (isFormula AND non-empty
-            // formula). A fresh/empty column is isFormula:true but formula:'' — still
-            // writable, so it must NOT be excluded.
-            var computed = !!f.isFormula && !!(f.formula && f.formula.trim());
-            return { id: c.id, type: f.type || 'Text', label: f.label || c.id,
-                     computed: computed, choices: choices };
-        }).filter(function (c) {
-            // Skip geometry, internal sort, computed columns, and (v1) attachments.
-            return c.id !== cfg.geomCol && c.id !== 'manualSort' &&
-                   !c.computed && baseType(c.type) !== 'Attachments';
-        });
-        schema = cols;
-        return schema;
+        try {
+            var res = await fetch(gristUrl('/columns'), { headers: authHeaders() });
+            if (!res.ok) { throw new Error('HTTP ' + res.status); }
+            var data = await res.json();
+            // First Attachments column = photo target (excluded from the normal form).
+            attachCol = null;
+            (data.columns || []).some(function (c) {
+                if (c.fields && baseType(c.fields.type) === 'Attachments' && c.id !== cfg.geomCol) {
+                    attachCol = c.id; return true;
+                }
+                return false;
+            });
+            var cols = (data.columns || []).map(function (c) {
+                var f = c.fields || {};
+                // Choice / ChoiceList store their options in widgetOptions JSON.
+                var choices = null;
+                if (f.widgetOptions) {
+                    try { choices = (JSON.parse(f.widgetOptions) || {}).choices || null; } catch (e) { /* ignore */ }
+                }
+                // Read-only only if it's a real computed formula (isFormula AND non-empty
+                // formula). A fresh/empty column is isFormula:true but formula:'' — still
+                // writable, so it must NOT be excluded.
+                var computed = !!f.isFormula && !!(f.formula && f.formula.trim());
+                return { id: c.id, type: f.type || 'Text', label: f.label || c.id,
+                         computed: computed, choices: choices };
+            }).filter(function (c) {
+                // Skip geometry, internal sort, computed columns, and (v1) attachments.
+                return c.id !== cfg.geomCol && c.id !== 'manualSort' &&
+                       !c.computed && baseType(c.type) !== 'Attachments';
+            });
+            schema = cols;
+            saveCachedSchema();
+            return schema;
+        } catch (e) {
+            // Network failed — try cached schema so offline capture still works.
+            if (loadCachedSchema()) { return schema; }
+            throw e;
+        }
     }
     // Upload one photo Blob to Grist; returns its attachment id.
     // POST /api/docs/{doc}/attachments, multipart field "upload".
