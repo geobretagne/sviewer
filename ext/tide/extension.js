@@ -1,21 +1,24 @@
 /**
- * Marée (tide) — show predicted water extent on a coastal zone for a chosen
- * date/time, near one port. Combines Litto3D bathymetry (WMS, IGN69) with SHOM
- * tide predictions (above Zéro Hydrographique), datum-corrected via the RAM
+ * Marée (tide) — show the predicted SEA extent on a coastal zone for a chosen
+ * date/time, near one port. NOT a flood-risk tool: it visualises the astronomical
+ * tide (predicted sea level), not a flood/inondation forecast (surge, swell,
+ * river are ignored). Wording deliberately avoids "flood".
+ *
+ * Combines SHOM bathymetry (sea floor, WMS, altitude IGN69) with SHOM tide
+ * predictions (above Zéro Hydrographique), datum-corrected via the RAM
  * (Références Altimétriques Maritimes, open SHOM data).
  *
- * Physics (see ext/tideflood/INVESTIGATION.md):
+ * Physics (see ext/tide/INVESTIGATION.md):
  *   S           = zh_ref (RAM port, ZH height in IGN69)   // datum separation
  *   water_IGN69 = tide_ZH(t) + S
- *   flood       ⟺ terrain_IGN69 < water_IGN69             // painted by GeoServer SLD
- * Measured ΔS = 1 cm / 5 km ≪ Litto3D 10 cm precision → flat-S honest at 4 nm.
+ *   submerged   ⟺ seafloor_IGN69 < water_IGN69            // painted by GeoServer SLD
+ * Measured ΔS = 1 cm / 5 km → flat-S honest at 4 nm.
  *
  * SCIENTIFIC TRACEABILITY RULE: every datum used in the computation (its source,
  * date, value) is displayed to the user. No hidden numbers.
  *
- * Build plan: ext/tide/PLAN.md. This file = M0 (button + zoom gate + dock) and
- * M1 (nearest RAM port + datum separation, displayed with full provenance).
- * Chart (uPlot) + SHOM + SLD flood come in later milestones.
+ * Build plan: ext/tide/PLAN.md. Sea overlay = one bathymetry WMS, dynamic SLD
+ * thresholded at water_IGN69; tide curve (uPlot) drives the level.
  */
 (function () {
     'use strict';
@@ -32,24 +35,20 @@
     var SEARCH_M  = 30000;     // half-width (m) of the WFS bbox around map center
     var DEF_MINZOOM = 13;      // coastal scale gate (single-port flat-S validity)
 
-    // Litto3D bathymetry/MNT (GeoServer WMS). Pixel value = altitude IGN69 in
-    // metres (GRAY_INDEX), nodata = -9999. Flood is painted server-side by an
-    // inline SLD whose ColorMap break = water_IGN69 (the flat-S threshold).
+    // SHOM bathymetry 1 m (GeoServer WMS). Pixel = sea-floor altitude IGN69 in
+    // metres (GRAY_INDEX), nodata = -99999. IGN69 → the tide's water_IGN69
+    // thresholds it directly, no extra correction. SEA tool: paint where the sea
+    // floor is BELOW the water level (submerged), graded by depth (water − bathy);
+    // exposed flats (bathy ≥ level) and nodata stay transparent. Tide rises →
+    // waterline creeps up the shore; falls → intertidal flats emerge.
     //
     // CRITICAL: GeoServer matches the SLD <NamedLayer><Name> to the layer only
     // when WORKSPACE-QUALIFIED ('shom:bathy_1m'). A bare name parses but is
     // silently ignored → default style renders. Verified on geobretagne.
     //
-    // SHOM bathymetry (sea floor), pixel value = altitude IGN69 in metres (so the
-    // tide's water_IGN69 thresholds it directly, no extra correction). nodata =
-    // -99999. This is a SEA tool: we paint where the sea floor is BELOW the water
-    // level (submerged), graded by depth (water_IGN69 − bathy); exposed flats
-    // (bathy ≥ level) and nodata stay transparent. As the tide rises the waterline
-    // creeps up the shore; as it falls, intertidal flats emerge.
-    //
-    // We do NOT use the terrestrial Litto3D (alti:litto3d) here: it covers only the
-    // land above lowest tide, leaving the open sea nodata, and overlapped the
-    // intertidal band. One bathymetry layer = no overlap, no land taint.
+    // We do NOT use the terrestrial Litto3D here: it covers only the land above
+    // lowest tide (open sea = nodata) and overlapped the intertidal band. One
+    // bathymetry layer = no overlap, no land taint.
     var WMS_URL   = 'https://geobretagne.fr/geoserver/shom/bathy_1m/wms';
     var WMS_LAYER = 'shom:bathy_1m';
     var WMS_SRC   = 'GéoBretagne / SHOM — bathymétrie 1 m (altitude IGN69)';
@@ -123,9 +122,9 @@
             'cursor.label':'Heure sélectionnée (flèches gauche/droite pour ajuster)',
             'read.zh':     'sur le zéro hydrographique',
             'read.ign':    'en altitude IGN69',
-            'terrain.label':'Terrain (bathymétrie)',
-            'terrain.expl':'L’étendue inondée est calculée par le serveur : tout pixel dont l’altitude IGN69 est inférieure au niveau d’eau est peint.',
-            'soon':        'Inondation sur la carte : prochaine étape.'
+            'terrain.label':'Fond marin (bathymétrie)',
+            'terrain.expl':'La mer est calculée par le serveur : tout pixel dont l’altitude du fond (IGN69) est inférieure au niveau de la mer est peint.',
+            'soon':        'Étendue de la mer sur la carte : prochaine étape.'
         },
         en: {
             'btn.title':   'Tide (predicted water extent)',
@@ -155,9 +154,9 @@
             'cursor.label':'Selected time (left/right arrows to adjust)',
             'read.zh':     'above chart datum',
             'read.ign':    'IGN69 altitude',
-            'terrain.label':'Terrain (bathymetry)',
-            'terrain.expl':'The flooded extent is computed server-side: every pixel whose IGN69 altitude is below the water level is painted.',
-            'soon':        'Flood the map: next step.'
+            'terrain.label':'Sea floor (bathymetry)',
+            'terrain.expl':'The sea is computed server-side: every pixel whose sea-floor altitude (IGN69) is below the sea level is painted.',
+            'soon':        'Sea extent on the map: next step.'
         },
         es: {
             'btn.title':   'Marea (extensión de agua prevista)',
@@ -187,9 +186,9 @@
             'cursor.label':'Hora seleccionada (flechas izquierda/derecha para ajustar)',
             'read.zh':     'sobre el cero hidrográfico',
             'read.ign':    'en altitud IGN69',
-            'terrain.label':'Terreno (batimetría)',
-            'terrain.expl':'La extensión inundada la calcula el servidor: se pinta todo píxel cuya altitud IGN69 es inferior al nivel del agua.',
-            'soon':        'Inundación en el mapa: próximo paso.'
+            'terrain.label':'Fondo marino (batimetría)',
+            'terrain.expl':'El mar lo calcula el servidor: se pinta todo píxel cuya altitud del fondo (IGN69) es inferior al nivel del mar.',
+            'soon':        'Extensión del mar en el mapa: próximo paso.'
         },
         de: {
             'btn.title':   'Gezeiten (vorhergesagte Wasserausdehnung)',
@@ -219,9 +218,9 @@
             'cursor.label':'Gewählte Uhrzeit (Pfeiltasten links/rechts zum Anpassen)',
             'read.zh':     'über Seekartennull',
             'read.ign':    'IGN69-Höhe',
-            'terrain.label':'Gelände (Bathymetrie)',
-            'terrain.expl':'Die überflutete Ausdehnung wird serverseitig berechnet: jedes Pixel, dessen IGN69-Höhe unter dem Wasserstand liegt, wird eingefärbt.',
-            'soon':        'Karte überfluten: nächster Schritt.'
+            'terrain.label':'Meeresboden (Bathymetrie)',
+            'terrain.expl':'Das Meer wird serverseitig berechnet: jedes Pixel, dessen Meeresboden-Höhe (IGN69) unter dem Meeresspiegel liegt, wird eingefärbt.',
+            'soon':        'Meeresausdehnung auf der Karte: nächster Schritt.'
         }
     };
     function lang() {
@@ -258,10 +257,10 @@
         var tide     = null;   // loaded tide series { points, highs, lows, date, source, ... }
         var chart    = null;   // active uPlot instance
         var curIdx   = 0;      // selected sample index in tide.points (cursor position)
-        var floodLayer = null; // OL WMS layer painting the flood (own, removed on close)
-        var floodSrc   = null; // its ol.source.ImageWMS
+        var seaLayer = null; // OL WMS layer painting the sea (own, removed on close)
+        var seaSrc   = null; // its ol.source.ImageWMS
         var debugLevel = null; // M4 throwaway manual override (null = use waterIGN69)
-        var floodTimer = null; // debounce handle for the flood WMS request
+        var seaTimer = null; // debounce handle for the sea WMS request
 
         // --- RAM nearest-port fetch ------------------------------------------
         // Query the open RAM WFS for ports within a bbox around the map centre,
@@ -372,7 +371,7 @@
                   '<table class="sv-tide-levels">' + levels + '</table>' +
                   provHtml(RAM_SRC, port.date) +
                 '</section>' : '') +
-                // Terrain + sea data behind the flood (traceability of the overlay)
+                // Bathymetry data behind the sea overlay (traceability)
                 '<section class="sv-tide-block">' +
                   '<h3 class="sv-tide-h">' + esc(t('terrain.label')) + '</h3>' +
                   '<p class="sv-tide-expl">' + esc(t('terrain.expl')) + '</p>' +
@@ -394,8 +393,8 @@
                   // BOTH datums (ZH and the computed IGN69) — no hidden number.
                   '<div class="sv-tide-readout" id="sv-tide-readout" tabindex="0" role="slider" ' +
                        'aria-label="' + esc(t('cursor.label')) + '"></div>' +
-                  // M4 throwaway: manual level slider to prove the SLD flood in
-                  // isolation. Removed in M5 once the cursor drives the flood.
+                  // M4 throwaway: manual level slider to prove the SLD sea render in
+                  // isolation. Removed in M5 once the cursor drives the level.
                   '<div class="sv-tide-debug" id="sv-tide-debug">' +
                     '<label>débug niveau IGN69 ' +
                       '<input type="range" id="sv-tide-debug-range" min="-2" max="14" step="0.1" value="3">' +
@@ -406,7 +405,7 @@
                 '</div>';
             bindDebug();
         }
-        // M4 throwaway slider wiring — drives the flood from a literal level so the
+        // M4 throwaway slider wiring — drives the sea from a literal level so the
         // SLD threshold can be proven before the cursor coupling (M5).
         function bindDebug() {
             var r = document.getElementById('sv-tide-debug-range');
@@ -415,12 +414,12 @@
             r.addEventListener('input', function () {
                 debugLevel = parseFloat(r.value);
                 if (o) { o.textContent = debugLevel.toFixed(1) + ' m'; }
-                updateFlood();
+                updateSea();
             });
-            // Apply the initial slider value immediately so a flood shows on open.
+            // Apply the initial slider value immediately so the sea shows on open.
             debugLevel = parseFloat(r.value);
             if (o) { o.textContent = debugLevel.toFixed(1) + ' m'; }
-            updateFlood();
+            updateSea();
         }
 
         // --- M2: tide curve (fixture → SHOM proxy at M6) ----------------------
@@ -559,7 +558,7 @@
             curIdx = i;
             updateReadout();
             if (!fromMouse) { lockCursor(); }
-            // M5 will re-flood the map here from waterIGN69().
+            // M5 will re-render the sea here from waterIGN69().
         }
         // Pin uPlot's visual cursor to curIdx (so keyboard moves show on the plot).
         // Only x matters for the vertical cursor line; top is the data y so the
@@ -651,7 +650,7 @@
             { c: '#6db3e8', o: 0.68 },  // shallow (bathy = level-1.5)
             { c: '#bfe0f5', o: 0.55 }   // waterline (bathy = level)
         ];
-        function floodSLD(level) {
+        function seaSLD(level) {
             var L = Number(level);
             function entry(color, q, op) {
                 return '<ColorMapEntry color="' + color + '" quantity="' + q + '" opacity="' + op + '"/>';
@@ -677,42 +676,42 @@
                 '</RasterSymbolizer>' +
                 '</Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>';
         }
-        // Create the OL WMS flood layer once (above background, below UI). SLD_BODY
+        // Create the OL WMS sea layer once (above background, below UI). SLD_BODY
         // carries the style inline; STYLES must be present (empty) for GeoServer to
         // honour SLD_BODY.
-        function ensureFloodLayer() {
-            if (floodLayer) { return; }
+        function ensureSeaLayer() {
+            if (seaLayer) { return; }
             // No crossOrigin: we never read the pixels (no canvas export), so a
             // tainted image is fine and we avoid a hard failure if the WMS omits
             // CORS headers.
-            floodSrc = new ol.source.ImageWMS({
+            seaSrc = new ol.source.ImageWMS({
                 url: WMS_URL,
                 params: { LAYERS: WMS_LAYER, STYLES: '', FORMAT: 'image/png', TRANSPARENT: true },
                 ratio: 1
             });
-            floodLayer = new ol.layer.Image({ source: floodSrc, zIndex: 850, opacity: 1 });
-            map.addLayer(floodLayer);
+            seaLayer = new ol.layer.Image({ source: seaSrc, zIndex: 850, opacity: 1 });
+            map.addLayer(seaLayer);
         }
-        function removeFloodLayer() {
-            if (floodLayer) { map.removeLayer(floodLayer); floodLayer = null; floodSrc = null; }
+        function removeSeaLayer() {
+            if (seaLayer) { map.removeLayer(seaLayer); seaLayer = null; seaSrc = null; }
         }
-        // Re-render the flood at the current water level. M4 uses debugLevel if set
+        // Re-render the sea at the current water level. M4 uses debugLevel if set
         // (throwaway slider); otherwise the cursor-derived waterIGN69(). Updating
         // SLD_BODY via updateParams re-requests the image at the new threshold.
-        // updateFlood is DEBOUNCED: dragging the slider (M4) or scrubbing the
+        // updateSea is DEBOUNCED: dragging the slider (M4) or scrubbing the
         // cursor (M5) fires on every input/keypress — without this each one would
         // launch a WMS GetMap. Coalesce to the last value after a short idle so a
         // fast drag = one request, not dozens.
-        var FLOOD_DEBOUNCE = 160;   // ms idle before the WMS request
-        function applyFlood() {
+        var SEA_DEBOUNCE = 160;   // ms idle before the WMS request
+        function applySea() {
             var level = debugLevel != null ? debugLevel : waterIGN69();
             if (level == null) { return; }
-            ensureFloodLayer();
-            floodSrc.updateParams({ SLD_BODY: floodSLD(level) });
+            ensureSeaLayer();
+            seaSrc.updateParams({ SLD_BODY: seaSLD(level) });
         }
-        function updateFlood() {
-            if (floodTimer) { clearTimeout(floodTimer); }
-            floodTimer = setTimeout(function () { floodTimer = null; applyFlood(); }, FLOOD_DEBOUNCE);
+        function updateSea() {
+            if (seaTimer) { clearTimeout(seaTimer); }
+            seaTimer = setTimeout(function () { seaTimer = null; applySea(); }, SEA_DEBOUNCE);
         }
 
         // --- Toolbar button + zoom gate --------------------------------------
@@ -755,8 +754,8 @@
         }
         SViewer.panel.onClose(PANEL, function () {
             active = false; destroyChart();
-            if (floodTimer) { clearTimeout(floodTimer); floodTimer = null; }
-            removeFloodLayer(); debugLevel = null;
+            if (seaTimer) { clearTimeout(seaTimer); seaTimer = null; }
+            removeSeaLayer(); debugLevel = null;
             btn.setAttribute('aria-pressed', 'false'); btn.classList.remove('active');
         });
 

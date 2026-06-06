@@ -1,4 +1,4 @@
-# Tide-flood extension — investigation
+# Tide extension — investigation
 
 Show map water extent for a date/time, by combining Litto3D bathymetry (WMS)
 with SHOM tide predictions. Status: **investigation only — feasibility +
@@ -7,7 +7,7 @@ unknowns, no code.**
 ## 1. The goal
 
 User picks a date/time → map shows which terrain is underwater at that instant.
-"Flood line" = contour where terrain altitude == water level.
+The waterline = contour where the sea-floor altitude == sea level. This is a SEA-extent tool, NOT a flood/inondation forecast.
 
 ## 2. The core problem — two different vertical zeros
 
@@ -24,7 +24,7 @@ To compare them, convert one into the other's datum using the **separation**:
 ```
 S(x,y) = altitude(ZH) − altitude(IGN69)      // metres, varies along coast
 water_level_IGN69 = tide_ZH + S(x,y)
-flooded(x,y)  ⟺  terrain_IGN69(x,y) < water_level_IGN69(x,y)
+submerged(x,y) ⟺ seafloor_IGN69(x,y) < water_level_IGN69(x,y)
 ```
 
 `S` is NOT constant. Brittany: roughly 3–6 m, changing along the coast. Getting
@@ -91,16 +91,16 @@ locally constant or linearly interpolated between nearby ports. Document the
 
 - GeoServer WMS → dynamic SLD via URL param → custom colormap. Confirmed by user.
 - **BUT** WMS returns a *coloured image*, not altitude numbers. To compute the
-  flood line client-side we'd need terrain *values*, not a picture.
+  waterline client-side we'd need terrain *values*, not a picture.
 - Options:
-  - **A — server renders the flood (recommended).** Push the whole comparison
+  - **A — server renders the sea (recommended).** Push the whole comparison
     into a GeoServer SLD: a colormap/rule on the Litto3D coverage that paints
     "below water_level" one way, "above" another. `water_level_IGN69` is a single
     number we inject into the SLD per request (it's constant-ish over a small
     AOI). Browser just sends a WMS GetMap with our SLD; GeoServer does the
     threshold. **No terrain numbers ever reach the browser.** Cleanest, fastest,
     fits "minimalist viewer, small datasets."
-    - The flood line for a flat water level = a single colormap break at
+    - The waterline for a flat water level = a single colormap break at
       `water_level_IGN69`. Trivial SLD: ColorMap with two entries either side of
       the threshold.
     - If `S` varies across the AOI, the threshold isn't flat → can't do it with
@@ -113,14 +113,14 @@ locally constant or linearly interpolated between nearby ports. Document the
 ## 6. Proposed v1 architecture (minimal, fits sViewer rules)
 
 ```
-[browser ext: tideflood]
+[browser ext: tide]
    1. user picks date/time (+ AOI implicit from map view / nearest port)
    2. → OUR proxy /tide?port=BREST&t=2026-06-06T14:30   (no key in browser)
         proxy → SHOM SAPM/SPM (key server-side) → returns tide_ZH scalar
    3. browser: water_level_IGN69 = tide_ZH + S_port   (S_port from RAM, fetched
       once via open WFS, cached; flat over AOI)
    4. browser: WMS GetMap to Litto3D GeoServer with a dynamic SLD whose colormap
-      break = water_level_IGN69  → GeoServer paints flooded vs dry
+      break = water_level_IGN69  → GeoServer paints submerged vs exposed
    5. overlay that WMS layer on the map; a time slider re-runs 2–4
 ```
 

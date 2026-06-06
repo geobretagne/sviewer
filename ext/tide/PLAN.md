@@ -1,15 +1,15 @@
 # Tide extension — build plan
 
 Show predicted water extent on map for a chosen date/time, near one port.
-Datum-correct (RAM `zh_ref`), tide curve as the control (uPlot), flood painted
+Datum-correct (RAM `zh_ref`), tide curve as the control (uPlot), sea painted
 server-side by GeoServer SLD.
 
-See `../tideflood/INVESTIGATION.md` for the why. Summary of the settled physics:
+See `INVESTIGATION.md` for the why. Summary of the settled physics:
 
 ```
 S          = zh_ref (RAM, port, IGN69)        // datum separation, ≈ const over AOI
 water_IGN69 = tide_ZH(t) + S
-flood       ⟺  terrain_IGN69 < water_IGN69    // painted by GeoServer SLD break
+submerged   ⟺  seafloor_IGN69 < water_IGN69    // painted by GeoServer SLD break
 ```
 Measured: ΔS = 1 cm over 5 km ≪ Litto3D 10 cm precision → flat-S honest at 4 nm.
 
@@ -105,7 +105,7 @@ scalar now produced live — the exact input the map step needs.
 
 ---
 
-## M4 — Flood overlay via SLD, FLAT manual level (no curve coupling)
+## M4 — Sea overlay via SLD, FLAT manual level (no curve coupling)
 
 **Goal:** prove the GeoServer SLD-threshold trick with a hardcoded level, before
 wiring it to the cursor.
@@ -118,7 +118,7 @@ wiring it to the cursor.
   onDisable hook).
 - Temporary debug slider 0–6 m → re-issue GetMap. (Throwaway, replaced in M5.)
 
-**Test:** move debug slider → blue flood grows/shrinks on the real Litto3D.
+**Test:** move debug slider → blue sea grows/shrinks on the real Litto3D.
 Confirms SLD break works, opacity right, layer cleanup right.
 
 **Increment value:** the only genuinely new/unknown tech (server-side SLD
@@ -128,15 +128,15 @@ threshold) proven in isolation. **Unknowns #5 from investigation resolved here.*
 
 ## M5 — Couple cursor → map (fixture end-to-end)
 
-**Goal:** scrub the tide cursor → flood updates on map. Full UX, still fixture
+**Goal:** scrub the tide cursor → sea updates on map. Full UX, still fixture
 tide.
 
 - Replace debug slider with the M3 cursor's `water_IGN69` output.
 - Debounce GetMap (~150 ms) / snap to 10-min so it's cacheable.
-- Flood reflects cursor; opening at "now" shows current predicted flood.
+- Sea reflects cursor; opening at "now" shows current predicted sea.
 - Reuse core `opacity` if it cleanly applies to the overlay; else ext-local.
 
-**Test:** drag cursor along curve → watch tide flood advance/retreat on Litto3D
+**Test:** drag cursor along curve → watch tide sea advance/retreat on Litto3D
 in sync. Whole feature *feels* done — running on free data + one fixture.
 
 **Increment value:** complete demoable feature, no paid dep yet. This is the
@@ -163,7 +163,7 @@ screenshot/video for the geOrchestra talk if needed.
 - Label everywhere: **"marée prédite"** — not real level (surge/pressure ignored).
 
 **Test:** real port + real day → curve matches SHOM annuaire; date nav works;
-flood driven by real predictions. Second load of same day = cache hit, offline OK.
+sea driven by real predictions. Second load of same day = cache hit, offline OK.
 
 **Increment value:** feature complete on real data. All risk already retired by
 M0–M5; this milestone is a data-source swap behind a stable JSON contract.
@@ -176,17 +176,17 @@ M0–M5; this milestone is a data-source swap behind a stable JSON contract.
 
 - URL params (permanent, `tide_*`):
   - `tide_port` — preselect port (skip nearest-search), deep-link.
-  - `tide_t` — preselect datetime → cursor + flood on load (shareable "this
+  - `tide_t` — preselect datetime → cursor + sea on load (shareable "this
     moment underwater"). Honors "URL = persistence".
   - `tide_minzoom` — scale-gate override (default 13).
   - all validated; document in manifest `params` + `examples`.
-- a11y: dock focus order, cursor keyboard, contrast on flood tint + curve,
+- a11y: dock focus order, cursor keyboard, contrast on sea tint + curve,
   announce readout, button title. WCAG 2.1 AA pass.
 - `ext/tide/SPEC.md`, manifest `seo`/`examples`, screenshot.
 - i18n 100% (fr/en/es/de). No `couche` anywhere.
 - CHANGELOG; version bump; minify.
 
-**Test:** share a `?ext=tide&tide_port=…&tide_t=…` link → opens at that flood
+**Test:** share a `?ext=tide&tide_port=…&tide_t=…` link → opens at that sea
 state. Keyboard-only run-through. Embedded mode sanity (proxy reachable).
 
 **Increment value:** shippable, shareable, documented, accessible.
