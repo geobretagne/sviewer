@@ -82,12 +82,12 @@ Dock bas pleine largeur, deux onglets (tablist WCAG, flèches ←/→) :
   caractéristiques (PHMA/PMVE/NM), bathymétrie, **courants**, **toute la
   provenance** (source + date sous chaque bloc).
 
-### Couches carte
+### Superpositions carte
 
 - **Mer** (WMS bathymétrie, SLD) — bleu/orange, suit le curseur (débounce 160 ms),
   zIndex 850.
 - **Courants** (WMTS SHOM) — **superposition automatique, sans bouton ni sélecteur**
-  (les flèches n'encombrent pas la carte). La couche est déduite de l'instant :
+  (les flèches n'encombrent pas la carte). La superposition est déduite de l'instant :
   - **vive-eau / morte-eau** d'après le marnage du jour à **Brest** (≥ 4,5 m →
     vive-eau, sinon morte-eau) ;
   - **décalage** = arrondi(instant − pleine mer de Brest la plus proche), borné
@@ -150,5 +150,5 @@ paramètres et en ajoutant `ext=tide`. Un lien partagé rouvre à l'identique.
 ## Dépendances
 
 - **uPlot** (MIT, vendored `uplot.min.{js,css}`, lazy au premier graphe).
-- **OpenLayers 10** (cœur sViewer) pour les couches WMS (mer) et WMTS (courants).
+- **OpenLayers 10** (cœur sViewer) pour les superpositions WMS (mer) et WMTS (courants).
 - Aucune autre : pas de CDN, pas de clé d'API, pas de backend.

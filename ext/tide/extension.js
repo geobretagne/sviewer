@@ -150,7 +150,7 @@
             'terrain.label':'Fond marin (bathymétrie)',
             'terrain.expl':'La mer est calculée par le serveur : tout pixel dont l’altitude du fond (IGN69) est inférieure au niveau de la mer est peint.',
             'cur.label':   'Courants de marée',
-            'cur.expl':    'Superposition automatique selon l’heure choisie : couche SHOM la plus proche (heure relative à la pleine mer de Brest, vive-eau/morte-eau d’après le marnage).'
+            'cur.expl':    'Superposition automatique selon l’heure choisie : superposition SHOM la plus proche (heure relative à la pleine mer de Brest, vive-eau/morte-eau d’après le marnage).'
         },
         en: {
             'btn.title':   'Tide (predicted water extent)',
@@ -1298,7 +1298,7 @@
                 '@media (prefers-reduced-motion:reduce){' + P + '.sv-tide-spinner{animation-duration:1.6s}}',
                 P + '.sv-tide-curve-foot{flex:none;margin-top:.25rem}',
                 P + '.sv-tide-msg{font-size:.85rem;color:var(--sv-panel-fg-muted,#52525b);margin:.3rem 0}',
-                P + '.sv-tide-err{font-size:.85rem;color:#c0392b;margin:.3rem 0}',
+                P + '.sv-tide-err{font-size:.85rem;color:var(--sv-panel-fg,#18181b);margin:.3rem 0;border-left:3px solid #d9534f;padding-left:.4rem}',
                 P + '.sv-tide-block{margin:0}',
                 P + '.sv-tide-h{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--sv-panel-fg-muted,#52525b);margin:.2rem 0 .15rem}',
                 P + '.sv-tide-port-name{font-size:1rem;font-weight:600;margin:0}',
