@@ -2740,6 +2740,16 @@ if (state.label) {
         window.addEventListener('pageshow', fixContentHeight);
         fixContentHeight();
 
+        // offline indicator
+        (function() {
+            var el = document.getElementById('sv-offline');
+            if (!el) { return; }
+            function update() { el.hidden = navigator.onLine; }
+            window.addEventListener('online',  update);
+            window.addEventListener('offline', update);
+            update();
+        })();
+
         // q=1 WMS path: only fires when WMS layers are present.
         // GeoJSON-only q=1 is handled inside _applyGeoJSON after features load.
         if (state.gfiok && config.layersQueryable.length > 0) {

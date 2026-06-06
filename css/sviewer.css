@@ -550,6 +550,25 @@
 }
 .sv-scope .sv-hint-close:hover { background: rgb(0 0 0 / 8%); }
 
+/* Offline banner — top-centre, amber, auto-shown when navigator.onLine=false. */
+.sv-scope .sv-offline {
+    position: absolute;
+    top: 0.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 8500;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    background: rgb(255 193 7 / 95%);
+    color: #000;
+    font-size: 0.82rem;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
+    pointer-events: none;
+}
+.sv-scope .sv-offline[hidden] { display: none; }
+
 /* Trust badge — surfaces sViewer's privacy stance at the share moment. */
 .sv-scope .sv-trust-badge {
     display: flex;

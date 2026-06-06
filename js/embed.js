@@ -89,6 +89,7 @@
 
         <div id="sv-frame-map" class="sv-framemap">
             <div id="sv-toast" class="sv-toast" role="status" aria-live="polite" aria-atomic="true"></div>
+            <div id="sv-offline" class="sv-offline i18n" data-i18n="msg.offline" role="status" aria-live="polite" hidden></div>
             <div id="sv-ol-map" class="sv-map" tabindex="-1" role="region" aria-label="Interactive map">
                 <div id="sv-marker"></div>
                 <div id="sv-loading-bar" class="sv-loading-bar" aria-hidden="true" style="display:none;"></div>

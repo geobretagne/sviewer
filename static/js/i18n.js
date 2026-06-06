@@ -76,7 +76,8 @@ Object.assign(window.SViewer.hardConfig, {
             'msg.geojson_no_data':      'No data found at this URL',
             'msg.hint_click':           'Click a feature on the map for details',
             'btn.hint_dismiss':         'Dismiss',
-            'msg.trust_badge':          'Self-hosted, no tracker, no cookie.'
+            'msg.trust_badge':          'Self-hosted, no tracker, no cookie.',
+            'msg.offline':              'Offline — map from cache'
         },
         fr: {
             'btn.initial_view':  'vue initiale',
@@ -149,7 +150,8 @@ Object.assign(window.SViewer.hardConfig, {
             'msg.geojson_no_data':      'Aucune donnée trouvée à cette URL',
             'msg.hint_click':           'Cliquez un objet sur la carte pour le détail',
             'btn.hint_dismiss':         'Fermer',
-            'msg.trust_badge':          'Auto-hébergé, sans traceur, sans cookie.'
+            'msg.trust_badge':          'Auto-hébergé, sans traceur, sans cookie.',
+            'msg.offline':              'Hors ligne — carte depuis le cache'
         },
         es: {
             'btn.initial_view':  'Vista inicial',
@@ -222,7 +224,8 @@ Object.assign(window.SViewer.hardConfig, {
             'msg.geojson_no_data':      'No se encontraron datos en esta URL',
             'msg.hint_click':           'Haga clic en un elemento del mapa para ver el detalle',
             'btn.hint_dismiss':         'Cerrar',
-            'msg.trust_badge':          'Autoalojado, sin rastreador, sin cookie.'
+            'msg.trust_badge':          'Autoalojado, sin rastreador, sin cookie.',
+            'msg.offline':              'Sin conexión — mapa desde caché'
         },
         de: {
             'btn.initial_view':  'Startansicht',
@@ -295,7 +298,8 @@ Object.assign(window.SViewer.hardConfig, {
             'msg.geojson_no_data':      'Keine Daten unter dieser URL gefunden',
             'msg.hint_click':           'Klicken Sie ein Objekt auf der Karte für Details',
             'btn.hint_dismiss':         'Schließen',
-            'msg.trust_badge':          'Selbst gehostet, kein Tracker, kein Cookie.'
+            'msg.trust_badge':          'Selbst gehostet, kein Tracker, kein Cookie.',
+            'msg.offline':              'Offline — Karte aus dem Cache'
         }
     }
 });
