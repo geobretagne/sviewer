@@ -490,21 +490,20 @@
                     hooks: {
                         // Mouse scrub: as uPlot moves its OWN cursor, follow its
                         // index — but do NOT re-drive the cursor (fromMouse=true),
-                        // else we fight the pointer every frame and it disappears.
-                        // idx is null when the pointer leaves the plot → ignore,
-                        // keeping the last locked value.
-                        setCursor: [function (u) {
-                            if (u.cursor.idx != null) { setIdx(u.cursor.idx, true); }
-                        }],
-                        // Red "now" vertical line + the selected-instant marker
-                        // (the dot that drives the map). Both redrawn each frame.
+                        // Red "now" vertical line + the orange selection line.
+                        // Hover does NOT move the selection — only a click commits
+                        // (see the click handler below), so the orange line sticks
+                        // to the clicked time, not the pointer.
                         draw: [drawNowLine, drawSelMarker]
                     }
                 };
                 chart = new uPlot(opts, [xs, ys], host);
-                // When the pointer leaves the plot, uPlot hides its cursor — pin it
-                // back to the selected index so the chosen instant stays marked.
-                chart.over.addEventListener('mouseleave', function () { lockCursor(); });
+                // Commit the selection on CLICK (not hover): read uPlot's cursor
+                // index at click time and move there. Hover still shows uPlot's own
+                // cursor for feedback, but the orange line + map stay on the click.
+                chart.over.addEventListener('click', function () {
+                    if (chart && chart.cursor.idx != null) { setIdx(chart.cursor.idx); }
+                });
                 // Default selection = current time, clamped into the series' day.
                 curIdx = nearestIdxToNow();
                 lockCursor();
@@ -531,21 +530,18 @@
             });
             return best;
         }
-        // fromMouse: the index came from uPlot's own cursor (hover) — the visual
-        // cursor is already in place, so skip lockCursor. Keyboard/default paths
-        // pass fromMouse=false → lockCursor pins the cursor to the new index.
-        function setIdx(i, fromMouse) {
+        // Commit a selection (from a click or the keyboard). Pins uPlot's cursor,
+        // repaints the orange line, and updates the map. Hover does NOT call this.
+        function setIdx(i) {
             if (!tide) { return; }
             var n = tide.points.length;
             i = Math.max(0, Math.min(n - 1, i | 0));
             if (i === curIdx) { return; }
             curIdx = i;
             updateReadout();
-            if (!fromMouse) { lockCursor(); }
-            // Always refresh the orange selection line — including mouse moves, so
-            // it follows on the first click/scrub (not only on a later redraw).
-            if (chart) { chart.redraw(false, false); }
-            updateSea();   // scrubbing the cursor re-paints the sea (debounced)
+            lockCursor();
+            if (chart) { chart.redraw(false, false); }   // refresh the orange line
+            updateSea();                                  // re-paint the sea (debounced)
         }
         // Pin uPlot's visual cursor to curIdx (so keyboard moves show on the plot).
         // Only x matters for the vertical cursor line; top is the data y so the
