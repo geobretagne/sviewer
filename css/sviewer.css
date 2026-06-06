@@ -511,7 +511,8 @@
 .sv-scope .sv-toast-error   { background: rgb(220 53 69 / 95%); }
 
 /* First-run hint — teaches a novice the map is clickable. Top-centre,
-   dismissible, never on a bare basemap. */
+   dismissible, never on a bare basemap.
+   Map overlays use hardcoded dark-glass + white: readable on any map or theme. */
 .sv-scope .sv-hint {
     position: absolute;
     top: 0.75rem;
@@ -524,11 +525,10 @@
     max-width: calc(100% - 1.5rem);
     padding: 0.4rem 0.5rem 0.4rem 0.85rem;
     border-radius: 999px;
-    background: var(--sv-surface-glass, rgb(255 255 255 / 92%));
-    color: var(--sv-fg, #18181b);
+    background: rgb(24 24 27 / 88%);
+    color: #fff;
     font-size: 0.85rem;
-    box-shadow: 0 2px 10px rgb(0 0 0 / 18%);
-    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 10px rgb(0 0 0 / 28%);
 }
 .sv-scope .sv-hint[hidden] { display: none; }
 .sv-scope .sv-hint-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -548,7 +548,7 @@
     cursor: pointer;
     line-height: 1;
 }
-.sv-scope .sv-hint-close:hover { background: rgb(0 0 0 / 8%); }
+.sv-scope .sv-hint-close:hover { background: rgb(255 255 255 / 15%); }
 
 /* Offline banner — top-centre, amber, auto-shown when navigator.onLine=false. */
 .sv-scope .sv-offline {
