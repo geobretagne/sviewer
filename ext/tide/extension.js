@@ -579,22 +579,22 @@
             ctx.stroke();
             ctx.restore();
         }
-        // Marker at the selected instant (curIdx) — the point that drives the map.
-        // A filled blue dot on the curve at (t, h) so the chosen sample stays
-        // visible even when the pointer is away from the plot.
+        // Vertical ORANGE line at the selected instant (curIdx) — the time that
+        // drives the map. Matches the map's water/no-water orange; distinct from
+        // the red "now" line. Same draw basis as drawNowLine.
         function drawSelMarker(u) {
             if (!tide || !tide.points[curIdx]) { return; }
-            var p = tide.points[curIdx];
-            var cx = u.valToPos(p.t / 1000, 'x', true);
-            var cy = u.valToPos(Number(p.h), 'y', true);
+            var cx = Math.round(u.valToPos(tide.points[curIdx].t / 1000, 'x', true));
             var ctx = u.ctx;
             ctx.save();
             ctx.beginPath();
-            ctx.arc(cx, cy, Math.max(3, 3.5 * u.pxRatio), 0, 2 * Math.PI);
-            ctx.fillStyle = '#0d6efd';
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = Math.max(1, 1.5 * u.pxRatio);
-            ctx.fill();
+            ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+            ctx.clip();
+            ctx.strokeStyle = '#e8852b';   // orange = the selected level (map "above water")
+            ctx.lineWidth = Math.max(1, 2 * u.pxRatio);
+            ctx.beginPath();
+            ctx.moveTo(cx, u.bbox.top);
+            ctx.lineTo(cx, u.bbox.top + u.bbox.height);
             ctx.stroke();
             ctx.restore();
         }
