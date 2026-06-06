@@ -80,7 +80,15 @@
     // Swapped for the real SHOM proxy at M6 behind the same JSON shape:
     //   { port, date, tz, step, datum:'ZH', unit, source, points:[{t,h}],
     //     highs:[{t,h,coef}], lows:[{t,h}] }
-    var FIXTURE = 'fixtures/tide-sqp-2026-06-06.json';
+    // Fixture per reference port (keyed by RAM `site`). Picked by the nearest
+    // port found in M1; falls back to the default if no fixture for that port.
+    // At M6 this whole map is replaced by one proxy call ?port=<site>.
+    var FIXTURES = {
+        'Concarneau':           'fixtures/tide-concarneau-2026-06-06.json',
+        'Saint-Quay-Portrieux': 'fixtures/tide-sqp-2026-06-06.json'
+    };
+    var FIXTURE_DEFAULT = 'fixtures/tide-concarneau-2026-06-06.json';
+    function fixtureFor(site) { return (site && FIXTURES[site]) || FIXTURE_DEFAULT; }
 
     // --- i18n -----------------------------------------------------------------
     var I18N = {
@@ -420,7 +428,7 @@
             var seq = fetchSeq;                 // tie to the port fetch generation
             var head = document.getElementById('sv-tide-curve-head');
             if (head) { head.textContent = t('loading'); }
-            fetch(BASE + FIXTURE, { headers: { Accept: 'application/json' } })
+            fetch(BASE + fixtureFor(port && port.site), { headers: { Accept: 'application/json' } })
                 .then(function (r) { return r.ok ? r.json() : Promise.reject('HTTP ' + r.status); })
                 .then(function (j) {
                     if (seq !== fetchSeq) { return; }            // map moved → stale
