@@ -91,6 +91,21 @@
     var OM_URL = 'https://marine-api.open-meteo.com/v1/marine';
     var OM_SRC = 'Open-Meteo Marine (modèle), calibré sur SHOM-RAM';
 
+    // SHOM tidal-current atlas (Courants de marée 2D) — WMTS, keyless, CORS-open,
+    // transparent RGBA PNG. Layers are indexed relative to HIGH WATER AT BREST:
+    //   COURANTS2D_WMTS_<ME|VE><PM | AP1..6 | AV1..6>_3857
+    //   ME = morte-eau (neap, coef 45), VE = vive-eau (spring, coef 95)
+    //   PM = at HW; APn = n hours after HW; AVn = n hours before HW (±6 h)
+    // We pick the layer automatically from the selected instant: offset = round
+    // (instant − nearest Brest HW), clamped ±6; spring/neap from Brest's daily
+    // range (the atlas only has two buckets, like the product itself). No toggle,
+    // no picker — the current follows the cursor like the sea does. Brest's tide
+    // curve (for HW times + range) is fetched from Open-Meteo, same as the port.
+    var CUR_WMTS  = 'https://services.data.shom.fr/INSPIRE/wmts';
+    var CUR_SRC   = 'SHOM — Atlas de courants de marée 2D (référence Brest)';
+    var BREST_LL  = [-4.4944, 48.3833];   // Brest [lon, lat] for the reference curve
+    var BREST_RANGE_SPRING = 4.5;          // day range (m) ≥ → vive-eau, else morte-eau
+
     // --- i18n -----------------------------------------------------------------
     var I18N = {
         fr: {
@@ -133,7 +148,9 @@
             'read.ign':    'en altitude IGN69',
             'wms.loading': 'Chargement de la carte de la mer…',
             'terrain.label':'Fond marin (bathymétrie)',
-            'terrain.expl':'La mer est calculée par le serveur : tout pixel dont l’altitude du fond (IGN69) est inférieure au niveau de la mer est peint.'
+            'terrain.expl':'La mer est calculée par le serveur : tout pixel dont l’altitude du fond (IGN69) est inférieure au niveau de la mer est peint.',
+            'cur.label':   'Courants de marée',
+            'cur.expl':    'Superposition automatique selon l’heure choisie : couche SHOM la plus proche (heure relative à la pleine mer de Brest, vive-eau/morte-eau d’après le marnage).'
         },
         en: {
             'btn.title':   'Tide (predicted water extent)',
@@ -175,7 +192,9 @@
             'read.ign':    'IGN69 altitude',
             'wms.loading': 'Loading sea map…',
             'terrain.label':'Sea floor (bathymetry)',
-            'terrain.expl':'The sea is computed server-side: every pixel whose sea-floor altitude (IGN69) is below the sea level is painted.'
+            'terrain.expl':'The sea is computed server-side: every pixel whose sea-floor altitude (IGN69) is below the sea level is painted.',
+            'cur.label':   'Tidal currents',
+            'cur.expl':    'Overlaid automatically for the selected hour: the nearest SHOM layer (hour relative to Brest high water, spring/neap from the tidal range).'
         },
         es: {
             'btn.title':   'Marea (extensión de agua prevista)',
@@ -217,7 +236,9 @@
             'read.ign':    'en altitud IGN69',
             'wms.loading': 'Cargando el mapa del mar…',
             'terrain.label':'Fondo marino (batimetría)',
-            'terrain.expl':'El mar lo calcula el servidor: se pinta todo píxel cuya altitud del fondo (IGN69) es inferior al nivel del mar.'
+            'terrain.expl':'El mar lo calcula el servidor: se pinta todo píxel cuya altitud del fondo (IGN69) es inferior al nivel del mar.',
+            'cur.label':   'Corrientes de marea',
+            'cur.expl':    'Superposición automática según la hora elegida: capa SHOM más próxima (hora relativa a la pleamar de Brest, viva/muerta según la amplitud).'
         },
         de: {
             'btn.title':   'Gezeiten (vorhergesagte Wasserausdehnung)',
@@ -259,7 +280,9 @@
             'read.ign':    'IGN69-Höhe',
             'wms.loading': 'Meereskarte wird geladen…',
             'terrain.label':'Meeresboden (Bathymetrie)',
-            'terrain.expl':'Das Meer wird serverseitig berechnet: jedes Pixel, dessen Meeresboden-Höhe (IGN69) unter dem Meeresspiegel liegt, wird eingefärbt.'
+            'terrain.expl':'Das Meer wird serverseitig berechnet: jedes Pixel, dessen Meeresboden-Höhe (IGN69) unter dem Meeresspiegel liegt, wird eingefärbt.',
+            'cur.label':   'Gezeitenströmungen',
+            'cur.expl':    'Automatisch für die gewählte Stunde überlagert: nächstgelegene SHOM-Ebene (Stunde relativ zum Brest-Hochwasser, Spring/Nipp nach Tidenhub).'
         }
     };
     function lang() {
@@ -303,6 +326,9 @@
         var seaTimer = null; // debounce handle for the sea WMS request
         var draft    = 0;    // tirant d'eau (m) — safety clearance; lowers the blue/orange break
         var wantT    = null; // ?tide_t= deep-link instant (epoch ms), consumed once on first curve
+        var curLayer = null; // OL WMTS tidal-current overlay (own, removed on close)
+        var curId    = null; // current layer identifier in use (avoid needless reloads)
+        var brestCache = {}; // 'date' → { highs:[ms], range } | null  (Brest HW + range per day)
 
         // --- RAM nearest-port fetch ------------------------------------------
         // Query the open RAM WFS for ports within a bbox around the map centre,
@@ -428,6 +454,12 @@
                   '<p class="sv-tide-expl">' + esc(t('terrain.expl')) + '</p>' +
                   '<p class="sv-tide-expl">' + esc(t('draft.expl')) + '</p>' +
                   provHtml(WMS_SRC, null) +
+                '</section>' +
+                // Tidal currents (traceability)
+                '<section class="sv-tide-block">' +
+                  '<h3 class="sv-tide-h">' + esc(t('cur.label')) + '</h3>' +
+                  '<p class="sv-tide-expl">' + esc(t('cur.expl')) + '</p>' +
+                  provHtml(CUR_SRC, null) +
                 '</section>');
         }
         // Two tabs (compact, mobile-first): "Marée" = live controls + graph,
@@ -801,6 +833,7 @@
                 // Paint the sea for "now" (the cursor's default position) as soon
                 // as the series is loaded.
                 updateSea();
+                loadBrest();   // Brest curve → auto current overlay for this instant
             }).catch(function () {
                 var h = document.getElementById('sv-tide-curve-head');
                 if (h) { h.innerHTML = '<span class="sv-tide-err">' + esc(t('err.curve')) + '</span>'; }
@@ -836,6 +869,7 @@
             lockCursor();
             if (chart) { chart.redraw(false, false); }   // refresh the orange line
             updateSea();                                  // re-paint the sea (debounced)
+            updateCurrent();                              // swap current overlay if hour changed
             syncUrl();
         }
         // Reflect the current state in the address bar (URL = persistence): port,
@@ -1052,6 +1086,105 @@
             seaTimer = setTimeout(function () { seaTimer = null; applySea(); }, SEA_DEBOUNCE);
         }
 
+        // --- Tidal currents (SHOM atlas, Brest-referenced, auto layer) -------
+        // Fetch Brest's tide curve for the same window and cache, per day, its HW
+        // times + range — the inputs to pick the right current layer. One extra
+        // Open-Meteo call per window; cached so date stepping costs nothing.
+        function loadBrest() {
+            var date = isoDate(curDate);
+            if (brestCache[date] !== undefined) { updateCurrent(); return; }   // cached (incl. null)
+            var start = new Date(curDate); start.setDate(start.getDate() - WINDOW_BACK);
+            var end   = new Date(curDate); end.setDate(end.getDate() + WINDOW_FWD);
+            var url = OM_URL +
+                '?latitude=' + BREST_LL[1] + '&longitude=' + BREST_LL[0] +
+                '&minutely_15=sea_level_height_msl' +
+                '&start_date=' + isoDate(start) + '&end_date=' + isoDate(end) +
+                '&timezone=' + encodeURIComponent('Europe/Paris');
+            fetch(url, { headers: { Accept: 'application/json' } })
+                .then(function (r) { return r.ok ? r.json() : Promise.reject('HTTP ' + r.status); })
+                .then(function (j) {
+                    var byDay = splitByDay(j);
+                    var d = new Date(start);
+                    while (d <= end) {
+                        var ds = isoDate(d);
+                        brestCache[ds] = brestDay(byDay[ds]);
+                        d.setDate(d.getDate() + 1);
+                    }
+                    updateCurrent();
+                })
+                .catch(function () { /* currents are a bonus — fail silently */ });
+        }
+        // Reduce one day's raw {t,msl}[] to HW timestamps + tidal range.
+        function brestDay(raw) {
+            if (!raw || raw.length < 3) { return null; }
+            var highs = [], min = Infinity, max = -Infinity;
+            for (var i = 0; i < raw.length; i++) {
+                if (raw[i].msl < min) { min = raw[i].msl; }
+                if (raw[i].msl > max) { max = raw[i].msl; }
+            }
+            for (var k = 1; k < raw.length - 1; k++) {
+                if (raw[k].msl >= raw[k - 1].msl && raw[k].msl >= raw[k + 1].msl) {
+                    highs.push(raw[k].t); k += 6;
+                }
+            }
+            return { highs: highs, range: max - min };
+        }
+        // Choose the SHOM current layer id for an instant (epoch ms): spring/neap
+        // from Brest's day range, offset = round(instant − nearest Brest HW) in
+        // hours, clamped ±6. Returns the layer identifier or null.
+        function pickCurrentLayer(ms) {
+            var bd = brestCache[isoDate(new Date(ms))];
+            if (!bd || !bd.highs.length) { return null; }
+            var cond = bd.range >= BREST_RANGE_SPRING ? 'VE' : 'ME';
+            var nearest = bd.highs[0], best = Infinity;
+            bd.highs.forEach(function (hw) {
+                var dd = Math.abs(hw - ms);
+                if (dd < best) { best = dd; nearest = hw; }
+            });
+            var off = Math.round((ms - nearest) / 3600000);   // hours from HW
+            off = Math.max(-6, Math.min(6, off));
+            var phase = off === 0 ? 'PM' : (off > 0 ? 'AP' + off : 'AV' + (-off));
+            return 'COURANTS2D_WMTS_' + cond + phase + '_3857';
+        }
+        function ensureCurrentLayer(id) {
+            if (curLayer && curId === id) { return; }
+            removeCurrentLayer();
+            var proj = ol.proj.get('EPSG:3857');
+            var src = new ol.source.WMTS({
+                url: CUR_WMTS, layer: id, matrixSet: '3857', format: 'image/png',
+                projection: proj, style: 'normal', requestEncoding: 'KVP',
+                tileGrid: wmtsGrid3857(),
+                attributions: [CUR_SRC]
+            });
+            curLayer = new ol.layer.Tile({ source: src, zIndex: 855, opacity: 0.85 });
+            map.addLayer(curLayer);
+            curId = id;
+        }
+        function removeCurrentLayer() {
+            if (curLayer) { map.removeLayer(curLayer); curLayer = null; curId = null; }
+        }
+        // Swap the current overlay to match the selected instant. Called on every
+        // cursor commit (cheap: a no-op when the layer id is unchanged).
+        function updateCurrent() {
+            var s = selected();
+            if (!s) { return; }
+            var id = pickCurrentLayer(s.t);
+            if (!id) { removeCurrentLayer(); return; }
+            ensureCurrentLayer(id);
+        }
+        // Standard EPSG:3857 WMTS grid (20 zooms) — matches the SHOM matrixset.
+        var _wmtsGrid = null;
+        function wmtsGrid3857() {
+            if (_wmtsGrid) { return _wmtsGrid; }
+            var ext = ol.proj.get('EPSG:3857').getExtent();
+            var res = [], mat = [], r0 = 156543.03392804097;
+            for (var z = 0; z < 20; z++) { res.push(r0 / Math.pow(2, z)); mat.push(String(z)); }
+            _wmtsGrid = new ol.tilegrid.WMTS({
+                origin: ol.extent.getTopLeft(ext), resolutions: res, matrixIds: mat
+            });
+            return _wmtsGrid;
+        }
+
         // --- Toolbar button + zoom gate --------------------------------------
         var toolbar = document.getElementById('sv-panel-controls');
         var btn = document.createElement('button');
@@ -1095,7 +1228,7 @@
         SViewer.panel.onClose(PANEL, function () {
             active = false; destroyChart();
             if (seaTimer) { clearTimeout(seaTimer); seaTimer = null; }
-            removeSeaLayer();
+            removeSeaLayer(); removeCurrentLayer();
             btn.setAttribute('aria-pressed', 'false'); btn.classList.remove('active');
         });
 
