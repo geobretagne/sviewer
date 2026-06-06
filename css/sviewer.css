@@ -696,6 +696,7 @@
 
 .sv-sidepanel.sv-panel-dock .sv-panel-header {
     padding: 0;
+    margin-bottom: 4px;   /* tight: the dock is short, every px of height matters */
     min-height: 0;
 }
 
@@ -718,8 +719,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 10px;
-    margin-bottom: 16px;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
     flex-shrink: 0;
 }
 
