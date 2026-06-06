@@ -349,6 +349,12 @@
                 .then(function (j) {
                     if (seq !== fetchSeq) { return; }
                     var p = pickNearest(j, c);
+                    // wantPort is a ONE-SHOT deep-link preference (?tide_port=). If
+                    // its named port isn't in range, fall back to nearest rather
+                    // than failing. Consume it either way so the re-pick button
+                    // (and later opens) always use nearest-to-view.
+                    if (!p && wantPort) { wantPort = null; p = pickNearest(j, c); }
+                    wantPort = null;
                     if (!p) { showError(t('err.none')); return; }
                     port = p;
                     renderLayout();
