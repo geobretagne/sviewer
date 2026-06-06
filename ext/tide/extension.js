@@ -257,7 +257,7 @@
         var curIdx   = 0;      // selected sample index in tide.points (cursor position)
         var seaLayer = null; // OL WMS layer painting the sea (own, removed on close)
         var seaSrc   = null; // its ol.source.ImageWMS
-        var debugLevel = null; // M4 throwaway manual override (null = use waterIGN69)
+        var debugLevel = null; // M4 throwaway manual TIDE HEIGHT (ZH); null = use cursor
         var seaTimer = null; // debounce handle for the sea WMS request
 
         // --- RAM nearest-port fetch ------------------------------------------
@@ -394,8 +394,8 @@
                   // M4 throwaway: manual level slider to prove the SLD sea render in
                   // isolation. Removed in M5 once the cursor drives the level.
                   '<div class="sv-tide-debug" id="sv-tide-debug">' +
-                    '<label>débug niveau IGN69 ' +
-                      '<input type="range" id="sv-tide-debug-range" min="-2" max="14" step="0.1" value="3">' +
+                    '<label>débug hauteur de marée (ZH) ' +
+                      '<input type="range" id="sv-tide-debug-range" min="0" max="14" step="0.1" value="3">' +
                       '<output id="sv-tide-debug-out">3.0 m</output>' +
                     '</label>' +
                   '</div>' +
@@ -714,7 +714,12 @@
         // fast drag = one request, not dozens.
         var SEA_DEBOUNCE = 160;   // ms idle before the WMS request
         function applySea() {
-            var level = debugLevel != null ? debugLevel : waterIGN69();
+            // debugLevel is a TIDE HEIGHT (on ZH) — convert to IGN69 for the SLD
+            // threshold: water_IGN69 = tide_ZH + S. The cursor path already yields
+            // IGN69 via waterIGN69().
+            var level = debugLevel != null
+                ? debugLevel + (port ? Number(port.S) : 0)
+                : waterIGN69();
             if (level == null) { return; }
             ensureSeaLayer();
             seaSrc.updateParams({ SLD_BODY: seaSLD(level) });
