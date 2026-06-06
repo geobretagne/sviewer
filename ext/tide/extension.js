@@ -348,7 +348,6 @@
                     site: String(pr.site || pr.zone || '?'),
                     S:    S,
                     phma: numOrNull(pr.phma), pmve: numOrNull(pr.pmve), nm: numOrNull(pr.nm),
-                    ref:  String(pr.reference || 'IGN69'),
                     date: pr.date_ch != null ? String(pr.date_ch) : (pr.date_rf != null ? String(pr.date_rf) : null),
                     x: x, y: y
                 };
@@ -595,7 +594,9 @@
                 });
         }
         // Group a multi-day minutely_15 response into raw {t,msl} arrays per local
-        // calendar day.
+        // calendar day. Open-Meteo returns local wall-clock times (timezone=
+        // Europe/Paris) with no offset; parseLocal interprets them in the browser's
+        // local zone — correct for a French user, and DST-safe (no hardcoded +02).
         function splitByDay(j) {
             var out = {};
             var m = j && j.minutely_15;
@@ -603,12 +604,20 @@
             var times = m.time, msl = m.sea_level_height_msl || [];
             for (var i = 0; i < times.length; i++) {
                 var v = Number(msl[i]);
-                var ts = Date.parse(times[i] + '+02:00');   // Europe/Paris summer (CEST)
+                var ts = parseLocal(times[i]);
                 if (!isFinite(v) || !isFinite(ts)) { continue; }
                 var day = times[i].slice(0, 10);            // 'YYYY-MM-DD'
                 (out[day] || (out[day] = [])).push({ t: ts, msl: v });
             }
             return out;
+        }
+        // Parse 'YYYY-MM-DDTHH:MM' as LOCAL time (no zone suffix) → epoch ms. Avoids
+        // the hardcoded-offset bug (CEST vs CET); new Date(y,mo,d,h,mi) uses the
+        // browser's zone with correct DST.
+        function parseLocal(s) {
+            var m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(s);
+            if (!m) { return NaN; }
+            return new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0)).getTime();
         }
         // No tide data for a date (beyond the forecast horizon). Render the date
         // nav + a note, clear the plot, so the user can navigate back.
@@ -769,12 +778,10 @@
                           values: function (u, vals) { return vals.map(function (v) { return v + ' ' + unit; }); } }
                     ],
                     hooks: {
-                        // Mouse scrub: as uPlot moves its OWN cursor, follow its
-                        // index — but do NOT re-drive the cursor (fromMouse=true),
-                        // Red "now" vertical line + the orange selection line.
-                        // Hover does NOT move the selection — only a click commits
-                        // (see the click handler below), so the orange line sticks
-                        // to the clicked time, not the pointer.
+                        // Red "now" vertical line + the orange selection line, drawn
+                        // each frame. Hover does NOT move the selection — only a
+                        // click commits (see the click handler below), so the orange
+                        // line sticks to the clicked time, not the pointer.
                         draw: [drawNowLine, drawSelMarker]
                     }
                 };
@@ -799,11 +806,10 @@
                 if (h) { h.innerHTML = '<span class="sv-tide-err">' + esc(t('err.curve')) + '</span>'; }
             });
         }
-        // --- Cursor / readout (M3) -------------------------------------------
-        // Index of the sample nearest to "now"; clamps to the series ends when the
-        // current clock is outside the fixture's day.
+        // --- Cursor / readout ------------------------------------------------
         // Default cursor position: the deep-link instant (tide_t) on the first
-        // curve, consumed once; otherwise the sample nearest "now".
+        // curve, consumed once; otherwise the sample nearest "now". Clamps to the
+        // series ends when the target is outside the shown day.
         function nearestIdxToNow() {
             var target = Date.now();
             if (wantT != null) { target = wantT; wantT = null; }
@@ -1100,9 +1106,7 @@
             styled = true;
             var P = '#sv-panel-ext-tide ';
             var css = [
-                // Split dock: provenance column (scrolls) + curve column (fills).
-                // Stacks to a single column on narrow screens.
-                // Tabbed layout: tablist on top, one pane fills the rest.
+                // Tabbed layout: tablist on top, one pane (Marée|Données) fills the rest.
                 P + '#sv-tide-root{display:flex;flex-direction:column;gap:.4rem;height:100%;min-height:0}',
                 P + '.sv-tide-tabs{flex:none;display:flex;gap:.25rem;border-bottom:1px solid var(--sv-panel-border,#ccc)}',
                 P + '.sv-tide-tab{appearance:none;background:none;border:none;border-bottom:2px solid transparent;padding:.3rem .7rem;font-size:.85rem;font-weight:600;color:var(--sv-panel-fg-muted,#52525b);cursor:pointer}',
@@ -1123,8 +1127,9 @@
                 P + '.sv-tide-today{padding:.1rem .5rem;font-size:.74rem}',
                 P + '.sv-tide-marks{display:flex;flex-wrap:wrap;gap:.3rem;margin:.2rem 0}',
                 P + '.sv-tide-mark{font-size:.74rem;padding:.1rem .45rem;border-radius:10px;font-variant-numeric:tabular-nums;white-space:nowrap}',
-                P + '.sv-tide-mark-pm{background:rgba(13,110,253,.14);color:#0d6efd}',
-                P + '.sv-tide-mark-bm{background:rgba(127,127,127,.16);color:#555}',
+                P + '.sv-tide-mark{color:var(--sv-panel-fg,#18181b)}',
+                P + '.sv-tide-mark-pm{background:rgba(13,110,253,.14)}',
+                P + '.sv-tide-mark-bm{background:rgba(127,127,127,.18)}',
                 P + '.sv-tide-plot{flex:1;min-height:120px}',
                 // Cursor readout strip — selected instant in both datums. Focusable
                 // slider; visible focus ring (keyboard scrub). Hardcoded colors are
@@ -1152,7 +1157,7 @@
                 P + '.sv-tide-faraway{font-size:.74rem;color:var(--sv-panel-fg-muted,#52525b);margin:.25rem 0 0;font-style:italic;border-left:3px solid #e8852b;padding-left:.4rem}',
                 P + '.sv-tide-faraway[hidden]{display:none}',
                 P + '.sv-tide-dim{font-weight:400;color:var(--sv-panel-fg-muted,#52525b);font-size:.85rem}',
-                P + '.sv-tide-sep{font-size:.95rem;font-weight:600;color:#0d6efd;margin:0}',
+                P + '.sv-tide-sep{font-size:.95rem;font-weight:600;color:var(--sv-panel-fg,#18181b);margin:0}',
                 P + '.sv-tide-expl{font-size:.8rem;color:var(--sv-panel-fg-muted,#52525b);margin:.15rem 0 0}',
                 P + '.sv-tide-formula{margin:.2rem 0 0}',
                 P + '.sv-tide-formula code{font-size:.82rem;background:rgba(127,127,127,.12);padding:.15rem .4rem;border-radius:4px}',
@@ -1181,7 +1186,9 @@
         // cursor position so a shared link reopens at that exact moment.
         var tp = params.get('tide_t');
         if (tp) {
-            var ts = Date.parse(/[zZ+]/.test(tp) || tp.length <= 10 ? tp : tp + '+02:00');
+            // Local 'YYYY-MM-DDTHH:MM' (our own syncUrl format) → parseLocal,
+            // DST-safe. An explicitly-zoned value (Z/+hh) is honoured via Date.parse.
+            var ts = /[zZ]|[+]\d\d:?\d\d$/.test(tp) ? Date.parse(tp) : parseLocal(tp);
             if (isFinite(ts)) { wantT = ts; curDate = new Date(ts); }
         }
         // tide_draft = boat draft in metres (0..3, clamped). Reflected on the slider
