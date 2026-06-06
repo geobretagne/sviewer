@@ -120,6 +120,7 @@
             'cursor.label':'Heure sélectionnée (flèches gauche/droite pour ajuster)',
             'read.zh':     'sur le zéro hydrographique',
             'read.ign':    'en altitude IGN69',
+            'wms.loading': 'Chargement de la carte de la mer…',
             'terrain.label':'Fond marin (bathymétrie)',
             'terrain.expl':'La mer est calculée par le serveur : tout pixel dont l’altitude du fond (IGN69) est inférieure au niveau de la mer est peint.'
         },
@@ -151,6 +152,7 @@
             'cursor.label':'Selected time (left/right arrows to adjust)',
             'read.zh':     'above chart datum',
             'read.ign':    'IGN69 altitude',
+            'wms.loading': 'Loading sea map…',
             'terrain.label':'Sea floor (bathymetry)',
             'terrain.expl':'The sea is computed server-side: every pixel whose sea-floor altitude (IGN69) is below the sea level is painted.'
         },
@@ -182,6 +184,7 @@
             'cursor.label':'Hora seleccionada (flechas izquierda/derecha para ajustar)',
             'read.zh':     'sobre el cero hidrográfico',
             'read.ign':    'en altitud IGN69',
+            'wms.loading': 'Cargando el mapa del mar…',
             'terrain.label':'Fondo marino (batimetría)',
             'terrain.expl':'El mar lo calcula el servidor: se pinta todo píxel cuya altitud del fondo (IGN69) es inferior al nivel del mar.'
         },
@@ -213,6 +216,7 @@
             'cursor.label':'Gewählte Uhrzeit (Pfeiltasten links/rechts zum Anpassen)',
             'read.zh':     'über Seekartennull',
             'read.ign':    'IGN69-Höhe',
+            'wms.loading': 'Meereskarte wird geladen…',
             'terrain.label':'Meeresboden (Bathymetrie)',
             'terrain.expl':'Das Meer wird serverseitig berechnet: jedes Pixel, dessen Meeresboden-Höhe (IGN69) unter dem Meeresspiegel liegt, wird eingefärbt.'
         }
@@ -384,8 +388,13 @@
                   // Cursor readout — focusable (role=slider) so arrow keys scrub
                   // the time without a mouse (WCAG). Shows the selected instant in
                   // BOTH datums (ZH and the computed IGN69) — no hidden number.
-                  '<div class="sv-tide-readout" id="sv-tide-readout" tabindex="0" role="slider" ' +
-                       'aria-label="' + esc(t('cursor.label')) + '"></div>' +
+                  '<div class="sv-tide-readrow">' +
+                    '<div class="sv-tide-readout" id="sv-tide-readout" tabindex="0" role="slider" ' +
+                         'aria-label="' + esc(t('cursor.label')) + '"></div>' +
+                    // WMS loading indicator — shown while the sea layer fetches.
+                    '<span class="sv-tide-spinner" id="sv-tide-spinner" role="status" ' +
+                         'aria-label="' + esc(t('wms.loading')) + '" title="' + esc(t('wms.loading')) + '" hidden></span>' +
+                  '</div>' +
                   '<p class="sv-tide-prov sv-tide-curve-foot" id="sv-tide-curve-foot"></p>' +
                 '</div>';
         }
@@ -487,10 +496,9 @@
                         setCursor: [function (u) {
                             if (u.cursor.idx != null) { setIdx(u.cursor.idx, true); }
                         }],
-                        // Red "now" marker: a fixed vertical line at the current
-                        // clock time, drawn only when "now" falls inside the day's
-                        // range. Distinct from the (movable) scrub cursor.
-                        draw: [drawNowLine]
+                        // Red "now" vertical line + the selected-instant marker
+                        // (the dot that drives the map). Both redrawn each frame.
+                        draw: [drawNowLine, drawSelMarker]
                     }
                 };
                 chart = new uPlot(opts, [xs, ys], host);
@@ -532,7 +540,10 @@
             if (i === curIdx) { return; }
             curIdx = i;
             updateReadout();
-            if (!fromMouse) { lockCursor(); }
+            if (!fromMouse) {
+                lockCursor();
+                if (chart) { chart.redraw(false, false); }   // refresh the selection marker
+            }
             updateSea();   // scrubbing the cursor re-paints the sea (debounced)
         }
         // Pin uPlot's visual cursor to curIdx (so keyboard moves show on the plot).
@@ -564,6 +575,25 @@
             ctx.beginPath();
             ctx.moveTo(cx, u.bbox.top);
             ctx.lineTo(cx, u.bbox.top + u.bbox.height);
+            ctx.stroke();
+            ctx.restore();
+        }
+        // Marker at the selected instant (curIdx) — the point that drives the map.
+        // A filled blue dot on the curve at (t, h) so the chosen sample stays
+        // visible even when the pointer is away from the plot.
+        function drawSelMarker(u) {
+            if (!tide || !tide.points[curIdx]) { return; }
+            var p = tide.points[curIdx];
+            var cx = u.valToPos(p.t / 1000, 'x', true);
+            var cy = u.valToPos(Number(p.h), 'y', true);
+            var ctx = u.ctx;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(cx, cy, Math.max(3, 3.5 * u.pxRatio), 0, 2 * Math.PI);
+            ctx.fillStyle = '#0d6efd';
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = Math.max(1, 1.5 * u.pxRatio);
+            ctx.fill();
             ctx.stroke();
             ctx.restore();
         }
@@ -672,11 +702,23 @@
                 params: { LAYERS: WMS_LAYER, STYLES: '', FORMAT: 'image/png', TRANSPARENT: true },
                 ratio: 1
             });
+            // Loading indicator: ImageWMS fires load start/end/error per GetMap.
+            // Count in-flight requests (a scrub + a map move can overlap) and show
+            // the spinner while any is pending.
+            seaSrc.on('imageloadstart', function () { seaLoading++; updateSeaSpinner(); });
+            seaSrc.on('imageloadend',   function () { seaLoading = Math.max(0, seaLoading - 1); updateSeaSpinner(); });
+            seaSrc.on('imageloaderror', function () { seaLoading = Math.max(0, seaLoading - 1); updateSeaSpinner(); });
             seaLayer = new ol.layer.Image({ source: seaSrc, zIndex: 850, opacity: 1 });
             map.addLayer(seaLayer);
         }
+        var seaLoading = 0;
+        function updateSeaSpinner() {
+            var el = document.getElementById('sv-tide-spinner');
+            if (el) { el.hidden = seaLoading <= 0; }
+        }
         function removeSeaLayer() {
             if (seaLayer) { map.removeLayer(seaLayer); seaLayer = null; seaSrc = null; }
+            seaLoading = 0; updateSeaSpinner();
         }
         // Re-render the sea at the current water level (cursor-derived
         // waterIGN69()). updateParams re-requests the WMS image at the new SLD
@@ -765,14 +807,19 @@
                 // Cursor readout strip — selected instant in both datums. Focusable
                 // slider; visible focus ring (keyboard scrub). Hardcoded colors are
                 // fine here (panel, not a map overlay).
-                P + '.sv-tide-readout{flex:none;display:flex;align-items:center;flex-wrap:wrap;gap:.4rem;margin-top:.35rem;padding:.3rem .5rem;border:1px solid var(--sv-panel-border,#ccc);border-radius:6px;background:rgba(13,110,253,.06);font-variant-numeric:tabular-nums;cursor:ew-resize}',
+                P + '.sv-tide-readrow{flex:none;display:flex;align-items:center;gap:.5rem;margin-top:.35rem}',
+                P + '.sv-tide-readout{flex:1;min-width:0;display:flex;align-items:center;flex-wrap:wrap;gap:.4rem;padding:.3rem .5rem;border:1px solid var(--sv-panel-border,#ccc);border-radius:6px;background:rgba(13,110,253,.06);font-variant-numeric:tabular-nums;cursor:ew-resize}',
                 P + '.sv-tide-readout:focus-visible{outline:2px solid #0d6efd;outline-offset:1px}',
                 P + '.sv-tide-read-time{font-weight:700;font-size:.95rem;color:#0d6efd}',
                 P + '.sv-tide-read-val{font-size:.9rem;color:#333}',
                 P + '.sv-tide-read-ign{font-weight:600}',
                 P + '.sv-tide-read-ref{font-size:.72rem;color:#888;font-weight:400}',
                 P + '.sv-tide-read-arrow{color:#888}',
-                // M4 throwaway debug slider (dashed = temporary).
+                // WMS loading spinner — shown while the sea layer fetches.
+                P + '.sv-tide-spinner{flex:none;width:1.1rem;height:1.1rem;border:2px solid rgba(13,110,253,.25);border-top-color:#0d6efd;border-radius:50%;animation:sv-tide-spin .7s linear infinite}',
+                P + '.sv-tide-spinner[hidden]{display:none}',
+                '@keyframes sv-tide-spin{to{transform:rotate(360deg)}}',
+                '@media (prefers-reduced-motion:reduce){' + P + '.sv-tide-spinner{animation-duration:1.6s}}',
                 P + '.sv-tide-curve-foot{flex:none;margin-top:.25rem}',
                 '@media (max-width:640px){' + P + '#sv-tide-root{flex-direction:column;overflow:auto}' +
                     P + '.sv-tide-info{flex:none}' + P + '.sv-tide-curve{min-height:200px}}',
