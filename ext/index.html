@@ -337,6 +337,7 @@
         <li><a class="sv-nav-link" href="#ext-csv" data-id="csv">CSV</a></li>
         <li><a class="sv-nav-link" href="#ext-grist" data-id="grist">Grist</a></li>
         <li><a class="sv-nav-link" href="#ext-isochrone" data-id="isochrone">Isochrone / Isodistance</a></li>
+        <li><a class="sv-nav-link" href="#ext-tide" data-id="tide">Marée</a></li>
         <li><a class="sv-nav-link" href="#ext-me" data-id="me">Moi</a></li>
         <li><a class="sv-nav-link" href="#ext-panoramax" data-id="panoramax">Panoramax</a></li>
         <li><a class="sv-nav-link" href="#ext-print" data-id="print">Print / PDF</a></li>
@@ -638,6 +639,62 @@
             <footer class="sv-card-footer">
                 <span>v1.1.0</span>
                 <span>sViewer ≥ 0.10.0</span>
+                <span>fphg</span>
+            </footer>
+        </div>
+    </article>
+
+    <article id="ext-tide" class="sv-card" data-search="marée visualise l'étendue de la mer prévue sur une zone côtière pour une date et une heure choisies. la bathymétrie shom (fond marin, wms) est peinte en bleu (immergé) / orange (découvert) de part et d'autre du niveau de la mer, lui-même donné par une courbe de marée interactive (open-meteo, modèle libre) calée sur les références altimétriques maritimes du shom (zéro hydrographique → ign69). un curseur « tirant d'eau » signale les zones d'échouage pour un bateau. toutes les données sources (origine, date, valeur) sont affichées — approche scientifique traçable. outil de visualisation de marée prédite, non destiné à la navigation. " data-type="extension" role="listitem">
+        <button type="button" class="sv-card-thumb" data-full="tide/screenshot.png" aria-label="Agrandir la capture de Marée">
+            <span class="sv-phone">
+                <span class="sv-phone-notch"></span>
+                <img src="tide/screenshot.png" alt="Capture de Marée" loading="lazy">
+            </span>
+        </button>
+        <div class="sv-card-body">
+            <div class="sv-card-head">
+                <h2>Marée</h2>
+                <span class="sv-badge sv-badge-extension">extension</span>
+            </div>
+            <p class="sv-desc">Visualise l'étendue de la mer prévue sur une zone côtière pour une date et une heure choisies. La bathymétrie SHOM (fond marin, WMS) est peinte en bleu (immergé) / orange (découvert) de part et d'autre du niveau de la mer, lui-même donné par une courbe de marée interactive (Open-Meteo, modèle libre) calée sur les Références Altimétriques Maritimes du SHOM (zéro hydrographique → IGN69). Un curseur « tirant d'eau » signale les zones d'échouage pour un bateau. Toutes les données sources (origine, date, valeur) sont affichées — approche scientifique traçable. Outil de visualisation de marée prédite, non destiné à la navigation.</p>
+            
+            
+            <details class="sv-params">
+                <summary>Paramètres URL <span class="sv-param-count">4</span></summary>
+                <table>
+                    <thead><tr><th>Paramètre</th><th>Exemple</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><code>tide_minzoom</code></td>
+                            <td><code>tide_minzoom=13</code></td>
+                            <td>Niveau de zoom minimal pour activer l'outil (échelle côtière, port unique). Défaut 13.</td>
+                        </tr><tr>
+                            <td><code>tide_port</code></td>
+                            <td><code>tide_port=Concarneau</code></td>
+                            <td>Présélectionne un port RAM par son nom (saute la recherche du port le plus proche). Lien profond.</td>
+                        </tr><tr>
+                            <td><code>tide_t</code></td>
+                            <td><code>tide_t=2026-06-10T14:30</code></td>
+                            <td>Instant présélectionné (ISO local 'AAAA-MM-JJTHH:MM') : fixe le jour et place le curseur dessus. Permet de partager « ce moment précis ». L'URL est mise à jour en continu.</td>
+                        </tr><tr>
+                            <td><code>tide_draft</code></td>
+                            <td><code>tide_draft=1.5</code></td>
+                            <td>Tirant d'eau du bateau en mètres (0 à 3). Abaisse la limite bleu/orange pour signaler les zones d'échouage.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </details>
+            
+            <ul class="sv-examples">
+                <li>
+                    <a href="../?ext=tide&tide_port=Concarneau">Marée à Concarneau</a> <span class="sv-ex-desc">— Ouvre l'outil sur le port de Concarneau ; faites glisser le curseur sur la courbe pour voir la mer évoluer</span>
+                </li><li>
+                    <a href="../?ext=tide&tide_port=Concarneau&tide_t=2026-06-10T14:30&tide_draft=1.5">Lien profond — un instant précis</a> <span class="sv-ex-desc">— Rouvre à une date/heure donnée avec un tirant d'eau de 1,5 m — idéal pour partager ou embarquer</span>
+                </li>
+            </ul>
+            <footer class="sv-card-footer">
+                <span>v0.1.0</span>
+                <span>sViewer ≥ 0.16.0</span>
                 <span>fphg</span>
             </footer>
         </div>

@@ -25,6 +25,11 @@
     "description": "Calcule et affiche des zones isochrones ou isodistances via l'API navigation IGN Géoplateforme, avec recherche de lieux via Nominatim/OSM"
   },
   {
+    "id": "tide",
+    "name": "Marée",
+    "description": "Visualise l'étendue de la mer prévue sur une zone côtière pour une date et une heure choisies. La bathymétrie SHOM (fond marin, WMS) est peinte en bleu (immergé) / orange (découvert) de part et d'autre du niveau de la mer, lui-même donné par une courbe de marée interactive (Open-Meteo, modèle libre) calée sur les Références Altimétriques Maritimes du SHOM (zéro hydrographique → IGN69). Un curseur « tirant d'eau » signale les zones d'échouage pour un bateau. Toutes les données sources (origine, date, valeur) sont affichées — approche scientifique traçable. Outil de visualisation de marée prédite, non destiné à la navigation."
+  },
+  {
     "id": "me",
     "name": "Moi",
     "description": "Espace personnel sViewer (local au navigateur). Mes cartes — enregistrement de cartes sViewer (nom, filtre, restauration en un tap, export/import JSON). En mode application installée : devient le hub d'accueil, avec chargement d'une carte par collage d'URL ou par scan d'un QR code (caméra), pour pallier l'absence de barre d'adresse. Aucun serveur, aucun compte."
