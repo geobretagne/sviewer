@@ -514,9 +514,12 @@
             var r = document.getElementById('sv-tide-draft-range');
             var o = document.getElementById('sv-tide-draft-out');
             if (!r) { return; }
+            // Announce the value WITH unit (native range would read a bare "1.5").
+            r.setAttribute('aria-valuetext', draft.toFixed(1) + ' m');
             r.addEventListener('input', function () {
                 draft = parseFloat(r.value) || 0;
                 if (o) { o.textContent = draft.toFixed(1) + ' m'; }
+                r.setAttribute('aria-valuetext', draft.toFixed(1) + ' m');
                 updateSea();   // re-paint with the lowered break (debounced)
                 syncUrl();
             });
@@ -1102,20 +1105,20 @@
                 // Tabbed layout: tablist on top, one pane fills the rest.
                 P + '#sv-tide-root{display:flex;flex-direction:column;gap:.4rem;height:100%;min-height:0}',
                 P + '.sv-tide-tabs{flex:none;display:flex;gap:.25rem;border-bottom:1px solid var(--sv-panel-border,#ccc)}',
-                P + '.sv-tide-tab{appearance:none;background:none;border:none;border-bottom:2px solid transparent;padding:.3rem .7rem;font-size:.85rem;font-weight:600;color:#888;cursor:pointer}',
-                P + '.sv-tide-tab[aria-selected="true"]{color:#0d6efd;border-bottom-color:#0d6efd}',
+                P + '.sv-tide-tab{appearance:none;background:none;border:none;border-bottom:2px solid transparent;padding:.3rem .7rem;font-size:.85rem;font-weight:600;color:var(--sv-panel-fg-muted,#52525b);cursor:pointer}',
+                P + '.sv-tide-tab[aria-selected="true"]{color:var(--sv-panel-fg,#18181b);border-bottom-color:#0d6efd}',
                 P + '.sv-tide-tab:focus-visible{outline:2px solid #0d6efd;outline-offset:-2px}',
                 P + '.sv-tide-pane{flex:1;min-height:0}',
                 P + '.sv-tide-pane[hidden]{display:none}',
                 P + '.sv-tide-info{overflow:auto;display:flex;flex-direction:column;gap:.4rem;padding-right:.3rem}',
                 P + '.sv-tide-curve{min-width:0;min-height:0;display:flex;flex-direction:column}',
                 P + '.sv-tide-draft{flex:none;display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem}',
-                P + '.sv-tide-draft label{font-size:.8rem;font-weight:600;color:#333;white-space:nowrap}',
+                P + '.sv-tide-draft label{font-size:.8rem;font-weight:600;color:var(--sv-panel-fg,#18181b);white-space:nowrap}',
                 P + '.sv-tide-draft input[type=range]{flex:1;accent-color:#e8852b}',
-                P + '.sv-tide-draft output{font-variant-numeric:tabular-nums;font-size:.82rem;font-weight:600;color:#e8852b;min-width:3.5em;text-align:right}',
+                P + '.sv-tide-draft output{font-variant-numeric:tabular-nums;font-size:.82rem;font-weight:600;color:var(--sv-panel-fg,#18181b);min-width:3.5em;text-align:right}',
                 P + '.sv-tide-curve-head{flex:none}',
                 P + '.sv-tide-datenav{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap}',
-                P + '.sv-tide-curve-title{font-size:.85rem;font-weight:600;color:#333;flex:1;min-width:0;text-align:center}',
+                P + '.sv-tide-curve-title{font-size:.85rem;font-weight:600;color:var(--sv-panel-fg,#18181b);flex:1;min-width:0;text-align:center}',
                 P + '.sv-tide-datebtn{padding:.1rem .5rem;line-height:1.2;font-weight:700}',
                 P + '.sv-tide-today{padding:.1rem .5rem;font-size:.74rem}',
                 P + '.sv-tide-marks{display:flex;flex-wrap:wrap;gap:.3rem;margin:.2rem 0}',
@@ -1129,36 +1132,36 @@
                 P + '.sv-tide-readrow{flex:none;display:flex;align-items:center;gap:.5rem;margin-top:.35rem}',
                 P + '.sv-tide-readout{flex:1;min-width:0;display:flex;align-items:center;flex-wrap:wrap;gap:.4rem;padding:.3rem .5rem;border:1px solid var(--sv-panel-border,#ccc);border-radius:6px;background:rgba(13,110,253,.06);font-variant-numeric:tabular-nums;cursor:ew-resize}',
                 P + '.sv-tide-readout:focus-visible{outline:2px solid #0d6efd;outline-offset:1px}',
-                P + '.sv-tide-read-time{font-weight:700;font-size:.95rem;color:#0d6efd}',
-                P + '.sv-tide-read-val{font-size:.9rem;color:#333}',
+                P + '.sv-tide-read-time{font-weight:700;font-size:.95rem;color:var(--sv-panel-fg,#18181b)}',
+                P + '.sv-tide-read-val{font-size:.9rem;color:var(--sv-panel-fg,#18181b)}',
                 P + '.sv-tide-read-ign{font-weight:600}',
-                P + '.sv-tide-read-ref{font-size:.72rem;color:#888;font-weight:400}',
-                P + '.sv-tide-read-arrow{color:#888}',
+                P + '.sv-tide-read-ref{font-size:.72rem;color:var(--sv-panel-fg-muted,#52525b);font-weight:400}',
+                P + '.sv-tide-read-arrow{color:var(--sv-panel-fg-muted,#52525b)}',
                 // WMS loading spinner — shown while the sea layer fetches.
                 P + '.sv-tide-spinner{flex:none;width:1.1rem;height:1.1rem;border:2px solid rgba(13,110,253,.25);border-top-color:#0d6efd;border-radius:50%;animation:sv-tide-spin .7s linear infinite}',
                 P + '.sv-tide-spinner[hidden]{display:none}',
                 '@keyframes sv-tide-spin{to{transform:rotate(360deg)}}',
                 '@media (prefers-reduced-motion:reduce){' + P + '.sv-tide-spinner{animation-duration:1.6s}}',
                 P + '.sv-tide-curve-foot{flex:none;margin-top:.25rem}',
-                P + '.sv-tide-msg{font-size:.85rem;color:#666;margin:.3rem 0}',
+                P + '.sv-tide-msg{font-size:.85rem;color:var(--sv-panel-fg-muted,#52525b);margin:.3rem 0}',
                 P + '.sv-tide-err{font-size:.85rem;color:#c0392b;margin:.3rem 0}',
                 P + '.sv-tide-block{margin:0}',
-                P + '.sv-tide-h{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:#888;margin:.2rem 0 .15rem}',
+                P + '.sv-tide-h{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--sv-panel-fg-muted,#52525b);margin:.2rem 0 .15rem}',
                 P + '.sv-tide-port-name{font-size:1rem;font-weight:600;margin:0}',
                 P + '.sv-tide-repick{width:100%;margin-bottom:.4rem;font-size:.82rem}',
-                P + '.sv-tide-faraway{font-size:.74rem;color:#b8860b;margin:.25rem 0 0;font-style:italic}',
+                P + '.sv-tide-faraway{font-size:.74rem;color:var(--sv-panel-fg-muted,#52525b);margin:.25rem 0 0;font-style:italic;border-left:3px solid #e8852b;padding-left:.4rem}',
                 P + '.sv-tide-faraway[hidden]{display:none}',
-                P + '.sv-tide-dim{font-weight:400;color:#888;font-size:.85rem}',
+                P + '.sv-tide-dim{font-weight:400;color:var(--sv-panel-fg-muted,#52525b);font-size:.85rem}',
                 P + '.sv-tide-sep{font-size:.95rem;font-weight:600;color:#0d6efd;margin:0}',
-                P + '.sv-tide-expl{font-size:.8rem;color:#666;margin:.15rem 0 0}',
+                P + '.sv-tide-expl{font-size:.8rem;color:var(--sv-panel-fg-muted,#52525b);margin:.15rem 0 0}',
                 P + '.sv-tide-formula{margin:.2rem 0 0}',
                 P + '.sv-tide-formula code{font-size:.82rem;background:rgba(127,127,127,.12);padding:.15rem .4rem;border-radius:4px}',
                 P + '.sv-tide-levels{border-collapse:collapse;font-size:.85rem;margin:.1rem 0 0}',
                 P + '.sv-tide-levels th,' + P + '.sv-tide-levels td{text-align:left;padding:.1rem .6rem .1rem 0;font-weight:400}',
-                P + '.sv-tide-levels td{font-variant-numeric:tabular-nums;color:#333}',
+                P + '.sv-tide-levels td{font-variant-numeric:tabular-nums;color:var(--sv-panel-fg,#18181b)}',
                 // Provenance line — always visible, dimmed but legible (traceability).
-                P + '.sv-tide-prov{font-size:.72rem;color:#999;margin:.1rem 0 0;font-style:italic}',
-                P + '.sv-tide-prov-date{color:#999}',
+                P + '.sv-tide-prov{font-size:.72rem;color:var(--sv-panel-fg-muted,#52525b);margin:.1rem 0 0;font-style:italic}',
+                P + '.sv-tide-prov-date{color:var(--sv-panel-fg-muted,#52525b)}',
                 // Zoom-gated toolbar button (disabled look without losing the icon).
                 '.sv-scope .sv-tide-gated{opacity:.45;cursor:not-allowed}'
             ].join('');
