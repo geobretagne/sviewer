@@ -34,6 +34,31 @@
 
     var minZoom = DEF_MINZOOM;
 
+    // uPlot (MIT, vendored ext/tide/uplot.min.{js,css}) — lazy-loaded on the
+    // first chart so core + map load stay fast and non-tide pages pay nothing.
+    var BASE = SViewer.extensionBase();   // must read at module scope (currentScript)
+    var uplotReady = null;
+    function loadUplot() {
+        if (uplotReady) { return uplotReady; }
+        uplotReady = new Promise(function (resolve, reject) {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet'; link.href = BASE + 'uplot.min.css';
+            document.head.appendChild(link);
+            var s = document.createElement('script');
+            s.src = BASE + 'uplot.min.js';
+            s.onload = function () { resolve(window.uPlot); };
+            s.onerror = function () { reject(new Error('uplot-load-failed')); };
+            document.head.appendChild(s);
+        });
+        return uplotReady;
+    }
+
+    // M2 — tide curve comes from a static FIXTURE (synthetic harmonic, NOT SHOM).
+    // Swapped for the real SHOM proxy at M6 behind the same JSON shape:
+    //   { port, date, tz, step, datum:'ZH', unit, source, points:[{t,h}],
+    //     highs:[{t,h,coef}], lows:[{t,h}] }
+    var FIXTURE = 'fixtures/tide-sqp-2026-06-06.json';
+
     // --- i18n -----------------------------------------------------------------
     var I18N = {
         fr: {
@@ -54,7 +79,14 @@
             'prov.date':   'Date de la donnée',
             'err.none':    'Aucun port de référence à proximité. Déplacez la carte vers la côte.',
             'err.fetch':   'Service RAM (SHOM) injoignable.',
-            'soon':        'Courbe de marée et inondation : prochaines étapes.'
+            'curve.label': 'Marée prévue',
+            'curve.date':  'Hauteurs d’eau sur le zéro hydrographique — {date}',
+            'curve.pm':    'PM',
+            'curve.bm':    'BM',
+            'curve.coef':  'coef. {c}',
+            'curve.fixture':'Données synthétiques (démonstration) — à remplacer par les prédictions SHOM.',
+            'err.curve':   'Courbe de marée indisponible.',
+            'soon':        'Sélection d’une heure et inondation sur la carte : prochaines étapes.'
         },
         en: {
             'btn.title':   'Tide (predicted water extent)',
@@ -74,7 +106,14 @@
             'prov.date':   'Data date',
             'err.none':    'No reference port nearby. Pan the map toward the coast.',
             'err.fetch':   'RAM service (SHOM) unreachable.',
-            'soon':        'Tide curve and flooding: next steps.'
+            'curve.label': 'Predicted tide',
+            'curve.date':  'Water heights above chart datum — {date}',
+            'curve.pm':    'HW',
+            'curve.bm':    'LW',
+            'curve.coef':  'coef. {c}',
+            'curve.fixture':'Synthetic data (demo) — to be replaced by SHOM predictions.',
+            'err.curve':   'Tide curve unavailable.',
+            'soon':        'Pick an hour and flood the map: next steps.'
         },
         es: {
             'btn.title':   'Marea (extensión de agua prevista)',
@@ -94,7 +133,14 @@
             'prov.date':   'Fecha del dato',
             'err.none':    'Ningún puerto de referencia cerca. Desplace el mapa hacia la costa.',
             'err.fetch':   'Servicio RAM (SHOM) inaccesible.',
-            'soon':        'Curva de marea e inundación: próximos pasos.'
+            'curve.label': 'Marea prevista',
+            'curve.date':  'Alturas de agua sobre el cero hidrográfico — {date}',
+            'curve.pm':    'PM',
+            'curve.bm':    'BM',
+            'curve.coef':  'coef. {c}',
+            'curve.fixture':'Datos sintéticos (demostración) — a sustituir por las predicciones del SHOM.',
+            'err.curve':   'Curva de marea no disponible.',
+            'soon':        'Elegir una hora e inundación en el mapa: próximos pasos.'
         },
         de: {
             'btn.title':   'Gezeiten (vorhergesagte Wasserausdehnung)',
@@ -114,7 +160,14 @@
             'prov.date':   'Datum der Daten',
             'err.none':    'Kein Referenzhafen in der Nähe. Verschieben Sie die Karte zur Küste.',
             'err.fetch':   'RAM-Dienst (SHOM) nicht erreichbar.',
-            'soon':        'Gezeitenkurve und Überflutung: nächste Schritte.'
+            'curve.label': 'Vorhergesagte Gezeit',
+            'curve.date':  'Wasserhöhen über Seekartennull — {date}',
+            'curve.pm':    'HW',
+            'curve.bm':    'NW',
+            'curve.coef':  'Koef. {c}',
+            'curve.fixture':'Synthetische Daten (Demo) — durch SHOM-Vorhersagen zu ersetzen.',
+            'err.curve':   'Gezeitenkurve nicht verfügbar.',
+            'soon':        'Uhrzeit wählen und Karte überfluten: nächste Schritte.'
         }
     };
     function lang() {
@@ -148,6 +201,8 @@
         var port     = null;   // selected RAM port { site, S, phma, pmve, nm, date, x, y }
         var fetchSeq = 0;      // stale-response guard
         var wantPort = null;   // ?tide_port= preselection (by name)
+        var tide     = null;   // loaded tide series { points, highs, lows, date, source, ... }
+        var chart    = null;   // active uPlot instance
 
         // --- RAM nearest-port fetch ------------------------------------------
         // Query the open RAM WFS for ports within a bbox around the map centre,
@@ -170,7 +225,8 @@
                     var p = pickNearest(j, c);
                     if (!p) { showError(t('err.none')); return; }
                     port = p;
-                    renderPort();
+                    renderLayout();
+                    loadTide();
                 })
                 .catch(function () { if (seq === fetchSeq) { showError(t('err.fetch')); } });
         }
@@ -225,13 +281,15 @@
             if (val == null) { return ''; }
             return '<tr><th scope="row">' + esc(label) + '</th><td>' + esc(val.toFixed(2)) + ' m</td></tr>';
         }
-        function renderPort() {
-            var r = root(); if (!r || !port) { return; }
+        // Pure HTML for the provenance column (port + datum separation + levels).
+        // Every block carries source + date (scientific-traceability rule).
+        function portHtml() {
+            if (!port) { return ''; }
             var levels =
                 levelRow(t('lvl.phma'), port.phma) +
                 levelRow(t('lvl.pmve'), port.pmve) +
                 levelRow(t('lvl.nm'),   port.nm);
-            r.innerHTML =
+            return (
                 // Port
                 '<section class="sv-tide-block">' +
                   '<h3 class="sv-tide-h">' + esc(t('port.label')) + '</h3>' +
@@ -254,10 +312,126 @@
                   '<h3 class="sv-tide-h">' + esc(t('levels.label')) + '</h3>' +
                   '<table class="sv-tide-levels">' + levels + '</table>' +
                   provHtml(RAM_SRC, port.date) +
-                '</section>' : '') +
-                // Next milestones placeholder
-                '<p class="sv-tide-soon">' + esc(t('soon')) + '</p>';
+                '</section>' : ''));
         }
+        // The dock is split: a scrollable provenance column (port + datum + levels)
+        // on the left, and the tide curve filling the rest on the right. Wide dock
+        // → curve reads horizontally, provenance stays visible (traceability).
+        function renderLayout() {
+            var r = root(); if (!r) { return; }
+            r.innerHTML =
+                '<div class="sv-tide-info" id="sv-tide-info">' + portHtml() + '</div>' +
+                '<div class="sv-tide-curve" id="sv-tide-curve">' +
+                  '<div class="sv-tide-curve-head" id="sv-tide-curve-head"></div>' +
+                  '<div class="sv-tide-plot" id="sv-tide-plot"></div>' +
+                  '<p class="sv-tide-prov sv-tide-curve-foot" id="sv-tide-curve-foot"></p>' +
+                '</div>';
+        }
+
+        // --- M2: tide curve (fixture → SHOM proxy at M6) ----------------------
+        function destroyChart() { if (chart) { try { chart.destroy(); } catch (e) { /* */ } chart = null; } }
+        // Fetch the tide series. M2 = static fixture; the JSON shape is the M6
+        // proxy contract, so swapping the source later touches only this URL.
+        function loadTide() {
+            var seq = fetchSeq;                 // tie to the port fetch generation
+            var head = document.getElementById('sv-tide-curve-head');
+            if (head) { head.textContent = t('loading'); }
+            fetch(BASE + FIXTURE, { headers: { Accept: 'application/json' } })
+                .then(function (r) { return r.ok ? r.json() : Promise.reject('HTTP ' + r.status); })
+                .then(function (j) {
+                    if (seq !== fetchSeq) { return; }            // map moved → stale
+                    if (!j || !Array.isArray(j.points) || !j.points.length) { return Promise.reject('empty'); }
+                    tide = j;
+                    renderCurve();
+                })
+                .catch(function () {
+                    if (seq !== fetchSeq) { return; }
+                    var h = document.getElementById('sv-tide-curve-head');
+                    if (h) { h.innerHTML = '<span class="sv-tide-err">' + esc(t('err.curve')) + '</span>'; }
+                });
+        }
+        function renderCurve() {
+            if (!tide) { return; }
+            var head = document.getElementById('sv-tide-curve-head');
+            var foot = document.getElementById('sv-tide-curve-foot');
+            // Header: title + date; high/low water marks with coef (sailors think
+            // in coefficients). All from the series itself — no hidden derivation.
+            if (head) {
+                var marks = '';
+                (tide.highs || []).forEach(function (hi) {
+                    marks += '<span class="sv-tide-mark sv-tide-mark-pm">' + esc(t('curve.pm')) + ' ' +
+                        esc(hhmm(hi.t)) + ' · ' + esc(Number(hi.h).toFixed(2)) + ' m' +
+                        (hi.coef != null ? ' · ' + esc(t('curve.coef', { c: hi.coef })) : '') + '</span>';
+                });
+                (tide.lows || []).forEach(function (lo) {
+                    marks += '<span class="sv-tide-mark sv-tide-mark-bm">' + esc(t('curve.bm')) + ' ' +
+                        esc(hhmm(lo.t)) + ' · ' + esc(Number(lo.h).toFixed(2)) + ' m</span>';
+                });
+                head.innerHTML =
+                    '<div class="sv-tide-curve-title">' + esc(t('curve.date', { date: tide.date || '' })) + '</div>' +
+                    '<div class="sv-tide-marks">' + marks + '</div>';
+            }
+            // Footer: provenance of the curve itself (source + date). Fixture is
+            // explicitly flagged as synthetic so no one mistakes it for SHOM.
+            if (foot) {
+                foot.innerHTML = esc(t('prov.source')) + ' : ' + esc(tide.source || '?') +
+                    (tide.date ? '<span class="sv-tide-prov-date"> · ' + esc(t('prov.date')) + ' ' + esc(tide.date) + '</span>' : '') +
+                    ' — <em>' + esc(t('curve.fixture')) + '</em>';
+            }
+            drawPlot();
+        }
+        function drawPlot() {
+            var hostC = document.getElementById('sv-tide-plot');
+            if (!hostC || !tide) { return; }
+            loadUplot().then(function (uPlot) {
+                var host = document.getElementById('sv-tide-plot');
+                if (!host || !tide) { return; }
+                destroyChart();
+                host.textContent = '';
+                var xs = tide.points.map(function (p) { return p.t / 1000; });
+                var ys = tide.points.map(function (p) { return Number(p.h); });
+                var unit = tide.unit || 'm';
+                var fmtTime = uPlot.fmtDate('{HH}:{mm}');
+                var fmtFull = uPlot.fmtDate('{HH}:{mm}');
+                var w = host.clientWidth || 320;
+                var h = Math.max(120, host.clientHeight || 160);
+                var opts = {
+                    width: w, height: h,
+                    cursor: { drag: { x: false, y: false } },   // M3 adds the scrub cursor
+                    scales: { x: { time: true } },
+                    legend: { show: false },
+                    series: [
+                        {},
+                        { stroke: '#0d6efd', width: 2, fill: 'rgba(13,110,253,.12)',
+                          points: { show: false } }
+                    ],
+                    axes: [
+                        { stroke: '#888', grid: { stroke: 'rgba(127,127,127,.15)' },
+                          values: function (u, splits) {
+                              return splits.map(function (s) { return fmtTime(new Date(s * 1000)); });
+                          } },
+                        { stroke: '#888', grid: { stroke: 'rgba(127,127,127,.15)' },
+                          values: function (u, vals) { return vals.map(function (v) { return v + ' ' + unit; }); } }
+                    ]
+                };
+                chart = new uPlot(opts, [xs, ys], host);
+            }).catch(function () {
+                var h = document.getElementById('sv-tide-curve-head');
+                if (h) { h.innerHTML = '<span class="sv-tide-err">' + esc(t('err.curve')) + '</span>'; }
+            });
+        }
+        function hhmm(ms) {
+            var d = new Date(ms);
+            return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+        }
+        // Core fires this when the user drags the dock taller/shorter → resize the
+        // plot to fill the new height.
+        SViewer.on('sv:panelResize', function () {
+            if (!chart) { return; }
+            var host = document.getElementById('sv-tide-plot');
+            if (!host) { return; }
+            chart.setSize({ width: host.clientWidth, height: Math.max(120, host.clientHeight) });
+        });
 
         // --- Toolbar button + zoom gate --------------------------------------
         var toolbar = document.getElementById('sv-panel-controls');
@@ -298,7 +472,7 @@
             findPort();
         }
         SViewer.panel.onClose(PANEL, function () {
-            active = false;
+            active = false; destroyChart();
             btn.setAttribute('aria-pressed', 'false'); btn.classList.remove('active');
         });
 
@@ -309,7 +483,21 @@
             styled = true;
             var P = '#sv-panel-ext-tide ';
             var css = [
-                P + '#sv-tide-root{display:flex;flex-direction:column;gap:.4rem;height:100%;min-height:0;overflow:auto;padding-right:.3rem}',
+                // Split dock: provenance column (scrolls) + curve column (fills).
+                // Stacks to a single column on narrow screens.
+                P + '#sv-tide-root{display:flex;flex-direction:row;gap:1rem;height:100%;min-height:0}',
+                P + '.sv-tide-info{flex:0 0 260px;min-width:0;overflow:auto;display:flex;flex-direction:column;gap:.4rem;padding-right:.3rem}',
+                P + '.sv-tide-curve{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}',
+                P + '.sv-tide-curve-head{flex:none}',
+                P + '.sv-tide-curve-title{font-size:.85rem;font-weight:600;color:#333}',
+                P + '.sv-tide-marks{display:flex;flex-wrap:wrap;gap:.3rem;margin:.2rem 0}',
+                P + '.sv-tide-mark{font-size:.74rem;padding:.1rem .45rem;border-radius:10px;font-variant-numeric:tabular-nums;white-space:nowrap}',
+                P + '.sv-tide-mark-pm{background:rgba(13,110,253,.14);color:#0d6efd}',
+                P + '.sv-tide-mark-bm{background:rgba(127,127,127,.16);color:#555}',
+                P + '.sv-tide-plot{flex:1;min-height:120px}',
+                P + '.sv-tide-curve-foot{flex:none;margin-top:.25rem}',
+                '@media (max-width:640px){' + P + '#sv-tide-root{flex-direction:column;overflow:auto}' +
+                    P + '.sv-tide-info{flex:none}' + P + '.sv-tide-curve{min-height:200px}}',
                 P + '.sv-tide-msg{font-size:.85rem;color:#666;margin:.3rem 0}',
                 P + '.sv-tide-err{font-size:.85rem;color:#c0392b;margin:.3rem 0}',
                 P + '.sv-tide-block{margin:0}',
@@ -326,7 +514,6 @@
                 // Provenance line — always visible, dimmed but legible (traceability).
                 P + '.sv-tide-prov{font-size:.72rem;color:#999;margin:.1rem 0 0;font-style:italic}',
                 P + '.sv-tide-prov-date{color:#999}',
-                P + '.sv-tide-soon{font-size:.78rem;color:#aaa;margin:.4rem 0 0;border-top:1px solid rgba(127,127,127,.18);padding-top:.4rem}',
                 // Zoom-gated toolbar button (disabled look without losing the icon).
                 '.sv-scope .sv-tide-gated{opacity:.45;cursor:not-allowed}'
             ].join('');
