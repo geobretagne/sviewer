@@ -32,6 +32,19 @@
     var SEARCH_M  = 30000;     // half-width (m) of the WFS bbox around map center
     var DEF_MINZOOM = 13;      // coastal scale gate (single-port flat-S validity)
 
+    // Litto3D bathymetry/MNT (GeoServer WMS). Pixel value = altitude IGN69 in
+    // metres (GRAY_INDEX), nodata = -9999. Flood is painted server-side by an
+    // inline SLD whose ColorMap break = water_IGN69 (the flat-S threshold).
+    //
+    // CRITICAL: GeoServer matches the SLD <NamedLayer><Name> to the layer only
+    // when WORKSPACE-QUALIFIED ('alti:litto3d'). The bare name ('litto3d') parses
+    // but is silently ignored → default style renders. Verified on geobretagne.
+    var WMS_URL   = 'https://geobretagne.fr/geoserver/alti/litto3d/wms';
+    var WMS_LAYER = 'alti:litto3d';
+    var WMS_SRC   = 'GéoBretagne / SHOM-IGN — Litto3D (MNT, altitude IGN69)';
+    var FLOOD_COLOR = '#1d6fdb';
+    var FLOOD_OPACITY = 0.6;
+
     var minZoom = DEF_MINZOOM;
 
     // uPlot (MIT, vendored ext/tide/uplot.min.{js,css}) — lazy-loaded on the
@@ -89,6 +102,8 @@
             'cursor.label':'Heure sélectionnée (flèches gauche/droite pour ajuster)',
             'read.zh':     'sur le zéro hydrographique',
             'read.ign':    'en altitude IGN69',
+            'terrain.label':'Terrain (bathymétrie)',
+            'terrain.expl':'L’étendue inondée est calculée par le serveur : tout pixel dont l’altitude IGN69 est inférieure au niveau d’eau est peint.',
             'soon':        'Inondation sur la carte : prochaine étape.'
         },
         en: {
@@ -119,6 +134,8 @@
             'cursor.label':'Selected time (left/right arrows to adjust)',
             'read.zh':     'above chart datum',
             'read.ign':    'IGN69 altitude',
+            'terrain.label':'Terrain (bathymetry)',
+            'terrain.expl':'The flooded extent is computed server-side: every pixel whose IGN69 altitude is below the water level is painted.',
             'soon':        'Flood the map: next step.'
         },
         es: {
@@ -149,6 +166,8 @@
             'cursor.label':'Hora seleccionada (flechas izquierda/derecha para ajustar)',
             'read.zh':     'sobre el cero hidrográfico',
             'read.ign':    'en altitud IGN69',
+            'terrain.label':'Terreno (batimetría)',
+            'terrain.expl':'La extensión inundada la calcula el servidor: se pinta todo píxel cuya altitud IGN69 es inferior al nivel del agua.',
             'soon':        'Inundación en el mapa: próximo paso.'
         },
         de: {
@@ -179,6 +198,8 @@
             'cursor.label':'Gewählte Uhrzeit (Pfeiltasten links/rechts zum Anpassen)',
             'read.zh':     'über Seekartennull',
             'read.ign':    'IGN69-Höhe',
+            'terrain.label':'Gelände (Bathymetrie)',
+            'terrain.expl':'Die überflutete Ausdehnung wird serverseitig berechnet: jedes Pixel, dessen IGN69-Höhe unter dem Wasserstand liegt, wird eingefärbt.',
             'soon':        'Karte überfluten: nächster Schritt.'
         }
     };
@@ -216,6 +237,9 @@
         var tide     = null;   // loaded tide series { points, highs, lows, date, source, ... }
         var chart    = null;   // active uPlot instance
         var curIdx   = 0;      // selected sample index in tide.points (cursor position)
+        var floodLayer = null; // OL WMS layer painting the flood (own, removed on close)
+        var floodSrc   = null; // its ol.source.ImageWMS
+        var debugLevel = null; // M4 throwaway manual override (null = use waterIGN69)
 
         // --- RAM nearest-port fetch ------------------------------------------
         // Query the open RAM WFS for ports within a bbox around the map centre,
@@ -325,7 +349,13 @@
                   '<h3 class="sv-tide-h">' + esc(t('levels.label')) + '</h3>' +
                   '<table class="sv-tide-levels">' + levels + '</table>' +
                   provHtml(RAM_SRC, port.date) +
-                '</section>' : ''));
+                '</section>' : '') +
+                // Terrain data behind the flood (traceability of the map overlay)
+                '<section class="sv-tide-block">' +
+                  '<h3 class="sv-tide-h">' + esc(t('terrain.label')) + '</h3>' +
+                  '<p class="sv-tide-expl">' + esc(t('terrain.expl')) + '</p>' +
+                  provHtml(WMS_SRC, null) +
+                '</section>');
         }
         // The dock is split: a scrollable provenance column (port + datum + levels)
         // on the left, and the tide curve filling the rest on the right. Wide dock
@@ -342,8 +372,33 @@
                   // BOTH datums (ZH and the computed IGN69) — no hidden number.
                   '<div class="sv-tide-readout" id="sv-tide-readout" tabindex="0" role="slider" ' +
                        'aria-label="' + esc(t('cursor.label')) + '"></div>' +
+                  // M4 throwaway: manual level slider to prove the SLD flood in
+                  // isolation. Removed in M5 once the cursor drives the flood.
+                  '<div class="sv-tide-debug" id="sv-tide-debug">' +
+                    '<label>débug niveau IGN69 ' +
+                      '<input type="range" id="sv-tide-debug-range" min="-2" max="14" step="0.1" value="3">' +
+                      '<output id="sv-tide-debug-out">3.0 m</output>' +
+                    '</label>' +
+                  '</div>' +
                   '<p class="sv-tide-prov sv-tide-curve-foot" id="sv-tide-curve-foot"></p>' +
                 '</div>';
+            bindDebug();
+        }
+        // M4 throwaway slider wiring — drives the flood from a literal level so the
+        // SLD threshold can be proven before the cursor coupling (M5).
+        function bindDebug() {
+            var r = document.getElementById('sv-tide-debug-range');
+            var o = document.getElementById('sv-tide-debug-out');
+            if (!r) { return; }
+            r.addEventListener('input', function () {
+                debugLevel = parseFloat(r.value);
+                if (o) { o.textContent = debugLevel.toFixed(1) + ' m'; }
+                updateFlood();
+            });
+            // Apply the initial slider value immediately so a flood shows on open.
+            debugLevel = parseFloat(r.value);
+            if (o) { o.textContent = debugLevel.toFixed(1) + ' m'; }
+            updateFlood();
         }
 
         // --- M2: tide curve (fixture → SHOM proxy at M6) ----------------------
@@ -555,6 +610,53 @@
             chart.setSize({ width: host.clientWidth, height: Math.max(120, host.clientHeight) });
         });
 
+        // --- M4: server-side flood via inline SLD ----------------------------
+        // Build the SLD that paints terrain BELOW `level` (m IGN69) as a flood and
+        // leaves everything else transparent. type=intervals → a hard threshold at
+        // `level`; nodata (-9999) and dry land (> level) get opacity 0.
+        function floodSLD(level) {
+            var L = Number(level).toFixed(3);
+            return '<?xml version="1.0" encoding="UTF-8"?>' +
+                '<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc">' +
+                '<NamedLayer><Name>' + WMS_LAYER + '</Name>' +
+                '<UserStyle><Name>flood</Name><FeatureTypeStyle><Rule>' +
+                '<RasterSymbolizer><Opacity>1.0</Opacity>' +
+                '<ColorMap type="intervals">' +
+                '<ColorMapEntry color="' + FLOOD_COLOR + '" quantity="-9000" opacity="0"/>' +
+                '<ColorMapEntry color="' + FLOOD_COLOR + '" quantity="' + L + '" opacity="' + FLOOD_OPACITY + '"/>' +
+                '<ColorMapEntry color="' + FLOOD_COLOR + '" quantity="20000" opacity="0"/>' +
+                '</ColorMap></RasterSymbolizer>' +
+                '</Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>';
+        }
+        // Create the OL WMS flood layer once (above background, below UI). SLD_BODY
+        // carries the style inline; STYLES must be present (empty) for GeoServer to
+        // honour SLD_BODY.
+        function ensureFloodLayer() {
+            if (floodLayer) { return; }
+            // No crossOrigin: we never read the pixels (no canvas export), so a
+            // tainted image is fine and we avoid a hard failure if the WMS omits
+            // CORS headers.
+            floodSrc = new ol.source.ImageWMS({
+                url: WMS_URL,
+                params: { LAYERS: WMS_LAYER, STYLES: '', FORMAT: 'image/png', TRANSPARENT: true },
+                ratio: 1
+            });
+            floodLayer = new ol.layer.Image({ source: floodSrc, zIndex: 850, opacity: 1 });
+            map.addLayer(floodLayer);
+        }
+        function removeFloodLayer() {
+            if (floodLayer) { map.removeLayer(floodLayer); floodLayer = null; floodSrc = null; }
+        }
+        // Re-render the flood at the current water level. M4 uses debugLevel if set
+        // (throwaway slider); otherwise the cursor-derived waterIGN69(). Updating
+        // SLD_BODY via updateParams re-requests the image at the new threshold.
+        function updateFlood() {
+            var level = debugLevel != null ? debugLevel : waterIGN69();
+            if (level == null) { return; }
+            ensureFloodLayer();
+            floodSrc.updateParams({ SLD_BODY: floodSLD(level) });
+        }
+
         // --- Toolbar button + zoom gate --------------------------------------
         var toolbar = document.getElementById('sv-panel-controls');
         var btn = document.createElement('button');
@@ -594,7 +696,7 @@
             findPort();
         }
         SViewer.panel.onClose(PANEL, function () {
-            active = false; destroyChart();
+            active = false; destroyChart(); removeFloodLayer(); debugLevel = null;
             btn.setAttribute('aria-pressed', 'false'); btn.classList.remove('active');
         });
 
@@ -627,6 +729,11 @@
                 P + '.sv-tide-read-ign{font-weight:600}',
                 P + '.sv-tide-read-ref{font-size:.72rem;color:#888;font-weight:400}',
                 P + '.sv-tide-read-arrow{color:#888}',
+                // M4 throwaway debug slider (dashed = temporary).
+                P + '.sv-tide-debug{flex:none;margin-top:.3rem;padding:.25rem .4rem;border:1px dashed #c0392b;border-radius:6px}',
+                P + '.sv-tide-debug label{display:flex;align-items:center;gap:.5rem;font-size:.74rem;color:#c0392b}',
+                P + '.sv-tide-debug input[type=range]{flex:1}',
+                P + '.sv-tide-debug output{font-variant-numeric:tabular-nums;min-width:3.5em;text-align:right}',
                 P + '.sv-tide-curve-foot{flex:none;margin-top:.25rem}',
                 '@media (max-width:640px){' + P + '#sv-tide-root{flex-direction:column;overflow:auto}' +
                     P + '.sv-tide-info{flex:none}' + P + '.sv-tide-curve{min-height:200px}}',
