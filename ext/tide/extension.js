@@ -4,9 +4,10 @@
  * tide (predicted sea level), not a flood/inondation forecast (surge, swell,
  * river are ignored). Wording deliberately avoids "flood".
  *
- * Combines SHOM bathymetry (sea floor, WMS, altitude IGN69) with SHOM tide
- * predictions (above Zéro Hydrographique), datum-corrected via the RAM
- * (Références Altimétriques Maritimes, open SHOM data).
+ * Combines SHOM bathymetry (sea floor, WMS, altitude IGN69) with an Open-Meteo
+ * Marine tide curve (free, no key, CORS-direct) calibrated to the RAM
+ * (Références Altimétriques Maritimes, open SHOM data) so the curve's mean sits
+ * at the port's true mean sea level in IGN69.
  *
  * Physics (see ext/tide/INVESTIGATION.md):
  *   S           = zh_ref (RAM port, ZH height in IGN69)   // datum separation
@@ -76,19 +77,19 @@
         return uplotReady;
     }
 
-    // M2 — tide curve comes from a static FIXTURE (synthetic harmonic, NOT SHOM).
-    // Swapped for the real SHOM proxy at M6 behind the same JSON shape:
-    //   { port, date, tz, step, datum:'ZH', unit, source, points:[{t,h}],
-    //     highs:[{t,h,coef}], lows:[{t,h}] }
-    // Fixture per reference port (keyed by RAM `site`). Picked by the nearest
-    // port found in M1; falls back to the default if no fixture for that port.
-    // At M6 this whole map is replaced by one proxy call ?port=<site>.
-    var FIXTURES = {
-        'Concarneau':           'fixtures/tide-concarneau-2026-06-06.json',
-        'Saint-Quay-Portrieux': 'fixtures/tide-sqp-2026-06-06.json'
-    };
-    var FIXTURE_DEFAULT = 'fixtures/tide-concarneau-2026-06-06.json';
-    function fixtureFor(site) { return (site && FIXTURES[site]) || FIXTURE_DEFAULT; }
+    // Tide curve = Open-Meteo Marine API (free, no key, CORS-open → called
+    // DIRECTLY from the browser, no proxy). Returns sea-surface height vs MSL,
+    // 15-min step. The model gives the right SHAPE/timing (range matches SHOM
+    // within ~cm on a test day) but its absolute MSL→IGN69 offset is uncertain,
+    // so we CALIBRATE to RAM: anchor the curve's daily mean to the port's true
+    // mean sea level in IGN69 (NM_IGN69 = zh_ref + NM_ZH). This removes the
+    // absolute datum error while keeping Open-Meteo's oscillation.
+    //
+    // Heights are stored as ZH-equivalent so the existing readout/marks (which do
+    // h + S = water_IGN69) work unchanged:  h_ZH(t) = om_msl(t) + offset − zh_ref,
+    // with offset = NM_IGN69 − mean(om_msl over the day).
+    var OM_URL = 'https://marine-api.open-meteo.com/v1/marine';
+    var OM_SRC = 'Open-Meteo Marine (modèle), calibré sur SHOM-RAM';
 
     // --- i18n -----------------------------------------------------------------
     var I18N = {
@@ -115,7 +116,7 @@
             'curve.pm':    'PM',
             'curve.bm':    'BM',
             'curve.coef':  'coef. {c}',
-            'curve.fixture':'Données synthétiques (démonstration) — à remplacer par les prédictions SHOM.',
+            'curve.model': 'Marée prédite (modèle Open-Meteo, calé sur SHOM-RAM) — non garantie pour la navigation.',
             'err.curve':   'Courbe de marée indisponible.',
             'cursor.label':'Heure sélectionnée (flèches gauche/droite pour ajuster)',
             'read.zh':     'sur le zéro hydrographique',
@@ -147,7 +148,7 @@
             'curve.pm':    'HW',
             'curve.bm':    'LW',
             'curve.coef':  'coef. {c}',
-            'curve.fixture':'Synthetic data (demo) — to be replaced by SHOM predictions.',
+            'curve.model': 'Predicted tide (Open-Meteo model, calibrated to SHOM-RAM) — not for navigation.',
             'err.curve':   'Tide curve unavailable.',
             'cursor.label':'Selected time (left/right arrows to adjust)',
             'read.zh':     'above chart datum',
@@ -179,7 +180,7 @@
             'curve.pm':    'PM',
             'curve.bm':    'BM',
             'curve.coef':  'coef. {c}',
-            'curve.fixture':'Datos sintéticos (demostración) — a sustituir por las predicciones del SHOM.',
+            'curve.model': 'Marea prevista (modelo Open-Meteo, calibrado con SHOM-RAM) — no apta para navegación.',
             'err.curve':   'Curva de marea no disponible.',
             'cursor.label':'Hora seleccionada (flechas izquierda/derecha para ajustar)',
             'read.zh':     'sobre el cero hidrográfico',
@@ -211,7 +212,7 @@
             'curve.pm':    'HW',
             'curve.bm':    'NW',
             'curve.coef':  'Koef. {c}',
-            'curve.fixture':'Synthetische Daten (Demo) — durch SHOM-Vorhersagen zu ersetzen.',
+            'curve.model': 'Vorhergesagte Gezeit (Open-Meteo-Modell, auf SHOM-RAM kalibriert) — nicht für die Navigation.',
             'err.curve':   'Gezeitenkurve nicht verfügbar.',
             'cursor.label':'Gewählte Uhrzeit (Pfeiltasten links/rechts zum Anpassen)',
             'read.zh':     'über Seekartennull',
@@ -253,6 +254,7 @@
         var fetchSeq = 0;      // stale-response guard
         var wantPort = null;   // ?tide_port= preselection (by name)
         var tide     = null;   // loaded tide series { points, highs, lows, date, source, ... }
+        var curDate  = new Date();  // selected day for the tide curve (default today)
         var chart    = null;   // active uPlot instance
         var curIdx   = 0;      // selected sample index in tide.points (cursor position)
         var seaLayer = null; // OL WMS layer painting the sea (own, removed on close)
@@ -399,20 +401,37 @@
                 '</div>';
         }
 
-        // --- M2: tide curve (fixture → SHOM proxy at M6) ----------------------
+        // --- M6: tide curve from Open-Meteo Marine (calibrated to RAM) --------
         function destroyChart() { if (chart) { try { chart.destroy(); } catch (e) { /* */ } chart = null; } }
-        // Fetch the tide series. M2 = static fixture; the JSON shape is the M6
-        // proxy contract, so swapping the source later touches only this URL.
+        // YYYY-MM-DD for a Date in local time.
+        function isoDate(d) {
+            return d.getFullYear() + '-' +
+                ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+        }
+        // Fetch Open-Meteo for the port's coords + the selected day, then convert +
+        // calibrate to our ZH-equivalent series. Direct browser fetch (CORS open),
+        // no key, no proxy.
         function loadTide() {
-            var seq = fetchSeq;                 // tie to the port fetch generation
+            if (!port) { return; }
+            var seq = fetchSeq;
             var head = document.getElementById('sv-tide-curve-head');
             if (head) { head.textContent = t('loading'); }
-            fetch(BASE + fixtureFor(port && port.site), { headers: { Accept: 'application/json' } })
+            // port.x/.y are EPSG:3857 → lon/lat for the API.
+            var ll = ol.proj.toLonLat([port.x, port.y]);
+            var date = isoDate(curDate);
+            var url = OM_URL +
+                '?latitude=' + encodeURIComponent(ll[1].toFixed(4)) +
+                '&longitude=' + encodeURIComponent(ll[0].toFixed(4)) +
+                '&minutely_15=sea_level_height_msl' +
+                '&start_date=' + date + '&end_date=' + date +
+                '&timezone=' + encodeURIComponent('Europe/Paris');
+            fetch(url, { headers: { Accept: 'application/json' } })
                 .then(function (r) { return r.ok ? r.json() : Promise.reject('HTTP ' + r.status); })
                 .then(function (j) {
                     if (seq !== fetchSeq) { return; }            // map moved → stale
-                    if (!j || !Array.isArray(j.points) || !j.points.length) { return Promise.reject('empty'); }
-                    tide = j;
+                    var series = buildSeries(j, date);
+                    if (!series) { return Promise.reject('empty'); }
+                    tide = series;
                     renderCurve();
                 })
                 .catch(function () {
@@ -420,6 +439,48 @@
                     var h = document.getElementById('sv-tide-curve-head');
                     if (h) { h.innerHTML = '<span class="sv-tide-err">' + esc(t('err.curve')) + '</span>'; }
                 });
+        }
+        // Convert Open-Meteo MSL heights → our ZH-equivalent series, calibrated to
+        // RAM. Returns { port, date, tz, step, datum, unit, source, points, highs,
+        // lows } or null. h_ZH = om_msl + offset − zh_ref, offset = NM_IGN69 −
+        // mean(om); so the day's mean sea level matches RAM's NM in IGN69.
+        function buildSeries(j, date) {
+            var m = j && j.minutely_15;
+            if (!m || !Array.isArray(m.time) || !Array.isArray(m.sea_level_height_msl)) { return null; }
+            var times = m.time, msl = m.sea_level_height_msl;
+            var raw = [];
+            for (var i = 0; i < times.length; i++) {
+                var v = Number(msl[i]);
+                var ts = Date.parse(times[i] + '+02:00');   // Europe/Paris summer (CEST)
+                if (isFinite(v) && isFinite(ts)) { raw.push({ t: ts, msl: v }); }
+            }
+            if (!raw.length) { return null; }
+            // Calibration: anchor the day's mean to NM in IGN69.
+            var sum = 0; raw.forEach(function (p) { sum += p.msl; });
+            var mean = sum / raw.length;
+            var nmIGN69 = Number(port.S) + (port.nm != null ? Number(port.nm) : 0);  // zh_ref + NM_ZH
+            var offset  = nmIGN69 - mean;                 // MSL → IGN69 anchor
+            var points = raw.map(function (p) {
+                // store ZH-equivalent: h + S = water_IGN69 = msl + offset
+                return { t: p.t, h: +((p.msl + offset) - Number(port.S)).toFixed(3) };
+            });
+            var ex = extrema(points);
+            return {
+                port: port.site, date: date, tz: 'Europe/Paris',
+                step: 15, datum: 'ZH', unit: 'm', source: OM_SRC,
+                points: points, highs: ex.highs, lows: ex.lows
+            };
+        }
+        // Local minima/maxima of the height series → PM (highs) / BM (lows). No
+        // coef (the free model doesn't provide SHOM coefficients).
+        function extrema(points) {
+            var highs = [], lows = [];
+            for (var i = 1; i < points.length - 1; i++) {
+                var a = points[i - 1].h, b = points[i].h, c = points[i + 1].h;
+                if (b >= a && b >= c) { highs.push({ t: points[i].t, h: b }); i += 6; }
+                else if (b <= a && b <= c) { lows.push({ t: points[i].t, h: b }); i += 6; }
+            }
+            return { highs: highs, lows: lows };
         }
         function renderCurve() {
             if (!tide) { return; }
@@ -442,12 +503,13 @@
                     '<div class="sv-tide-curve-title">' + esc(t('curve.date', { date: tide.date || '' })) + '</div>' +
                     '<div class="sv-tide-marks">' + marks + '</div>';
             }
-            // Footer: provenance of the curve itself (source + date). Fixture is
-            // explicitly flagged as synthetic so no one mistakes it for SHOM.
+            // Footer: provenance of the curve (source + date) + a "modelled,
+            // not navigation-grade" disclaimer (Open-Meteo model, calibrated to
+            // RAM; surge/atmospheric effects not guaranteed).
             if (foot) {
                 foot.innerHTML = esc(t('prov.source')) + ' : ' + esc(tide.source || '?') +
                     (tide.date ? '<span class="sv-tide-prov-date"> · ' + esc(t('prov.date')) + ' ' + esc(tide.date) + '</span>' : '') +
-                    ' — <em>' + esc(t('curve.fixture')) + '</em>';
+                    ' — <em>' + esc(t('curve.model')) + '</em>';
             }
             drawPlot();
         }
