@@ -355,19 +355,19 @@
                 levelRow(t('lvl.pmve'), port.pmve) +
                 levelRow(t('lvl.nm'),   port.nm);
             return (
+                // Re-pick button FIRST: the port is chosen on open and does NOT
+                // follow pans (avoids surprise refetches). This re-picks the
+                // nearest RAM port for the current view; the hint shows when you
+                // have panned far from the current port.
+                '<button type="button" class="btn btn-primary btn-sm sv-tide-repick" id="sv-tide-repick">' +
+                    esc(t('port.repick')) + '</button>' +
+                '<p class="sv-tide-faraway" id="sv-tide-faraway" hidden>' + esc(t('port.faraway')) + '</p>' +
                 // Port
                 '<section class="sv-tide-block">' +
                   '<h3 class="sv-tide-h">' + esc(t('port.label')) + '</h3>' +
                   '<p class="sv-tide-port-name">' + esc(port.site) +
                     (port.dist != null ? ' <span class="sv-tide-dim">(' + esc(t('port.dist', { d: fmtDist(port.dist) })) + ')</span>' : '') +
                   '</p>' +
-                  // Manual re-pick: the port is chosen on open and does NOT follow
-                  // pans (avoids surprise refetches). This button re-picks the
-                  // nearest RAM port for the current view; the hint appears when
-                  // you have panned far from the current port.
-                  '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-repick" id="sv-tide-repick">' +
-                    esc(t('port.repick')) + '</button>' +
-                  '<p class="sv-tide-faraway" id="sv-tide-faraway" hidden>' + esc(t('port.faraway')) + '</p>' +
                   provHtml(RAM_SRC, port.date) +
                 '</section>' +
                 // Datum separation S
@@ -920,7 +920,7 @@
                 P + '.sv-tide-block{margin:0}',
                 P + '.sv-tide-h{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:#888;margin:.2rem 0 .15rem}',
                 P + '.sv-tide-port-name{font-size:1rem;font-weight:600;margin:0}',
-                P + '.sv-tide-repick{margin-top:.3rem;font-size:.78rem;padding:.15rem .5rem}',
+                P + '.sv-tide-repick{width:100%;margin-bottom:.4rem;font-size:.82rem}',
                 P + '.sv-tide-faraway{font-size:.74rem;color:#b8860b;margin:.25rem 0 0;font-style:italic}',
                 P + '.sv-tide-faraway[hidden]{display:none}',
                 P + '.sv-tide-dim{font-weight:400;color:#888;font-size:.85rem}',
