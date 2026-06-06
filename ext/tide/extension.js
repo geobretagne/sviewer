@@ -1217,11 +1217,13 @@
         function updateGate() {
             var z = view.getZoom();
             var ok = z != null && z >= minZoom;
-            btn.disabled = !ok;
-            btn.classList.toggle('sv-tide-gated', !ok);
-            btn.title = ok ? t('btn.title') : t('gate.hint');
+            // Gate only the toolbar BUTTON (can't OPEN fresh when too far out).
+            // An already-open panel stays put — unzooming keeps the full state
+            // (port, date, draft, graph); zooming back in needs no reopen/refetch.
+            btn.disabled = !ok && !active;
+            btn.classList.toggle('sv-tide-gated', !ok && !active);
+            btn.title = (ok || active) ? t('btn.title') : t('gate.hint');
             btn.setAttribute('aria-label', btn.title);
-            if (!ok && active) { SViewer.panel.close(); }
         }
         view.on('change:resolution', updateGate);
         // Panning → update the "panned away from port" hint (no auto re-pick).
