@@ -37,32 +37,26 @@
     // inline SLD whose ColorMap break = water_IGN69 (the flat-S threshold).
     //
     // CRITICAL: GeoServer matches the SLD <NamedLayer><Name> to the layer only
-    // when WORKSPACE-QUALIFIED ('alti:litto3d'). The bare name ('litto3d') parses
-    // but is silently ignored → default style renders. Verified on geobretagne.
-    var WMS_URL   = 'https://geobretagne.fr/geoserver/alti/litto3d/wms';
-    var WMS_LAYER = 'alti:litto3d';
-    var WMS_SRC   = 'GéoBretagne / SHOM-IGN — Litto3D (MNT, altitude IGN69)';
-    // Depth-graded flood palette (ColorBrewer Blues, sequential, colourblind-safe):
-    // deepest water dark navy → shoreline near-white. The ColorMap reads the pixel
-    // = terrain altitude (IGN69 m); depth = level − terrain, so LOW terrain = deep =
-    // dark. Darkest pinned to a fixed floor (-10 m IGN69); fades toward the shore so
-    // the terrain shows through at the waterline.
-    var DEEP_FLOOR = -10;   // terrain altitude (m) mapped to the darkest stop
-    var FLOOD_STOPS = [
-        { c: '#08306b', o: 0.85 },  // deepest  (terrain = DEEP_FLOOR)
-        { c: '#2171b5', o: 0.70 },  // mid      (terrain = level*0.5)
-        { c: '#9ecae1', o: 0.55 },  // shallow  (terrain = level*0.9)
-        { c: '#deebf7', o: 0.45 }   // shoreline (terrain = level, depth 0)
-    ];
-
-    // Sea floor (SHOM bathymetry, GéoBretagne). litto3d is the TERRESTRIAL part
-    // only (above lowest tide) → open sea is nodata there. bathy_1m fills the sea:
-    // it is always below any tide we show, so it is painted as a STATIC blue
-    // underlay (deep navy → shallow light), under the dynamic flood. Not coupled
-    // to the tide level. Recolourable (dynamic SLD verified). nodata = -99999.
-    var SEA_URL   = 'https://geobretagne.fr/geoserver/shom/bathy_1m/wms';
-    var SEA_LAYER = 'shom:bathy_1m';
-    var SEA_SRC   = 'GéoBretagne / SHOM — bathymétrie 1 m';
+    // when WORKSPACE-QUALIFIED ('shom:bathy_1m'). A bare name parses but is
+    // silently ignored → default style renders. Verified on geobretagne.
+    //
+    // SHOM bathymetry (sea floor), pixel value = altitude IGN69 in metres (so the
+    // tide's water_IGN69 thresholds it directly, no extra correction). nodata =
+    // -99999. This is a SEA tool: we paint where the sea floor is BELOW the water
+    // level (submerged), graded by depth (water_IGN69 − bathy); exposed flats
+    // (bathy ≥ level) and nodata stay transparent. As the tide rises the waterline
+    // creeps up the shore; as it falls, intertidal flats emerge.
+    //
+    // We do NOT use the terrestrial Litto3D (alti:litto3d) here: it covers only the
+    // land above lowest tide, leaving the open sea nodata, and overlapped the
+    // intertidal band. One bathymetry layer = no overlap, no land taint.
+    var WMS_URL   = 'https://geobretagne.fr/geoserver/shom/bathy_1m/wms';
+    var WMS_LAYER = 'shom:bathy_1m';
+    var WMS_SRC   = 'GéoBretagne / SHOM — bathymétrie 1 m (altitude IGN69)';
+    // Depth-graded water palette (deep navy → shallow light), keyed on the pixel =
+    // sea-floor altitude (IGN69 m). Stops are positioned relative to the water
+    // level L: deepest at a fixed floor, lightening to the waterline at L.
+    var DEEP_FLOOR = -40;   // sea-floor altitude (m) mapped to the darkest stop
 
     var minZoom = DEF_MINZOOM;
 
@@ -268,7 +262,6 @@
         var floodSrc   = null; // its ol.source.ImageWMS
         var debugLevel = null; // M4 throwaway manual override (null = use waterIGN69)
         var floodTimer = null; // debounce handle for the flood WMS request
-        var seaLayer   = null; // static blue sea-floor underlay (bathy_1m)
 
         // --- RAM nearest-port fetch ------------------------------------------
         // Query the open RAM WFS for ports within a bbox around the map centre,
@@ -384,7 +377,6 @@
                   '<h3 class="sv-tide-h">' + esc(t('terrain.label')) + '</h3>' +
                   '<p class="sv-tide-expl">' + esc(t('terrain.expl')) + '</p>' +
                   provHtml(WMS_SRC, null) +
-                  provHtml(SEA_SRC, null) +
                 '</section>');
         }
         // The dock is split: a scrollable provenance column (port + datum + levels)
@@ -640,39 +632,46 @@
             chart.setSize({ width: host.clientWidth, height: Math.max(120, host.clientHeight) });
         });
 
-        // --- M4: server-side flood via inline SLD ----------------------------
-        // Build the SLD that paints water DEPTH below `level` (m IGN69). type=ramp
-        // interpolates between stops keyed on the pixel = terrain altitude:
-        //   -9998        → transparent  (guards nodata -9999, which in `ramp` would
-        //                                otherwise take the first stop's colour)
-        //   DEEP_FLOOR   → darkest navy (deepest water)
-        //   level*0.5    → mid blue
-        //   level*0.9    → shallow
-        //   level        → shoreline (depth 0), near-white, faint
-        //   level+eps    → transparent (dry land starts)
-        //   20000        → transparent (cap)
+        // --- M4: server-side sea via inline SLD ------------------------------
+        // Paint the SEA at water level `level` (m IGN69) on the bathymetry. type=ramp
+        // keyed on the pixel = sea-floor altitude:
+        //   -50000      → transparent  (guards nodata -99999, which in `ramp` would
+        //                               otherwise take the first stop's colour)
+        //   DEEP_FLOOR  → darkest navy (deep water: water_IGN69 − bathy is large)
+        //   level-8     → mid blue
+        //   level-1.5   → shallow
+        //   level       → waterline (depth 0), light
+        //   level+eps   → transparent (sea floor above the tide = exposed flats)
+        //   20000       → transparent (cap)
+        // As `level` rises the whole ramp shifts up the shore (more area submerged);
+        // as it falls, flats above the new level turn transparent (emerge).
+        var SEA_STOPS = [
+            { c: '#0a2a5e', o: 0.90 },  // deepest (bathy = DEEP_FLOOR)
+            { c: '#1d6fdb', o: 0.78 },  // mid     (bathy = level-8)
+            { c: '#6db3e8', o: 0.68 },  // shallow (bathy = level-1.5)
+            { c: '#bfe0f5', o: 0.55 }   // waterline (bathy = level)
+        ];
         function floodSLD(level) {
             var L = Number(level);
             function entry(color, q, op) {
                 return '<ColorMapEntry color="' + color + '" quantity="' + q + '" opacity="' + op + '"/>';
             }
-            var qDeep = DEEP_FLOOR;
-            var qMid  = (L * 0.5).toFixed(3);
-            var qShal = (L * 0.9).toFixed(3);
-            var qShore = L.toFixed(3);
+            var qMid  = (L - 8).toFixed(3);
+            var qShal = (L - 1.5).toFixed(3);
+            var qWl   = L.toFixed(3);
             var qDry  = (L + 0.001).toFixed(3);
             var cm =
-                entry(FLOOD_STOPS[0].c, -9998, 0) +              // nodata guard
-                entry(FLOOD_STOPS[0].c, qDeep, FLOOD_STOPS[0].o) +
-                entry(FLOOD_STOPS[1].c, qMid,  FLOOD_STOPS[1].o) +
-                entry(FLOOD_STOPS[2].c, qShal, FLOOD_STOPS[2].o) +
-                entry(FLOOD_STOPS[3].c, qShore, FLOOD_STOPS[3].o) +
-                entry(FLOOD_STOPS[3].c, qDry,  0) +              // dry land
-                entry(FLOOD_STOPS[3].c, 20000, 0);              // cap
+                entry(SEA_STOPS[0].c, -50000, 0) +              // nodata guard (-99999)
+                entry(SEA_STOPS[0].c, DEEP_FLOOR, SEA_STOPS[0].o) +
+                entry(SEA_STOPS[1].c, qMid,  SEA_STOPS[1].o) +
+                entry(SEA_STOPS[2].c, qShal, SEA_STOPS[2].o) +
+                entry(SEA_STOPS[3].c, qWl,   SEA_STOPS[3].o) +
+                entry(SEA_STOPS[3].c, qDry,  0) +               // exposed flats / land
+                entry(SEA_STOPS[3].c, 20000, 0);               // cap
             return '<?xml version="1.0" encoding="UTF-8"?>' +
                 '<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc">' +
                 '<NamedLayer><Name>' + WMS_LAYER + '</Name>' +
-                '<UserStyle><Name>flood</Name><FeatureTypeStyle><Rule>' +
+                '<UserStyle><Name>sea</Name><FeatureTypeStyle><Rule>' +
                 '<RasterSymbolizer><Opacity>1.0</Opacity>' +
                 '<ColorMap type="ramp">' + cm + '</ColorMap>' +
                 '</RasterSymbolizer>' +
@@ -697,41 +696,6 @@
         function removeFloodLayer() {
             if (floodLayer) { map.removeLayer(floodLayer); floodLayer = null; floodSrc = null; }
         }
-
-        // Static blue sea-floor underlay. Painted ONCE on open (sea is below every
-        // tide we show, so it never changes with the level). Sits below the flood
-        // layer (zIndex 840 < 850). Depth-graded deep navy → shallow light.
-        function seaSLD() {
-            function entry(c, q, op) {
-                return '<ColorMapEntry color="' + c + '" quantity="' + q + '" opacity="' + op + '"/>';
-            }
-            var cm =
-                entry('#0a2a5e', -50000, 0) +      // nodata guard (-99999)
-                entry('#0a2a5e', -40, 0.90) +      // deep
-                entry('#1d6fdb', -10, 0.80) +
-                entry('#6db3e8', 0,   0.70) +
-                entry('#aed6f2', 6,   0.60);       // shallow / intertidal flats
-            return '<?xml version="1.0" encoding="UTF-8"?>' +
-                '<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc">' +
-                '<NamedLayer><Name>' + SEA_LAYER + '</Name>' +
-                '<UserStyle><Name>sea</Name><FeatureTypeStyle><Rule>' +
-                '<RasterSymbolizer><Opacity>1.0</Opacity>' +
-                '<ColorMap type="ramp">' + cm + '</ColorMap>' +
-                '</RasterSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>';
-        }
-        function ensureSeaLayer() {
-            if (seaLayer) { return; }
-            var src = new ol.source.ImageWMS({
-                url: SEA_URL,
-                params: { LAYERS: SEA_LAYER, STYLES: '', FORMAT: 'image/png', TRANSPARENT: true, SLD_BODY: seaSLD() },
-                ratio: 1
-            });
-            seaLayer = new ol.layer.Image({ source: src, zIndex: 840, opacity: 1 });
-            map.addLayer(seaLayer);
-        }
-        function removeSeaLayer() {
-            if (seaLayer) { map.removeLayer(seaLayer); seaLayer = null; }
-        }
         // Re-render the flood at the current water level. M4 uses debugLevel if set
         // (throwaway slider); otherwise the cursor-derived waterIGN69(). Updating
         // SLD_BODY via updateParams re-requests the image at the new threshold.
@@ -743,7 +707,6 @@
         function applyFlood() {
             var level = debugLevel != null ? debugLevel : waterIGN69();
             if (level == null) { return; }
-            ensureSeaLayer();   // static sea underlay (paints once, below the flood)
             ensureFloodLayer();
             floodSrc.updateParams({ SLD_BODY: floodSLD(level) });
         }
@@ -793,7 +756,7 @@
         SViewer.panel.onClose(PANEL, function () {
             active = false; destroyChart();
             if (floodTimer) { clearTimeout(floodTimer); floodTimer = null; }
-            removeFloodLayer(); removeSeaLayer(); debugLevel = null;
+            removeFloodLayer(); debugLevel = null;
             btn.setAttribute('aria-pressed', 'false'); btn.classList.remove('active');
         });
 
