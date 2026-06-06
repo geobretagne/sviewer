@@ -42,8 +42,18 @@
     var WMS_URL   = 'https://geobretagne.fr/geoserver/alti/litto3d/wms';
     var WMS_LAYER = 'alti:litto3d';
     var WMS_SRC   = 'GéoBretagne / SHOM-IGN — Litto3D (MNT, altitude IGN69)';
-    var FLOOD_COLOR = '#1d6fdb';
-    var FLOOD_OPACITY = 0.6;
+    // Depth-graded flood palette (ColorBrewer Blues, sequential, colourblind-safe):
+    // deepest water dark navy → shoreline near-white. The ColorMap reads the pixel
+    // = terrain altitude (IGN69 m); depth = level − terrain, so LOW terrain = deep =
+    // dark. Darkest pinned to a fixed floor (-10 m IGN69); fades toward the shore so
+    // the terrain shows through at the waterline.
+    var DEEP_FLOOR = -10;   // terrain altitude (m) mapped to the darkest stop
+    var FLOOD_STOPS = [
+        { c: '#08306b', o: 0.85 },  // deepest  (terrain = DEEP_FLOOR)
+        { c: '#2171b5', o: 0.70 },  // mid      (terrain = level*0.5)
+        { c: '#9ecae1', o: 0.55 },  // shallow  (terrain = level*0.9)
+        { c: '#deebf7', o: 0.45 }   // shoreline (terrain = level, depth 0)
+    ];
 
     var minZoom = DEF_MINZOOM;
 
@@ -611,21 +621,41 @@
         });
 
         // --- M4: server-side flood via inline SLD ----------------------------
-        // Build the SLD that paints terrain BELOW `level` (m IGN69) as a flood and
-        // leaves everything else transparent. type=intervals → a hard threshold at
-        // `level`; nodata (-9999) and dry land (> level) get opacity 0.
+        // Build the SLD that paints water DEPTH below `level` (m IGN69). type=ramp
+        // interpolates between stops keyed on the pixel = terrain altitude:
+        //   -9998        → transparent  (guards nodata -9999, which in `ramp` would
+        //                                otherwise take the first stop's colour)
+        //   DEEP_FLOOR   → darkest navy (deepest water)
+        //   level*0.5    → mid blue
+        //   level*0.9    → shallow
+        //   level        → shoreline (depth 0), near-white, faint
+        //   level+eps    → transparent (dry land starts)
+        //   20000        → transparent (cap)
         function floodSLD(level) {
-            var L = Number(level).toFixed(3);
+            var L = Number(level);
+            function entry(color, q, op) {
+                return '<ColorMapEntry color="' + color + '" quantity="' + q + '" opacity="' + op + '"/>';
+            }
+            var qDeep = DEEP_FLOOR;
+            var qMid  = (L * 0.5).toFixed(3);
+            var qShal = (L * 0.9).toFixed(3);
+            var qShore = L.toFixed(3);
+            var qDry  = (L + 0.001).toFixed(3);
+            var cm =
+                entry(FLOOD_STOPS[0].c, -9998, 0) +              // nodata guard
+                entry(FLOOD_STOPS[0].c, qDeep, FLOOD_STOPS[0].o) +
+                entry(FLOOD_STOPS[1].c, qMid,  FLOOD_STOPS[1].o) +
+                entry(FLOOD_STOPS[2].c, qShal, FLOOD_STOPS[2].o) +
+                entry(FLOOD_STOPS[3].c, qShore, FLOOD_STOPS[3].o) +
+                entry(FLOOD_STOPS[3].c, qDry,  0) +              // dry land
+                entry(FLOOD_STOPS[3].c, 20000, 0);              // cap
             return '<?xml version="1.0" encoding="UTF-8"?>' +
                 '<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc">' +
                 '<NamedLayer><Name>' + WMS_LAYER + '</Name>' +
                 '<UserStyle><Name>flood</Name><FeatureTypeStyle><Rule>' +
                 '<RasterSymbolizer><Opacity>1.0</Opacity>' +
-                '<ColorMap type="intervals">' +
-                '<ColorMapEntry color="' + FLOOD_COLOR + '" quantity="-9000" opacity="0"/>' +
-                '<ColorMapEntry color="' + FLOOD_COLOR + '" quantity="' + L + '" opacity="' + FLOOD_OPACITY + '"/>' +
-                '<ColorMapEntry color="' + FLOOD_COLOR + '" quantity="20000" opacity="0"/>' +
-                '</ColorMap></RasterSymbolizer>' +
+                '<ColorMap type="ramp">' + cm + '</ColorMap>' +
+                '</RasterSymbolizer>' +
                 '</Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>';
         }
         // Create the OL WMS flood layer once (above background, below UI). SLD_BODY
