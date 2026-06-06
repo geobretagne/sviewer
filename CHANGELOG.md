@@ -4,6 +4,37 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.17.4] - 2026-06-06
+
+### Added
+
+- **Démarrage hors ligne.** Le service worker précharge désormais OpenLayers et
+  l'extension `field` (optionnel) au moment de l'installation. L'application
+  installée peut s'ouvrir sans réseau après le premier chargement.
+- **Rechargement automatique après mise à jour.** À l'activation d'un nouveau
+  service worker, sViewer affiche un toast « Nouvelle version disponible » puis
+  recharge automatiquement la page, évitant toute désynchronisation
+  shell/cache.
+- **Indicateur hors ligne.** Pastille ambre centrée en haut de carte affichant
+  « Hors ligne — carte depuis le cache » (+ en, es, de) quand
+  `navigator.onLine = false`.
+
+### Fixed
+
+- **Extension `field` — schéma Grist hors ligne.** Le schéma de colonnes est
+  maintenant mis en cache dans `localStorage` (clé `sv_field_schema_v1.<doc>.<table>`).
+  Si la requête réseau échoue (mode avion), le schéma mis en cache est utilisé
+  automatiquement ; premier usage sans réseau affiche une erreur claire.
+- **Extension `field` — message d'erreur masqué.** Le message d'erreur de schéma
+  s'affichait dans un span de 78 px caché derrière les boutons. Il remplace
+  désormais toute la barre de capture (`renderBarError`), avec bouton
+  d'annulation accessible.
+- **Thème sombre — fond blanc sur blanc.** `sv-hint` utilisait
+  `--sv-surface-glass` (presque blanc en thème sombre) comme fond. Remplacé
+  par `rgb(24 24 27 / 88%)` codé en dur (dark-glass). Règle établie : les
+  superpositions carte utilisent des couleurs codées en dur, indépendantes du
+  thème.
+
 ## [0.17.3] - 2026-06-06
 
 ### Fixed
