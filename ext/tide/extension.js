@@ -35,23 +35,23 @@
     var SEARCH_M  = 30000;     // half-width (m) of the WFS bbox around map center
     var DEF_MINZOOM = 13;      // coastal scale gate (single-port flat-S validity)
 
-    // SHOM bathymetry 1 m (GeoServer WMS). Pixel = sea-floor altitude IGN69 in
+    // SHOM bathymetry 5 m (GeoServer WMS). Pixel = sea-floor altitude IGN69 in
     // metres (GRAY_INDEX), nodata = -99999. IGN69 → the tide's water_IGN69
     // thresholds it directly, no extra correction. SEA tool: paint where the sea
-    // floor is BELOW the water level (submerged), graded by depth (water − bathy);
-    // exposed flats (bathy ≥ level) and nodata stay transparent. Tide rises →
-    // waterline creeps up the shore; falls → intertidal flats emerge.
+    // floor is BELOW the water level (submerged) blue, at/above orange; nodata
+    // transparent. Tide rises → waterline creeps up the shore; falls → flats
+    // emerge. 5 m grid (vs 1 m): smoother coast, less speckle, faster.
     //
     // CRITICAL: GeoServer matches the SLD <NamedLayer><Name> to the layer only
-    // when WORKSPACE-QUALIFIED ('shom:bathy_1m'). A bare name parses but is
+    // when WORKSPACE-QUALIFIED ('shom:bathy_5m'). A bare name parses but is
     // silently ignored → default style renders. Verified on geobretagne.
     //
     // We do NOT use the terrestrial Litto3D here: it covers only the land above
     // lowest tide (open sea = nodata) and overlapped the intertidal band. One
     // bathymetry layer = no overlap, no land taint.
-    var WMS_URL   = 'https://geobretagne.fr/geoserver/shom/bathy_1m/wms';
-    var WMS_LAYER = 'shom:bathy_1m';
-    var WMS_SRC   = 'GéoBretagne / SHOM — bathymétrie 1 m (altitude IGN69)';
+    var WMS_URL   = 'https://geobretagne.fr/geoserver/shom/bathy_5m/wms';
+    var WMS_LAYER = 'shom:bathy_5m';
+    var WMS_SRC   = 'GéoBretagne / SHOM — bathymétrie 5 m (altitude IGN69)';
     // Binary water/no-water: below the water level = blue (submerged), at/above =
     // orange (exposed). Hard threshold (SLD type=intervals), no depth grading.
 
