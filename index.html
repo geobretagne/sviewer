@@ -70,6 +70,16 @@
             navigator.serviceWorker.register('sw.js').catch(err => {
                 console.debug('Service Worker registration failed:', err);
             });
+            // New SW activated (new release) → prompt reload so shell matches new cache
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                var sv = window.SViewer;
+                if (sv && sv.toast) {
+                    sv.toast('Nouvelle version disponible — rechargement…', { type: 'info', duration: 2500 });
+                    setTimeout(() => window.location.reload(), 2600);
+                } else {
+                    window.location.reload();
+                }
+            });
         }
 
         // Wait for DOM to be ready, then initialize with URL parameters

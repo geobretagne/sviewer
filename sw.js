@@ -1,21 +1,31 @@
 // CACHE_NAME is patched at build time by `npm run stamp` (commit hash suffix)
 const SVIEWER_COMMIT = 'ea33995';
 const CACHE_NAME = 'sviewer-' + SVIEWER_COMMIT;
-const ASSETS_TO_CACHE = [
+const ASSETS_REQUIRED = [
   './',
   './index.html',
   './manifest.json',
   './static/js/embed.min.js',
   './static/js/sviewer.min.js',
   './static/css/sviewer.min.css',
-  './static/js/i18n.js'
+  './static/js/i18n.js',
+  './static/lib/ol/ol.js',
+  './static/lib/ol/ol.css'
+];
+
+// Cached best-effort: missing = offline degrades gracefully, install still succeeds
+const ASSETS_OPTIONAL = [
+  './ext/field/manifest.json',
+  './ext/field/extension.js'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS_TO_CACHE).catch(() => {
-        // Ignore failures for optional assets
+      return cache.addAll(ASSETS_REQUIRED).then(() => {
+        return Promise.all(
+          ASSETS_OPTIONAL.map(url => cache.add(url).catch(() => {}))
+        );
       });
     })
   );
