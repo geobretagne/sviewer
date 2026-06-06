@@ -1173,12 +1173,17 @@
             ensureCurrentLayer(id);
         }
         // Standard EPSG:3857 WMTS grid (20 zooms) — matches the SHOM matrixset.
+        // The current atlas only publishes matrices 0..13 (it is a coarse regional
+        // field). Build the grid to z13 ONLY — requesting z14+ would 404. Above
+        // z13 OL over-zooms the z13 tile (the current field just looks coarser,
+        // which is honest: the data IS coarse).
+        var CUR_MAXZ = 13;
         var _wmtsGrid = null;
         function wmtsGrid3857() {
             if (_wmtsGrid) { return _wmtsGrid; }
             var ext = ol.proj.get('EPSG:3857').getExtent();
             var res = [], mat = [], r0 = 156543.03392804097;
-            for (var z = 0; z < 20; z++) { res.push(r0 / Math.pow(2, z)); mat.push(String(z)); }
+            for (var z = 0; z <= CUR_MAXZ; z++) { res.push(r0 / Math.pow(2, z)); mat.push(String(z)); }
             _wmtsGrid = new ol.tilegrid.WMTS({
                 origin: ol.extent.getTopLeft(ext), resolutions: res, matrixIds: mat
             });
