@@ -508,6 +508,7 @@
                 // Default selection = current time, clamped into the series' day.
                 curIdx = nearestIdxToNow();
                 lockCursor();
+                chart.redraw(false, false);   // draw the selection marker at "now"
                 bindReadoutKeys();
                 updateReadout();
                 // Paint the sea for "now" (the cursor's default position) as soon
