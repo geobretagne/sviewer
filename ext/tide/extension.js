@@ -96,6 +96,8 @@
         fr: {
             'btn.title':   'Marée (étendue d’eau prévue)',
             'panel.title': 'Marée',
+            'tab.tide':    'Marée',
+            'tab.data':    'Données',
             'gate.hint':   'Zoomez sur une zone côtière près d’un port pour activer l’outil.',
             'loading':     'Recherche du port le plus proche…',
             'port.label':  'Port de référence',
@@ -136,6 +138,8 @@
         en: {
             'btn.title':   'Tide (predicted water extent)',
             'panel.title': 'Tide',
+            'tab.tide':    'Tide',
+            'tab.data':    'Data',
             'gate.hint':   'Zoom in on a coastal area near a port to enable the tool.',
             'loading':     'Finding nearest port…',
             'port.label':  'Reference port',
@@ -176,6 +180,8 @@
         es: {
             'btn.title':   'Marea (extensión de agua prevista)',
             'panel.title': 'Marea',
+            'tab.tide':    'Marea',
+            'tab.data':    'Datos',
             'gate.hint':   'Acérquese a una zona costera cerca de un puerto para activar la herramienta.',
             'loading':     'Buscando el puerto más cercano…',
             'port.label':  'Puerto de referencia',
@@ -216,6 +222,8 @@
         de: {
             'btn.title':   'Gezeiten (vorhergesagte Wasserausdehnung)',
             'panel.title': 'Gezeiten',
+            'tab.tide':    'Gezeit',
+            'tab.data':    'Daten',
             'gate.hint':   'Zoomen Sie auf ein Küstengebiet nahe einem Hafen, um das Werkzeug zu aktivieren.',
             'loading':     'Nächstgelegenen Hafen suchen…',
             'port.label':  'Referenzhafen',
@@ -374,22 +382,24 @@
             if (val == null) { return ''; }
             return '<tr><th scope="row">' + esc(label) + '</th><td>' + esc(val.toFixed(2)) + ' m</td></tr>';
         }
-        // Pure HTML for the provenance column (port + datum separation + levels).
+        // Re-pick control (button + panned-away hint). Lives on the Marée tab so
+        // the user can re-pick the port without leaving the graph.
+        function repickHtml() {
+            if (!port) { return ''; }
+            return (
+                '<button type="button" class="btn btn-primary btn-sm sv-tide-repick" id="sv-tide-repick">' +
+                    esc(t('port.repick')) + '</button>' +
+                '<p class="sv-tide-faraway" id="sv-tide-faraway" hidden>' + esc(t('port.faraway')) + '</p>');
+        }
+        // Données tab: port + datum separation + characteristic levels + bathymetry.
         // Every block carries source + date (scientific-traceability rule).
-        function portHtml() {
+        function dataHtml() {
             if (!port) { return ''; }
             var levels =
                 levelRow(t('lvl.phma'), port.phma) +
                 levelRow(t('lvl.pmve'), port.pmve) +
                 levelRow(t('lvl.nm'),   port.nm);
             return (
-                // Re-pick button FIRST: the port is chosen on open and does NOT
-                // follow pans (avoids surprise refetches). This re-picks the
-                // nearest RAM port for the current view; the hint shows when you
-                // have panned far from the current port.
-                '<button type="button" class="btn btn-primary btn-sm sv-tide-repick" id="sv-tide-repick">' +
-                    esc(t('port.repick')) + '</button>' +
-                '<p class="sv-tide-faraway" id="sv-tide-faraway" hidden>' + esc(t('port.faraway')) + '</p>' +
                 // Port
                 '<section class="sv-tide-block">' +
                   '<h3 class="sv-tide-h">' + esc(t('port.label')) + '</h3>' +
@@ -421,16 +431,21 @@
                   provHtml(WMS_SRC, null) +
                 '</section>');
         }
-        // The dock is split: a scrollable provenance column (port + datum + levels)
-        // on the left, and the tide curve filling the rest on the right. Wide dock
-        // → curve reads horizontally, provenance stays visible (traceability).
+        // Two tabs (compact, mobile-first): "Marée" = live controls + graph,
+        // "Données" = port/datum/levels/bathymetry provenance. A tablist (WCAG)
+        // toggles the panes; both share the short bottom dock.
         function renderLayout() {
             var r = root(); if (!r) { return; }
             r.innerHTML =
-                '<div class="sv-tide-info" id="sv-tide-info">' + portHtml() + '</div>' +
-                '<div class="sv-tide-curve" id="sv-tide-curve">' +
-                  // Draft (tirant d'eau): lowers the safe/danger break by this much
-                  // so the map flags grounding zones for a boat of this draft.
+                '<div class="sv-tide-tabs" role="tablist" aria-label="' + esc(t('panel.title')) + '">' +
+                  '<button type="button" role="tab" class="sv-tide-tab" id="sv-tide-tab-tide" ' +
+                       'aria-controls="sv-tide-pane-tide" aria-selected="true" tabindex="0">' + esc(t('tab.tide')) + '</button>' +
+                  '<button type="button" role="tab" class="sv-tide-tab" id="sv-tide-tab-data" ' +
+                       'aria-controls="sv-tide-pane-data" aria-selected="false" tabindex="-1">' + esc(t('tab.data')) + '</button>' +
+                '</div>' +
+                // Marée pane
+                '<div class="sv-tide-pane sv-tide-curve" id="sv-tide-pane-tide" role="tabpanel" aria-labelledby="sv-tide-tab-tide">' +
+                  repickHtml() +
                   '<div class="sv-tide-draft">' +
                     '<label for="sv-tide-draft-range">' + esc(t('draft.label')) + '</label>' +
                     '<input type="range" id="sv-tide-draft-range" min="0" max="3" step="0.1" value="' + draft + '" ' +
@@ -439,21 +454,57 @@
                   '</div>' +
                   '<div class="sv-tide-curve-head" id="sv-tide-curve-head"></div>' +
                   '<div class="sv-tide-plot" id="sv-tide-plot"></div>' +
-                  // Cursor readout — focusable (role=slider) so arrow keys scrub
-                  // the time without a mouse (WCAG). Shows the selected instant in
-                  // BOTH datums (ZH and the computed IGN69) — no hidden number.
                   '<div class="sv-tide-readrow">' +
                     '<div class="sv-tide-readout" id="sv-tide-readout" tabindex="0" role="slider" ' +
                          'aria-label="' + esc(t('cursor.label')) + '"></div>' +
-                    // WMS loading indicator — shown while the sea layer fetches.
                     '<span class="sv-tide-spinner" id="sv-tide-spinner" role="status" ' +
                          'aria-label="' + esc(t('wms.loading')) + '" title="' + esc(t('wms.loading')) + '" hidden></span>' +
                   '</div>' +
                   '<p class="sv-tide-prov sv-tide-curve-foot" id="sv-tide-curve-foot"></p>' +
+                '</div>' +
+                // Données pane (hidden by default)
+                '<div class="sv-tide-pane sv-tide-info" id="sv-tide-pane-data" role="tabpanel" aria-labelledby="sv-tide-tab-data" hidden>' +
+                  dataHtml() +
                 '</div>';
+            bindTabs();
             bindRepick();
             bindDraft();
             updateFaraway();
+        }
+        // Tab switching: aria-selected + roving tabindex + show/hide panes. Left/
+        // Right arrows move between tabs (WCAG tablist pattern). The chart must be
+        // resized when its pane becomes visible (uPlot sizes to a 0-height hidden
+        // box otherwise).
+        function bindTabs() {
+            var tabs = [
+                { tab: 'sv-tide-tab-tide', pane: 'sv-tide-pane-tide' },
+                { tab: 'sv-tide-tab-data', pane: 'sv-tide-pane-data' }
+            ];
+            function select(idx) {
+                tabs.forEach(function (tt, i) {
+                    var tb = document.getElementById(tt.tab), pn = document.getElementById(tt.pane);
+                    var on = i === idx;
+                    if (tb) { tb.setAttribute('aria-selected', on); tb.tabIndex = on ? 0 : -1; }
+                    if (pn) { pn.hidden = !on; }
+                });
+                if (idx === 0 && chart) {
+                    var host = document.getElementById('sv-tide-plot');
+                    if (host) { chart.setSize({ width: host.clientWidth, height: Math.max(120, host.clientHeight) }); }
+                }
+            }
+            tabs.forEach(function (tt, i) {
+                var tb = document.getElementById(tt.tab);
+                if (!tb) { return; }
+                tb.addEventListener('click', function () { select(i); });
+                tb.addEventListener('keydown', function (e) {
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        var n = (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+                        var nt = document.getElementById(tabs[n].tab);
+                        if (nt) { nt.focus(); select(n); }
+                    }
+                });
+            });
         }
         function bindRepick() {
             var b = document.getElementById('sv-tide-repick');
@@ -1048,9 +1099,16 @@
             var css = [
                 // Split dock: provenance column (scrolls) + curve column (fills).
                 // Stacks to a single column on narrow screens.
-                P + '#sv-tide-root{display:flex;flex-direction:row;gap:1rem;height:100%;min-height:0}',
-                P + '.sv-tide-info{flex:0 0 260px;min-width:0;overflow:auto;display:flex;flex-direction:column;gap:.4rem;padding-right:.3rem}',
-                P + '.sv-tide-curve{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}',
+                // Tabbed layout: tablist on top, one pane fills the rest.
+                P + '#sv-tide-root{display:flex;flex-direction:column;gap:.4rem;height:100%;min-height:0}',
+                P + '.sv-tide-tabs{flex:none;display:flex;gap:.25rem;border-bottom:1px solid var(--sv-panel-border,#ccc)}',
+                P + '.sv-tide-tab{appearance:none;background:none;border:none;border-bottom:2px solid transparent;padding:.3rem .7rem;font-size:.85rem;font-weight:600;color:#888;cursor:pointer}',
+                P + '.sv-tide-tab[aria-selected="true"]{color:#0d6efd;border-bottom-color:#0d6efd}',
+                P + '.sv-tide-tab:focus-visible{outline:2px solid #0d6efd;outline-offset:-2px}',
+                P + '.sv-tide-pane{flex:1;min-height:0}',
+                P + '.sv-tide-pane[hidden]{display:none}',
+                P + '.sv-tide-info{overflow:auto;display:flex;flex-direction:column;gap:.4rem;padding-right:.3rem}',
+                P + '.sv-tide-curve{min-width:0;min-height:0;display:flex;flex-direction:column}',
                 P + '.sv-tide-draft{flex:none;display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem}',
                 P + '.sv-tide-draft label{font-size:.8rem;font-weight:600;color:#333;white-space:nowrap}',
                 P + '.sv-tide-draft input[type=range]{flex:1;accent-color:#e8852b}',
@@ -1082,8 +1140,6 @@
                 '@keyframes sv-tide-spin{to{transform:rotate(360deg)}}',
                 '@media (prefers-reduced-motion:reduce){' + P + '.sv-tide-spinner{animation-duration:1.6s}}',
                 P + '.sv-tide-curve-foot{flex:none;margin-top:.25rem}',
-                '@media (max-width:640px){' + P + '#sv-tide-root{flex-direction:column;overflow:auto}' +
-                    P + '.sv-tide-info{flex:none}' + P + '.sv-tide-curve{min-height:200px}}',
                 P + '.sv-tide-msg{font-size:.85rem;color:#666;margin:.3rem 0}',
                 P + '.sv-tide-err{font-size:.85rem;color:#c0392b;margin:.3rem 0}',
                 P + '.sv-tide-block{margin:0}',
