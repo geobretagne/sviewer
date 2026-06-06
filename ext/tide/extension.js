@@ -541,10 +541,10 @@
             if (i === curIdx) { return; }
             curIdx = i;
             updateReadout();
-            if (!fromMouse) {
-                lockCursor();
-                if (chart) { chart.redraw(false, false); }   // refresh the selection marker
-            }
+            if (!fromMouse) { lockCursor(); }
+            // Always refresh the orange selection line — including mouse moves, so
+            // it follows on the first click/scrub (not only on a later redraw).
+            if (chart) { chart.redraw(false, false); }
             updateSea();   // scrubbing the cursor re-paints the sea (debounced)
         }
         // Pin uPlot's visual cursor to curIdx (so keyboard moves show on the plot).
