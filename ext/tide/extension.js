@@ -52,10 +52,8 @@
     var WMS_URL   = 'https://geobretagne.fr/geoserver/shom/bathy_1m/wms';
     var WMS_LAYER = 'shom:bathy_1m';
     var WMS_SRC   = 'GéoBretagne / SHOM — bathymétrie 1 m (altitude IGN69)';
-    // Depth-graded water palette (deep navy → shallow light), keyed on the pixel =
-    // sea-floor altitude (IGN69 m). Stops are positioned relative to the water
-    // level L: deepest at a fixed floor, lightening to the waterline at L.
-    var DEEP_FLOOR = -40;   // sea-floor altitude (m) mapped to the darkest stop
+    // Binary water/no-water: below the water level = blue (submerged), at/above =
+    // orange (exposed). Hard threshold (SLD type=intervals), no depth grading.
 
     var minZoom = DEF_MINZOOM;
 
@@ -632,47 +630,32 @@
         });
 
         // --- M4: server-side sea via inline SLD ------------------------------
-        // Paint the SEA at water level `level` (m IGN69) on the bathymetry. type=ramp
-        // keyed on the pixel = sea-floor altitude:
-        //   -50000      → transparent  (guards nodata -99999, which in `ramp` would
-        //                               otherwise take the first stop's colour)
-        //   DEEP_FLOOR  → darkest navy (deep water: water_IGN69 − bathy is large)
-        //   level-8     → mid blue
-        //   level-1.5   → shallow
-        //   level       → waterline (depth 0), light
-        //   level+eps   → transparent (sea floor above the tide = exposed flats)
-        //   20000       → transparent (cap)
-        // As `level` rises the whole ramp shifts up the shore (more area submerged);
-        // as it falls, flats above the new level turn transparent (emerge).
-        var SEA_STOPS = [
-            { c: '#0a2a5e', o: 0.90 },  // deepest (bathy = DEEP_FLOOR)
-            { c: '#1d6fdb', o: 0.78 },  // mid     (bathy = level-8)
-            { c: '#6db3e8', o: 0.68 },  // shallow (bathy = level-1.5)
-            { c: '#bfe0f5', o: 0.55 }   // waterline (bathy = level)
-        ];
+        // BINARY split at the water level `level` (m IGN69) on the bathymetry.
+        // type=intervals = hard step (no interpolation); a pixel falls in the
+        // interval whose quantity is its UPPER bound:
+        //   (-∞ .. -50000]  → transparent  (nodata -99999)
+        //   (-50000 .. level] → BLUE   sea floor below the water level = submerged
+        //   (level .. 20000]  → ORANGE sea floor at/above the water level = exposed
+        // As `level` rises the blue grows up the shore (flats covered); as it falls,
+        // flats above the new level turn orange (emerge). One clean waterline.
+        var SEA_BLUE   = '#1d6fdb';
+        var SEA_ORANGE = '#e8852b';
+        var SEA_OPACITY = 0.6;
         function seaSLD(level) {
-            var L = Number(level);
+            var L = Number(level).toFixed(3);
             function entry(color, q, op) {
                 return '<ColorMapEntry color="' + color + '" quantity="' + q + '" opacity="' + op + '"/>';
             }
-            var qMid  = (L - 8).toFixed(3);
-            var qShal = (L - 1.5).toFixed(3);
-            var qWl   = L.toFixed(3);
-            var qDry  = (L + 0.001).toFixed(3);
             var cm =
-                entry(SEA_STOPS[0].c, -50000, 0) +              // nodata guard (-99999)
-                entry(SEA_STOPS[0].c, DEEP_FLOOR, SEA_STOPS[0].o) +
-                entry(SEA_STOPS[1].c, qMid,  SEA_STOPS[1].o) +
-                entry(SEA_STOPS[2].c, qShal, SEA_STOPS[2].o) +
-                entry(SEA_STOPS[3].c, qWl,   SEA_STOPS[3].o) +
-                entry(SEA_STOPS[3].c, qDry,  0) +               // exposed flats / land
-                entry(SEA_STOPS[3].c, 20000, 0);               // cap
+                entry(SEA_BLUE,   -50000, 0) +              // nodata guard (-99999)
+                entry(SEA_BLUE,   L,      SEA_OPACITY) +    // submerged → blue
+                entry(SEA_ORANGE, 20000,  SEA_OPACITY);     // above water → orange
             return '<?xml version="1.0" encoding="UTF-8"?>' +
                 '<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc">' +
                 '<NamedLayer><Name>' + WMS_LAYER + '</Name>' +
                 '<UserStyle><Name>sea</Name><FeatureTypeStyle><Rule>' +
                 '<RasterSymbolizer><Opacity>1.0</Opacity>' +
-                '<ColorMap type="ramp">' + cm + '</ColorMap>' +
+                '<ColorMap type="intervals">' + cm + '</ColorMap>' +
                 '</RasterSymbolizer>' +
                 '</Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>';
         }
