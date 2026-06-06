@@ -573,21 +573,21 @@
         }
         // Red vertical "now" marker drawn on the plot canvas. Fires from uPlot's
         // `draw` hook (after the series render). Skipped when the current time is
-        // outside the shown day. canvas coords are device px → use the un-scaled
-        // valToPos (over=false) and uPlot's own bbox.
+        // outside the shown day. With canvas=true, valToPos returns DEVICE pixels,
+        // matching u.bbox (also device px) — do NOT multiply by pxRatio again.
         function drawNowLine(u) {
             if (!tide || !tide.points.length) { return; }
             var nowS = Date.now() / 1000;
             var x0 = u.data[0][0], x1 = u.data[0][u.data[0].length - 1];
             if (nowS < x0 || nowS > x1) { return; }   // now outside the day → no line
-            var cx = Math.round(u.valToPos(nowS, 'x', true) * u.pxRatio);
+            var cx = Math.round(u.valToPos(nowS, 'x', true));
             var ctx = u.ctx;
             ctx.save();
             ctx.beginPath();
             ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
             ctx.clip();
             ctx.strokeStyle = '#e02424';   // red, fixed (theme-independent overlay)
-            ctx.lineWidth = 1.5 * u.pxRatio;
+            ctx.lineWidth = Math.max(1, 1.5 * u.pxRatio);
             ctx.beginPath();
             ctx.moveTo(cx, u.bbox.top);
             ctx.lineTo(cx, u.bbox.top + u.bbox.height);
