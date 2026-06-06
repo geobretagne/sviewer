@@ -100,6 +100,8 @@
             'loading':     'Recherche du port le plus proche…',
             'port.label':  'Port de référence',
             'port.dist':   'à {d} du centre de la carte',
+            'port.repick': 'Port le plus proche ici',
+            'port.faraway':'Vous vous êtes éloigné de ce port — actualisez pour le port le plus proche.',
             'sep.label':   'Référence verticale',
             'sep.val':     'Zéro hydrographique à {v} m / IGN69',
             'sep.expl':    'Décalage appliqué aux hauteurs de marée (comptées sur le zéro hydrographique) pour les ramener en altitude IGN69.',
@@ -132,6 +134,8 @@
             'loading':     'Finding nearest port…',
             'port.label':  'Reference port',
             'port.dist':   '{d} from map centre',
+            'port.repick': 'Nearest port here',
+            'port.faraway':'You have panned away from this port — refresh for the nearest one.',
             'sep.label':   'Vertical reference',
             'sep.val':     'Chart datum at {v} m / IGN69',
             'sep.expl':    'Offset applied to tide heights (measured above chart datum) to bring them to IGN69 altitude.',
@@ -164,6 +168,8 @@
             'loading':     'Buscando el puerto más cercano…',
             'port.label':  'Puerto de referencia',
             'port.dist':   'a {d} del centro del mapa',
+            'port.repick': 'Puerto más cercano aquí',
+            'port.faraway':'Se ha alejado de este puerto — actualice para el más cercano.',
             'sep.label':   'Referencia vertical',
             'sep.val':     'Cero hidrográfico a {v} m / IGN69',
             'sep.expl':    'Desfase aplicado a las alturas de marea (medidas sobre el cero hidrográfico) para llevarlas a altitud IGN69.',
@@ -196,6 +202,8 @@
             'loading':     'Nächstgelegenen Hafen suchen…',
             'port.label':  'Referenzhafen',
             'port.dist':   '{d} vom Kartenzentrum',
+            'port.repick': 'Nächster Hafen hier',
+            'port.faraway':'Sie haben sich von diesem Hafen entfernt — aktualisieren für den nächsten.',
             'sep.label':   'Höhenbezug',
             'sep.val':     'Seekartennull bei {v} m / IGN69',
             'sep.expl':    'Versatz, der auf Gezeitenhöhen (über Seekartennull gemessen) angewandt wird, um sie auf IGN69-Höhe zu bringen.',
@@ -353,6 +361,13 @@
                   '<p class="sv-tide-port-name">' + esc(port.site) +
                     (port.dist != null ? ' <span class="sv-tide-dim">(' + esc(t('port.dist', { d: fmtDist(port.dist) })) + ')</span>' : '') +
                   '</p>' +
+                  // Manual re-pick: the port is chosen on open and does NOT follow
+                  // pans (avoids surprise refetches). This button re-picks the
+                  // nearest RAM port for the current view; the hint appears when
+                  // you have panned far from the current port.
+                  '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-repick" id="sv-tide-repick">' +
+                    esc(t('port.repick')) + '</button>' +
+                  '<p class="sv-tide-faraway" id="sv-tide-faraway" hidden>' + esc(t('port.faraway')) + '</p>' +
                   provHtml(RAM_SRC, port.date) +
                 '</section>' +
                 // Datum separation S
@@ -399,6 +414,22 @@
                   '</div>' +
                   '<p class="sv-tide-prov sv-tide-curve-foot" id="sv-tide-curve-foot"></p>' +
                 '</div>';
+            bindRepick();
+            updateFaraway();
+        }
+        function bindRepick() {
+            var b = document.getElementById('sv-tide-repick');
+            if (b) { b.addEventListener('click', function () { findPort(); }); }
+        }
+        // Show the "you have panned away" hint when the map centre is far from the
+        // current port (beyond the single-port flat-S validity, ~10 km).
+        var FARAWAY_M = 10000;
+        function updateFaraway() {
+            var el = document.getElementById('sv-tide-faraway');
+            if (!el || !port) { return; }
+            var c = view.getCenter();
+            var far = c && Math.hypot(c[0] - port.x, c[1] - port.y) > FARAWAY_M;
+            el.hidden = !far;
         }
 
         // --- M6: tide curve from Open-Meteo Marine (calibrated to RAM) --------
@@ -828,6 +859,8 @@
             if (!ok && active) { SViewer.panel.close(); }
         }
         view.on('change:resolution', updateGate);
+        // Panning → update the "panned away from port" hint (no auto re-pick).
+        view.on('change:center', function () { if (active) { updateFaraway(); } });
         updateGate();
 
         function open() {
@@ -887,6 +920,9 @@
                 P + '.sv-tide-block{margin:0}',
                 P + '.sv-tide-h{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:#888;margin:.2rem 0 .15rem}',
                 P + '.sv-tide-port-name{font-size:1rem;font-weight:600;margin:0}',
+                P + '.sv-tide-repick{margin-top:.3rem;font-size:.78rem;padding:.15rem .5rem}',
+                P + '.sv-tide-faraway{font-size:.74rem;color:#b8860b;margin:.25rem 0 0;font-style:italic}',
+                P + '.sv-tide-faraway[hidden]{display:none}',
                 P + '.sv-tide-dim{font-weight:400;color:#888;font-size:.85rem}',
                 P + '.sv-tide-sep{font-size:.95rem;font-weight:600;color:#0d6efd;margin:0}',
                 P + '.sv-tide-expl{font-size:.8rem;color:#666;margin:.15rem 0 0}',
