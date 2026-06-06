@@ -121,8 +121,7 @@
             'read.zh':     'sur le zéro hydrographique',
             'read.ign':    'en altitude IGN69',
             'terrain.label':'Fond marin (bathymétrie)',
-            'terrain.expl':'La mer est calculée par le serveur : tout pixel dont l’altitude du fond (IGN69) est inférieure au niveau de la mer est peint.',
-            'soon':        'Étendue de la mer sur la carte : prochaine étape.'
+            'terrain.expl':'La mer est calculée par le serveur : tout pixel dont l’altitude du fond (IGN69) est inférieure au niveau de la mer est peint.'
         },
         en: {
             'btn.title':   'Tide (predicted water extent)',
@@ -153,8 +152,7 @@
             'read.zh':     'above chart datum',
             'read.ign':    'IGN69 altitude',
             'terrain.label':'Sea floor (bathymetry)',
-            'terrain.expl':'The sea is computed server-side: every pixel whose sea-floor altitude (IGN69) is below the sea level is painted.',
-            'soon':        'Sea extent on the map: next step.'
+            'terrain.expl':'The sea is computed server-side: every pixel whose sea-floor altitude (IGN69) is below the sea level is painted.'
         },
         es: {
             'btn.title':   'Marea (extensión de agua prevista)',
@@ -185,8 +183,7 @@
             'read.zh':     'sobre el cero hidrográfico',
             'read.ign':    'en altitud IGN69',
             'terrain.label':'Fondo marino (batimetría)',
-            'terrain.expl':'El mar lo calcula el servidor: se pinta todo píxel cuya altitud del fondo (IGN69) es inferior al nivel del mar.',
-            'soon':        'Extensión del mar en el mapa: próximo paso.'
+            'terrain.expl':'El mar lo calcula el servidor: se pinta todo píxel cuya altitud del fondo (IGN69) es inferior al nivel del mar.'
         },
         de: {
             'btn.title':   'Gezeiten (vorhergesagte Wasserausdehnung)',
@@ -217,8 +214,7 @@
             'read.zh':     'über Seekartennull',
             'read.ign':    'IGN69-Höhe',
             'terrain.label':'Meeresboden (Bathymetrie)',
-            'terrain.expl':'Das Meer wird serverseitig berechnet: jedes Pixel, dessen Meeresboden-Höhe (IGN69) unter dem Meeresspiegel liegt, wird eingefärbt.',
-            'soon':        'Meeresausdehnung auf der Karte: nächster Schritt.'
+            'terrain.expl':'Das Meer wird serverseitig berechnet: jedes Pixel, dessen Meeresboden-Höhe (IGN69) unter dem Meeresspiegel liegt, wird eingefärbt.'
         }
     };
     function lang() {
@@ -257,7 +253,6 @@
         var curIdx   = 0;      // selected sample index in tide.points (cursor position)
         var seaLayer = null; // OL WMS layer painting the sea (own, removed on close)
         var seaSrc   = null; // its ol.source.ImageWMS
-        var debugLevel = null; // M4 throwaway manual TIDE HEIGHT (ZH); null = use cursor
         var seaTimer = null; // debounce handle for the sea WMS request
 
         // --- RAM nearest-port fetch ------------------------------------------
@@ -391,45 +386,8 @@
                   // BOTH datums (ZH and the computed IGN69) — no hidden number.
                   '<div class="sv-tide-readout" id="sv-tide-readout" tabindex="0" role="slider" ' +
                        'aria-label="' + esc(t('cursor.label')) + '"></div>' +
-                  // M4 throwaway: manual level slider to prove the SLD sea render in
-                  // isolation. Removed in M5 once the cursor drives the level.
-                  '<div class="sv-tide-debug" id="sv-tide-debug">' +
-                    '<label>débug hauteur de marée (ZH) ' +
-                      '<input type="range" id="sv-tide-debug-range" min="0" max="14" step="0.1" value="3">' +
-                      '<output id="sv-tide-debug-out">3.0 m</output>' +
-                    '</label>' +
-                  '</div>' +
                   '<p class="sv-tide-prov sv-tide-curve-foot" id="sv-tide-curve-foot"></p>' +
                 '</div>';
-            bindDebug();
-        }
-        // M4 throwaway slider wiring — drives the sea from a literal level so the
-        // SLD threshold can be proven before the cursor coupling (M5).
-        function bindDebug() {
-            var r = document.getElementById('sv-tide-debug-range');
-            var o = document.getElementById('sv-tide-debug-out');
-            if (!r) { return; }
-            r.addEventListener('input', function () {
-                debugLevel = parseFloat(r.value);
-                if (o) { o.textContent = debugLevel.toFixed(1) + ' m'; }
-                updateSea();
-            });
-            // Initial value is set by syncDebugToCursor() once the tide series has
-            // loaded (so it matches the tide height at "now"), not here.
-        }
-        // Set the debug slider + value to the current cursor's tide height (ZH) and
-        // render. Default position = "now"; this makes the opening sea match the
-        // present tide instead of an arbitrary slider value.
-        function syncDebugToCursor() {
-            var r = document.getElementById('sv-tide-debug-range');
-            var o = document.getElementById('sv-tide-debug-out');
-            var s = selected();
-            if (!r || !s) { return; }
-            var hZH = Math.max(parseFloat(r.min), Math.min(parseFloat(r.max), s.hZH));
-            r.value = hZH;
-            debugLevel = hZH;
-            if (o) { o.textContent = hZH.toFixed(1) + ' m'; }
-            updateSea();
         }
 
         // --- M2: tide curve (fixture → SHOM proxy at M6) ----------------------
@@ -544,9 +502,9 @@
                 lockCursor();
                 bindReadoutKeys();
                 updateReadout();
-                // Default the debug slider to the tide height at "now" (matches the
-                // cursor), now that the series is loaded.
-                syncDebugToCursor();
+                // Paint the sea for "now" (the cursor's default position) as soon
+                // as the series is loaded.
+                updateSea();
             }).catch(function () {
                 var h = document.getElementById('sv-tide-curve-head');
                 if (h) { h.innerHTML = '<span class="sv-tide-err">' + esc(t('err.curve')) + '</span>'; }
@@ -575,7 +533,7 @@
             curIdx = i;
             updateReadout();
             if (!fromMouse) { lockCursor(); }
-            // M5 will re-render the sea here from waterIGN69().
+            updateSea();   // scrubbing the cursor re-paints the sea (debounced)
         }
         // Pin uPlot's visual cursor to curIdx (so keyboard moves show on the plot).
         // Only x matters for the vertical cursor line; top is the data y so the
@@ -720,21 +678,17 @@
         function removeSeaLayer() {
             if (seaLayer) { map.removeLayer(seaLayer); seaLayer = null; seaSrc = null; }
         }
-        // Re-render the sea at the current water level. M4 uses debugLevel if set
-        // (throwaway slider); otherwise the cursor-derived waterIGN69(). Updating
-        // SLD_BODY via updateParams re-requests the image at the new threshold.
-        // updateSea is DEBOUNCED: dragging the slider (M4) or scrubbing the
-        // cursor (M5) fires on every input/keypress — without this each one would
-        // launch a WMS GetMap. Coalesce to the last value after a short idle so a
-        // fast drag = one request, not dozens.
+        // Re-render the sea at the current water level (cursor-derived
+        // waterIGN69()). updateParams re-requests the WMS image at the new SLD
+        // threshold. updateSea is DEBOUNCED: scrubbing the cursor fires on every
+        // move/keypress — without this each one would launch a WMS GetMap.
+        // Coalesce to the last value after a short idle so a fast scrub = one
+        // request, not dozens.
         var SEA_DEBOUNCE = 160;   // ms idle before the WMS request
         function applySea() {
-            // debugLevel is a TIDE HEIGHT (on ZH) — convert to IGN69 for the SLD
-            // threshold: water_IGN69 = tide_ZH + S. The cursor path already yields
-            // IGN69 via waterIGN69().
-            var level = debugLevel != null
-                ? debugLevel + (port ? Number(port.S) : 0)
-                : waterIGN69();
+            // The cursor's selected instant → water_IGN69 = tide_ZH + S, the SLD
+            // threshold. Painted blue below, orange above.
+            var level = waterIGN69();
             if (level == null) { return; }
             ensureSeaLayer();
             seaSrc.updateParams({ SLD_BODY: seaSLD(level) });
@@ -785,7 +739,7 @@
         SViewer.panel.onClose(PANEL, function () {
             active = false; destroyChart();
             if (seaTimer) { clearTimeout(seaTimer); seaTimer = null; }
-            removeSeaLayer(); debugLevel = null;
+            removeSeaLayer();
             btn.setAttribute('aria-pressed', 'false'); btn.classList.remove('active');
         });
 
@@ -819,10 +773,6 @@
                 P + '.sv-tide-read-ref{font-size:.72rem;color:#888;font-weight:400}',
                 P + '.sv-tide-read-arrow{color:#888}',
                 // M4 throwaway debug slider (dashed = temporary).
-                P + '.sv-tide-debug{flex:none;margin-top:.3rem;padding:.25rem .4rem;border:1px dashed #c0392b;border-radius:6px}',
-                P + '.sv-tide-debug label{display:flex;align-items:center;gap:.5rem;font-size:.74rem;color:#c0392b}',
-                P + '.sv-tide-debug input[type=range]{flex:1}',
-                P + '.sv-tide-debug output{font-variant-numeric:tabular-nums;min-width:3.5em;text-align:right}',
                 P + '.sv-tide-curve-foot{flex:none;margin-top:.25rem}',
                 '@media (max-width:640px){' + P + '#sv-tide-root{flex-direction:column;overflow:auto}' +
                     P + '.sv-tide-info{flex:none}' + P + '.sv-tide-curve{min-height:200px}}',
