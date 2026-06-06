@@ -414,9 +414,21 @@
                 if (o) { o.textContent = debugLevel.toFixed(1) + ' m'; }
                 updateSea();
             });
-            // Apply the initial slider value immediately so the sea shows on open.
-            debugLevel = parseFloat(r.value);
-            if (o) { o.textContent = debugLevel.toFixed(1) + ' m'; }
+            // Initial value is set by syncDebugToCursor() once the tide series has
+            // loaded (so it matches the tide height at "now"), not here.
+        }
+        // Set the debug slider + value to the current cursor's tide height (ZH) and
+        // render. Default position = "now"; this makes the opening sea match the
+        // present tide instead of an arbitrary slider value.
+        function syncDebugToCursor() {
+            var r = document.getElementById('sv-tide-debug-range');
+            var o = document.getElementById('sv-tide-debug-out');
+            var s = selected();
+            if (!r || !s) { return; }
+            var hZH = Math.max(parseFloat(r.min), Math.min(parseFloat(r.max), s.hZH));
+            r.value = hZH;
+            debugLevel = hZH;
+            if (o) { o.textContent = hZH.toFixed(1) + ' m'; }
             updateSea();
         }
 
@@ -532,6 +544,9 @@
                 lockCursor();
                 bindReadoutKeys();
                 updateReadout();
+                // Default the debug slider to the tide height at "now" (matches the
+                // cursor), now that the series is loaded.
+                syncDebugToCursor();
             }).catch(function () {
                 var h = document.getElementById('sv-tide-curve-head');
                 if (h) { h.innerHTML = '<span class="sv-tide-err">' + esc(t('err.curve')) + '</span>'; }
