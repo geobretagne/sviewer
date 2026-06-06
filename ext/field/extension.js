@@ -1446,6 +1446,17 @@
         return !!lastFix; // all modes accept unlimited vertices (MultiPoint, Line, Polygon)
     }
 
+    function renderBarError(msg) {
+        if (!barEl) { return; }
+        barEl.innerHTML =
+            '<span style="font-size:.85rem;flex:1;white-space:normal;padding:0 4px">' + esc(msg) + '</span>' +
+            '<button type="button" id="fld-bar-stop" class="btn btn-outline-light"' +
+                ' aria-label="' + esc(t('capture.stop')) + '"' +
+                ' style="min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;padding:0">' +
+                icon('x-lg') + '</button>';
+        var el = document.getElementById('fld-bar-stop');
+        if (el) { el.addEventListener('click', function () { if (confirmAbort()) { stopCapture(); } }); }
+    }
     function renderBar() {
         if (!barEl) { return; }
         var canClose = canFinalize();
@@ -1520,8 +1531,7 @@
             if (!canFinalize()) { return; }
             try { await fetchSchema(); }
             catch (e) {
-                var s = document.getElementById('fld-bar-status');
-                if (s) { s.textContent = t('err.schema') + ' ' + (e.message || e); }
+                renderBarError(t('err.schema') + ' ' + (e.message || e));
                 return;
             }
             stopWatch();              // keep vertices — needed to build the polygon on save
