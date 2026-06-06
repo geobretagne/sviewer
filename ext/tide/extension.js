@@ -114,6 +114,8 @@
             'err.none':    'Aucun port de référence à proximité. Déplacez la carte vers la côte.',
             'err.fetch':   'Service RAM (SHOM) injoignable.',
             'curve.label': 'Marée prévue',
+            'draft.label': 'Tirant d’eau',
+            'draft.expl':  'Zones où l’eau est insuffisante pour ce tirant d’eau (risque d’échouage) en orange.',
             'curve.date':  'Hauteurs d’eau sur le zéro hydrographique — {date}',
             'date.prev':   'Jour précédent',
             'date.next':   'Jour suivant',
@@ -152,6 +154,8 @@
             'err.none':    'No reference port nearby. Pan the map toward the coast.',
             'err.fetch':   'RAM service (SHOM) unreachable.',
             'curve.label': 'Predicted tide',
+            'draft.label': 'Draft',
+            'draft.expl':  'Areas with too little water for this draft (grounding risk) in orange.',
             'curve.date':  'Water heights above chart datum — {date}',
             'date.prev':   'Previous day',
             'date.next':   'Next day',
@@ -190,6 +194,8 @@
             'err.none':    'Ningún puerto de referencia cerca. Desplace el mapa hacia la costa.',
             'err.fetch':   'Servicio RAM (SHOM) inaccesible.',
             'curve.label': 'Marea prevista',
+            'draft.label': 'Calado',
+            'draft.expl':  'Zonas con agua insuficiente para este calado (riesgo de varada) en naranja.',
             'curve.date':  'Alturas de agua sobre el cero hidrográfico — {date}',
             'date.prev':   'Día anterior',
             'date.next':   'Día siguiente',
@@ -228,6 +234,8 @@
             'err.none':    'Kein Referenzhafen in der Nähe. Verschieben Sie die Karte zur Küste.',
             'err.fetch':   'RAM-Dienst (SHOM) nicht erreichbar.',
             'curve.label': 'Vorhergesagte Gezeit',
+            'draft.label': 'Tiefgang',
+            'draft.expl':  'Bereiche mit zu wenig Wasser für diesen Tiefgang (Grundberührungsrisiko) in Orange.',
             'curve.date':  'Wasserhöhen über Seekartennull — {date}',
             'date.prev':   'Vorheriger Tag',
             'date.next':   'Nächster Tag',
@@ -285,6 +293,7 @@
         var seaLayer = null; // OL WMS layer painting the sea (own, removed on close)
         var seaSrc   = null; // its ol.source.ImageWMS
         var seaTimer = null; // debounce handle for the sea WMS request
+        var draft    = 0;    // tirant d'eau (m) — safety clearance; lowers the blue/orange break
 
         // --- RAM nearest-port fetch ------------------------------------------
         // Query the open RAM WFS for ports within a bbox around the map centre,
@@ -406,6 +415,7 @@
                 '<section class="sv-tide-block">' +
                   '<h3 class="sv-tide-h">' + esc(t('terrain.label')) + '</h3>' +
                   '<p class="sv-tide-expl">' + esc(t('terrain.expl')) + '</p>' +
+                  '<p class="sv-tide-expl">' + esc(t('draft.expl')) + '</p>' +
                   provHtml(WMS_SRC, null) +
                 '</section>');
         }
@@ -417,6 +427,14 @@
             r.innerHTML =
                 '<div class="sv-tide-info" id="sv-tide-info">' + portHtml() + '</div>' +
                 '<div class="sv-tide-curve" id="sv-tide-curve">' +
+                  // Draft (tirant d'eau): lowers the safe/danger break by this much
+                  // so the map flags grounding zones for a boat of this draft.
+                  '<div class="sv-tide-draft">' +
+                    '<label for="sv-tide-draft-range">' + esc(t('draft.label')) + '</label>' +
+                    '<input type="range" id="sv-tide-draft-range" min="0" max="10" step="0.1" value="' + draft + '" ' +
+                         'aria-describedby="sv-tide-draft-out">' +
+                    '<output id="sv-tide-draft-out" for="sv-tide-draft-range">' + draft.toFixed(1) + ' m</output>' +
+                  '</div>' +
                   '<div class="sv-tide-curve-head" id="sv-tide-curve-head"></div>' +
                   '<div class="sv-tide-plot" id="sv-tide-plot"></div>' +
                   // Cursor readout — focusable (role=slider) so arrow keys scrub
@@ -432,11 +450,22 @@
                   '<p class="sv-tide-prov sv-tide-curve-foot" id="sv-tide-curve-foot"></p>' +
                 '</div>';
             bindRepick();
+            bindDraft();
             updateFaraway();
         }
         function bindRepick() {
             var b = document.getElementById('sv-tide-repick');
             if (b) { b.addEventListener('click', function () { findPort(); }); }
+        }
+        function bindDraft() {
+            var r = document.getElementById('sv-tide-draft-range');
+            var o = document.getElementById('sv-tide-draft-out');
+            if (!r) { return; }
+            r.addEventListener('input', function () {
+                draft = parseFloat(r.value) || 0;
+                if (o) { o.textContent = draft.toFixed(1) + ' m'; }
+                updateSea();   // re-paint with the lowered break (debounced)
+            });
         }
         // Show the "you have panned away" hint when the map centre is far from the
         // current port (beyond the single-port flat-S validity, ~10 km).
@@ -920,12 +949,14 @@
         // request, not dozens.
         var SEA_DEBOUNCE = 160;   // ms idle before the WMS request
         function applySea() {
-            // The cursor's selected instant → water_IGN69 = tide_ZH + S, the SLD
-            // threshold. Painted blue below, orange above.
+            // water_IGN69 = tide_ZH + S. The boat needs `draft` m of water under
+            // it, so the navigable break is LOWERED by the draft: blue (safe) =
+            // seafloor < water − draft; orange (grounding risk) = seafloor ≥ that.
+            // draft = 0 → plain water/no-water.
             var level = waterIGN69();
             if (level == null) { return; }
             ensureSeaLayer();
-            seaSrc.updateParams({ SLD_BODY: seaSLD(level) });
+            seaSrc.updateParams({ SLD_BODY: seaSLD(level - draft) });
         }
         function updateSea() {
             if (seaTimer) { clearTimeout(seaTimer); }
@@ -991,6 +1022,10 @@
                 P + '#sv-tide-root{display:flex;flex-direction:row;gap:1rem;height:100%;min-height:0}',
                 P + '.sv-tide-info{flex:0 0 260px;min-width:0;overflow:auto;display:flex;flex-direction:column;gap:.4rem;padding-right:.3rem}',
                 P + '.sv-tide-curve{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}',
+                P + '.sv-tide-draft{flex:none;display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem}',
+                P + '.sv-tide-draft label{font-size:.8rem;font-weight:600;color:#333;white-space:nowrap}',
+                P + '.sv-tide-draft input[type=range]{flex:1;accent-color:#e8852b}',
+                P + '.sv-tide-draft output{font-variant-numeric:tabular-nums;font-size:.82rem;font-weight:600;color:#e8852b;min-width:3.5em;text-align:right}',
                 P + '.sv-tide-curve-head{flex:none}',
                 P + '.sv-tide-datenav{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap}',
                 P + '.sv-tide-curve-title{font-size:.85rem;font-weight:600;color:#333;flex:1;min-width:0;text-align:center}',
