@@ -1,8 +1,14 @@
 # Tide extension — investigation
 
-Show map water extent for a date/time, by combining Litto3D bathymetry (WMS)
-with SHOM tide predictions. Status: **investigation only — feasibility +
-unknowns, no code.**
+> **Historical feasibility note.** Written before the build. The core insight —
+> two vertical datums, RAM gives the separation — held. Two providers changed by
+> the time it shipped (see `SPEC.md`): the tide source is **Open-Meteo Marine**
+> (free/keyless/CORS, calibrated to RAM), not a SHOM-SPM proxy; the elevation
+> source is **`shom:bathy_5m`** (sea floor), not terrestrial Litto3D. The
+> "do the threshold server-side in an SLD" strategy is exactly what shipped.
+
+Show map water extent for a date/time, by combining bathymetry (WMS) with tide
+predictions. Status: **investigation only — feasibility + unknowns, no code.**
 
 ## 1. The goal
 
