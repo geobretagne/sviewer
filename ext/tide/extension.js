@@ -279,6 +279,7 @@
         var wantPort = null;   // ?tide_port= preselection (by name)
         var tide     = null;   // loaded tide series { points, highs, lows, date, source, ... }
         var curDate  = new Date();  // selected day for the tide curve (default today)
+        var tideCache = {};    // 'site|date' → series | null (null = known no-data)
         var chart    = null;   // active uPlot instance
         var curIdx   = 0;      // selected sample index in tide.points (cursor position)
         var seaLayer = null; // OL WMS layer painting the sea (own, removed on close)
@@ -455,44 +456,73 @@
             return d.getFullYear() + '-' +
                 ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
         }
-        // Fetch Open-Meteo for the port's coords + the selected day, then convert +
-        // calibrate to our ZH-equivalent series. Direct browser fetch (CORS open),
-        // no key, no proxy.
+        // Render the selected day. If it's already cached → instant, no network.
+        // Otherwise fetch a WINDOW (one Open-Meteo call covers ~2 weeks at weight
+        // 1.0) around the day and cache every day in it, so stepping ±days within
+        // the window costs ZERO extra calls. Keeps us well under the free limits
+        // (600/min, 10000/day, per visitor IP).
+        var WINDOW_BACK = 3;    // days fetched before curDate
+        var WINDOW_FWD  = 10;   // days after (Open-Meteo forecast horizon ~2 weeks)
         function loadTide() {
             if (!port) { return; }
-            var seq = ++fetchSeq;                 // invalidate any in-flight day/port fetch
             var date = isoDate(curDate);
-            // Cache hit (deterministic per port+day) → render instantly, no fetch.
             var cached = tideCache[cacheKey(date)];
-            if (cached) { tide = cached; renderCurve(); return; }
+            if (cached) { ++fetchSeq; tide = cached; renderCurve(); return; }
+            if (cached === null) { ++fetchSeq; showNoData(date); return; }  // known no-data
+            fetchWindow();
+        }
+        // One range request → per-day series, all cached. Days the API doesn't
+        // cover (beyond horizon) are cached as null so we never refetch them.
+        function fetchWindow() {
+            var seq = ++fetchSeq;
             var head = document.getElementById('sv-tide-curve-head');
             if (head) { head.textContent = t('loading'); }
-            // port.x/.y are EPSG:3857 → lon/lat for the API.
             var ll = ol.proj.toLonLat([port.x, port.y]);
+            var start = new Date(curDate); start.setDate(start.getDate() - WINDOW_BACK);
+            var end   = new Date(curDate); end.setDate(end.getDate() + WINDOW_FWD);
             var url = OM_URL +
                 '?latitude=' + encodeURIComponent(ll[1].toFixed(4)) +
                 '&longitude=' + encodeURIComponent(ll[0].toFixed(4)) +
                 '&minutely_15=sea_level_height_msl' +
-                '&start_date=' + date + '&end_date=' + date +
+                '&start_date=' + isoDate(start) + '&end_date=' + isoDate(end) +
                 '&timezone=' + encodeURIComponent('Europe/Paris');
             fetch(url, { headers: { Accept: 'application/json' } })
                 .then(function (r) { return r.ok ? r.json() : Promise.reject('HTTP ' + r.status); })
                 .then(function (j) {
                     if (seq !== fetchSeq) { return; }            // superseded → drop
-                    var series = buildSeries(j, date);
-                    // Empty = date outside Open-Meteo's forecast horizon (far
-                    // future). Keep the date nav so the user can step back; show a
-                    // "no data" note. NOT a hard error.
-                    if (!series) { showNoData(date); return; }
-                    tideCache[cacheKey(date)] = series;
-                    tide = series;
-                    renderCurve();
+                    var byDay = splitByDay(j);                   // { 'YYYY-MM-DD': [{t,msl}] }
+                    // Mark every requested day; build series or cache null.
+                    var d = new Date(start);
+                    while (d <= end) {
+                        var ds = isoDate(d);
+                        var raw = byDay[ds];
+                        tideCache[cacheKey(ds)] = (raw && raw.length) ? buildSeriesFromRaw(raw, ds) : null;
+                        d.setDate(d.getDate() + 1);
+                    }
+                    var sel = tideCache[cacheKey(isoDate(curDate))];
+                    if (sel) { tide = sel; renderCurve(); } else { showNoData(isoDate(curDate)); }
                 })
                 .catch(function () {
                     if (seq !== fetchSeq) { return; }
                     var h = document.getElementById('sv-tide-curve-head');
                     if (h) { h.innerHTML = '<span class="sv-tide-err">' + esc(t('err.curve')) + '</span>'; }
                 });
+        }
+        // Group a multi-day minutely_15 response into raw {t,msl} arrays per local
+        // calendar day.
+        function splitByDay(j) {
+            var out = {};
+            var m = j && j.minutely_15;
+            if (!m || !Array.isArray(m.time)) { return out; }
+            var times = m.time, msl = m.sea_level_height_msl || [];
+            for (var i = 0; i < times.length; i++) {
+                var v = Number(msl[i]);
+                var ts = Date.parse(times[i] + '+02:00');   // Europe/Paris summer (CEST)
+                if (!isFinite(v) || !isFinite(ts)) { continue; }
+                var day = times[i].slice(0, 10);            // 'YYYY-MM-DD'
+                (out[day] || (out[day] = [])).push({ t: ts, msl: v });
+            }
+            return out;
         }
         // No tide data for a date (beyond the forecast horizon). Render the date
         // nav + a note, clear the plot, so the user can navigate back.
@@ -506,7 +536,7 @@
                 head.innerHTML =
                     '<div class="sv-tide-datenav">' +
                       '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-datebtn" id="sv-tide-prev" aria-label="' + esc(t('date.prev')) + '" title="' + esc(t('date.prev')) + '">‹</button>' +
-                      '<span class="sv-tide-curve-title">' + esc(date) + '</span>' +
+                      '<span class="sv-tide-curve-title" id="sv-tide-curve-title">' + esc(date) + '</span>' +
                       '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-datebtn" id="sv-tide-next" aria-label="' + esc(t('date.next')) + '" title="' + esc(t('date.next')) + '">›</button>' +
                       '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-today" id="sv-tide-today">' + esc(t('date.today')) + '</button>' +
                     '</div>' +
@@ -514,22 +544,11 @@
                 bindDateNav();
             }
         }
-        // Convert Open-Meteo MSL heights → our ZH-equivalent series, calibrated to
-        // RAM. Returns { port, date, tz, step, datum, unit, source, points, highs,
-        // lows } or null. h_ZH = om_msl + offset − zh_ref, offset = NM_IGN69 −
-        // mean(om); so the day's mean sea level matches RAM's NM in IGN69.
-        function buildSeries(j, date) {
-            var m = j && j.minutely_15;
-            if (!m || !Array.isArray(m.time) || !Array.isArray(m.sea_level_height_msl)) { return null; }
-            var times = m.time, msl = m.sea_level_height_msl;
-            var raw = [];
-            for (var i = 0; i < times.length; i++) {
-                var v = Number(msl[i]);
-                var ts = Date.parse(times[i] + '+02:00');   // Europe/Paris summer (CEST)
-                if (isFinite(v) && isFinite(ts)) { raw.push({ t: ts, msl: v }); }
-            }
-            if (!raw.length) { return null; }
-            // Calibration: anchor the day's mean to NM in IGN69.
+        // Convert one day's raw {t,msl}[] → our ZH-equivalent series, calibrated to
+        // RAM. h_ZH = om_msl + offset − zh_ref, offset = NM_IGN69 − mean(om over
+        // the day); so the day's mean sea level matches RAM's NM in IGN69.
+        function buildSeriesFromRaw(raw, date) {
+            if (!raw || !raw.length) { return null; }
             var sum = 0; raw.forEach(function (p) { sum += p.msl; });
             var mean = sum / raw.length;
             var nmIGN69 = Number(port.S) + (port.nm != null ? Number(port.nm) : 0);  // zh_ref + NM_ZH
@@ -547,16 +566,27 @@
         }
         // Date navigation: shift curDate by ±1 day (or back to today) and reload.
         // Predictions are deterministic per (port, day) → cache the built series by
-        // "site|date" so revisiting a day is instant and offline-friendly.
-        var tideCache = {};
+        // "site|date" so revisiting a day is instant; a window fetch fills many
+        // days at once. Value null = known no-data (beyond horizon), never refetch.
         function cacheKey(date) { return (port ? port.site : '?') + '|' + date; }
+        // Debounce loadTide on rapid date stepping: clicking ‹/› five times fast
+        // loads only the final day (cache hits render instantly; only a real fetch
+        // is deferred). Update the title immediately so the UI stays responsive.
+        var dateTimer = null;
+        var DATE_DEBOUNCE = 250;
+        function requestDay() {
+            var el = document.getElementById('sv-tide-curve-title');
+            if (el) { el.textContent = t('curve.date', { date: isoDate(curDate) }); }
+            if (dateTimer) { clearTimeout(dateTimer); }
+            dateTimer = setTimeout(function () { dateTimer = null; loadTide(); }, DATE_DEBOUNCE);
+        }
         function shiftDate(days) {
             var d = new Date(curDate);
             d.setDate(d.getDate() + days);
             curDate = d;
-            loadTide();
+            requestDay();
         }
-        function goToday() { curDate = new Date(); loadTide(); }
+        function goToday() { curDate = new Date(); requestDay(); }
         function bindDateNav() {
             var prev = document.getElementById('sv-tide-prev');
             var next = document.getElementById('sv-tide-next');
@@ -597,7 +627,7 @@
                     '<div class="sv-tide-datenav">' +
                       '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-datebtn" id="sv-tide-prev"' +
                         ' aria-label="' + esc(t('date.prev')) + '" title="' + esc(t('date.prev')) + '">‹</button>' +
-                      '<span class="sv-tide-curve-title">' + esc(t('curve.date', { date: tide.date || '' })) + '</span>' +
+                      '<span class="sv-tide-curve-title" id="sv-tide-curve-title">' + esc(t('curve.date', { date: tide.date || '' })) + '</span>' +
                       '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-datebtn" id="sv-tide-next"' +
                         ' aria-label="' + esc(t('date.next')) + '" title="' + esc(t('date.next')) + '">›</button>' +
                       '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-today" id="sv-tide-today">' +
