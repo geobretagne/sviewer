@@ -482,6 +482,9 @@
                         '<path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/>' +
                       '</svg></button>' +
                     '<span class="sv-tide-topname" id="sv-tide-topname">' + esc(port ? port.site : '') + '</span>' +
+                    // Date nav (‹ date › today) filled by renderCurve once the
+                    // series loads — between port name and draft to save a line.
+                    '<div class="sv-tide-datenav-slot" id="sv-tide-datenav-slot"></div>' +
                     '<label class="sv-tide-draft-lbl" for="sv-tide-draft-range">' + esc(t('draft.label')) + '</label>' +
                     '<input type="range" id="sv-tide-draft-range" min="0" max="3" step="0.1" value="' + draft + '" ' +
                          'aria-describedby="sv-tide-draft-out">' +
@@ -661,20 +664,12 @@
         function showNoData(date) {
             destroyChart();
             tide = null;
+            var nav  = document.getElementById('sv-tide-datenav-slot');
             var head = document.getElementById('sv-tide-curve-head');
             var plot = document.getElementById('sv-tide-plot');
             if (plot) { plot.innerHTML = ''; }
-            if (head) {
-                head.innerHTML =
-                    '<div class="sv-tide-datenav">' +
-                      '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-datebtn" id="sv-tide-prev" aria-label="' + esc(t('date.prev')) + '" title="' + esc(t('date.prev')) + '">‹</button>' +
-                      '<span class="sv-tide-curve-title" id="sv-tide-curve-title">' + esc(date) + '</span>' +
-                      '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-datebtn" id="sv-tide-next" aria-label="' + esc(t('date.next')) + '" title="' + esc(t('date.next')) + '">›</button>' +
-                      '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-today" id="sv-tide-today">' + esc(t('date.today')) + '</button>' +
-                    '</div>' +
-                    '<p class="sv-tide-msg">' + esc(t('date.nodata')) + '</p>';
-                bindDateNav();
-            }
+            if (nav)  { nav.innerHTML = dateNavHtml(date); bindDateNav(); }
+            if (head) { head.innerHTML = '<p class="sv-tide-msg">' + esc(t('date.nodata')) + '</p>'; }
         }
         // Convert one day's raw {t,msl}[] → our ZH-equivalent series, calibrated to
         // RAM. h_ZH = om_msl + offset − zh_ref, offset = NM_IGN69 − mean(om over
@@ -708,7 +703,7 @@
         var DATE_DEBOUNCE = 250;
         function requestDay() {
             var el = document.getElementById('sv-tide-curve-title');
-            if (el) { el.textContent = t('curve.date', { date: isoDate(curDate) }); }
+            if (el) { el.textContent = isoDate(curDate); }
             if (dateTimer) { clearTimeout(dateTimer); }
             dateTimer = setTimeout(function () { dateTimer = null; loadTide(); }, DATE_DEBOUNCE);
         }
@@ -738,12 +733,28 @@
             }
             return { highs: highs, lows: lows };
         }
+        // Date nav (‹ date › today) — rendered into the topline slot, between port
+        // name and draft, to save a vertical line.
+        function dateNavHtml(dateText) {
+            return '<div class="sv-tide-datenav">' +
+                '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-datebtn" id="sv-tide-prev"' +
+                    ' aria-label="' + esc(t('date.prev')) + '" title="' + esc(t('date.prev')) + '">‹</button>' +
+                '<span class="sv-tide-curve-title" id="sv-tide-curve-title">' + esc(dateText) + '</span>' +
+                '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-datebtn" id="sv-tide-next"' +
+                    ' aria-label="' + esc(t('date.next')) + '" title="' + esc(t('date.next')) + '">›</button>' +
+                '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-today" id="sv-tide-today">' +
+                    esc(t('date.today')) + '</button>' +
+                '</div>';
+        }
         function renderCurve() {
             if (!tide) { return; }
+            var nav  = document.getElementById('sv-tide-datenav-slot');
             var head = document.getElementById('sv-tide-curve-head');
             var foot = document.getElementById('sv-tide-curve-foot');
-            // Header: title + date; high/low water marks with coef (sailors think
-            // in coefficients). All from the series itself — no hidden derivation.
+            // Date nav goes in the topline (compact: just the date); high/low
+            // marks stay above the plot. The full "hauteurs sur ZH" label lives in
+            // the footer provenance.
+            if (nav) { nav.innerHTML = dateNavHtml(tide.date || ''); bindDateNav(); }
             if (head) {
                 var marks = '';
                 (tide.highs || []).forEach(function (hi) {
@@ -755,18 +766,7 @@
                     marks += '<span class="sv-tide-mark sv-tide-mark-bm">' + esc(t('curve.bm')) + ' ' +
                         esc(hhmm(lo.t)) + ' · ' + esc(Number(lo.h).toFixed(2)) + ' m</span>';
                 });
-                head.innerHTML =
-                    '<div class="sv-tide-datenav">' +
-                      '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-datebtn" id="sv-tide-prev"' +
-                        ' aria-label="' + esc(t('date.prev')) + '" title="' + esc(t('date.prev')) + '">‹</button>' +
-                      '<span class="sv-tide-curve-title" id="sv-tide-curve-title">' + esc(t('curve.date', { date: tide.date || '' })) + '</span>' +
-                      '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-datebtn" id="sv-tide-next"' +
-                        ' aria-label="' + esc(t('date.next')) + '" title="' + esc(t('date.next')) + '">›</button>' +
-                      '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-today" id="sv-tide-today">' +
-                        esc(t('date.today')) + '</button>' +
-                    '</div>' +
-                    '<div class="sv-tide-marks">' + marks + '</div>';
-                bindDateNav();
+                head.innerHTML = '<div class="sv-tide-marks">' + marks + '</div>';
             }
             // Footer: provenance of the curve (source + date) + a "modelled,
             // not navigation-grade" disclaimer (Open-Meteo model, calibrated to
@@ -1262,15 +1262,16 @@
                 P + '.sv-tide-info{overflow:auto;display:flex;flex-direction:column;gap:.4rem;padding-right:.3rem}',
                 P + '.sv-tide-curve{min-width:0;min-height:0;display:flex;flex-direction:column}',
                 // Compact top line: icon re-pick · port name · draft slider.
-                P + '.sv-tide-topline{flex:none;display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem}',
+                P + '.sv-tide-topline{flex:none;display:flex;align-items:center;gap:.4rem .5rem;flex-wrap:wrap;margin-bottom:.3rem}',
                 P + '.sv-tide-topname{font-weight:600;color:var(--sv-panel-fg,#18181b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:9em;flex:none}',
                 P + '.sv-tide-repick{flex:none;display:inline-flex;align-items:center;justify-content:center;padding:.2rem .45rem}',
                 P + '.sv-tide-draft-lbl{font-size:.78rem;font-weight:600;color:var(--sv-panel-fg-muted,#52525b);white-space:nowrap;margin-left:auto}',
                 P + '.sv-tide-topline input[type=range]{flex:1;min-width:4rem;max-width:11rem;accent-color:#e8852b}',
                 P + '.sv-tide-topline output{font-variant-numeric:tabular-nums;font-size:.82rem;font-weight:600;color:var(--sv-panel-fg,#18181b);min-width:3.2em;text-align:right;flex:none}',
                 P + '.sv-tide-curve-head{flex:none}',
-                P + '.sv-tide-datenav{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap}',
-                P + '.sv-tide-curve-title{font-size:.85rem;font-weight:600;color:var(--sv-panel-fg,#18181b);flex:1;min-width:0;text-align:center}',
+                P + '.sv-tide-datenav-slot{display:flex;align-items:center;min-width:0}',
+                P + '.sv-tide-datenav{display:flex;align-items:center;gap:.2rem;min-width:0}',
+                P + '.sv-tide-curve-title{font-size:.8rem;font-weight:600;color:var(--sv-panel-fg,#18181b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
                 P + '.sv-tide-datebtn{padding:.1rem .5rem;line-height:1.2;font-weight:700}',
                 P + '.sv-tide-today{padding:.1rem .5rem;font-size:.74rem}',
                 P + '.sv-tide-marks{display:flex;flex-wrap:wrap;gap:.3rem;margin:.2rem 0}',
