@@ -294,6 +294,7 @@
         var seaSrc   = null; // its ol.source.ImageWMS
         var seaTimer = null; // debounce handle for the sea WMS request
         var draft    = 0;    // tirant d'eau (m) — safety clearance; lowers the blue/orange break
+        var wantT    = null; // ?tide_t= deep-link instant (epoch ms), consumed once on first curve
 
         // --- RAM nearest-port fetch ------------------------------------------
         // Query the open RAM WFS for ports within a bbox around the map centre,
@@ -317,6 +318,7 @@
                     if (!p) { showError(t('err.none')); return; }
                     port = p;
                     renderLayout();
+                    syncUrl();      // reflect the port immediately (tide_t added once the curve loads)
                     loadTide();
                 })
                 .catch(function () { if (seq === fetchSeq) { showError(t('err.fetch')); } });
@@ -465,6 +467,7 @@
                 draft = parseFloat(r.value) || 0;
                 if (o) { o.textContent = draft.toFixed(1) + ' m'; }
                 updateSea();   // re-paint with the lowered break (debounced)
+                syncUrl();
             });
         }
         // Show the "you have panned away" hint when the map centre is far from the
@@ -745,11 +748,18 @@
         // --- Cursor / readout (M3) -------------------------------------------
         // Index of the sample nearest to "now"; clamps to the series ends when the
         // current clock is outside the fixture's day.
+        // Default cursor position: the deep-link instant (tide_t) on the first
+        // curve, consumed once; otherwise the sample nearest "now".
         function nearestIdxToNow() {
+            var target = Date.now();
+            if (wantT != null) { target = wantT; wantT = null; }
+            return nearestIdxTo(target);
+        }
+        function nearestIdxTo(ms) {
             if (!tide || !tide.points.length) { return 0; }
-            var now = Date.now(), best = 0, bestD = Infinity;
+            var best = 0, bestD = Infinity;
             tide.points.forEach(function (p, i) {
-                var d = Math.abs(p.t - now);
+                var d = Math.abs(p.t - ms);
                 if (d < bestD) { bestD = d; best = i; }
             });
             return best;
@@ -766,6 +776,25 @@
             lockCursor();
             if (chart) { chart.redraw(false, false); }   // refresh the orange line
             updateSea();                                  // re-paint the sea (debounced)
+            syncUrl();
+        }
+        // Reflect the current state in the address bar (URL = persistence): port,
+        // selected instant, draft. replaceState preserves every other param. A
+        // shared/bookmarked link reopens at this exact port + moment + draft.
+        function syncUrl() {
+            if (!port) { return; }
+            var p = new URLSearchParams(window.location.search);
+            if (!p.get('ext')) { p.set('ext', 'tide'); }   // so a shared link auto-loads the tool
+            p.set('tide_port', port.site);
+            if (draft > 0) { p.set('tide_draft', draft.toFixed(1)); } else { p.delete('tide_draft'); }
+            var sel = selected();
+            if (sel) {
+                // local ISO 'YYYY-MM-DDTHH:MM' (no seconds, no zone — Europe/Paris)
+                var d = new Date(sel.t);
+                p.set('tide_t', isoDate(d) + 'T' +
+                    ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2));
+            }
+            try { history.replaceState(null, '', window.location.pathname + '?' + p.toString()); } catch (e) { /* */ }
         }
         // Pin uPlot's visual cursor to curIdx (so keyboard moves show on the plot).
         // Only x matters for the vertical cursor line; top is the data y so the
@@ -1083,11 +1112,22 @@
             document.head.appendChild(style);
         }
 
-        // --- Boot: params -----------------------------------------------------
+        // --- Boot: params (permanent tide_* names — never rename) -------------
         var params = new URLSearchParams(window.location.search);
         var mz = parseInt(params.get('tide_minzoom'), 10);
         if (isFinite(mz) && mz > 0 && mz < 22) { minZoom = mz; updateGate(); }
         var wp = params.get('tide_port');
         if (wp) { wantPort = wp.trim(); }
+        // tide_t = deep-link instant (ISO 'YYYY-MM-DDTHH:MM'). Sets the day and the
+        // cursor position so a shared link reopens at that exact moment.
+        var tp = params.get('tide_t');
+        if (tp) {
+            var ts = Date.parse(/[zZ+]/.test(tp) || tp.length <= 10 ? tp : tp + '+02:00');
+            if (isFinite(ts)) { wantT = ts; curDate = new Date(ts); }
+        }
+        // tide_draft = boat draft in metres (0..3, clamped). Reflected on the slider
+        // when the panel renders.
+        var td = parseFloat(params.get('tide_draft'));
+        if (isFinite(td)) { draft = Math.max(0, Math.min(3, td)); }
     });
 }());
