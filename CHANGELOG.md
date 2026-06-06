@@ -4,6 +4,42 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.18.0] - 2026-06-07
+
+### Added
+
+- **Extension `tide` (Marée).** Visualise l'étendue de la mer prévue sur une zone
+  côtière pour une date/heure choisie. La bathymétrie SHOM (`shom:bathy_5m`) est
+  peinte bleu (immergé) / orange (découvert) de part et d'autre du niveau de la
+  mer, donné par une courbe de marée interactive (uPlot) que l'utilisateur fait
+  défiler. Données :
+  - **Port + référence verticale** via les RAM (Références Altimétriques
+    Maritimes, WFS ouvert SHOM, sans clé) : `zh_ref` donne la séparation zéro
+    hydrographique → IGN69.
+  - **Courbe de marée** via Open-Meteo Marine (gratuit, sans clé, CORS ouvert →
+    appel direct, sans backend ni proxy), **calée sur les RAM** (la moyenne du
+    jour est ancrée sur le niveau moyen IGN69 du port) — accord ~5-10 cm avec le
+    SHOM.
+  - **Seuil mer/terre** calculé côté serveur par SLD inline sur le WMS (aucune
+    valeur de terrain ne transite par le navigateur).
+  - **Curseur tirant d'eau** (0–3 m) : signale les zones d'échouage pour un bateau.
+  - Navigation de date (fetch fenêtré 14 jours, un seul appel ; cache par jour),
+    lecture double-référentiel (ZH + IGN69), ligne « maintenant » + instant
+    sélectionné sur le graphe, 2 onglets (Marée / Données) adaptés mobile.
+  - Paramètres d'URL permanents `tide_port` / `tide_t` / `tide_draft` /
+    `tide_minzoom`, reflétés en continu dans la barre d'adresse (lien partageable).
+  - **Outil de visualisation de marée prédite, non destiné à la navigation**
+    (marée astronomique modélisée ; surcote/houle/pression non garanties). Toute
+    donnée source (origine, date, valeur) affichée — traçabilité scientifique.
+    Voir `ext/tide/SPEC.md`.
+
+### Changed
+
+- **Espace gaspillé sous les titres de panneau réduit (tous panneaux).** La règle
+  globale `.sv-panel-header` laissait ~26 px de vide sous chaque titre avant le
+  contenu (padding 10 px + marge 16 px) ; ramené à 6 px + 8 px, et marge 4 px pour
+  les panneaux en dock (bandeau bas, court).
+
 ## [0.17.4] - 2026-06-06
 
 ### Added
