@@ -407,15 +407,6 @@
             if (val == null) { return ''; }
             return '<tr><th scope="row">' + esc(label) + '</th><td>' + esc(val.toFixed(2)) + ' m</td></tr>';
         }
-        // Re-pick control (button + panned-away hint). Lives on the Marée tab so
-        // the user can re-pick the port without leaving the graph.
-        function repickHtml() {
-            if (!port) { return ''; }
-            return (
-                '<button type="button" class="btn btn-primary btn-sm sv-tide-repick" id="sv-tide-repick">' +
-                    esc(t('port.repick')) + '</button>' +
-                '<p class="sv-tide-faraway" id="sv-tide-faraway" hidden>' + esc(t('port.faraway')) + '</p>');
-        }
         // Données tab: port + datum separation + characteristic levels + bathymetry.
         // Every block carries source + date (scientific-traceability rule).
         function dataHtml() {
@@ -476,13 +467,21 @@
                 '</div>' +
                 // Marée pane
                 '<div class="sv-tide-pane sv-tide-curve" id="sv-tide-pane-tide" role="tabpanel" aria-labelledby="sv-tide-tab-tide">' +
-                  repickHtml() +
-                  '<div class="sv-tide-draft">' +
-                    '<label for="sv-tide-draft-range">' + esc(t('draft.label')) + '</label>' +
+                  // One compact line: re-pick (icon only) · port name · draft slider.
+                  '<div class="sv-tide-topline">' +
+                    '<button type="button" class="btn btn-outline-secondary btn-sm sv-tide-repick" id="sv-tide-repick" ' +
+                         'aria-label="' + esc(t('port.repick')) + '" title="' + esc(t('port.repick')) + '">' +
+                      '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">' +
+                        '<path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/>' +
+                        '<path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/>' +
+                      '</svg></button>' +
+                    '<span class="sv-tide-topname" id="sv-tide-topname">' + esc(port ? port.site : '') + '</span>' +
+                    '<label class="sv-tide-draft-lbl" for="sv-tide-draft-range">' + esc(t('draft.label')) + '</label>' +
                     '<input type="range" id="sv-tide-draft-range" min="0" max="3" step="0.1" value="' + draft + '" ' +
                          'aria-describedby="sv-tide-draft-out">' +
                     '<output id="sv-tide-draft-out" for="sv-tide-draft-range">' + draft.toFixed(1) + ' m</output>' +
                   '</div>' +
+                  '<p class="sv-tide-faraway" id="sv-tide-faraway" hidden>' + esc(t('port.faraway')) + '</p>' +
                   '<div class="sv-tide-curve-head" id="sv-tide-curve-head"></div>' +
                   '<div class="sv-tide-plot" id="sv-tide-plot"></div>' +
                   '<div class="sv-tide-readrow">' +
@@ -1254,10 +1253,13 @@
                 P + '.sv-tide-pane[hidden]{display:none}',
                 P + '.sv-tide-info{overflow:auto;display:flex;flex-direction:column;gap:.4rem;padding-right:.3rem}',
                 P + '.sv-tide-curve{min-width:0;min-height:0;display:flex;flex-direction:column}',
-                P + '.sv-tide-draft{flex:none;display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem}',
-                P + '.sv-tide-draft label{font-size:.8rem;font-weight:600;color:var(--sv-panel-fg,#18181b);white-space:nowrap}',
-                P + '.sv-tide-draft input[type=range]{flex:1;accent-color:#e8852b}',
-                P + '.sv-tide-draft output{font-variant-numeric:tabular-nums;font-size:.82rem;font-weight:600;color:var(--sv-panel-fg,#18181b);min-width:3.5em;text-align:right}',
+                // Compact top line: icon re-pick · port name · draft slider.
+                P + '.sv-tide-topline{flex:none;display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem}',
+                P + '.sv-tide-topname{font-weight:600;color:var(--sv-panel-fg,#18181b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:9em;flex:none}',
+                P + '.sv-tide-repick{flex:none;display:inline-flex;align-items:center;justify-content:center;padding:.2rem .45rem}',
+                P + '.sv-tide-draft-lbl{font-size:.78rem;font-weight:600;color:var(--sv-panel-fg-muted,#52525b);white-space:nowrap;margin-left:auto}',
+                P + '.sv-tide-topline input[type=range]{flex:1;min-width:4rem;max-width:11rem;accent-color:#e8852b}',
+                P + '.sv-tide-topline output{font-variant-numeric:tabular-nums;font-size:.82rem;font-weight:600;color:var(--sv-panel-fg,#18181b);min-width:3.2em;text-align:right;flex:none}',
                 P + '.sv-tide-curve-head{flex:none}',
                 P + '.sv-tide-datenav{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap}',
                 P + '.sv-tide-curve-title{font-size:.85rem;font-weight:600;color:var(--sv-panel-fg,#18181b);flex:1;min-width:0;text-align:center}',
@@ -1291,7 +1293,6 @@
                 P + '.sv-tide-block{margin:0}',
                 P + '.sv-tide-h{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--sv-panel-fg-muted,#52525b);margin:.2rem 0 .15rem}',
                 P + '.sv-tide-port-name{font-size:1rem;font-weight:600;margin:0}',
-                P + '.sv-tide-repick{width:100%;margin-bottom:.4rem;font-size:.82rem}',
                 P + '.sv-tide-faraway{font-size:.74rem;color:var(--sv-panel-fg-muted,#52525b);margin:.25rem 0 0;font-style:italic;border-left:3px solid #e8852b;padding-left:.4rem}',
                 P + '.sv-tide-faraway[hidden]{display:none}',
                 P + '.sv-tide-dim{font-weight:400;color:var(--sv-panel-fg-muted,#52525b);font-size:.85rem}',
