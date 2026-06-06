@@ -435,15 +435,20 @@
                           values: function (u, vals) { return vals.map(function (v) { return v + ' ' + unit; }); } }
                     ],
                     hooks: {
-                        // Mouse scrub: as uPlot moves its cursor, follow its index
-                        // (only when the pointer is actually over the plot — idx is
-                        // null otherwise, which we ignore to keep the locked value).
+                        // Mouse scrub: as uPlot moves its OWN cursor, follow its
+                        // index — but do NOT re-drive the cursor (fromMouse=true),
+                        // else we fight the pointer every frame and it disappears.
+                        // idx is null when the pointer leaves the plot → ignore,
+                        // keeping the last locked value.
                         setCursor: [function (u) {
-                            if (u.cursor.idx != null) { setIdx(u.cursor.idx); }
+                            if (u.cursor.idx != null) { setIdx(u.cursor.idx, true); }
                         }]
                     }
                 };
                 chart = new uPlot(opts, [xs, ys], host);
+                // When the pointer leaves the plot, uPlot hides its cursor — pin it
+                // back to the selected index so the chosen instant stays marked.
+                chart.over.addEventListener('mouseleave', function () { lockCursor(); });
                 // Default selection = current time, clamped into the series' day.
                 curIdx = nearestIdxToNow();
                 lockCursor();
@@ -466,13 +471,17 @@
             });
             return best;
         }
-        function setIdx(i) {
+        // fromMouse: the index came from uPlot's own cursor (hover) — the visual
+        // cursor is already in place, so skip lockCursor. Keyboard/default paths
+        // pass fromMouse=false → lockCursor pins the cursor to the new index.
+        function setIdx(i, fromMouse) {
             if (!tide) { return; }
             var n = tide.points.length;
             i = Math.max(0, Math.min(n - 1, i | 0));
             if (i === curIdx) { return; }
             curIdx = i;
             updateReadout();
+            if (!fromMouse) { lockCursor(); }
             // M5 will re-flood the map here from waterIGN69().
         }
         // Pin uPlot's visual cursor to curIdx (so keyboard moves show on the plot).
@@ -510,7 +519,6 @@
             el.setAttribute('aria-valuemax', String(tide.points.length - 1));
             el.setAttribute('aria-valuenow', String(curIdx));
             el.setAttribute('aria-valuetext', hhmm(s.t) + ' — ' + s.ign.toFixed(2) + ' m IGN69');
-            lockCursor();
         }
         function bindReadoutKeys() {
             var el = document.getElementById('sv-tide-readout');
