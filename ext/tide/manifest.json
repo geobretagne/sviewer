@@ -1,0 +1,42 @@
+{
+  "id":          "tide",
+  "type":        "extension",
+  "version":     "0.1.0",
+  "name":        "Marée",
+  "description": "Visualise l'étendue d'eau prévue sur une zone côtière pour une date et une heure choisies. Combine la bathymétrie Litto3D (WMS) et les prédictions de marée du SHOM, avec correction de référence verticale (zéro hydrographique → IGN69 via les Références Altimétriques Maritimes). Courbe de marée interactive (uPlot, libre) pilotant l'inondation sur la carte. Toutes les données sources (origine, date, valeur) sont affichées — approche scientifique traçable.",
+  "author":      "fphg",
+
+  "entry": "extension.js",
+
+  "params": [
+    {
+      "name":        "tide_minzoom",
+      "type":        "number",
+      "description": "Niveau de zoom minimal pour activer l'outil (échelle côtière, port unique). Défaut 13.",
+      "example":     "tide_minzoom=13"
+    },
+    {
+      "name":        "tide_port",
+      "type":        "string",
+      "description": "Présélectionne un port RAM par son nom (saute la recherche du port le plus proche). Lien profond.",
+      "example":     "tide_port=Saint-Quay-Portrieux"
+    }
+  ],
+
+  "sviewer": {
+    "minVersion": "0.16.0"
+  },
+
+  "seo": {
+    "title":           "Marée — étendue d'eau prévue par date/heure dans sViewer",
+    "metaDescription": "Extension sViewer combinant bathymétrie Litto3D et prédictions de marée SHOM, avec correction de référence verticale (ZH→IGN69). Courbe de marée interactive, données sources tracées, sans CDN."
+  },
+
+  "examples": [
+    {
+      "title":       "Zone côtière (à venir)",
+      "url":         "?ext=tide",
+      "description": "Zoomez sur une zone côtière près d'un port, puis activez l'outil Marée"
+    }
+  ]
+}
