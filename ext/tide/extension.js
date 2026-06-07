@@ -132,7 +132,7 @@
             'err.fetch':   'Service RAM (SHOM) injoignable.',
             'curve.label': 'Marée prévue',
             'draft.label': 'Tirant d’eau',
-            'draft.expl':  'Zones où l’eau est insuffisante pour ce tirant d’eau (risque d’échouage) en orange.',
+            'draft.expl':  'Bleu = profondeur suffisante ; rouge = immergé mais moins que le tirant d’eau (risque d’échouage) ; orange = découvert.',
             'curve.date':  'Hauteurs d’eau sur le zéro hydrographique — {date}',
             'date.prev':   'Jour précédent',
             'date.next':   'Jour suivant',
@@ -176,7 +176,7 @@
             'err.fetch':   'RAM service (SHOM) unreachable.',
             'curve.label': 'Predicted tide',
             'draft.label': 'Draft',
-            'draft.expl':  'Areas with too little water for this draft (grounding risk) in orange.',
+            'draft.expl':  'Blue = enough depth; red = submerged but less than the draft (grounding risk); orange = exposed.',
             'curve.date':  'Water heights above chart datum — {date}',
             'date.prev':   'Previous day',
             'date.next':   'Next day',
@@ -220,7 +220,7 @@
             'err.fetch':   'Servicio RAM (SHOM) inaccesible.',
             'curve.label': 'Marea prevista',
             'draft.label': 'Calado',
-            'draft.expl':  'Zonas con agua insuficiente para este calado (riesgo de varada) en naranja.',
+            'draft.expl':  'Azul = profundidad suficiente; rojo = sumergido pero menos que el calado (riesgo de varada); naranja = descubierto.',
             'curve.date':  'Alturas de agua sobre el cero hidrográfico — {date}',
             'date.prev':   'Día anterior',
             'date.next':   'Día siguiente',
@@ -264,7 +264,7 @@
             'err.fetch':   'RAM-Dienst (SHOM) nicht erreichbar.',
             'curve.label': 'Vorhergesagte Gezeit',
             'draft.label': 'Tiefgang',
-            'draft.expl':  'Bereiche mit zu wenig Wasser für diesen Tiefgang (Grundberührungsrisiko) in Orange.',
+            'draft.expl':  'Blau = genug Tiefe; rot = unter Wasser, aber weniger als der Tiefgang (Grundberührungsrisiko); orange = trockengefallen.',
             'curve.date':  'Wasserhöhen über Seekartennull — {date}',
             'date.prev':   'Vorheriger Tag',
             'date.next':   'Nächster Tag',
@@ -1009,26 +1009,32 @@
         });
 
         // --- M4: server-side sea via inline SLD ------------------------------
-        // BINARY split at the water level `level` (m IGN69) on the bathymetry.
-        // type=intervals = hard step (no interpolation); a pixel falls in the
-        // interval whose quantity is its UPPER bound:
-        //   (-∞ .. -50000]  → transparent  (nodata -99999)
-        //   (-50000 .. level] → BLUE   sea floor below the water level = submerged
-        //   (level .. 20000]  → ORANGE sea floor at/above the water level = exposed
-        // As `level` rises the blue grows up the shore (flats covered); as it falls,
-        // flats above the new level turn orange (emerge). One clean waterline.
+        // THREE zones at the water level `water` (m IGN69) and the boat's `draft`,
+        // on the bathymetry. type=intervals = hard step; a pixel falls in the
+        // interval whose quantity is its UPPER bound (sea-floor altitude):
+        //   (-∞ .. -50000]       → transparent  (nodata -99999)
+        //   (-50000 .. water-draft] → BLUE   ≥ draft of water above the floor = safe
+        //   (water-draft .. water]  → RED    submerged but < draft = grounding danger
+        //   (water .. 20000]        → ORANGE floor at/above the water level = exposed
+        // draft = 0 collapses the red band → blue (safe) vs orange (exposed).
         var SEA_BLUE   = '#1d6fdb';
+        var SEA_RED    = '#d9342b';
         var SEA_ORANGE = '#e8852b';
         var SEA_OPACITY = 0.6;
-        function seaSLD(level) {
-            var L = Number(level).toFixed(3);
+        function seaSLD(water, draft) {
+            var W = Number(water);
+            var D = Math.max(0, Number(draft) || 0);
             function entry(color, q, op) {
-                return '<ColorMapEntry color="' + color + '" quantity="' + q + '" opacity="' + op + '"/>';
+                return '<ColorMapEntry color="' + color + '" quantity="' + (typeof q === 'number' ? q.toFixed(3) : q) + '" opacity="' + op + '"/>';
             }
-            var cm =
-                entry(SEA_BLUE,   -50000, 0) +              // nodata guard (-99999)
-                entry(SEA_BLUE,   L,      SEA_OPACITY) +    // submerged → blue
-                entry(SEA_ORANGE, 20000,  SEA_OPACITY);     // above water → orange
+            var cm = entry(SEA_BLUE, -50000, 0);              // nodata guard (-99999)
+            if (D > 0) {
+                cm += entry(SEA_BLUE, W - D, SEA_OPACITY) +  // safe (≥ draft clearance)
+                      entry(SEA_RED,  W,     SEA_OPACITY);   // submerged but < draft
+            } else {
+                cm += entry(SEA_BLUE, W, SEA_OPACITY);       // no draft → all submerged blue
+            }
+            cm += entry(SEA_ORANGE, 20000, SEA_OPACITY);     // above water → orange
             return '<?xml version="1.0" encoding="UTF-8"?>' +
                 '<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc">' +
                 '<NamedLayer><Name>' + WMS_LAYER + '</Name>' +
@@ -1077,14 +1083,12 @@
         // request, not dozens.
         var SEA_DEBOUNCE = 160;   // ms idle before the WMS request
         function applySea() {
-            // water_IGN69 = tide_ZH + S. The boat needs `draft` m of water under
-            // it, so the navigable break is LOWERED by the draft: blue (safe) =
-            // seafloor < water − draft; orange (grounding risk) = seafloor ≥ that.
-            // draft = 0 → plain water/no-water.
-            var level = waterIGN69();
-            if (level == null) { return; }
+            // water_IGN69 = tide_ZH + S. Three zones: blue (≥ draft clearance),
+            // red (submerged but < draft = grounding danger), orange (above water).
+            var water = waterIGN69();
+            if (water == null) { return; }
             ensureSeaLayer();
-            seaSrc.updateParams({ SLD_BODY: seaSLD(level - draft) });
+            seaSrc.updateParams({ SLD_BODY: seaSLD(water, draft) });
         }
         function updateSea() {
             if (seaTimer) { clearTimeout(seaTimer); }

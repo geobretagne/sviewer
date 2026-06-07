@@ -1,9 +1,11 @@
 # Marée (tide) — spec
 
 Affiche l'**étendue de la mer prévue** sur une zone côtière, pour une date et une
-heure choisies. La bathymétrie SHOM (fond marin) est peinte **bleu (immergé) /
-orange (découvert)** de part et d'autre du niveau de la mer ; ce niveau est donné
-par une **courbe de marée interactive** que l'utilisateur fait défiler.
+heure choisies. La bathymétrie SHOM (fond marin) est peinte en trois zones selon
+le niveau de la mer et le **tirant d'eau** du bateau : **bleu** (profondeur
+suffisante), **rouge** (immergé mais moins que le tirant d'eau — risque
+d'échouage), **orange** (découvert). Le niveau de la mer est donné par une
+**courbe de marée interactive** que l'utilisateur fait défiler.
 
 **Outil de visualisation de marée prédite — NON destiné à la navigation.** Le mot
 « inondation » est volontairement évité : on visualise la marée astronomique
@@ -71,8 +73,9 @@ Dock bas pleine largeur, deux onglets (tablist WCAG, flèches ←/→) :
     nom du port · **navigation de date** ‹ date › « Aujourd'hui » · **curseur
     tirant d'eau** (0–3 m). Le port est choisi à l'ouverture, ne suit PAS les
     déplacements ; le bouton re-sélectionne le plus proche ; un avertissement
-    apparaît si l'on s'éloigne de > 10 km. Le tirant d'eau abaisse la limite
-    bleu/orange → signale les zones d'échouage.
+    apparaît si l'on s'éloigne de > 10 km. Le tirant d'eau ouvre une bande
+    rouge (immergé mais < tirant d'eau) entre le bleu (sûr) et l'orange
+    (découvert) → signale les zones d'échouage.
   - **courbe** uPlot : surface hauteur(t), repères PM/BM, **ligne rouge = maintenant**,
     **ligne orange = instant sélectionné**.
   - **lecture** sous le graphe : instant sélectionné dans les **deux** référentiels
@@ -84,8 +87,8 @@ Dock bas pleine largeur, deux onglets (tablist WCAG, flèches ←/→) :
 
 ### Superpositions carte
 
-- **Mer** (WMS bathymétrie, SLD) — bleu/orange, suit le curseur (débounce 160 ms),
-  zIndex 850.
+- **Mer** (WMS bathymétrie, SLD) — trois zones bleu/rouge/orange (cf. tirant
+  d'eau), suit le curseur (débounce 160 ms), zIndex 850.
 - **Courants** (WMTS SHOM) — **superposition automatique, sans bouton ni sélecteur**
   (les flèches n'encombrent pas la carte). La superposition est déduite de l'instant :
   - **vive-eau / morte-eau** d'après le marnage du jour à **Brest** (≥ 4,5 m →
