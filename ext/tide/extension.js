@@ -601,16 +601,17 @@
                          'aria-label="' + esc(t('wms.loading')) + '" title="' + esc(t('wms.loading')) + '" hidden></span>' +
                   '</div>' +
                 '</div>' +
-                // Vent pane (hidden; lazily filled on first open)
+                // Vent pane (hidden; lazily filled on first open) — graph only,
+                // source/age moved to Données.
                 '<div class="sv-tide-pane sv-tide-curve" id="sv-tide-pane-wind" role="tabpanel" aria-labelledby="sv-tide-tab-wind" hidden>' +
                   '<div class="sv-tide-wind-plot" id="sv-tide-wind-plot"></div>' +
-                  '<p class="sv-tide-prov sv-tide-wind-foot" id="sv-tide-wind-foot"></p>' +
                 '</div>' +
-                // Données pane (hidden by default) — includes the tide-curve source
-                // line (moved off the Marée tab to free graph space).
+                // Données pane (hidden by default) — also holds the tide + wind
+                // source lines (moved off their tabs to free graph space).
                 '<div class="sv-tide-pane sv-tide-info" id="sv-tide-pane-data" role="tabpanel" aria-labelledby="sv-tide-tab-data" hidden>' +
                   dataHtml() +
                   '<p class="sv-tide-prov sv-tide-curve-foot" id="sv-tide-curve-foot"></p>' +
+                  '<p class="sv-tide-prov sv-tide-wind-foot" id="sv-tide-wind-foot"></p>' +
                 '</div>';
             bindTabs();
             bindRepick();
