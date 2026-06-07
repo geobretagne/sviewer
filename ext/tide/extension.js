@@ -109,7 +109,7 @@
     // Wind forecast = Open-Meteo (same provider, keyless, CORS-direct). Model =
     // best_match: Open-Meteo auto-selects Météo-France AROME 1.3 km near France
     // for the short term and a global model beyond — seamless, no nulls (AROME
-    // alone stops at ~57 h). Wind/gust in knots + direction; loaded LAZILY on the
+    // alone stops at ~57 h). Wind/gust in km/h + direction; loaded LAZILY on the
     // first open of the Vent tab.
     var WIND_URL  = 'https://api.open-meteo.com/v1/forecast';
     var WIND_SRC  = 'Open-Meteo — Météo-France AROME 1,3 km près des côtes, modèle global au-delà';
@@ -125,7 +125,7 @@
             'wind.spd':    'Vent',
             'wind.gust':   'Rafales',
             'wind.err':    'Prévision de vent indisponible.',
-            'wind.badge':  'Vent {spd} nœuds, direction {dir}°',
+            'wind.badge':  'Vent {spd} km/h, direction {dir}°',
             'gate.hint':   'Zoomez sur une zone côtière près d’un port pour activer l’outil.',
             'loading':     'Recherche du port le plus proche…',
             'port.label':  'Port de référence',
@@ -174,7 +174,7 @@
             'wind.spd':    'Wind',
             'wind.gust':   'Gusts',
             'wind.err':    'Wind forecast unavailable.',
-            'wind.badge':  'Wind {spd} knots, direction {dir}°',
+            'wind.badge':  'Wind {spd} km/h, direction {dir}°',
             'gate.hint':   'Zoom in on a coastal area near a port to enable the tool.',
             'loading':     'Finding nearest port…',
             'port.label':  'Reference port',
@@ -223,7 +223,7 @@
             'wind.spd':    'Viento',
             'wind.gust':   'Rachas',
             'wind.err':    'Previsión de viento no disponible.',
-            'wind.badge':  'Viento {spd} nudos, dirección {dir}°',
+            'wind.badge':  'Viento {spd} km/h, dirección {dir}°',
             'gate.hint':   'Acérquese a una zona costera cerca de un puerto para activar la herramienta.',
             'loading':     'Buscando el puerto más cercano…',
             'port.label':  'Puerto de referencia',
@@ -272,7 +272,7 @@
             'wind.spd':    'Wind',
             'wind.gust':   'Böen',
             'wind.err':    'Windvorhersage nicht verfügbar.',
-            'wind.badge':  'Wind {spd} Knoten, Richtung {dir}°',
+            'wind.badge':  'Wind {spd} km/h, Richtung {dir}°',
             'gate.hint':   'Zoomen Sie auf ein Küstengebiet nahe einem Hafen, um das Werkzeug zu aktivieren.',
             'loading':     'Nächstgelegenen Hafen suchen…',
             'port.label':  'Referenzhafen',
@@ -1275,7 +1275,7 @@
                 '?latitude=' + encodeURIComponent(ll[1].toFixed(4)) +
                 '&longitude=' + encodeURIComponent(ll[0].toFixed(4)) +
                 '&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m' +
-                '&wind_speed_unit=kn&timezone=' + encodeURIComponent('Europe/Paris') +
+                '&wind_speed_unit=kmh&timezone=' + encodeURIComponent('Europe/Paris') +
                 '&forecast_days=5';
             fetch(url, { headers: { Accept: 'application/json' } })
                 .then(function (r) { return r.ok ? r.json() : Promise.reject('HTTP ' + r.status); })
@@ -1332,7 +1332,7 @@
                               return splits.map(function (s) { return f(new Date(s * 1000)); });
                           } },
                         { stroke: '#888', grid: { stroke: 'rgba(127,127,127,.15)' },
-                          values: function (u, vals) { return vals.map(function (v) { return v + ' kn'; }); } }
+                          values: function (u, vals) { return vals.map(function (v) { return v + ' km/h'; }); } }
                     ],
                     hooks: { draw: [drawWindArrows] }
                 };
@@ -1413,7 +1413,7 @@
                 '<svg class="sv-tide-wb-arrow" style="transform:rotate(' + rot.toFixed(0) + 'deg)" ' +
                      'width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">' +
                   '<path d="M8 0 4 7h3v9h2V7h3z"/></svg>' +
-                '<span class="sv-tide-wb-spd">' + esc(Math.round(w.spd)) + gust + ' <small>kn</small></span>';
+                '<span class="sv-tide-wb-spd">' + esc(Math.round(w.spd)) + gust + ' <small>km/h</small></span>';
             el.setAttribute('aria-label', t('wind.badge', {
                 spd: Math.round(w.spd), dir: w.dir == null ? '?' : Math.round(w.dir)
             }));

@@ -61,7 +61,7 @@ valeur) est affichée à l'utilisateur. Aucun nombre caché.
   de tuiles 0–13 (champ régional grossier ; au-delà OL sur-zoome la tuile z13).
 - **Vent** — Open-Meteo `forecast` (`api.open-meteo.com`), **sans clé, CORS
   ouvert**, modèle `best_match` (Météo-France **AROME 1,3 km** près des côtes,
-  modèle global au-delà). Vitesse + rafales (nœuds) + direction, 5 jours horaires,
+  modèle global au-delà). Vitesse + rafales (km/h) + direction, 5 jours horaires,
   aux coordonnées du port. Chargé **paresseusement** à la première ouverture de
   l'onglet, rechargé au changement de port.
 
@@ -86,7 +86,7 @@ Dock bas pleine largeur, trois onglets (tablist WCAG, flèches ←/→) :
   - **lecture** sous le graphe : instant sélectionné dans les **deux** référentiels
     (ZH et IGN69 calculé) — rien de caché.
   - **spinner** pendant le chargement de la carte WMS.
-- **Vent** — graphe uPlot : vent (bleu) + rafales (rouge pointillé) en nœuds,
+- **Vent** — graphe uPlot : vent (bleu) + rafales (rouge pointillé) en km/h,
   flèches de direction (vers où souffle le vent) le long du bas ; horizon 5 jours.
 - **Données** — port + nom, **séparation de datum + formule**, niveaux
   caractéristiques (PHMA/PMVE/NM), bathymétrie, **courants**, **vent**, **toute la
