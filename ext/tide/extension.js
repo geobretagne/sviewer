@@ -125,6 +125,7 @@
             'wind.spd':    'Vent',
             'wind.gust':   'Rafales',
             'wind.err':    'Prévision de vent indisponible.',
+            'wind.badge':  'Vent {spd} nœuds, direction {dir}°',
             'gate.hint':   'Zoomez sur une zone côtière près d’un port pour activer l’outil.',
             'loading':     'Recherche du port le plus proche…',
             'port.label':  'Port de référence',
@@ -173,6 +174,7 @@
             'wind.spd':    'Wind',
             'wind.gust':   'Gusts',
             'wind.err':    'Wind forecast unavailable.',
+            'wind.badge':  'Wind {spd} knots, direction {dir}°',
             'gate.hint':   'Zoom in on a coastal area near a port to enable the tool.',
             'loading':     'Finding nearest port…',
             'port.label':  'Reference port',
@@ -221,6 +223,7 @@
             'wind.spd':    'Viento',
             'wind.gust':   'Rachas',
             'wind.err':    'Previsión de viento no disponible.',
+            'wind.badge':  'Viento {spd} nudos, dirección {dir}°',
             'gate.hint':   'Acérquese a una zona costera cerca de un puerto para activar la herramienta.',
             'loading':     'Buscando el puerto más cercano…',
             'port.label':  'Puerto de referencia',
@@ -269,6 +272,7 @@
             'wind.spd':    'Wind',
             'wind.gust':   'Böen',
             'wind.err':    'Windvorhersage nicht verfügbar.',
+            'wind.badge':  'Wind {spd} Knoten, Richtung {dir}°',
             'gate.hint':   'Zoomen Sie auf ein Küstengebiet nahe einem Hafen, um das Werkzeug zu aktivieren.',
             'loading':     'Nächstgelegenen Hafen suchen…',
             'port.label':  'Referenzhafen',
@@ -881,6 +885,7 @@
                 // as the series is loaded.
                 updateSea();
                 loadBrest();   // Brest curve → auto current overlay for this instant
+                loadWindIfNeeded();   // wind for the on-map badge (independent of the Vent tab)
             }).catch(function () {
                 var h = document.getElementById('sv-tide-curve-head');
                 if (h) { h.innerHTML = '<span class="sv-tide-err">' + esc(t('err.curve')) + '</span>'; }
@@ -917,6 +922,7 @@
             if (chart) { chart.redraw(false, false); }   // refresh the orange line
             updateSea();                                  // re-paint the sea (debounced)
             updateCurrent();                              // swap current overlay if hour changed
+            updateWindBadge();                            // refresh the on-map wind badge
             syncUrl();
         }
         // Reflect the current state in the address bar (URL = persistence): port,
@@ -1241,26 +1247,29 @@
             return _wmtsGrid;
         }
 
-        // --- Wind forecast tab (Open-Meteo AROME, lazy) ----------------------
-        // Opened on first Vent-tab click: fetch wind at the port, render, then just
-        // resize on subsequent opens. Re-fetched when the port changes (windLoaded
-        // reset in findPort path via resetWind()).
+        // --- Wind forecast (Open-Meteo AROME) --------------------------------
+        // Loaded once per port (eagerly, after the tide curve, so the on-map badge
+        // works without opening the Vent tab). The chart renders only when the Vent
+        // tab is visible; the badge updates with the tide cursor.
+        function loadWindIfNeeded() { if (!windLoaded) { windLoaded = true; loadWind(); } }
         function openWind() {
-            if (!windLoaded) { windLoaded = true; loadWind(); }
-            else if (windChart) {
+            loadWindIfNeeded();
+            if (windChart) {
                 var host = document.getElementById('sv-tide-wind-plot');
                 if (host) { windChart.setSize({ width: host.clientWidth, height: Math.max(120, host.clientHeight) }); }
-            }
+            } else if (windData) { renderWind(); }   // data ready but chart not built yet
         }
         function resetWind() {
             windLoaded = false; windData = null;
             if (windChart) { try { windChart.destroy(); } catch (e) { /* */ } windChart = null; }
+            updateWindBadge();
+        }
+        function windPaneVisible() {
+            var p = document.getElementById('sv-tide-pane-wind');
+            return p && !p.hidden;
         }
         function loadWind() {
             if (!port) { return; }
-            var seq = fetchSeq;
-            var host = document.getElementById('sv-tide-wind-plot');
-            if (host) { host.innerHTML = '<p class="sv-tide-msg">' + esc(t('loading')) + '</p>'; }
             var ll = ol.proj.toLonLat([port.x, port.y]);
             var url = WIND_URL +
                 '?latitude=' + encodeURIComponent(ll[1].toFixed(4)) +
@@ -1271,7 +1280,6 @@
             fetch(url, { headers: { Accept: 'application/json' } })
                 .then(function (r) { return r.ok ? r.json() : Promise.reject('HTTP ' + r.status); })
                 .then(function (j) {
-                    if (seq !== fetchSeq && port) { /* port changed mid-flight */ }
                     var h = j && j.hourly;
                     if (!h || !Array.isArray(h.time)) { return Promise.reject('empty'); }
                     var d = { t: [], spd: [], gust: [], dir: [] };
@@ -1286,7 +1294,8 @@
                     }
                     if (!d.t.length) { return Promise.reject('empty'); }
                     windData = d;
-                    renderWind();
+                    if (windPaneVisible()) { renderWind(); }
+                    updateWindBadge();   // refresh the on-map badge for the current cursor
                 })
                 .catch(function () {
                     var hh = document.getElementById('sv-tide-wind-plot');
@@ -1373,6 +1382,38 @@
             }
             ctx.restore();
         }
+        // Nearest wind sample (hourly) to an instant (epoch ms). Returns
+        // { spd, gust, dir } or null.
+        function windAt(ms) {
+            if (!windData || !windData.t.length) { return null; }
+            var s = ms / 1000, best = 0, bestD = Infinity;
+            for (var i = 0; i < windData.t.length; i++) {
+                var dd = Math.abs(windData.t[i] - s);
+                if (dd < bestD) { bestD = dd; best = i; }
+            }
+            return { spd: windData.spd[best], gust: windData.gust[best], dir: windData.dir[best] };
+        }
+        // On-map wind badge (top-centre): an arrow + speed/gust for the tide
+        // cursor's selected instant. Updated on every cursor commit (setIdx) and
+        // when wind data (re)loads. Hidden when there's no data/selection.
+        function updateWindBadge() {
+            var el = document.getElementById('sv-tide-windbadge');
+            if (!el) { return; }
+            var s = selected();
+            var w = s ? windAt(s.t) : null;
+            if (!w || w.spd == null) { el.hidden = true; return; }
+            el.hidden = false;
+            var rot = (w.dir == null) ? 0 : (w.dir + 180);   // meteo FROM → arrow points TO
+            var gust = (w.gust != null) ? ' <span class="sv-tide-wb-gust">' + esc(Math.round(w.gust)) + '</span>' : '';
+            el.innerHTML =
+                '<svg class="sv-tide-wb-arrow" style="transform:rotate(' + rot.toFixed(0) + 'deg)" ' +
+                     'width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">' +
+                  '<path d="M8 0 4 7h3v9h2V7h3z"/></svg>' +
+                '<span class="sv-tide-wb-spd">' + esc(Math.round(w.spd)) + gust + ' <small>kn</small></span>';
+            el.setAttribute('aria-label', t('wind.badge', {
+                spd: Math.round(w.spd), dir: w.dir == null ? '?' : Math.round(w.dir)
+            }));
+        }
 
         // --- Toolbar button + zoom gate --------------------------------------
         var toolbar = document.getElementById('sv-panel-controls');
@@ -1413,13 +1454,31 @@
             active = true;
             btn.setAttribute('aria-pressed', 'true'); btn.classList.add('active');
             injectStyle();
+            ensureWindBadge();
             SViewer.panel.open(PANEL, t('panel.title'), '<div id="sv-tide-root"></div>', { dock: 'bottom' });
             findPort();
+        }
+        // Floating wind badge over the map (top-centre). Created once in the map
+        // frame; theme-independent dark-glass (map overlay rule). role=status.
+        function ensureWindBadge() {
+            if (document.getElementById('sv-tide-windbadge')) { return; }
+            var frame = document.getElementById('sv-frame-map') || map.getTargetElement();
+            if (!frame) { return; }
+            var el = document.createElement('div');
+            el.id = 'sv-tide-windbadge';
+            el.className = 'sv-tide-windbadge';
+            el.setAttribute('role', 'status');
+            el.hidden = true;
+            frame.appendChild(el);
+        }
+        function removeWindBadge() {
+            var el = document.getElementById('sv-tide-windbadge');
+            if (el && el.parentNode) { el.parentNode.removeChild(el); }
         }
         SViewer.panel.onClose(PANEL, function () {
             active = false; destroyChart(); resetWind();
             if (seaTimer) { clearTimeout(seaTimer); seaTimer = null; }
-            removeSeaLayer(); removeCurrentLayer();
+            removeSeaLayer(); removeCurrentLayer(); removeWindBadge();
             btn.setAttribute('aria-pressed', 'false'); btn.classList.remove('active');
         });
 
@@ -1497,7 +1556,15 @@
                 P + '.sv-tide-prov{font-size:.72rem;color:var(--sv-panel-fg-muted,#52525b);margin:.1rem 0 0;font-style:italic}',
                 P + '.sv-tide-prov-date{color:var(--sv-panel-fg-muted,#52525b)}',
                 // Zoom-gated toolbar button (disabled look without losing the icon).
-                '.sv-scope .sv-tide-gated{opacity:.45;cursor:not-allowed}'
+                '.sv-scope .sv-tide-gated{opacity:.45;cursor:not-allowed}',
+                // On-map wind badge (top-centre). Map overlay → hardcoded
+                // dark-glass + white, theme-independent (readable over any map).
+                '.sv-scope .sv-tide-windbadge{position:absolute;top:.6rem;left:50%;transform:translateX(-50%);z-index:8400;display:flex;align-items:center;gap:.45rem;padding:.3rem .6rem;border-radius:999px;background:rgb(24 24 27 / 88%);color:#fff;box-shadow:0 2px 8px rgb(0 0 0 / 28%);pointer-events:none;font-variant-numeric:tabular-nums}',
+                '.sv-scope .sv-tide-windbadge[hidden]{display:none}',
+                '.sv-scope .sv-tide-wb-arrow{color:#6db3e8;transition:transform .15s ease}',
+                '.sv-scope .sv-tide-wb-spd{font-size:.95rem;font-weight:700}',
+                '.sv-scope .sv-tide-wb-spd small{font-weight:400;opacity:.8;font-size:.78rem}',
+                '.sv-scope .sv-tide-wb-gust{color:#e8852b;font-weight:700}'
             ].join('');
             var style = document.createElement('style');
             style.id = 'sv-tide-style';
