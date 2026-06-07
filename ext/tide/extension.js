@@ -126,6 +126,7 @@
             'wind.gust':   'Rafales',
             'wind.err':    'Prévision de vent indisponible.',
             'wind.badge':  'Vent {spd} km/h, direction {dir}°',
+            'badge.aria':  'Hauteur d’eau {h} m, vent {spd} km/h direction {dir}°',
             'wind.fetched':'prévision récupérée le {when}',
             'wind.stale':  '— peut être obsolète',
             'gate.hint':   'Zoomez sur une zone côtière près d’un port pour activer l’outil.',
@@ -177,6 +178,7 @@
             'wind.gust':   'Gusts',
             'wind.err':    'Wind forecast unavailable.',
             'wind.badge':  'Wind {spd} km/h, direction {dir}°',
+            'badge.aria':  'Water height {h} m, wind {spd} km/h direction {dir}°',
             'wind.fetched':'forecast retrieved {when}',
             'wind.stale':  '— may be outdated',
             'gate.hint':   'Zoom in on a coastal area near a port to enable the tool.',
@@ -228,6 +230,7 @@
             'wind.gust':   'Rachas',
             'wind.err':    'Previsión de viento no disponible.',
             'wind.badge':  'Viento {spd} km/h, dirección {dir}°',
+            'badge.aria':  'Altura del agua {h} m, viento {spd} km/h dirección {dir}°',
             'wind.fetched':'previsión obtenida el {when}',
             'wind.stale':  '— puede estar desactualizada',
             'gate.hint':   'Acérquese a una zona costera cerca de un puerto para activar la herramienta.',
@@ -279,6 +282,7 @@
             'wind.gust':   'Böen',
             'wind.err':    'Windvorhersage nicht verfügbar.',
             'wind.badge':  'Wind {spd} km/h, Richtung {dir}°',
+            'badge.aria':  'Wasserhöhe {h} m, Wind {spd} km/h Richtung {dir}°',
             'wind.fetched':'Vorhersage abgerufen am {when}',
             'wind.stale':  '— möglicherweise veraltet',
             'gate.hint':   'Zoomen Sie auf ein Küstengebiet nahe einem Hafen, um das Werkzeug zu aktivieren.',
@@ -946,6 +950,7 @@
                 chart.redraw(false, false);   // draw the selection marker at "now"
                 bindReadoutKeys();
                 updateReadout();
+                updateWindBadge();   // show water height in the badge straight away
                 // Paint the sea for "now" (the cursor's default position) as soon
                 // as the series is loaded.
                 updateSea();
@@ -1487,29 +1492,40 @@
             }
             return { spd: windData.spd[best], gust: windData.gust[best], dir: windData.dir[best] };
         }
-        // On-map wind badge (top-centre): an arrow + speed/gust for the tide
-        // cursor's selected instant. Updated on every cursor commit (setIdx) and
-        // when wind data (re)loads. Hidden when there's no data/selection.
+        // On-map badge (top-centre): water height + wind for the tide cursor's
+        // selected instant — so the key info stays visible even when the bottom
+        // panel is hidden. Updated on every cursor commit and when wind reloads.
         function updateWindBadge() {
             var el = document.getElementById('sv-tide-windbadge');
             if (!el) { return; }
             var s = selected();
-            var w = s ? windAt(s.t) : null;
-            if (!w || w.spd == null) { el.hidden = true; return; }
+            if (!s) { el.hidden = true; return; }   // no tide selection → nothing to show
             el.hidden = false;
-            var rot = (w.dir == null) ? 0 : (w.dir + 180);   // meteo FROM → arrow points TO
-            // Gust in parentheses after the speed: "12 (24) kn".
-            var gust = (w.gust != null)
-                ? ' <span class="sv-tide-wb-gust">(' + esc(Math.round(w.gust)) + ')</span>' : '';
             var when = isoDate(new Date(s.t)) + ' ' + hhmm(s.t);
-            el.innerHTML =
-                '<span class="sv-tide-wb-when">' + esc(when) + '</span>' +
-                '<svg class="sv-tide-wb-arrow" style="transform:rotate(' + rot.toFixed(0) + 'deg)" ' +
-                     'width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">' +
-                  '<path d="M8 0 4 7h3v9h2V7h3z"/></svg>' +
-                '<span class="sv-tide-wb-spd">' + esc(Math.round(w.spd)) + gust + ' <small>km/h</small></span>';
-            el.setAttribute('aria-label', t('wind.badge', {
-                spd: Math.round(w.spd), dir: w.dir == null ? '?' : Math.round(w.dir)
+            // Water height on the chart datum (the annuaire value boaters read).
+            var water = '<span class="sv-tide-wb-water">' +
+                '<svg class="sv-tide-wb-wave" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">' +
+                  '<path d="M.5 11a3 3 0 0 1 2.1.9 2 2 0 0 0 2.8 0 3 3 0 0 1 4.2 0 2 2 0 0 0 2.8 0A3 3 0 0 1 15.5 11a.5.5 0 0 1 0 1 2 2 0 0 0-1.4.6 3 3 0 0 1-4.2 0 2 2 0 0 0-2.8 0 3 3 0 0 1-4.2 0A2 2 0 0 0 .5 12a.5.5 0 0 1 0-1"/></svg>' +
+                esc(s.hZH.toFixed(1)) + ' <small>m</small></span>';
+            // Wind (optional — may not be loaded yet / outside AROME).
+            var w = windAt(s.t);
+            var wind = '';
+            if (w && w.spd != null) {
+                var rot = (w.dir == null) ? 0 : (w.dir + 180);
+                var gust = (w.gust != null)
+                    ? ' <span class="sv-tide-wb-gust">(' + esc(Math.round(w.gust)) + ')</span>' : '';
+                wind =
+                    '<span class="sv-tide-wb-sep" aria-hidden="true"></span>' +
+                    '<svg class="sv-tide-wb-arrow" style="transform:rotate(' + rot.toFixed(0) + 'deg)" ' +
+                         'width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">' +
+                      '<path d="M8 0 4 7h3v9h2V7h3z"/></svg>' +
+                    '<span class="sv-tide-wb-spd">' + esc(Math.round(w.spd)) + gust + ' <small>km/h</small></span>';
+            }
+            el.innerHTML = '<span class="sv-tide-wb-when">' + esc(when) + '</span>' + water + wind;
+            el.setAttribute('aria-label', t('badge.aria', {
+                h: s.hZH.toFixed(1),
+                spd: (w && w.spd != null) ? Math.round(w.spd) : '?',
+                dir: (w && w.dir != null) ? Math.round(w.dir) : '?'
             }));
         }
 
@@ -1661,9 +1677,12 @@
                 '.sv-scope .sv-tide-windbadge{position:absolute;top:.6rem;left:50%;transform:translateX(-50%);z-index:8400;display:flex;align-items:center;gap:.45rem;padding:.3rem .6rem;border-radius:999px;background:rgb(24 24 27 / 88%);color:#fff;box-shadow:0 2px 8px rgb(0 0 0 / 28%);pointer-events:none;font-variant-numeric:tabular-nums}',
                 '.sv-scope .sv-tide-windbadge[hidden]{display:none}',
                 '.sv-scope .sv-tide-wb-when{font-size:.78rem;opacity:.85;white-space:nowrap}',
+                '.sv-scope .sv-tide-wb-water{display:inline-flex;align-items:center;gap:.25rem;font-size:.95rem;font-weight:700}',
+                '.sv-scope .sv-tide-wb-wave{color:#6db3e8}',
+                '.sv-scope .sv-tide-wb-water small,' + '.sv-scope .sv-tide-wb-spd small{font-weight:400;opacity:.8;font-size:.78rem}',
+                '.sv-scope .sv-tide-wb-sep{width:1px;height:1.1em;background:rgb(255 255 255 / 28%)}',
                 '.sv-scope .sv-tide-wb-arrow{color:#6db3e8;transition:transform .15s ease}',
                 '.sv-scope .sv-tide-wb-spd{font-size:.95rem;font-weight:700}',
-                '.sv-scope .sv-tide-wb-spd small{font-weight:400;opacity:.8;font-size:.78rem}',
                 '.sv-scope .sv-tide-wb-gust{color:#e8852b;font-weight:700}'
             ].join('');
             var style = document.createElement('style');
