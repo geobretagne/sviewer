@@ -1338,24 +1338,38 @@
         function drawWindArrows(u) {
             if (!windData) { return; }
             var ctx = u.ctx, n = windData.t.length;
-            var step = Math.max(1, Math.round(n / 28));   // ~28 arrows across
-            var y = u.bbox.top + u.bbox.height - 8 * u.pxRatio;
-            var len = 6 * u.pxRatio;
+            var pr = u.pxRatio || 1;
+            var step = Math.max(1, Math.round(n / 24));   // ~24 arrows across
+            // A band just inside the top of the plot (clear of the x-axis labels).
+            var y = u.bbox.top + 12 * pr;
+            var len = 7 * pr;
             ctx.save();
-            ctx.strokeStyle = '#52525b';
-            ctx.fillStyle = '#52525b';
-            ctx.lineWidth = Math.max(1, u.pxRatio);
+            ctx.strokeStyle = '#0d6efd';
+            ctx.fillStyle = '#0d6efd';
+            ctx.lineWidth = Math.max(1.2, 1.4 * pr);
+            ctx.lineCap = 'round';
             for (var i = 0; i < n; i += step) {
                 var dir = windData.dir[i];
                 if (dir == null) { continue; }
                 var cx = u.valToPos(windData.t[i], 'x', true);
                 if (cx < u.bbox.left || cx > u.bbox.left + u.bbox.width) { continue; }
-                var a = (dir + 180) * Math.PI / 180;     // blowing-TO direction
-                var dx = Math.sin(a) * len, dy = -Math.cos(a) * len;
-                ctx.beginPath(); ctx.moveTo(cx - dx, y - dy); ctx.lineTo(cx + dx, y + dy); ctx.stroke();
-                // arrowhead at the tip
+                // Meteo direction = wind FROM; the arrow points TO (+180°).
+                var a = (dir + 180) * Math.PI / 180;
+                var ux = Math.sin(a), uy = -Math.cos(a);     // unit vector "to"
+                var tipx = cx + ux * len, tipy = y + uy * len;
+                var tailx = cx - ux * len, taily = y - uy * len;
+                // shaft
+                ctx.beginPath(); ctx.moveTo(tailx, taily); ctx.lineTo(tipx, tipy); ctx.stroke();
+                // arrowhead (two barbs at the tip)
+                var ha = 0.5, hl = 4 * pr;
                 ctx.beginPath();
-                ctx.arc(cx + dx, y + dy, 1.6 * u.pxRatio, 0, 2 * Math.PI); ctx.fill();
+                ctx.moveTo(tipx, tipy);
+                ctx.lineTo(tipx - (ux * Math.cos(ha) - uy * Math.sin(ha)) * hl,
+                           tipy - (ux * Math.sin(ha) + uy * Math.cos(ha)) * hl);
+                ctx.moveTo(tipx, tipy);
+                ctx.lineTo(tipx - (ux * Math.cos(-ha) - uy * Math.sin(-ha)) * hl,
+                           tipy - (ux * Math.sin(-ha) + uy * Math.cos(-ha)) * hl);
+                ctx.stroke();
             }
             ctx.restore();
         }
