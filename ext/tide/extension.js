@@ -1426,12 +1426,12 @@
                 var hgt = Math.max(140, h2.clientHeight || 180);
                 var opts = {
                     width: w, height: hgt,
-                    legend: { show: true },
+                    legend: { show: false },
                     scales: { x: { time: true } },
                     series: [
                         {},
-                        { label: t('wind.spd') + ' (km/h)',  stroke: '#0d6efd', width: 2, points: { show: false } },
-                        { label: t('wind.gust') + ' (km/h)', stroke: '#d9342b', width: 1.5, dash: [4, 3], points: { show: false } }
+                        { label: t('wind.spd'),  stroke: '#0d6efd', width: 2, points: { show: false } },
+                        { label: t('wind.gust'), stroke: '#d9342b', width: 1.5, dash: [4, 3], points: { show: false } }
                     ],
                     axes: [
                         { stroke: '#888', grid: { stroke: 'rgba(127,127,127,.15)' },
@@ -1439,10 +1439,9 @@
                               var f = incr < 86400 ? fmtTime : fmtDay;
                               return splits.map(function (s) { return f(new Date(s * 1000)); });
                           } },
-                        // Bare km/h numbers (unit is in the legend); wider gutter so
-                        // they are never clipped.
-                        { stroke: '#888', size: 38, grid: { stroke: 'rgba(127,127,127,.15)' },
-                          values: function (u, vals) { return vals.map(function (v) { return v; }); } }
+                        // km/h on the ticks (no legend); wide gutter so never clipped.
+                        { stroke: '#888', size: 50, grid: { stroke: 'rgba(127,127,127,.15)' },
+                          values: function (u, vals) { return vals.map(function (v) { return v + ' km/h'; }); } }
                     ],
                     hooks: { draw: [drawWindArrows] }
                 };
