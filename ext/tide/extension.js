@@ -1075,18 +1075,14 @@
             return { t: p.t, hZH: hZH, ign: hZH + S, S: S };
         }
         function waterIGN69() { var s = selected(); return s ? s.ign : null; }
+        // The numeric height now lives on the on-map badge; the readout stays only
+        // as the KEYBOARD scrub control (role=slider). No visible numbers — just a
+        // hint label — but ARIA still announces the selected time + IGN69 level.
         function updateReadout() {
             var el = document.getElementById('sv-tide-readout');
             var s  = selected();
             if (!el || !s) { return; }
-            el.innerHTML =
-                '<span class="sv-tide-read-time">' + esc(hhmm(s.t)) + '</span>' +
-                '<span class="sv-tide-read-val">' + esc(s.hZH.toFixed(2)) + ' m ' +
-                    '<span class="sv-tide-read-ref">' + esc(t('read.zh')) + '</span></span>' +
-                '<span class="sv-tide-read-arrow" aria-hidden="true">→</span>' +
-                '<span class="sv-tide-read-val sv-tide-read-ign">' + esc(s.ign.toFixed(2)) + ' m ' +
-                    '<span class="sv-tide-read-ref">' + esc(t('read.ign')) + '</span></span>';
-            // ARIA slider state — announce the selected time + IGN69 level.
+            el.textContent = t('cursor.label');
             el.setAttribute('aria-valuemin', '0');
             el.setAttribute('aria-valuemax', String(tide.points.length - 1));
             el.setAttribute('aria-valuenow', String(curIdx));
@@ -1643,14 +1639,10 @@
                 // Cursor readout strip — selected instant in both datums. Focusable
                 // slider; visible focus ring (keyboard scrub). Hardcoded colors are
                 // fine here (panel, not a map overlay).
-                P + '.sv-tide-readrow{flex:none;display:flex;align-items:center;gap:.5rem;margin-top:.35rem}',
-                P + '.sv-tide-readout{flex:1;min-width:0;display:flex;align-items:center;flex-wrap:wrap;gap:.4rem;padding:.3rem .5rem;border:1px solid var(--sv-panel-border,#ccc);border-radius:6px;background:rgba(13,110,253,.06);font-variant-numeric:tabular-nums;cursor:ew-resize}',
+                P + '.sv-tide-readrow{flex:none;display:flex;align-items:center;gap:.5rem;margin-top:.25rem}',
+                // Slim keyboard scrub bar (no numbers — height is on the map badge).
+                P + '.sv-tide-readout{flex:1;min-width:0;padding:.15rem .5rem;border:1px solid var(--sv-panel-border,#ccc);border-radius:6px;background:rgba(13,110,253,.06);font-size:.72rem;color:var(--sv-panel-fg-muted,#52525b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:ew-resize}',
                 P + '.sv-tide-readout:focus-visible{outline:2px solid #0d6efd;outline-offset:1px}',
-                P + '.sv-tide-read-time{font-weight:700;font-size:.95rem;color:var(--sv-panel-fg,#18181b)}',
-                P + '.sv-tide-read-val{font-size:.9rem;color:var(--sv-panel-fg,#18181b)}',
-                P + '.sv-tide-read-ign{font-weight:600}',
-                P + '.sv-tide-read-ref{font-size:.72rem;color:var(--sv-panel-fg-muted,#52525b);font-weight:400}',
-                P + '.sv-tide-read-arrow{color:var(--sv-panel-fg-muted,#52525b)}',
                 // WMS loading spinner — shown while the sea layer fetches.
                 P + '.sv-tide-spinner{flex:none;width:1.1rem;height:1.1rem;border:2px solid rgba(13,110,253,.25);border-top-color:#0d6efd;border-radius:50%;animation:sv-tide-spin .7s linear infinite}',
                 P + '.sv-tide-spinner[hidden]{display:none}',
