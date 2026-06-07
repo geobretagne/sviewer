@@ -622,6 +622,7 @@
             bindRepick();
             bindDraft();
             updateFaraway();
+            updateWindFoot();   // refill the wind source/age line if data is already loaded
         }
         // Tab switching: aria-selected + roving tabindex + show/hide panes. Left/
         // Right arrows move between tabs (WCAG tablist pattern). The chart must be
@@ -1350,6 +1351,7 @@
         function windKey() { return 'wind.' + (port ? port.site : '?'); }
         function useWind(d, ts) {
             windData = d; windFetchedAt = ts || Date.now();
+            updateWindFoot();   // Données source/age line (independent of the Vent chart)
             if (windPaneVisible()) { renderWind(); }
             updateWindBadge();
         }
@@ -1397,18 +1399,22 @@
                     if (hh) { hh.innerHTML = '<p class="sv-tide-err">' + esc(t('wind.err')) + '</p>'; }
                 });
         }
+        // Fill the wind provenance/age line (in Données). Independent of the chart
+        // so it shows even when the Vent tab was never opened.
+        function updateWindFoot() {
+            var foot = document.getElementById('sv-tide-wind-foot');
+            if (!foot) { return; }
+            if (!windData) { foot.textContent = ''; return; }
+            var ageH = (Date.now() - windFetchedAt) / 3600000;
+            var when = windFetchedAt ? (isoDate(new Date(windFetchedAt)) + ' ' + hhmm(windFetchedAt)) : '?';
+            var stale = ageH > 6 ? ' <em class="sv-tide-stale">' + esc(t('wind.stale')) + '</em>' : '';
+            foot.innerHTML = esc(t('prov.source')) + ' : ' + esc(WIND_SRC) +
+                ' — ' + esc(t('wind.fetched', { when: when })) + stale;
+        }
         function renderWind() {
             var host = document.getElementById('sv-tide-wind-plot');
-            var foot = document.getElementById('sv-tide-wind-foot');
+            updateWindFoot();
             if (!host || !windData) { return; }
-            if (foot) {
-                // Provenance + forecast age (it's a forecast — be honest if stale).
-                var ageH = (Date.now() - windFetchedAt) / 3600000;
-                var when = windFetchedAt ? (isoDate(new Date(windFetchedAt)) + ' ' + hhmm(windFetchedAt)) : '?';
-                var stale = ageH > 6 ? ' <em class="sv-tide-stale">' + esc(t('wind.stale')) + '</em>' : '';
-                foot.innerHTML = esc(t('prov.source')) + ' : ' + esc(WIND_SRC) +
-                    ' — ' + esc(t('wind.fetched', { when: when })) + stale;
-            }
             loadUplot().then(function (uPlot) {
                 var h2 = document.getElementById('sv-tide-wind-plot');
                 if (!h2 || !windData) { return; }
