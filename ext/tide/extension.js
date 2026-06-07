@@ -1674,7 +1674,7 @@
                 '.sv-scope .sv-tide-gated{opacity:.45;cursor:not-allowed}',
                 // On-map wind badge (top-centre). Map overlay → hardcoded
                 // dark-glass + white, theme-independent (readable over any map).
-                '.sv-scope .sv-tide-windbadge{position:absolute;top:.6rem;left:50%;transform:translateX(-50%);z-index:8400;display:flex;align-items:center;gap:.45rem;padding:.3rem .6rem;border-radius:999px;background:rgb(24 24 27 / 88%);color:#fff;box-shadow:0 2px 8px rgb(0 0 0 / 28%);pointer-events:none;font-variant-numeric:tabular-nums}',
+                '.sv-scope .sv-tide-windbadge{position:absolute;top:3.4rem;left:50%;transform:translateX(-50%);z-index:8400;display:flex;align-items:center;gap:.45rem;padding:.3rem .6rem;border-radius:999px;background:rgb(24 24 27 / 88%);color:#fff;box-shadow:0 2px 8px rgb(0 0 0 / 28%);pointer-events:none;font-variant-numeric:tabular-nums;white-space:nowrap;max-width:calc(100% - 1rem)}',
                 '.sv-scope .sv-tide-windbadge[hidden]{display:none}',
                 '.sv-scope .sv-tide-wb-when{font-size:.78rem;opacity:.85;white-space:nowrap}',
                 '.sv-scope .sv-tide-wb-water{display:inline-flex;align-items:center;gap:.25rem;font-size:.95rem;font-weight:700}',
