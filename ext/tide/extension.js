@@ -1404,8 +1404,12 @@
             if (!w || w.spd == null) { el.hidden = true; return; }
             el.hidden = false;
             var rot = (w.dir == null) ? 0 : (w.dir + 180);   // meteo FROM → arrow points TO
-            var gust = (w.gust != null) ? ' <span class="sv-tide-wb-gust">' + esc(Math.round(w.gust)) + '</span>' : '';
+            // Gust in parentheses after the speed: "12 (24) kn".
+            var gust = (w.gust != null)
+                ? ' <span class="sv-tide-wb-gust">(' + esc(Math.round(w.gust)) + ')</span>' : '';
+            var when = isoDate(new Date(s.t)) + ' ' + hhmm(s.t);
             el.innerHTML =
+                '<span class="sv-tide-wb-when">' + esc(when) + '</span>' +
                 '<svg class="sv-tide-wb-arrow" style="transform:rotate(' + rot.toFixed(0) + 'deg)" ' +
                      'width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">' +
                   '<path d="M8 0 4 7h3v9h2V7h3z"/></svg>' +
@@ -1561,6 +1565,7 @@
                 // dark-glass + white, theme-independent (readable over any map).
                 '.sv-scope .sv-tide-windbadge{position:absolute;top:.6rem;left:50%;transform:translateX(-50%);z-index:8400;display:flex;align-items:center;gap:.45rem;padding:.3rem .6rem;border-radius:999px;background:rgb(24 24 27 / 88%);color:#fff;box-shadow:0 2px 8px rgb(0 0 0 / 28%);pointer-events:none;font-variant-numeric:tabular-nums}',
                 '.sv-scope .sv-tide-windbadge[hidden]{display:none}',
+                '.sv-scope .sv-tide-wb-when{font-size:.78rem;opacity:.85;white-space:nowrap}',
                 '.sv-scope .sv-tide-wb-arrow{color:#6db3e8;transition:transform .15s ease}',
                 '.sv-scope .sv-tide-wb-spd{font-size:.95rem;font-weight:700}',
                 '.sv-scope .sv-tide-wb-spd small{font-weight:400;opacity:.8;font-size:.78rem}',
