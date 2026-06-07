@@ -1501,7 +1501,11 @@
             var s = selected();
             if (!s) { el.hidden = true; return; }   // no tide selection → nothing to show
             el.hidden = false;
-            var when = isoDate(new Date(s.t)) + ' ' + hhmm(s.t);
+            // Date over time, two lines.
+            var when = '<span class="sv-tide-wb-when">' +
+                '<span class="sv-tide-wb-date">' + esc(isoDate(new Date(s.t))) + '</span>' +
+                '<span class="sv-tide-wb-time">' + esc(hhmm(s.t)) + '</span></span>' +
+                '<span class="sv-tide-wb-sep" aria-hidden="true"></span>';
             // Water height on the chart datum (the annuaire value boaters read).
             var water = '<span class="sv-tide-wb-water">' +
                 '<svg class="sv-tide-wb-wave" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">' +
@@ -1521,7 +1525,7 @@
                       '<path d="M8 0 4 7h3v9h2V7h3z"/></svg>' +
                     '<span class="sv-tide-wb-spd">' + esc(Math.round(w.spd)) + gust + ' <small>km/h</small></span>';
             }
-            el.innerHTML = '<span class="sv-tide-wb-when">' + esc(when) + '</span>' + water + wind;
+            el.innerHTML = when + water + wind;
             el.setAttribute('aria-label', t('badge.aria', {
                 h: s.hZH.toFixed(1),
                 spd: (w && w.spd != null) ? Math.round(w.spd) : '?',
@@ -1676,7 +1680,9 @@
                 // dark-glass + white, theme-independent (readable over any map).
                 '.sv-scope .sv-tide-windbadge{position:absolute;top:3.4rem;left:50%;transform:translateX(-50%);z-index:8400;display:flex;align-items:center;gap:.45rem;padding:.3rem .6rem;border-radius:999px;background:rgb(24 24 27 / 88%);color:#fff;box-shadow:0 2px 8px rgb(0 0 0 / 28%);pointer-events:none;font-variant-numeric:tabular-nums;white-space:nowrap;max-width:calc(100% - 1rem)}',
                 '.sv-scope .sv-tide-windbadge[hidden]{display:none}',
-                '.sv-scope .sv-tide-wb-when{font-size:.78rem;opacity:.85;white-space:nowrap}',
+                '.sv-scope .sv-tide-wb-when{display:flex;flex-direction:column;align-items:center;line-height:1.05;white-space:nowrap}',
+                '.sv-scope .sv-tide-wb-date{font-size:.68rem;opacity:.8}',
+                '.sv-scope .sv-tide-wb-time{font-size:.86rem;font-weight:700}',
                 '.sv-scope .sv-tide-wb-water{display:inline-flex;align-items:center;gap:.25rem;font-size:.95rem;font-weight:700}',
                 '.sv-scope .sv-tide-wb-wave{color:#6db3e8}',
                 '.sv-scope .sv-tide-wb-water small,' + '.sv-scope .sv-tide-wb-spd small{font-weight:400;opacity:.8;font-size:.78rem}',
