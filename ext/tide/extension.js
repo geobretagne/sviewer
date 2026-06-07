@@ -106,6 +106,14 @@
     var BREST_LL  = [-4.4944, 48.3833];   // Brest [lon, lat] for the reference curve
     var BREST_RANGE_SPRING = 4.5;          // day range (m) ≥ → vive-eau, else morte-eau
 
+    // Wind forecast = Open-Meteo (same provider, keyless, CORS-direct). Model =
+    // best_match: Open-Meteo auto-selects Météo-France AROME 1.3 km near France
+    // for the short term and a global model beyond — seamless, no nulls (AROME
+    // alone stops at ~57 h). Wind/gust in knots + direction; loaded LAZILY on the
+    // first open of the Vent tab.
+    var WIND_URL  = 'https://api.open-meteo.com/v1/forecast';
+    var WIND_SRC  = 'Open-Meteo — Météo-France AROME 1,3 km près des côtes, modèle global au-delà';
+
     // --- i18n -----------------------------------------------------------------
     var I18N = {
         fr: {
@@ -113,6 +121,10 @@
             'panel.title': 'Marée',
             'tab.tide':    'Marée',
             'tab.data':    'Données',
+            'tab.wind':    'Vent',
+            'wind.spd':    'Vent',
+            'wind.gust':   'Rafales',
+            'wind.err':    'Prévision de vent indisponible.',
             'gate.hint':   'Zoomez sur une zone côtière près d’un port pour activer l’outil.',
             'loading':     'Recherche du port le plus proche…',
             'port.label':  'Port de référence',
@@ -157,6 +169,10 @@
             'panel.title': 'Tide',
             'tab.tide':    'Tide',
             'tab.data':    'Data',
+            'tab.wind':    'Wind',
+            'wind.spd':    'Wind',
+            'wind.gust':   'Gusts',
+            'wind.err':    'Wind forecast unavailable.',
             'gate.hint':   'Zoom in on a coastal area near a port to enable the tool.',
             'loading':     'Finding nearest port…',
             'port.label':  'Reference port',
@@ -201,6 +217,10 @@
             'panel.title': 'Marea',
             'tab.tide':    'Marea',
             'tab.data':    'Datos',
+            'tab.wind':    'Viento',
+            'wind.spd':    'Viento',
+            'wind.gust':   'Rachas',
+            'wind.err':    'Previsión de viento no disponible.',
             'gate.hint':   'Acérquese a una zona costera cerca de un puerto para activar la herramienta.',
             'loading':     'Buscando el puerto más cercano…',
             'port.label':  'Puerto de referencia',
@@ -245,6 +265,10 @@
             'panel.title': 'Gezeiten',
             'tab.tide':    'Gezeit',
             'tab.data':    'Daten',
+            'tab.wind':    'Wind',
+            'wind.spd':    'Wind',
+            'wind.gust':   'Böen',
+            'wind.err':    'Windvorhersage nicht verfügbar.',
             'gate.hint':   'Zoomen Sie auf ein Küstengebiet nahe einem Hafen, um das Werkzeug zu aktivieren.',
             'loading':     'Nächstgelegenen Hafen suchen…',
             'port.label':  'Referenzhafen',
@@ -329,6 +353,9 @@
         var curLayer = null; // OL WMTS tidal-current overlay (own, removed on close)
         var curId    = null; // current layer identifier in use (avoid needless reloads)
         var brestCache = {}; // 'date' → { highs:[ms], range } | null  (Brest HW + range per day)
+        var windChart  = null; // uPlot wind instance (Vent tab)
+        var windData   = null; // { t:[], spd:[], gust:[], dir:[] } for the current port
+        var windLoaded = false; // lazy: fetched on first Vent-tab open
 
         // --- RAM nearest-port fetch ------------------------------------------
         // Query the open RAM WFS for ports within a bbox around the map centre,
@@ -357,6 +384,7 @@
                     wantPort = null;
                     if (!p) { showError(t('err.none')); return; }
                     port = p;
+                    resetWind();    // new port → wind reloads lazily on next Vent open
                     renderLayout();
                     syncUrl();      // reflect the port immediately (tide_t added once the curve loads)
                     loadTide();
@@ -457,6 +485,11 @@
                   '<h3 class="sv-tide-h">' + esc(t('cur.label')) + '</h3>' +
                   '<p class="sv-tide-expl">' + esc(t('cur.expl')) + '</p>' +
                   provHtml(CUR_SRC, null) +
+                '</section>' +
+                // Wind forecast (traceability)
+                '<section class="sv-tide-block">' +
+                  '<h3 class="sv-tide-h">' + esc(t('tab.wind')) + '</h3>' +
+                  provHtml(WIND_SRC, null) +
                 '</section>');
         }
         // Two tabs (compact, mobile-first): "Marée" = live controls + graph,
@@ -468,6 +501,8 @@
                 '<div class="sv-tide-tabs" role="tablist" aria-label="' + esc(t('panel.title')) + '">' +
                   '<button type="button" role="tab" class="sv-tide-tab" id="sv-tide-tab-tide" ' +
                        'aria-controls="sv-tide-pane-tide" aria-selected="true" tabindex="0">' + esc(t('tab.tide')) + '</button>' +
+                  '<button type="button" role="tab" class="sv-tide-tab" id="sv-tide-tab-wind" ' +
+                       'aria-controls="sv-tide-pane-wind" aria-selected="false" tabindex="-1">' + esc(t('tab.wind')) + '</button>' +
                   '<button type="button" role="tab" class="sv-tide-tab" id="sv-tide-tab-data" ' +
                        'aria-controls="sv-tide-pane-data" aria-selected="false" tabindex="-1">' + esc(t('tab.data')) + '</button>' +
                 '</div>' +
@@ -501,6 +536,11 @@
                   '</div>' +
                   '<p class="sv-tide-prov sv-tide-curve-foot" id="sv-tide-curve-foot"></p>' +
                 '</div>' +
+                // Vent pane (hidden; lazily filled on first open)
+                '<div class="sv-tide-pane sv-tide-curve" id="sv-tide-pane-wind" role="tabpanel" aria-labelledby="sv-tide-tab-wind" hidden>' +
+                  '<div class="sv-tide-wind-plot" id="sv-tide-wind-plot"></div>' +
+                  '<p class="sv-tide-prov sv-tide-wind-foot" id="sv-tide-wind-foot"></p>' +
+                '</div>' +
                 // Données pane (hidden by default)
                 '<div class="sv-tide-pane sv-tide-info" id="sv-tide-pane-data" role="tabpanel" aria-labelledby="sv-tide-tab-data" hidden>' +
                   dataHtml() +
@@ -517,6 +557,7 @@
         function bindTabs() {
             var tabs = [
                 { tab: 'sv-tide-tab-tide', pane: 'sv-tide-pane-tide' },
+                { tab: 'sv-tide-tab-wind', pane: 'sv-tide-pane-wind' },
                 { tab: 'sv-tide-tab-data', pane: 'sv-tide-pane-data' }
             ];
             function select(idx) {
@@ -530,6 +571,7 @@
                     var host = document.getElementById('sv-tide-plot');
                     if (host) { chart.setSize({ width: host.clientWidth, height: Math.max(120, host.clientHeight) }); }
                 }
+                if (idx === 1) { openWind(); }   // Vent tab: lazy-load + (re)size
             }
             tabs.forEach(function (tt, i) {
                 var tb = document.getElementById(tt.tab);
@@ -1199,6 +1241,125 @@
             return _wmtsGrid;
         }
 
+        // --- Wind forecast tab (Open-Meteo AROME, lazy) ----------------------
+        // Opened on first Vent-tab click: fetch wind at the port, render, then just
+        // resize on subsequent opens. Re-fetched when the port changes (windLoaded
+        // reset in findPort path via resetWind()).
+        function openWind() {
+            if (!windLoaded) { windLoaded = true; loadWind(); }
+            else if (windChart) {
+                var host = document.getElementById('sv-tide-wind-plot');
+                if (host) { windChart.setSize({ width: host.clientWidth, height: Math.max(120, host.clientHeight) }); }
+            }
+        }
+        function resetWind() {
+            windLoaded = false; windData = null;
+            if (windChart) { try { windChart.destroy(); } catch (e) { /* */ } windChart = null; }
+        }
+        function loadWind() {
+            if (!port) { return; }
+            var seq = fetchSeq;
+            var host = document.getElementById('sv-tide-wind-plot');
+            if (host) { host.innerHTML = '<p class="sv-tide-msg">' + esc(t('loading')) + '</p>'; }
+            var ll = ol.proj.toLonLat([port.x, port.y]);
+            var url = WIND_URL +
+                '?latitude=' + encodeURIComponent(ll[1].toFixed(4)) +
+                '&longitude=' + encodeURIComponent(ll[0].toFixed(4)) +
+                '&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m' +
+                '&wind_speed_unit=kn&timezone=' + encodeURIComponent('Europe/Paris') +
+                '&forecast_days=5';
+            fetch(url, { headers: { Accept: 'application/json' } })
+                .then(function (r) { return r.ok ? r.json() : Promise.reject('HTTP ' + r.status); })
+                .then(function (j) {
+                    if (seq !== fetchSeq && port) { /* port changed mid-flight */ }
+                    var h = j && j.hourly;
+                    if (!h || !Array.isArray(h.time)) { return Promise.reject('empty'); }
+                    var d = { t: [], spd: [], gust: [], dir: [] };
+                    for (var i = 0; i < h.time.length; i++) {
+                        var ts = parseLocal(h.time[i]);
+                        var sp = Number(h.wind_speed_10m[i]);
+                        if (!isFinite(ts) || !isFinite(sp)) { continue; }
+                        d.t.push(ts / 1000);
+                        d.spd.push(sp);
+                        d.gust.push(numOrNull(h.wind_gusts_10m[i]));
+                        d.dir.push(numOrNull(h.wind_direction_10m[i]));
+                    }
+                    if (!d.t.length) { return Promise.reject('empty'); }
+                    windData = d;
+                    renderWind();
+                })
+                .catch(function () {
+                    var hh = document.getElementById('sv-tide-wind-plot');
+                    if (hh) { hh.innerHTML = '<p class="sv-tide-err">' + esc(t('wind.err')) + '</p>'; }
+                });
+        }
+        function renderWind() {
+            var host = document.getElementById('sv-tide-wind-plot');
+            var foot = document.getElementById('sv-tide-wind-foot');
+            if (!host || !windData) { return; }
+            if (foot) { foot.innerHTML = esc(t('prov.source')) + ' : ' + esc(WIND_SRC); }
+            loadUplot().then(function (uPlot) {
+                var h2 = document.getElementById('sv-tide-wind-plot');
+                if (!h2 || !windData) { return; }
+                if (windChart) { try { windChart.destroy(); } catch (e) { /* */ } windChart = null; }
+                h2.innerHTML = '';
+                var fmtTime = uPlot.fmtDate('{HH}:{mm}');
+                var fmtDay  = uPlot.fmtDate('{DD}/{MM}');
+                var w = h2.clientWidth || 320;
+                var hgt = Math.max(140, h2.clientHeight || 180);
+                var opts = {
+                    width: w, height: hgt,
+                    legend: { show: true },
+                    scales: { x: { time: true } },
+                    series: [
+                        {},
+                        { label: t('wind.spd'),  stroke: '#0d6efd', width: 2, points: { show: false } },
+                        { label: t('wind.gust'), stroke: '#d9342b', width: 1.5, dash: [4, 3], points: { show: false } }
+                    ],
+                    axes: [
+                        { stroke: '#888', grid: { stroke: 'rgba(127,127,127,.15)' },
+                          values: function (u, splits, ai, sp, incr) {
+                              var f = incr < 86400 ? fmtTime : fmtDay;
+                              return splits.map(function (s) { return f(new Date(s * 1000)); });
+                          } },
+                        { stroke: '#888', grid: { stroke: 'rgba(127,127,127,.15)' },
+                          values: function (u, vals) { return vals.map(function (v) { return v + ' kn'; }); } }
+                    ],
+                    hooks: { draw: [drawWindArrows] }
+                };
+                windChart = new uPlot(opts, [windData.t, windData.spd, windData.gust], h2);
+            }).catch(function () {
+                var hh = document.getElementById('sv-tide-wind-plot');
+                if (hh) { hh.innerHTML = '<p class="sv-tide-err">' + esc(t('err.curve')) + '</p>'; }
+            });
+        }
+        // Wind-direction arrows along the bottom of the plot — a small glyph every
+        // ~3 h pointing where the wind blows TO (meteo dir = FROM, so +180°).
+        function drawWindArrows(u) {
+            if (!windData) { return; }
+            var ctx = u.ctx, n = windData.t.length;
+            var step = Math.max(1, Math.round(n / 28));   // ~28 arrows across
+            var y = u.bbox.top + u.bbox.height - 8 * u.pxRatio;
+            var len = 6 * u.pxRatio;
+            ctx.save();
+            ctx.strokeStyle = '#52525b';
+            ctx.fillStyle = '#52525b';
+            ctx.lineWidth = Math.max(1, u.pxRatio);
+            for (var i = 0; i < n; i += step) {
+                var dir = windData.dir[i];
+                if (dir == null) { continue; }
+                var cx = u.valToPos(windData.t[i], 'x', true);
+                if (cx < u.bbox.left || cx > u.bbox.left + u.bbox.width) { continue; }
+                var a = (dir + 180) * Math.PI / 180;     // blowing-TO direction
+                var dx = Math.sin(a) * len, dy = -Math.cos(a) * len;
+                ctx.beginPath(); ctx.moveTo(cx - dx, y - dy); ctx.lineTo(cx + dx, y + dy); ctx.stroke();
+                // arrowhead at the tip
+                ctx.beginPath();
+                ctx.arc(cx + dx, y + dy, 1.6 * u.pxRatio, 0, 2 * Math.PI); ctx.fill();
+            }
+            ctx.restore();
+        }
+
         // --- Toolbar button + zoom gate --------------------------------------
         var toolbar = document.getElementById('sv-panel-controls');
         var btn = document.createElement('button');
@@ -1242,7 +1403,7 @@
             findPort();
         }
         SViewer.panel.onClose(PANEL, function () {
-            active = false; destroyChart();
+            active = false; destroyChart(); resetWind();
             if (seaTimer) { clearTimeout(seaTimer); seaTimer = null; }
             removeSeaLayer(); removeCurrentLayer();
             btn.setAttribute('aria-pressed', 'false'); btn.classList.remove('active');
@@ -1284,6 +1445,8 @@
                 P + '.sv-tide-mark-pm{background:rgba(13,110,253,.14)}',
                 P + '.sv-tide-mark-bm{background:rgba(127,127,127,.18)}',
                 P + '.sv-tide-plot{flex:1;min-height:120px}',
+                P + '.sv-tide-wind-plot{flex:1;min-height:140px;margin-top:.3rem}',
+                P + '.sv-tide-wind-foot{flex:none;margin-top:.25rem}',
                 // Cursor readout strip — selected instant in both datums. Focusable
                 // slider; visible focus ring (keyboard scrub). Hardcoded colors are
                 // fine here (panel, not a map overlay).
