@@ -1270,7 +1270,7 @@
                 P + '.sv-tide-topname{font-weight:600;color:var(--sv-panel-fg,#18181b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:9em;flex:none}',
                 P + '.sv-tide-repick{flex:none;display:inline-flex;align-items:center;justify-content:center;padding:.2rem .45rem}',
                 P + '.sv-tide-draft-lbl{font-size:.78rem;font-weight:600;color:var(--sv-panel-fg-muted,#52525b);white-space:nowrap;margin-left:auto}',
-                P + '.sv-tide-topline input[type=range]{flex:1;min-width:4rem;max-width:11rem;accent-color:#e8852b}',
+                P + '.sv-tide-topline input[type=range]{flex:1;min-width:4rem;max-width:11rem;accent-color:#d9342b}',
                 P + '.sv-tide-topline output{font-variant-numeric:tabular-nums;font-size:.82rem;font-weight:600;color:var(--sv-panel-fg,#18181b);min-width:3.2em;text-align:right;flex:none}',
                 P + '.sv-tide-curve-head{flex:none}',
                 P + '.sv-tide-datenav-slot{display:flex;align-items:center;min-width:0}',
