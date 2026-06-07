@@ -27,7 +27,7 @@
   {
     "id": "tide",
     "name": "Marée",
-    "description": "Visualise l'étendue de la mer prévue sur une zone côtière pour une date et une heure choisies. La bathymétrie SHOM (fond marin, WMS) est peinte en bleu (immergé) / orange (découvert) de part et d'autre du niveau de la mer, lui-même donné par une courbe de marée interactive (Open-Meteo, modèle libre) calée sur les Références Altimétriques Maritimes du SHOM (zéro hydrographique → IGN69). Un curseur « tirant d'eau » signale les zones d'échouage pour un bateau, et les courants de marée du SHOM (atlas WMTS, référencé Brest) se superposent automatiquement selon l'heure choisie. Toutes les données sources (origine, date, valeur) sont affichées — approche scientifique traçable. Outil de visualisation de marée prédite, non destiné à la navigation."
+    "description": "Visualise l'étendue de la mer prévue sur une zone côtière pour une date et une heure choisies. La bathymétrie SHOM (fond marin, WMS) est peinte en bleu (immergé) / orange (découvert) de part et d'autre du niveau de la mer, lui-même donné par une courbe de marée interactive (Open-Meteo, modèle libre) calée sur les Références Altimétriques Maritimes du SHOM (zéro hydrographique → IGN69). Un curseur « tirant d'eau » signale les zones d'échouage pour un bateau, et les courants de marée du SHOM (atlas WMTS, référencé Brest) se superposent automatiquement selon l'heure choisie. Un onglet « Vent » affiche les prévisions Open-Meteo (modèle Météo-France AROME 1,3 km près des côtes) à l'emplacement du port. Toutes les données sources (origine, date, valeur) sont affichées — approche scientifique traçable. Outil de visualisation de marée prédite, non destiné à la navigation."
   },
   {
     "id": "me",

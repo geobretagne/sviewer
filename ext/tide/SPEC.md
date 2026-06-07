@@ -59,14 +59,19 @@ valeur) est affichée à l'utilisateur. Aucun nombre caché.
   **sans clé, CORS ouvert, PNG transparent**. Superposition automatique selon
   l'instant (voir ci-dessous). Couvre Manche/Atlantique, référencé Brest, niveaux
   de tuiles 0–13 (champ régional grossier ; au-delà OL sur-zoome la tuile z13).
+- **Vent** — Open-Meteo `forecast` (`api.open-meteo.com`), **sans clé, CORS
+  ouvert**, modèle `best_match` (Météo-France **AROME 1,3 km** près des côtes,
+  modèle global au-delà). Vitesse + rafales (nœuds) + direction, 5 jours horaires,
+  aux coordonnées du port. Chargé **paresseusement** à la première ouverture de
+  l'onglet, rechargé au changement de port.
 
 SHOM SPM (prédictions officielles) écarté : clé liée à un Referer + endpoint
 `hlt` en 403 sur l'offre gratuite. WorldTides écarté : pas de cache multi-
 utilisateur (licence). Open-Meteo : non commercial, attribution CC-BY-4.0.
 
-## Interface (2 onglets)
+## Interface (3 onglets)
 
-Dock bas pleine largeur, deux onglets (tablist WCAG, flèches ←/→) :
+Dock bas pleine largeur, trois onglets (tablist WCAG, flèches ←/→) :
 
 - **Marée** — contrôles vivants + graphe :
   - **ligne compacte** en haut : bouton **re-sélection du port** (icône seule) ·
@@ -81,8 +86,10 @@ Dock bas pleine largeur, deux onglets (tablist WCAG, flèches ←/→) :
   - **lecture** sous le graphe : instant sélectionné dans les **deux** référentiels
     (ZH et IGN69 calculé) — rien de caché.
   - **spinner** pendant le chargement de la carte WMS.
+- **Vent** — graphe uPlot : vent (bleu) + rafales (rouge pointillé) en nœuds,
+  flèches de direction (vers où souffle le vent) le long du bas ; horizon 5 jours.
 - **Données** — port + nom, **séparation de datum + formule**, niveaux
-  caractéristiques (PHMA/PMVE/NM), bathymétrie, **courants**, **toute la
+  caractéristiques (PHMA/PMVE/NM), bathymétrie, **courants**, **vent**, **toute la
   provenance** (source + date sous chaque bloc).
 
 ### Superpositions carte
@@ -153,5 +160,5 @@ paramètres et en ajoutant `ext=tide`. Un lien partagé rouvre à l'identique.
 ## Dépendances
 
 - **uPlot** (MIT, vendored `uplot.min.{js,css}`, lazy au premier graphe).
-- **OpenLayers 10** (cœur sViewer) pour les superpositions WMS (mer) et WMTS (courants).
+- **OpenLayers 10** (cœur sViewer) pour les superpositions WMS (mer) et WMTS (courants). Vent + marée + courants : Open-Meteo (forecast + marine).
 - Aucune autre : pas de CDN, pas de clé d'API, pas de backend.

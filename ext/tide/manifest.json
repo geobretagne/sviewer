@@ -1,59 +1,54 @@
 {
-  "id":          "tide",
-  "type":        "extension",
-  "version":     "0.1.0",
-  "name":        "Marée",
-  "description": "Visualise l'étendue de la mer prévue sur une zone côtière pour une date et une heure choisies. La bathymétrie SHOM (fond marin, WMS) est peinte en bleu (immergé) / orange (découvert) de part et d'autre du niveau de la mer, lui-même donné par une courbe de marée interactive (Open-Meteo, modèle libre) calée sur les Références Altimétriques Maritimes du SHOM (zéro hydrographique → IGN69). Un curseur « tirant d'eau » signale les zones d'échouage pour un bateau, et les courants de marée du SHOM (atlas WMTS, référencé Brest) se superposent automatiquement selon l'heure choisie. Toutes les données sources (origine, date, valeur) sont affichées — approche scientifique traçable. Outil de visualisation de marée prédite, non destiné à la navigation.",
-  "author":      "fphg",
-  "screenshot":  "screenshot.png",
-
+  "id": "tide",
+  "type": "extension",
+  "version": "0.1.0",
+  "name": "Marée",
+  "description": "Visualise l'étendue de la mer prévue sur une zone côtière pour une date et une heure choisies. La bathymétrie SHOM (fond marin, WMS) est peinte en bleu (immergé) / orange (découvert) de part et d'autre du niveau de la mer, lui-même donné par une courbe de marée interactive (Open-Meteo, modèle libre) calée sur les Références Altimétriques Maritimes du SHOM (zéro hydrographique → IGN69). Un curseur « tirant d'eau » signale les zones d'échouage pour un bateau, et les courants de marée du SHOM (atlas WMTS, référencé Brest) se superposent automatiquement selon l'heure choisie. Un onglet « Vent » affiche les prévisions Open-Meteo (modèle Météo-France AROME 1,3 km près des côtes) à l'emplacement du port. Toutes les données sources (origine, date, valeur) sont affichées — approche scientifique traçable. Outil de visualisation de marée prédite, non destiné à la navigation.",
+  "author": "fphg",
+  "screenshot": "screenshot.png",
   "entry": "extension.js",
-
   "params": [
     {
-      "name":        "tide_minzoom",
-      "type":        "number",
+      "name": "tide_minzoom",
+      "type": "number",
       "description": "Niveau de zoom minimal pour activer l'outil (échelle côtière, port unique). Défaut 13.",
-      "example":     "tide_minzoom=13"
+      "example": "tide_minzoom=13"
     },
     {
-      "name":        "tide_port",
-      "type":        "string",
+      "name": "tide_port",
+      "type": "string",
       "description": "Présélectionne un port RAM par son nom (saute la recherche du port le plus proche). Lien profond.",
-      "example":     "tide_port=Concarneau"
+      "example": "tide_port=Concarneau"
     },
     {
-      "name":        "tide_t",
-      "type":        "string",
+      "name": "tide_t",
+      "type": "string",
       "description": "Instant présélectionné (ISO local 'AAAA-MM-JJTHH:MM') : fixe le jour et place le curseur dessus. Permet de partager « ce moment précis ». L'URL est mise à jour en continu.",
-      "example":     "tide_t=2026-06-10T14:30"
+      "example": "tide_t=2026-06-10T14:30"
     },
     {
-      "name":        "tide_draft",
-      "type":        "number",
+      "name": "tide_draft",
+      "type": "number",
       "description": "Tirant d'eau du bateau en mètres (0 à 3). Abaisse la limite bleu/orange pour signaler les zones d'échouage.",
-      "example":     "tide_draft=1.5"
+      "example": "tide_draft=1.5"
     }
   ],
-
   "sviewer": {
     "minVersion": "0.16.0"
   },
-
   "seo": {
-    "title":           "Marée — étendue de la mer prévue par date/heure dans sViewer",
+    "title": "Marée — étendue de la mer prévue par date/heure dans sViewer",
     "metaDescription": "Extension sViewer : bathymétrie SHOM peinte selon le niveau de marée (Open-Meteo calé sur les RAM SHOM, ZH→IGN69). Courbe interactive, curseur tirant d'eau, données sources tracées, sans CDN ni clé d'API."
   },
-
   "examples": [
     {
-      "title":       "Marée à Concarneau",
-      "url":         "?ext=tide&tide_port=Concarneau",
+      "title": "Marée à Concarneau",
+      "url": "?ext=tide&tide_port=Concarneau",
       "description": "Ouvre l'outil sur le port de Concarneau ; faites glisser le curseur sur la courbe pour voir la mer évoluer"
     },
     {
-      "title":       "Lien profond — un instant précis",
-      "url":         "?ext=tide&tide_port=Concarneau&tide_t=2026-06-10T14:30&tide_draft=1.5",
+      "title": "Lien profond — un instant précis",
+      "url": "?ext=tide&tide_port=Concarneau&tide_t=2026-06-10T14:30&tide_draft=1.5",
       "description": "Rouvre à une date/heure donnée avec un tirant d'eau de 1,5 m — idéal pour partager ou embarquer"
     }
   ]
