@@ -600,16 +600,17 @@
                     '<span class="sv-tide-spinner" id="sv-tide-spinner" role="status" ' +
                          'aria-label="' + esc(t('wms.loading')) + '" title="' + esc(t('wms.loading')) + '" hidden></span>' +
                   '</div>' +
-                  '<p class="sv-tide-prov sv-tide-curve-foot" id="sv-tide-curve-foot"></p>' +
                 '</div>' +
                 // Vent pane (hidden; lazily filled on first open)
                 '<div class="sv-tide-pane sv-tide-curve" id="sv-tide-pane-wind" role="tabpanel" aria-labelledby="sv-tide-tab-wind" hidden>' +
                   '<div class="sv-tide-wind-plot" id="sv-tide-wind-plot"></div>' +
                   '<p class="sv-tide-prov sv-tide-wind-foot" id="sv-tide-wind-foot"></p>' +
                 '</div>' +
-                // Données pane (hidden by default)
+                // Données pane (hidden by default) — includes the tide-curve source
+                // line (moved off the Marée tab to free graph space).
                 '<div class="sv-tide-pane sv-tide-info" id="sv-tide-pane-data" role="tabpanel" aria-labelledby="sv-tide-tab-data" hidden>' +
                   dataHtml() +
+                  '<p class="sv-tide-prov sv-tide-curve-foot" id="sv-tide-curve-foot"></p>' +
                 '</div>';
             bindTabs();
             bindRepick();
