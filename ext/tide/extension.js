@@ -477,13 +477,14 @@
                     date: pr.date_ch != null ? String(pr.date_ch) : (pr.date_rf != null ? String(pr.date_rf) : null),
                     x: x, y: y
                 };
-                if (wantPort && cand.site.toLowerCase() === wantPort.toLowerCase()) {
-                    best = cand; bestD = 0; return;
-                }
                 var d = Math.hypot(x - center[0], y - center[1]);
-                if (!wantPort && d < bestD) { bestD = d; best = cand; }
+                cand.dist = d;   // real distance to the map centre, always
+                // ?tide_port= match wins by NAME, but keeps its true distance.
+                if (wantPort && cand.site.toLowerCase() === wantPort.toLowerCase()) {
+                    best = cand; bestD = -1; return;        // -1 = locked by name
+                }
+                if (bestD !== -1 && d < bestD) { bestD = d; best = cand; }
             });
-            if (best) { best.dist = bestD; }
             return best;
         }
         function numOrNull(v) { var n = Number(v); return isFinite(n) ? n : null; }
