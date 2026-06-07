@@ -458,6 +458,16 @@
                 });
         }
         // Pick the nearest feature with a usable zh_ref; or, if ?tide_port= is set,
+        // True ground distance (metres) between two EPSG:3857 points. Web Mercator
+        // distances are stretched by 1/cos(lat) (≈1.5× at 48°N); multiply the 3857
+        // hypot by cos(lat) at the mean latitude to get real metres. (ol.sphere is
+        // not in our custom OL build, so we correct manually — exact enough for the
+        // ~10 km coastal scale here.)
+        function geoDist(a, b) {
+            var latA = ol.proj.toLonLat(a)[1], latB = ol.proj.toLonLat(b)[1];
+            var k = Math.cos((latA + latB) / 2 * Math.PI / 180);
+            return Math.hypot(a[0] - b[0], a[1] - b[1]) * k;
+        }
         // that named port. Validates every numeric (untrusted service input).
         function pickNearest(fc, center) {
             if (!fc || !Array.isArray(fc.features)) { return null; }
@@ -477,7 +487,7 @@
                     date: pr.date_ch != null ? String(pr.date_ch) : (pr.date_rf != null ? String(pr.date_rf) : null),
                     x: x, y: y
                 };
-                var d = Math.hypot(x - center[0], y - center[1]);
+                var d = geoDist([x, y], center);   // true ground metres
                 cand.dist = d;   // real distance to the map centre, always
                 // ?tide_port= match wins by NAME, but keeps its true distance.
                 if (wantPort && cand.site.toLowerCase() === wantPort.toLowerCase()) {
@@ -686,7 +696,7 @@
             var el = document.getElementById('sv-tide-faraway');
             if (!el || !port) { return; }
             var c = view.getCenter();
-            var far = c && Math.hypot(c[0] - port.x, c[1] - port.y) > FARAWAY_M;
+            var far = c && geoDist(c, [port.x, port.y]) > FARAWAY_M;
             el.hidden = !far;
         }
 
