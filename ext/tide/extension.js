@@ -815,7 +815,7 @@
                           values: function (u, vals) { return vals.map(function (v) { return v + ' ' + unit; }); } }
                     ],
                     hooks: {
-                        // Red "now" vertical line + the orange selection line, drawn
+                        // Blue "now" vertical line + the orange selection line, drawn
                         // each frame. Hover does NOT move the selection — only a
                         // click commits (see the click handler below), so the orange
                         // line sticks to the clicked time, not the pointer.
@@ -904,7 +904,7 @@
             var top  = chart.valToPos(Number(tide.points[curIdx].h), 'y', true);
             chart.setCursor({ left: left, top: top });
         }
-        // Red vertical "now" marker drawn on the plot canvas. Fires from uPlot's
+        // Blue vertical "now" marker drawn on the plot canvas. Fires from uPlot's
         // `draw` hook (after the series render). Skipped when the current time is
         // outside the shown day. With canvas=true, valToPos returns DEVICE pixels,
         // matching u.bbox (also device px) — do NOT multiply by pxRatio again.
@@ -919,7 +919,7 @@
             ctx.beginPath();
             ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
             ctx.clip();
-            ctx.strokeStyle = '#e02424';   // red, fixed (theme-independent overlay)
+            ctx.strokeStyle = '#0d6efd';   // blue "now" line (red reserved for the danger zone)
             ctx.lineWidth = Math.max(1, 1.5 * u.pxRatio);
             ctx.beginPath();
             ctx.moveTo(cx, u.bbox.top);
