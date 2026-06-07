@@ -126,6 +126,8 @@
             'wind.gust':   'Rafales',
             'wind.err':    'Prévision de vent indisponible.',
             'wind.badge':  'Vent {spd} km/h, direction {dir}°',
+            'wind.fetched':'prévision récupérée le {when}',
+            'wind.stale':  '— peut être obsolète',
             'gate.hint':   'Zoomez sur une zone côtière près d’un port pour activer l’outil.',
             'loading':     'Recherche du port le plus proche…',
             'port.label':  'Port de référence',
@@ -175,6 +177,8 @@
             'wind.gust':   'Gusts',
             'wind.err':    'Wind forecast unavailable.',
             'wind.badge':  'Wind {spd} km/h, direction {dir}°',
+            'wind.fetched':'forecast retrieved {when}',
+            'wind.stale':  '— may be outdated',
             'gate.hint':   'Zoom in on a coastal area near a port to enable the tool.',
             'loading':     'Finding nearest port…',
             'port.label':  'Reference port',
@@ -224,6 +228,8 @@
             'wind.gust':   'Rachas',
             'wind.err':    'Previsión de viento no disponible.',
             'wind.badge':  'Viento {spd} km/h, dirección {dir}°',
+            'wind.fetched':'previsión obtenida el {when}',
+            'wind.stale':  '— puede estar desactualizada',
             'gate.hint':   'Acérquese a una zona costera cerca de un puerto para activar la herramienta.',
             'loading':     'Buscando el puerto más cercano…',
             'port.label':  'Puerto de referencia',
@@ -273,6 +279,8 @@
             'wind.gust':   'Böen',
             'wind.err':    'Windvorhersage nicht verfügbar.',
             'wind.badge':  'Wind {spd} km/h, Richtung {dir}°',
+            'wind.fetched':'Vorhersage abgerufen am {when}',
+            'wind.stale':  '— möglicherweise veraltet',
             'gate.hint':   'Zoomen Sie auf ein Küstengebiet nahe einem Hafen, um das Werkzeug zu aktivieren.',
             'loading':     'Nächstgelegenen Hafen suchen…',
             'port.label':  'Referenzhafen',
@@ -336,6 +344,43 @@
         return m >= 1000 ? (Math.round(m / 100) / 10) + ' km' : Math.round(m) + ' m';
     }
 
+    // --- Offline persistence (localStorage) -----------------------------------
+    // Tide/Brest curves + RAM port are deterministic/static → cached forever and
+    // valid offline. Wind is a forecast → cached too but stamped with fetch time
+    // so a stale prediction is shown as such, not trusted blindly. Keyed under one
+    // versioned namespace; quota errors swallowed (cache is an optimisation, never
+    // required). On a full quota we drop our oldest entries and retry once.
+    var STORE_PREFIX = 'sv_tide_v1.';
+    // Each entry is wrapped { _ts: <fetch ms>, v: <value> } — _ts drives LRU
+    // eviction on quota and lets callers show how old a forecast is. Returns the
+    // wrapper ({_ts, v}) or undefined.
+    function storeGet(key) {
+        try { var raw = localStorage.getItem(STORE_PREFIX + key); return raw ? JSON.parse(raw) : undefined; }
+        catch (e) { return undefined; }
+    }
+    function storeSet(key, val) {
+        var s;
+        try { s = JSON.stringify({ _ts: Date.now(), v: val }); } catch (e) { return; }
+        try { localStorage.setItem(STORE_PREFIX + key, s); }
+        catch (e) {
+            // Quota: evict our oldest entries (by stored `_ts`), retry once.
+            try {
+                var mine = [];
+                for (var i = 0; i < localStorage.length; i++) {
+                    var k = localStorage.key(i);
+                    if (k && k.indexOf(STORE_PREFIX) === 0) {
+                        var v = localStorage.getItem(k);
+                        var ts = 0; try { ts = (JSON.parse(v) || {})._ts || 0; } catch (e2) { /* */ }
+                        mine.push({ k: k, ts: ts });
+                    }
+                }
+                mine.sort(function (a, b) { return a.ts - b.ts; });
+                for (var j = 0; j < Math.ceil(mine.length / 3); j++) { localStorage.removeItem(mine[j].k); }
+                localStorage.setItem(STORE_PREFIX + key, s);
+            } catch (e3) { /* give up — cache is optional */ }
+        }
+    }
+
     SViewer.onMapReady(function (ctx) {
         var map  = ctx.map;
         var view = ctx.view || map.getView();
@@ -360,10 +405,14 @@
         var windChart  = null; // uPlot wind instance (Vent tab)
         var windData   = null; // { t:[], spd:[], gust:[], dir:[] } for the current port
         var windLoaded = false; // lazy: fetched on first Vent-tab open
+        var windFetchedAt = 0; // epoch ms of the wind data in use (for staleness)
 
         // --- RAM nearest-port fetch ------------------------------------------
         // Query the open RAM WFS for ports within a bbox around the map centre,
         // pick the nearest one carrying a non-null zh_ref (datum separation).
+        // Coarse (~10 km) cell key for caching the picked port — so an offline
+        // re-open near the same place recovers the port without the WFS.
+        function portCellKey(c) { return 'port.' + Math.round(c[0] / 10000) + '_' + Math.round(c[1] / 10000); }
         function findPort() {
             var c = view.getCenter();
             if (!c) { return; }
@@ -387,13 +436,22 @@
                     if (!p && wantPort) { wantPort = null; p = pickNearest(j, c); }
                     wantPort = null;
                     if (!p) { showError(t('err.none')); return; }
+                    storeSet(portCellKey(c), p);   // persist for offline re-open
                     port = p;
                     resetWind();    // new port → wind reloads lazily on next Vent open
                     renderLayout();
                     syncUrl();      // reflect the port immediately (tide_t added once the curve loads)
                     loadTide();
                 })
-                .catch(function () { if (seq === fetchSeq) { showError(t('err.fetch')); } });
+                .catch(function () {
+                    if (seq !== fetchSeq) { return; }
+                    // Offline / WFS down → recover a previously-picked port for this
+                    // map cell (datum + tide are deterministic → still valid).
+                    var st = storeGet(portCellKey(c));
+                    if (st && st.v) {
+                        port = st.v; resetWind(); renderLayout(); syncUrl(); loadTide();
+                    } else { showError(t('err.fetch')); }
+                });
         }
         // Pick the nearest feature with a usable zh_ref; or, if ?tide_port= is set,
         // that named port. Validates every numeric (untrusted service input).
@@ -638,6 +696,11 @@
             if (!port) { return; }
             var date = isoDate(curDate);
             var cached = tideCache[cacheKey(date)];
+            // Memory miss → try localStorage (survives reload + works offline).
+            if (cached === undefined) {
+                var stored = storeGet('tide.' + cacheKey(date));
+                if (stored !== undefined) { tideCache[cacheKey(date)] = cached = stored.v; }
+            }
             if (cached) { ++fetchSeq; tide = cached; renderCurve(); return; }
             if (cached === null) { ++fetchSeq; showNoData(date); return; }  // known no-data
             fetchWindow();
@@ -667,7 +730,9 @@
                     while (d <= end) {
                         var ds = isoDate(d);
                         var raw = byDay[ds];
-                        tideCache[cacheKey(ds)] = (raw && raw.length) ? buildSeriesFromRaw(raw, ds) : null;
+                        var ser = (raw && raw.length) ? buildSeriesFromRaw(raw, ds) : null;
+                        tideCache[cacheKey(ds)] = ser;
+                        storeSet('tide.' + cacheKey(ds), ser);   // persist (incl. null = known no-data)
                         d.setDate(d.getDate() + 1);
                     }
                     var sel = tideCache[cacheKey(isoDate(curDate))];
@@ -1150,6 +1215,9 @@
         function loadBrest() {
             var date = isoDate(curDate);
             if (brestCache[date] !== undefined) { updateCurrent(); return; }   // cached (incl. null)
+            // localStorage (Brest tide is deterministic → valid offline).
+            var st = storeGet('brest.' + date);
+            if (st !== undefined) { brestCache[date] = st.v; updateCurrent(); return; }
             var start = new Date(curDate); start.setDate(start.getDate() - WINDOW_BACK);
             var end   = new Date(curDate); end.setDate(end.getDate() + WINDOW_FWD);
             var url = OM_URL +
@@ -1164,7 +1232,9 @@
                     var d = new Date(start);
                     while (d <= end) {
                         var ds = isoDate(d);
-                        brestCache[ds] = brestDay(byDay[ds]);
+                        var bd = brestDay(byDay[ds]);
+                        brestCache[ds] = bd;
+                        storeSet('brest.' + ds, bd);
                         d.setDate(d.getDate() + 1);
                     }
                     updateCurrent();
@@ -1268,8 +1338,23 @@
             var p = document.getElementById('sv-tide-pane-wind');
             return p && !p.hidden;
         }
+        var WIND_FRESH_MS = 3 * 3600 * 1000;   // < 3 h old → skip the network
+        function windKey() { return 'wind.' + (port ? port.site : '?'); }
+        function useWind(d, ts) {
+            windData = d; windFetchedAt = ts || Date.now();
+            if (windPaneVisible()) { renderWind(); }
+            updateWindBadge();
+        }
         function loadWind() {
             if (!port) { return; }
+            // Cache-first: a fresh (<3 h) stored forecast or being offline → use the
+            // cache, skip the network. Wind is a forecast, so we stamp + show its age.
+            var stored = storeGet(windKey());
+            var fresh  = stored && (Date.now() - stored._ts) < WIND_FRESH_MS;
+            if (stored && (fresh || navigator.onLine === false)) {
+                useWind(stored.v, stored._ts);
+                if (fresh) { return; }   // offline+stale: shown, but still try below
+            }
             var ll = ol.proj.toLonLat([port.x, port.y]);
             var url = WIND_URL +
                 '?latitude=' + encodeURIComponent(ll[1].toFixed(4)) +
@@ -1293,11 +1378,13 @@
                         d.dir.push(numOrNull(h.wind_direction_10m[i]));
                     }
                     if (!d.t.length) { return Promise.reject('empty'); }
-                    windData = d;
-                    if (windPaneVisible()) { renderWind(); }
-                    updateWindBadge();   // refresh the on-map badge for the current cursor
+                    storeSet(windKey(), d);
+                    useWind(d, Date.now());
                 })
                 .catch(function () {
+                    // Network failed → fall back to any stored forecast (offline use).
+                    var st = storeGet(windKey());
+                    if (st) { useWind(st.v, st._ts); return; }
                     var hh = document.getElementById('sv-tide-wind-plot');
                     if (hh) { hh.innerHTML = '<p class="sv-tide-err">' + esc(t('wind.err')) + '</p>'; }
                 });
@@ -1306,7 +1393,14 @@
             var host = document.getElementById('sv-tide-wind-plot');
             var foot = document.getElementById('sv-tide-wind-foot');
             if (!host || !windData) { return; }
-            if (foot) { foot.innerHTML = esc(t('prov.source')) + ' : ' + esc(WIND_SRC); }
+            if (foot) {
+                // Provenance + forecast age (it's a forecast — be honest if stale).
+                var ageH = (Date.now() - windFetchedAt) / 3600000;
+                var when = windFetchedAt ? (isoDate(new Date(windFetchedAt)) + ' ' + hhmm(windFetchedAt)) : '?';
+                var stale = ageH > 6 ? ' <em class="sv-tide-stale">' + esc(t('wind.stale')) + '</em>' : '';
+                foot.innerHTML = esc(t('prov.source')) + ' : ' + esc(WIND_SRC) +
+                    ' — ' + esc(t('wind.fetched', { when: when })) + stale;
+            }
             loadUplot().then(function (uPlot) {
                 var h2 = document.getElementById('sv-tide-wind-plot');
                 if (!h2 || !windData) { return; }
@@ -1524,6 +1618,7 @@
                 P + '.sv-tide-plot{flex:1;min-height:120px}',
                 P + '.sv-tide-wind-plot{flex:1;min-height:140px;margin-top:.3rem}',
                 P + '.sv-tide-wind-foot{flex:none;margin-top:.25rem}',
+                P + '.sv-tide-stale{color:#8a6d00;font-style:normal;font-weight:600}',
                 // Cursor readout strip — selected instant in both datums. Focusable
                 // slider; visible focus ring (keyboard scrub). Hardcoded colors are
                 // fine here (panel, not a map overlay).
