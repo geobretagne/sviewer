@@ -4,6 +4,47 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.19.0] - 2026-06-08
+
+### Added
+
+- **Extension `tide` 1.0** — l'outil passe d'une visualisation de marée à un
+  **préparateur de sortie côtière à la journée** :
+  - **Onglet Vagues** (Open-Meteo Marine) : hauteur significative + houle + période
+    + direction, graphe uPlot, badge et provenance. Modèle global → honnête « vague
+    au large » (grossier près des côtes abritées).
+  - **Onglet Vent en nœuds** (l'unité du marin ; données récupérées en km/h,
+    converties à l'affichage) + **lignes de référence Beaufort**.
+  - **Sonde de profondeur au clic** : GetFeatureInfo sur la bathymétrie rendue →
+    hauteur d'eau et **marge sous la quille** au point cliqué, signes ± explicites,
+    couleurs calées sur la rampe ; recalcul au défilement curseur/tirant d'eau ;
+    **caution amber** sur un vide de données (jamais lu comme eau sûre).
+  - **Marnage du jour** (réel) + **coefficient ~ approché** aux repères PM/BM
+    (méthode énoncée dans Données — pas le coef officiel SHOM).
+  - **Amers OpenSeaMap** (XYZ, permanents) et **courants de marée SHOM** (WMTS,
+    auto-déduits de l'instant, référencés Brest) en superposition.
+  - **Échelle nautique** propre à l'outil (nm, bascule en mètres sous ~500 m),
+    haut-centre, suit le thème clair/sombre.
+  - **Deux repères temps partagés** (maintenant / instant choisi) sur les trois
+    graphes ; **clic sur n'importe quel graphe** engage l'instant partout.
+  - **Badge carte** glyphé (date/heure · hauteur · vent kn · vagues m) lié au
+    curseur, visible dock masqué.
+  - **WMS mer tuilé 512×512** (`TileWMS`) : rendu SLD parallèle + caché par tuile
+    (bien plus rapide sur grand écran haute résolution).
+  - **Persistance hors-ligne** (localStorage) marée/vent/vagues/Brest/port ;
+    bathymétrie + sonde restent en ligne.
+  - **UX mobile** : bouton port (icône + nom), menu tirant d'eau (pas 10 cm), axes
+    gras lisibles au soleil (HH:MM puis JJ/MM), cibles tactiles ≥ 44 px.
+  - **Robustesse horizon** : `end_date` borné + auto-correction sur l'erreur de
+    plage Open-Meteo (relance plafonnée), au-delà → « Pas de prévision ».
+
+### Fixed
+
+- **Mobile : la carte ne répondait plus à l'ouverture d'un panneau.** Le voile
+  (`.sv-framemap::after`, ≤ 600 px) assombrissait ET **capturait** tous les gestes
+  carte. Supprimé : c'est un outil cartographique, la carte reste interactive ; un
+  panneau couvre la carte par son propre élément (cœur, touche tous les panneaux).
+
 ## [0.18.0] - 2026-06-07
 
 ### Added
