@@ -553,10 +553,15 @@
                   '<p class="sv-tide-expl">' + esc(t('cur.expl')) + '</p>' +
                   provHtml(CUR_SRC, null) +
                 '</section>' +
-                // Wind forecast (traceability)
+                // Tide curve source + disclaimer (filled by renderCurve into the foot)
+                '<section class="sv-tide-block">' +
+                  '<h3 class="sv-tide-h">' + esc(t('curve.label')) + '</h3>' +
+                  '<p class="sv-tide-prov sv-tide-curve-foot" id="sv-tide-curve-foot"></p>' +
+                '</section>' +
+                // Wind forecast source + age (filled by renderWind into the foot)
                 '<section class="sv-tide-block">' +
                   '<h3 class="sv-tide-h">' + esc(t('tab.wind')) + '</h3>' +
-                  provHtml(WIND_SRC, null) +
+                  '<p class="sv-tide-prov sv-tide-wind-foot" id="sv-tide-wind-foot"></p>' +
                 '</section>');
         }
         // Two tabs (compact, mobile-first): "Marée" = live controls + graph,
@@ -607,12 +612,11 @@
                 '<div class="sv-tide-pane sv-tide-curve" id="sv-tide-pane-wind" role="tabpanel" aria-labelledby="sv-tide-tab-wind" hidden>' +
                   '<div class="sv-tide-wind-plot" id="sv-tide-wind-plot"></div>' +
                 '</div>' +
-                // Données pane (hidden by default) — also holds the tide + wind
-                // source lines (moved off their tabs to free graph space).
+                // Données pane (hidden by default) — dataHtml already contains the
+                // tide-curve + wind source lines (filled by renderCurve/renderWind),
+                // each under its own header.
                 '<div class="sv-tide-pane sv-tide-info" id="sv-tide-pane-data" role="tabpanel" aria-labelledby="sv-tide-tab-data" hidden>' +
                   dataHtml() +
-                  '<p class="sv-tide-prov sv-tide-curve-foot" id="sv-tide-curve-foot"></p>' +
-                  '<p class="sv-tide-prov sv-tide-wind-foot" id="sv-tide-wind-foot"></p>' +
                 '</div>';
             bindTabs();
             bindRepick();
