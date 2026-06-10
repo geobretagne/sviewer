@@ -1,5 +1,7 @@
 etc/customConfig.js
 etc/customConfig_*
+local/customConfig.js
+local/customConfig_*
 *~
 *.swp
 *.swo

@@ -4,6 +4,40 @@ All notable changes to sViewer are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning: [Semantic Versioning](https://semver.org/).
 
+## [0.20.0] - 2026-06-11
+
+### Added
+
+- **Extension `tide` 1.1 — modèle de marée harmonique FES2022 (EXPÉRIMENTAL).**
+  La marée n'est plus tirée d'un modèle météo mais **calculée localement** dans le
+  navigateur par **synthèse harmonique** des constituants du modèle global FES2022
+  (CNES/LEGOS/NOVELTIS/CLS, AVISO), calée sur les RAM SHOM.
+  - **Toute date, sans horizon** (passée ou future, domaine FES 1700–2100) et
+    **hors-ligne** : les constituants par port (34, ~80 ko) sont livrés.
+  - **Moteur `tide-engine.js`** (BSD-3, sans dépendance) reproduisant la formule de
+    Darwin de PyFES/LIBFES ; validé maille par maille (JS vs PyFES ~1,4 cm ; JS vs
+    SHOM ~3,8 cm à Concarneau ; médiane 14 ports ~7 cm).
+  - **Indicateur de qualité par port** mesuré face au SHOM, en **hauteur** (cm) ET
+    en **heure** (min), affiché à côté des repères PM/BM : 🟢 fiable (mer ouverte,
+    ~5 cm) / 🟡 indicatif / 🔴 approximatif (estuaire/ria — résolution de grille).
+  - **Cadre expérimental affiché partout** : ne remplace pas le SHOM, non destiné à
+    la navigation ; note technique `MODEL.md` (méthode, validation, limites).
+  - Open-Meteo **retiré comme source de marée** (vent/vagues/courants Open-Meteo
+    inchangés). Plus aucun appel réseau pour la courbe de marée.
+- **Onglet « Carte »** : fond de carte **hors-ligne PMTiles** (sélecteur de fichier
+  local, BSD-3, lecture par plages, zéro réseau) + **bascules de superpositions**
+  (Bathymétrie / Courants / Amers) — visibilité seule, le moteur de calcul reste
+  actif (sonde + courbe).
+- **`tide_open=1`** : ouverture automatique de l'outil au chargement.
+- Bouton de la barre d'outils : icône **voilier**.
+
+### Fixed
+
+- **Panneau dock (bas) sous les boutons de carte** — le dock héritait du z-index du
+  panneau latéral (5000), sous les boutons (8000/8010) ; passé à **8100** pour
+  couvrir les boutons quand on l'agrandit. Correctif **cœur** (profite à toute
+  extension en dock).
+
 ## [0.19.0] - 2026-06-08
 
 ### Added

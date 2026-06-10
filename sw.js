@@ -1,5 +1,5 @@
 // CACHE_NAME is patched at build time by `npm run stamp` (commit hash suffix)
-const SVIEWER_COMMIT = '64a7b33';
+const SVIEWER_COMMIT = '96971f7';
 const CACHE_NAME = 'sviewer-' + SVIEWER_COMMIT;
 const ASSETS_REQUIRED = [
   './',
@@ -16,7 +16,15 @@ const ASSETS_REQUIRED = [
 // Cached best-effort: missing = offline degrades gracefully, install still succeeds
 const ASSETS_OPTIONAL = [
   './ext/field/manifest.json',
-  './ext/field/extension.js'
+  './ext/field/extension.js',
+  // Tide: the harmonic engine + the per-region constituents are static and make
+  // the tide prediction fully offline (any date, no network). Pre-cached so the
+  // first OFFLINE open also works; the runtime handler caches them anyway once
+  // fetched online. (Note: bathymetry render, currents, seamarks, wind/waves
+  // remain online — only the tide CURVE is offline.)
+  './ext/tide/tide-engine.js',
+  './ext/tide/tides/regions.json',
+  './ext/tide/tides/fes-ports-bzh.json'
 ];
 
 self.addEventListener('install', event => {
@@ -53,6 +61,24 @@ self.addEventListener('fetch', event => {
 
   // Only cache GET requests for sViewer resources
   if (request.method !== 'GET' || !url.pathname.includes('/sviewer/')) {
+    return;
+  }
+
+  // Tide constituents/engine are STATIC (never change between deploys) → serve
+  // cache-first: instant + works on a flaky connection, refreshed in background.
+  if (/\/ext\/tide\/(tide-engine\.js|tides\/)/.test(url.pathname)) {
+    event.respondWith(
+      caches.match(request).then(cached => {
+        const network = fetch(request).then(response => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
+          return response;
+        }).catch(() => cached || Response.error());
+        return cached || network;     // cached now, refresh for next time
+      })
+    );
     return;
   }
 

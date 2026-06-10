@@ -1,14 +1,18 @@
 # Tide extension — build plan
 
-> **Historical build record.** For what actually shipped, see `SPEC.md`. Two
-> things changed during M6 vs this plan:
-> - **Tide source** = Open-Meteo Marine (free, keyless, CORS-direct), calibrated
->   to RAM — **NOT** a paid SHOM-SPM proxy. The proxy (M6 below) was never needed:
->   SHOM's free key is Referer-bound + the high/low endpoint is 403, and a
->   CORS-open keyless provider dissolved the whole proxy/key problem.
+> **Historical build record.** For what actually shipped, see `SPEC.md`; for the
+> current tide model see `MODEL.md`. Changes vs this plan:
+> - **Tide source (M6)** = first Open-Meteo Marine (free, keyless, CORS-direct,
+>   calibrated to RAM) instead of a paid SHOM-SPM proxy. Then **tide 1.1 replaced
+>   Open-Meteo with a local FES2022 harmonic model** — computed in-browser, **any
+>   date** (no forecast horizon), **offline**, with a **per-port quality indicator**
+>   (height + time) measured against SHOM. The proxy was never needed; the weather
+>   model's horizon + timing error drove the second switch. See `MODEL.md`.
 > - **Bathymetry** = `shom:bathy_5m` (sea floor) — **NOT** terrestrial Litto3D.
 >   Litto3D only covers land above lowest tide (open sea = nodata) and overlapped
 >   the intertidal band; one bathymetry layer = no overlap, no land taint.
+> - **Added after 1.0**: Carte tab (offline PMTiles basemap + overlay toggles),
+>   `tide_open=` auto-activate, sailboat toolbar icon.
 >
 > The milestone structure, datum physics, and "fixture first, swap behind a
 > stable JSON contract" strategy all held.

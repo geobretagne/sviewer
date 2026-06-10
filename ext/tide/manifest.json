@@ -1,9 +1,9 @@
 {
   "id": "tide",
   "type": "extension",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "Marée",
-  "description": "Outil côtier de préparation de sortie à la journée. La bathymétrie SHOM (fond marin, WMS) est peinte de part et d'autre du niveau de la mer : un dégradé de bleu pour l'eau sûre, gradué par tranche d'1 m d'eau sous la quille (bleu clair = 0–1 m, bleu marine = 2 m et plus), une bande rouge pour l'échouage (immergé mais < tirant d'eau) et de l'orange pour le découvert. Le niveau de la mer est donné par une courbe de marée interactive (Open-Meteo, modèle libre) calée sur les Références Altimétriques Maritimes du SHOM (zéro hydrographique → IGN69). Un menu « tirant d'eau » signale les zones d'échouage ; un clic sur la carte sonde la hauteur d'eau et la marge sous la quille en ce point (GetFeatureInfo). Marnage du jour et coefficient ~ approché aux repères PM/BM. Les courants de marée du SHOM (atlas WMTS, référencé Brest) et les amers OpenSeaMap se superposent ; une échelle nautique (nm, bascule en mètres au plus près) reste affichée. Onglets « Vent » (Open-Meteo AROME 1,3 km, en nœuds, lignes Beaufort) et « Vagues » (hauteur, direction, période, houle — Open-Meteo Marine, vague au large) à l'emplacement du port. Toutes les données sources (origine, date, valeur) sont affichées — approche scientifique traçable. Outil de visualisation de marée prédite, non destiné à la navigation.",
+  "description": "TRAVAIL EXPÉRIMENTAL — outil d'évaluation croisée de la bathymétrie (DEM) et d'un modèle de marée harmonique. NON destiné à la navigation, ne remplace pas les prédictions officielles du SHOM. La marée est calculée localement, dans le navigateur, par synthèse harmonique des constituants du modèle global FES2022 (CNES/LEGOS/NOVELTIS/CLS, diffusé par AVISO) — calée sur les Références Altimétriques Maritimes du SHOM (zéro hydrographique → IGN69). Avantages : fonctionne pour N'IMPORTE QUELLE date (sans horizon de prévision) et HORS-LIGNE (les constituants par port sont livrés, ~80 ko). Un indicateur de qualité par port, mesuré face au SHOM, affiche la fiabilité en hauteur (cm) ET en heure (min) : fiable en mer ouverte (~5 cm), dégradé en estuaire/ria (résolution de grille). La bathymétrie SHOM (fond marin, WMS) est peinte de part et d'autre du niveau de la mer : dégradé de bleu pour l'eau sûre (gradué par mètre d'eau sous la quille), bande rouge d'échouage (immergé mais < tirant d'eau), orange pour le découvert. Un menu « tirant d'eau » signale les zones d'échouage ; un clic sur la carte sonde la hauteur d'eau et la marge sous la quille (GetFeatureInfo). Marnage du jour et coefficient ~ approché aux repères PM/BM. Courants de marée SHOM (WMTS, référencé Brest) et amers OpenSeaMap superposés ; échelle nautique (nm → mètres au plus près) ; onglet « Carte » avec fond hors-ligne PMTiles et bascules de superpositions. Onglets « Vent » (Open-Meteo AROME 1,3 km, nœuds, Beaufort) et « Vagues » (Open-Meteo Marine, vague au large). Toutes les données sources (origine, date, valeur) sont affichées — approche scientifique traçable ; voir MODEL.md.",
   "author": "fphg",
   "screenshot": "screenshot.png",
   "entry": "extension.js",
@@ -17,39 +17,45 @@
     {
       "name": "tide_port",
       "type": "string",
-      "description": "Présélectionne un port RAM par son nom (saute la recherche du port le plus proche). Lien profond.",
+      "description": "Présélectionne un port par son nom (saute la recherche du port le plus proche). Lien profond.",
       "example": "tide_port=Concarneau"
     },
     {
       "name": "tide_t",
       "type": "string",
-      "description": "Instant présélectionné (ISO local 'AAAA-MM-JJTHH:MM') : fixe le jour et place le curseur dessus. Permet de partager « ce moment précis ». L'URL est mise à jour en continu.",
-      "example": "tide_t=2026-06-10T14:30"
+      "description": "Instant présélectionné (ISO local 'AAAA-MM-JJTHH:MM') : fixe le jour et place le curseur dessus. Le modèle harmonique calcule toute date, passée ou future, sans horizon. L'URL est mise à jour en continu.",
+      "example": "tide_t=2027-08-15T14:30"
     },
     {
       "name": "tide_draft",
       "type": "number",
       "description": "Tirant d'eau du bateau en mètres (0 à 3, pas 10 cm). Ouvre une bande rouge d'échouage (immergé mais < tirant d'eau) entre l'eau sûre et le découvert, et règle la marge sous quille de la sonde au clic.",
       "example": "tide_draft=1.5"
+    },
+    {
+      "name": "tide_open",
+      "type": "boolean",
+      "description": "1/true/yes → ouvre l'outil automatiquement au chargement (dock + superpositions), sans clic. Pratique pour un lien partagé ou un déploiement dédié.",
+      "example": "tide_open=1"
     }
   ],
   "sviewer": {
     "minVersion": "0.16.0"
   },
   "seo": {
-    "title": "Marée — étendue de la mer prévue par date/heure dans sViewer",
-    "metaDescription": "Extension sViewer : bathymétrie SHOM peinte selon le niveau de marée (Open-Meteo calé sur les RAM SHOM, ZH→IGN69). Courbe interactive, curseur tirant d'eau, données sources tracées, sans CDN ni clé d'API."
+    "title": "Marée (expérimental) — modèle harmonique FES2022 local dans sViewer",
+    "metaDescription": "Extension sViewer EXPÉRIMENTALE : marée calculée localement par synthèse harmonique FES2022 (CNES/AVISO), calée RAM SHOM (ZH→IGN69). Toute date, hors-ligne, indicateur de qualité par port (hauteur + heure) face au SHOM. Non destiné à la navigation. Sans CDN ni clé d'API."
   },
   "examples": [
     {
       "title": "Marée à Concarneau",
-      "url": "?ext=tide&tide_port=Concarneau",
-      "description": "Ouvre l'outil sur le port de Concarneau ; faites glisser le curseur sur la courbe pour voir la mer évoluer"
+      "url": "?ext=tide&tide_port=Concarneau&tide_open=1",
+      "description": "Ouvre l'outil sur Concarneau ; faites glisser le curseur sur la courbe pour voir la mer évoluer (modèle expérimental, voir l'indicateur de qualité)"
     },
     {
-      "title": "Lien profond — un instant précis",
-      "url": "?ext=tide&tide_port=Concarneau&tide_t=2026-06-10T14:30&tide_draft=1.5",
-      "description": "Rouvre à une date/heure donnée avec un tirant d'eau de 1,5 m — idéal pour partager ou embarquer"
+      "title": "Toute date — un an à l'avance",
+      "url": "?ext=tide&tide_port=Concarneau&tide_t=2027-08-15T14:30&tide_draft=1.5",
+      "description": "Le modèle harmonique calcule n'importe quelle date sans horizon — ici un an plus tard, tirant d'eau 1,5 m, hors-ligne"
     }
   ]
 }

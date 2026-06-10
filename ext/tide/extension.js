@@ -26,14 +26,10 @@
 
     var PANEL = 'tide';
 
-    // RAM — Références Altimétriques Maritimes (SHOM, Licence Ouverte 2.0, no key).
-    // WFS GeoJSON, features already in EPSG:3857 (matches the map view → no
-    // reprojection for distance maths). Property zh_ref = cote du ZH dans le
-    // système légal (reference="IGN69") = our datum separation S.
-    var RAM_WFS   = 'https://services.data.shom.fr/INSPIRE/wfs';
-    var RAM_LAYER = 'RAM_BDD_WLD_WGS84G_WFS:ram_3857';
+    // RAM — Références Altimétriques Maritimes (SHOM, Licence Ouverte 2.0). The
+    // per-port datum separation S (zh_ref) is baked into the shipped FES port
+    // file at build time; RAM_SRC remains as the provenance credit in Données.
     var RAM_SRC   = 'SHOM — Références Altimétriques Maritimes (RAM)';
-    var SEARCH_M  = 30000;     // half-width (m) of the WFS bbox around map center
     var DEF_MINZOOM = 13;      // coastal scale gate (single-port flat-S validity)
 
     // SHOM bathymetry 5 m (GeoServer WMS). Pixel = sea-floor altitude IGN69 in
@@ -78,6 +74,51 @@
         return uplotReady;
     }
 
+    // PMTiles (BSD-3, vendored ext/tide/pmtiles.min.js) — lazy-loaded the first
+    // time a user picks an offline basemap file, so non-tide pages (and tide users
+    // who never load a basemap) pay nothing. IIFE bundle → exposes window.pmtiles.
+    var pmtilesReady = null;
+    function loadPmtiles() {
+        if (pmtilesReady) { return pmtilesReady; }
+        pmtilesReady = new Promise(function (resolve, reject) {
+            if (window.pmtiles) { resolve(window.pmtiles); return; }
+            var s = document.createElement('script');
+            s.src = BASE + 'pmtiles.min.js';
+            s.onload = function () { resolve(window.pmtiles); };
+            s.onerror = function () { reject(new Error('pmtiles-load-failed')); };
+            document.head.appendChild(s);
+        });
+        return pmtilesReady;
+    }
+
+    // FES2022 tide engine (BSD-3 method, vendored tide-engine.js) + the shipped
+    // per-port constituents file. EXPERIMENTAL — cross-evaluation of the DEM and
+    // the tide model, NOT official prediction (see MODEL.md). When loaded it
+    // REPLACES the Open-Meteo curve with a local harmonic synthesis that works
+    // for ANY date (no forecast horizon), fully offline. Lazy: loaded the first
+    // time the tool opens, so non-tide pages pay nothing.
+    var fesReady = null;       // Promise<{engine, regions}> | null
+    var fesPorts = null;       // active region's port list (constituents)
+    var fesRegion = null;      // { id, label, bbox, meta }
+    function loadFes() {
+        if (fesReady) { return fesReady; }
+        fesReady = new Promise(function (resolve, reject) {
+            var done = function () {
+                fetch(BASE + 'tides/regions.json')
+                    .then(function (r) { return r.json(); })
+                    .then(function (reg) { resolve({ engine: window.TideEngine, regions: reg }); })
+                    .catch(reject);
+            };
+            if (window.TideEngine) { done(); return; }
+            var s = document.createElement('script');
+            s.src = BASE + 'tide-engine.js';
+            s.onload = done;
+            s.onerror = function () { reject(new Error('tide-engine-load-failed')); };
+            document.head.appendChild(s);
+        });
+        return fesReady;
+    }
+
     // Tide curve = Open-Meteo Marine API (free, no key, CORS-open → called
     // DIRECTLY from the browser, no proxy). Returns sea-surface height vs MSL,
     // 15-min step. The model gives the right SHAPE/timing (range matches SHOM
@@ -90,7 +131,9 @@
     // h + S = water_IGN69) work unchanged:  h_ZH(t) = om_msl(t) + offset − zh_ref,
     // with offset = NM_IGN69 − mean(om_msl over the day).
     var OM_URL = 'https://marine-api.open-meteo.com/v1/marine';
-    var OM_SRC = 'Open-Meteo Marine (modèle), calibré sur SHOM-RAM';
+    // FES2022 harmonic model (CNES/LEGOS/NOVELTIS/CLS, AVISO) — local synthesis,
+    // any date, offline. Experimental (see MODEL.md). Citation shown in Données.
+    var FES_SRC = 'FES2022 (CNES/AVISO) — modèle harmonique local, expérimental';
 
     // Waves = Open-Meteo Marine (same host/endpoint as the tide, keyless, CORS-open).
     // Hourly mean sea state at the port: significant height, mean direction, period.
@@ -136,7 +179,7 @@
     var SRC_URL = {};
     SRC_URL[RAM_SRC]     = 'https://www.data.gouv.fr/datasets/references-altimetriques-maritimes';
     SRC_URL[WMS_SRC]     = 'https://diffusion.shom.fr/donnees/bathymerie.html';
-    SRC_URL[OM_SRC]      = 'https://open-meteo.com/en/docs/marine-weather-api';
+    SRC_URL[FES_SRC]     = 'https://www.aviso.altimetry.fr/en/data/products/auxiliary-products/global-tide-fes.html';
     SRC_URL[WAVE_SRC]    = 'https://open-meteo.com/en/docs/marine-weather-api';
     SRC_URL[CUR_SRC]     = 'https://diffusion.shom.fr/marees/courants-de-maree/courants-2d.html';
     SRC_URL[WIND_SRC]    = 'https://open-meteo.com/en/docs/meteofrance-api';
@@ -151,6 +194,21 @@
             'tab.data':    'Données',
             'tab.wind':    'Vent',
             'tab.wave':    'Vagues',
+            'tab.map':     'Carte',
+            'ov.title':    'Superpositions',
+            'pref.title':  'Préférences',
+            'pref.autoopen': 'Ouvrir automatiquement au chargement',
+            'ov.tide':     'Bathymétrie',
+            'ov.cur':      'Courants',
+            'ov.mark':     'Amers',
+            'map.title':   'Fond de carte hors-ligne',
+            'map.expl':    'Chargez un fichier PMTiles local (archive de tuiles raster). Il devient un fond de carte hors-ligne, peint sous la bathymétrie. Lecture 100 % locale : aucun réseau, aucune clé. Valable le temps de la session (re-chargez après un rechargement de page).',
+            'map.pick':    'Choisir un fichier .pmtiles',
+            'map.none':    'Aucun fond hors-ligne chargé.',
+            'map.loading': 'Chargement du fond…',
+            'map.loaded':  '{name} — zoom {zmin}–{zmax} · emprise {w}, {s} → {e}, {n}',
+            'map.clear':   'Retirer le fond',
+            'map.err':     'Fichier illisible (PMTiles attendu).',
             'wind.spd':    'Vent',
             'wind.gust':   'Rafales',
             'wind.err':    'Prévision de vent indisponible.',
@@ -181,14 +239,12 @@
             'prov.source': 'Source',
             'prov.date':   'Date de la donnée',
             'err.none':    'Aucun port de référence à proximité. Déplacez la carte vers la côte.',
-            'err.fetch':   'Service RAM (SHOM) injoignable.',
             'curve.label': 'Marée prévue',
             'draft.label': 'Tirant d’eau',
             'draft.expl':  'Dégradé de bleu = eau sûre, gradué par tranche d’1 m d’eau sous la quille (bleu clair = 0–1 m, bleu marine = 2 m et plus) ; rouge = immergé mais moins que le tirant d’eau (risque d’échouage) ; orange = découvert.',
             'date.prev':   'Jour précédent',
             'date.next':   'Jour suivant',
             'date.today':  'Maintenant',
-            'date.nodata': 'Pas de prévision pour cette date (au-delà de l’horizon du modèle).',
             'curve.pm':    'PM',
             'curve.bm':    'BM',
             'curve.coef':  'coef. {c}',
@@ -196,6 +252,14 @@
             'curve.coefApprox': 'coef. ~{c}',
             'coef.method': 'Marnage = PM la plus haute − BM la plus basse du jour (réel). Coefficient ~ approché : 95 × marnage / marnage de vive-eau moyen, estimé à 2·(PMVE − NM) — repère vive-eau/morte-eau, pas le coefficient officiel du SHOM (le modèle libre n’en fournit pas).',
             'curve.model': 'Marée prédite (modèle Open-Meteo, calé sur SHOM-RAM) — non garantie pour la navigation.',
+            'curve.accuracy': 'Précision mesurée (test Concarneau, comparé au SHOM officiel) : horaires en avance d’environ 25 à 45 min, hauteurs à ± 10 cm une fois les références alignées. L’écart de temps varie d’une marée à l’autre (limite du modèle global près des côtes). Pas de coefficient officiel. Pour les horaires officiels, consulter le SHOM.',
+            'fes.model':   'Modèle harmonique FES2022 (CNES/AVISO), synthèse locale — TRAVAIL EXPÉRIMENTAL, ne remplace pas le SHOM. Toute date, hors-ligne. Voir la note de modèle.',
+            'fes.q.hi':    'Fiable',
+            'fes.q.med':   'Indicatif',
+            'fes.q.lo':    'Approximatif — estuaire/ria, voir SHOM',
+            'fes.q.unk':   'Non évalué',
+            'fes.h':       'Hauteur :',
+            'fes.t':       'Heure :',
             'err.curve':   'Courbe de marée indisponible.',
             'cursor.label':'Heure sélectionnée (flèches gauche/droite pour ajuster)',
             'wms.loading': 'Chargement de la carte de la mer…',
@@ -225,6 +289,21 @@
             'tab.data':    'Data',
             'tab.wind':    'Wind',
             'tab.wave':    'Waves',
+            'tab.map':     'Map',
+            'ov.title':    'Overlays',
+            'pref.title':  'Preferences',
+            'pref.autoopen': 'Open automatically on load',
+            'ov.tide':     'Bathymetry',
+            'ov.cur':      'Currents',
+            'ov.mark':     'Seamarks',
+            'map.title':   'Offline basemap',
+            'map.expl':    'Load a local PMTiles file (a raster tile archive). It becomes an offline basemap, painted under the bathymetry. Read entirely on-device: no network, no key. Lasts for the session (re-load after a page reload).',
+            'map.pick':    'Choose a .pmtiles file',
+            'map.none':    'No offline basemap loaded.',
+            'map.loading': 'Loading basemap…',
+            'map.loaded':  '{name} — zoom {zmin}–{zmax} · extent {w}, {s} → {e}, {n}',
+            'map.clear':   'Remove basemap',
+            'map.err':     'Unreadable file (PMTiles expected).',
             'wind.spd':    'Wind',
             'wind.gust':   'Gusts',
             'wind.err':    'Wind forecast unavailable.',
@@ -255,14 +334,12 @@
             'prov.source': 'Source',
             'prov.date':   'Data date',
             'err.none':    'No reference port nearby. Pan the map toward the coast.',
-            'err.fetch':   'RAM service (SHOM) unreachable.',
             'curve.label': 'Predicted tide',
             'draft.label': 'Draft',
             'draft.expl':  'Blue ramp = safe water, graded by 1 m of water under the keel (light blue = 0–1 m, navy = 2 m and more); red = submerged but less than the draft (grounding risk); orange = exposed.',
             'date.prev':   'Previous day',
             'date.next':   'Next day',
             'date.today':  'Now',
-            'date.nodata': 'No forecast for this date (beyond the model horizon).',
             'curve.pm':    'HW',
             'curve.bm':    'LW',
             'curve.coef':  'coef. {c}',
@@ -270,6 +347,14 @@
             'curve.coefApprox': 'coef. ~{c}',
             'coef.method': 'Range = highest HW − lowest LW of the day (real). Approx coefficient ~: 95 × range / mean spring range, estimated as 2·(MHWS − ML) — a spring/neap guide, not the official SHOM coefficient (the free model provides none).',
             'curve.model': 'Predicted tide (Open-Meteo model, calibrated to SHOM-RAM) — not for navigation.',
+            'curve.accuracy': 'Measured accuracy (Concarneau test vs official SHOM): times run ~25–45 min early, heights within ±10 cm once datums are aligned. The time offset varies tide to tide (global-model limit near the coast). No official coefficient. For official times, consult SHOM.',
+            'fes.model':   'FES2022 harmonic model (CNES/AVISO), local synthesis — EXPERIMENTAL, not a replacement for SHOM. Any date, offline. See the model note.',
+            'fes.q.hi':    'Reliable',
+            'fes.q.med':   'Indicative',
+            'fes.q.lo':    'Approximate — estuary/ria, see SHOM',
+            'fes.q.unk':   'Not assessed',
+            'fes.h':       'Height:',
+            'fes.t':       'Time:',
             'err.curve':   'Tide curve unavailable.',
             'cursor.label':'Selected time (left/right arrows to adjust)',
             'wms.loading': 'Loading sea map…',
@@ -299,6 +384,21 @@
             'tab.data':    'Datos',
             'tab.wind':    'Viento',
             'tab.wave':    'Olas',
+            'tab.map':     'Mapa',
+            'ov.title':    'Superposiciones',
+            'pref.title':  'Preferencias',
+            'pref.autoopen': 'Abrir automáticamente al cargar',
+            'ov.tide':     'Batimetría',
+            'ov.cur':      'Corrientes',
+            'ov.mark':     'Señales',
+            'map.title':   'Mapa base sin conexión',
+            'map.expl':    'Cargue un archivo PMTiles local (un archivo de teselas raster). Se convierte en un mapa base sin conexión, dibujado bajo la batimetría. Lectura totalmente local: sin red, sin clave. Válido durante la sesión (vuelva a cargarlo tras recargar la página).',
+            'map.pick':    'Elegir un archivo .pmtiles',
+            'map.none':    'Ningún mapa base sin conexión cargado.',
+            'map.loading': 'Cargando el mapa base…',
+            'map.loaded':  '{name} — zoom {zmin}–{zmax} · extensión {w}, {s} → {e}, {n}',
+            'map.clear':   'Quitar el mapa base',
+            'map.err':     'Archivo ilegible (se esperaba PMTiles).',
             'wind.spd':    'Viento',
             'wind.gust':   'Rachas',
             'wind.err':    'Previsión de viento no disponible.',
@@ -329,14 +429,12 @@
             'prov.source': 'Fuente',
             'prov.date':   'Fecha del dato',
             'err.none':    'Ningún puerto de referencia cerca. Desplace el mapa hacia la costa.',
-            'err.fetch':   'Servicio RAM (SHOM) inaccesible.',
             'curve.label': 'Marea prevista',
             'draft.label': 'Calado',
             'draft.expl':  'Degradado de azul = agua segura, graduado por cada metro de agua bajo la quilla (azul claro = 0–1 m, azul marino = 2 m o más); rojo = sumergido pero menos que el calado (riesgo de varada); naranja = descubierto.',
             'date.prev':   'Día anterior',
             'date.next':   'Día siguiente',
             'date.today':  'Ahora',
-            'date.nodata': 'Sin previsión para esta fecha (más allá del horizonte del modelo).',
             'curve.pm':    'PM',
             'curve.bm':    'BM',
             'curve.coef':  'coef. {c}',
@@ -344,6 +442,14 @@
             'curve.coefApprox': 'coef. ~{c}',
             'coef.method': 'Amplitud = pleamar más alta − bajamar más baja del día (real). Coeficiente ~ aproximado: 95 × amplitud / amplitud de marea viva media, estimada como 2·(PMVE − NM) — referencia viva/muerta, no el coeficiente oficial del SHOM (el modelo libre no lo da).',
             'curve.model': 'Marea prevista (modelo Open-Meteo, calibrado con SHOM-RAM) — no apta para navegación.',
+            'curve.accuracy': 'Precisión medida (prueba Concarneau frente al SHOM oficial): horarios adelantados unos 25–45 min, alturas dentro de ± 10 cm una vez alineados los datums. El desfase temporal varía de una marea a otra (límite del modelo global cerca de la costa). Sin coeficiente oficial. Para horarios oficiales, consulte el SHOM.',
+            'fes.model':   'Modelo armónico FES2022 (CNES/AVISO), síntesis local — TRABAJO EXPERIMENTAL, no sustituye al SHOM. Cualquier fecha, sin conexión. Véase la nota del modelo.',
+            'fes.q.hi':    'Fiable',
+            'fes.q.med':   'Indicativo',
+            'fes.q.lo':    'Aproximado — estuario/ría, ver SHOM',
+            'fes.q.unk':   'No evaluado',
+            'fes.h':       'Altura:',
+            'fes.t':       'Hora:',
             'err.curve':   'Curva de marea no disponible.',
             'cursor.label':'Hora seleccionada (flechas izquierda/derecha para ajustar)',
             'wms.loading': 'Cargando el mapa del mar…',
@@ -373,6 +479,21 @@
             'tab.data':    'Daten',
             'tab.wind':    'Wind',
             'tab.wave':    'Wellen',
+            'tab.map':     'Karte',
+            'ov.title':    'Overlays',
+            'pref.title':  'Einstellungen',
+            'pref.autoopen': 'Beim Laden automatisch öffnen',
+            'ov.tide':     'Bathymetrie',
+            'ov.cur':      'Strömungen',
+            'ov.mark':     'Seezeichen',
+            'map.title':   'Offline-Basiskarte',
+            'map.expl':    'Laden Sie eine lokale PMTiles-Datei (ein Raster-Kachelarchiv). Sie wird zur Offline-Basiskarte, unter der Bathymetrie gezeichnet. Vollständig lokal gelesen: kein Netz, kein Schlüssel. Gilt für die Sitzung (nach einem Seiten-Neuladen erneut laden).',
+            'map.pick':    '.pmtiles-Datei wählen',
+            'map.none':    'Keine Offline-Basiskarte geladen.',
+            'map.loading': 'Basiskarte wird geladen…',
+            'map.loaded':  '{name} — Zoom {zmin}–{zmax} · Ausdehnung {w}, {s} → {e}, {n}',
+            'map.clear':   'Basiskarte entfernen',
+            'map.err':     'Datei nicht lesbar (PMTiles erwartet).',
             'wind.spd':    'Wind',
             'wind.gust':   'Böen',
             'wind.err':    'Windvorhersage nicht verfügbar.',
@@ -403,14 +524,12 @@
             'prov.source': 'Quelle',
             'prov.date':   'Datum der Daten',
             'err.none':    'Kein Referenzhafen in der Nähe. Verschieben Sie die Karte zur Küste.',
-            'err.fetch':   'RAM-Dienst (SHOM) nicht erreichbar.',
             'curve.label': 'Vorhergesagte Gezeit',
             'draft.label': 'Tiefgang',
             'draft.expl':  'Blau-Verlauf = sicheres Wasser, abgestuft je 1 m Wasser unter dem Kiel (hellblau = 0–1 m, marineblau = 2 m und mehr); rot = unter Wasser, aber weniger als der Tiefgang (Grundberührungsrisiko); orange = trockengefallen.',
             'date.prev':   'Vorheriger Tag',
             'date.next':   'Nächster Tag',
             'date.today':  'Jetzt',
-            'date.nodata': 'Keine Vorhersage für dieses Datum (über den Modellhorizont hinaus).',
             'curve.pm':    'HW',
             'curve.bm':    'NW',
             'curve.coef':  'Koef. {c}',
@@ -418,6 +537,14 @@
             'curve.coefApprox': 'Koef. ~{c}',
             'coef.method': 'Tidenhub = höchstes HW − niedrigstes NW des Tages (real). Näherungskoeffizient ~: 95 × Tidenhub / mittlerer Springtidenhub, geschätzt als 2·(MHWS − MW) — Spring/Nipp-Anhalt, nicht der offizielle SHOM-Koeffizient (das freie Modell liefert keinen).',
             'curve.model': 'Vorhergesagte Gezeit (Open-Meteo-Modell, auf SHOM-RAM kalibriert) — nicht für die Navigation.',
+            'curve.accuracy': 'Gemessene Genauigkeit (Test Concarneau gegen offizielles SHOM): Zeiten ca. 25–45 min zu früh, Höhen innerhalb ± 10 cm nach Datum-Abgleich. Der Zeitversatz schwankt von Tide zu Tide (Grenze des globalen Modells küstennah). Kein offizieller Koeffizient. Für offizielle Zeiten das SHOM konsultieren.',
+            'fes.model':   'FES2022-Gezeitenmodell (CNES/AVISO), lokale Synthese — EXPERIMENTELL, kein Ersatz für das SHOM. Jedes Datum, offline. Siehe Modellnotiz.',
+            'fes.q.hi':    'Zuverlässig',
+            'fes.q.med':   'Richtwert',
+            'fes.q.lo':    'Näherung — Ästuar/Ria, SHOM beachten',
+            'fes.q.unk':   'Nicht bewertet',
+            'fes.h':       'Höhe:',
+            'fes.t':       'Zeit:',
             'err.curve':   'Gezeitenkurve nicht verfügbar.',
             'cursor.label':'Gewählte Uhrzeit (Pfeiltasten links/rechts zum Anpassen)',
             'wms.loading': 'Meereskarte wird geladen…',
@@ -525,7 +652,6 @@
         var wantPort = null;   // ?tide_port= preselection (by name)
         var tide     = null;   // loaded tide series { points, highs, lows, date, source, ... }
         var curDate  = new Date();  // selected day for the tide curve (default today)
-        var tideCache = {};    // 'site|date' → series | null (null = known no-data)
         var chart    = null;   // active uPlot instance
         var curIdx   = 0;      // selected sample index in tide.points (cursor position)
         var seaLayer = null; // OL WMS layer painting the sea (own, removed on close)
@@ -541,6 +667,17 @@
         var curLayer = null; // OL WMTS tidal-current overlay (own, removed on close)
         var curId    = null; // current layer identifier in use (avoid needless reloads)
         var markLayer = null; // OL XYZ OpenSeaMap seamark overlay (own, removed on close)
+        var baseLayer = null; // OL Tile layer of a user-picked PMTiles offline basemap (own, removed on close)
+        var basePM    = null; // pmtiles.PMTiles instance backing baseLayer (File-sourced, zero network)
+        var baseInfo  = null; // { name, minZoom, maxZoom, bounds:[w,s,e,n] } for the Carte tab readout
+        // Overlay VISIBILITY toggles (Carte tab). Visibility only — toggling an
+        // overlay OFF hides its paint but NEVER disables the underlying engine.
+        // Hiding the tide ramp keeps the click-probe + water-height compute live
+        // (they query the bathy directly, not the on-screen ramp pixels); OL also
+        // stops fetching an invisible layer's tiles, so hiding it saves bandwidth.
+        var visTide = true;  // tide depth colour-ramp overlay (seaLayer) visible
+        var visCur  = true;  // tidal-current overlay (curLayer) visible
+        var visMark = true;  // OpenSeaMap seamark overlay visible
         var brestCache = {}; // 'date' → { highs:[ms], range } | null  (Brest HW + range per day)
         var windChart  = null; // uPlot wind instance (Vent tab)
         var windData   = null; // { t:[], spd:[], gust:[], dir:[] } for the current port
@@ -552,53 +689,26 @@
         var waveFetchedAt = 0; // epoch ms of the wave data in use (for staleness)
 
         // --- RAM nearest-port fetch ------------------------------------------
-        // Query the open RAM WFS for ports within a bbox around the map centre,
-        // pick the nearest one carrying a non-null zh_ref (datum separation).
-        // Coarse (~10 km) cell key for caching the picked port — so an offline
-        // re-open near the same place recovers the port without the WFS.
-        function portCellKey(c) { return 'port.' + Math.round(c[0] / 10000) + '_' + Math.round(c[1] / 10000); }
+        // Pick the nearest FES port (shipped per-region constituents) to the map
+        // centre. The whole tide source is local + offline — no WFS, no API.
         function findPort() {
             var c = view.getCenter();
             if (!c) { return; }
             var seq = ++fetchSeq;
             showLoading();
-            var bbox = [c[0] - SEARCH_M, c[1] - SEARCH_M, c[0] + SEARCH_M, c[1] + SEARCH_M, 'EPSG:3857'].join(',');
-            var url = RAM_WFS +
-                '?service=WFS&version=2.0.0&request=GetFeature' +
-                '&typeNames=' + encodeURIComponent(RAM_LAYER) +
-                '&outputFormat=application/json&srsName=EPSG:3857' +
-                '&bbox=' + encodeURIComponent(bbox);
-            fetch(url, { headers: { Accept: 'application/json' } })
-                .then(function (r) { return r.ok ? r.json() : Promise.reject('HTTP ' + r.status); })
-                .then(function (j) {
-                    if (seq !== fetchSeq) { return; }
-                    var p = pickNearest(j, c);
-                    // wantPort is a ONE-SHOT deep-link preference (?tide_port=). If
-                    // its named port isn't in range, fall back to nearest rather
-                    // than failing. Consume it either way so the re-pick button
-                    // (and later opens) always use nearest-to-view.
-                    if (!p && wantPort) { wantPort = null; p = pickNearest(j, c); }
-                    wantPort = null;
-                    if (!p) { showError(t('err.none')); return; }
-                    storeSet(portCellKey(c), p);   // persist for offline re-open
-                    port = p;
-                    resetWind();    // new port → wind reloads lazily on next Vent open
-                    resetWave();    // ditto for waves
-                    renderLayout();
-                    syncUrl();      // reflect the port immediately (tide_t added once the curve loads)
-                    loadTide();
-                })
-                .catch(function () {
-                    if (seq !== fetchSeq) { return; }
-                    // Offline / WFS down → recover a previously-picked port for this
-                    // map cell (datum + tide are deterministic → still valid).
-                    var st = storeGet(portCellKey(c));
-                    if (st && st.v) {
-                        port = st.v; resetWind(); resetWave(); renderLayout(); syncUrl(); loadTide();
-                    } else { showError(t('err.fetch')); }
-                });
+            // FES2022 local engine: pick the nearest port (constituents + datum +
+            // quality) from the shipped region covering this point. Offline, any
+            // date, no network. Outside the shipped regions there is no tide data
+            // → a clear "pan to a covered coast" message (no Open-Meteo fallback).
+            fesPortAt(c).then(function (fp) {
+                if (seq !== fetchSeq) { return; }
+                if (!fp) { showError(t('err.none')); return; }
+                port = fp;
+                wantPort = null;
+                resetWind(); resetWave();
+                renderLayout(); syncUrl(); loadTide();
+            });
         }
-        // Pick the nearest feature with a usable zh_ref; or, if ?tide_port= is set,
         // True ground distance (metres) between two EPSG:3857 points. Web Mercator
         // distances are stretched by 1/cos(lat) (≈1.5× at 48°N); multiply the 3857
         // hypot by cos(lat) at the mean latitude to get real metres. (ol.sphere is
@@ -608,35 +718,6 @@
             var latA = ol.proj.toLonLat(a)[1], latB = ol.proj.toLonLat(b)[1];
             var k = Math.cos((latA + latB) / 2 * Math.PI / 180);
             return Math.hypot(a[0] - b[0], a[1] - b[1]) * k;
-        }
-        // that named port. Validates every numeric (untrusted service input).
-        function pickNearest(fc, center) {
-            if (!fc || !Array.isArray(fc.features)) { return null; }
-            var best = null, bestD = Infinity;
-            fc.features.forEach(function (f) {
-                var pr = f.properties || {};
-                var S  = Number(pr.zh_ref);
-                if (!isFinite(S)) { return; }                 // no datum sep → unusable
-                var g = f.geometry;
-                if (!g || g.type !== 'Point' || !Array.isArray(g.coordinates)) { return; }
-                var x = Number(g.coordinates[0]), y = Number(g.coordinates[1]);
-                if (!isFinite(x) || !isFinite(y)) { return; }
-                var cand = {
-                    site: String(pr.site || pr.zone || '?'),
-                    S:    S,
-                    phma: numOrNull(pr.phma), pmve: numOrNull(pr.pmve), nm: numOrNull(pr.nm),
-                    date: pr.date_ch != null ? String(pr.date_ch) : (pr.date_rf != null ? String(pr.date_rf) : null),
-                    x: x, y: y
-                };
-                var d = geoDist([x, y], center);   // true ground metres
-                cand.dist = d;   // real distance to the map centre, always
-                // ?tide_port= match wins by NAME, but keeps its true distance.
-                if (wantPort && cand.site.toLowerCase() === wantPort.toLowerCase()) {
-                    best = cand; bestD = -1; return;        // -1 = locked by name
-                }
-                if (bestD !== -1 && d < bestD) { bestD = d; best = cand; }
-            });
-            return best;
         }
         function numOrNull(v) { var n = Number(v); return isFinite(n) ? n : null; }
 
@@ -724,6 +805,7 @@
                 '<section class="sv-tide-block">' +
                   '<h3 class="sv-tide-h">' + esc(t('curve.label')) + '</h3>' +
                   '<p class="sv-tide-prov sv-tide-curve-foot" id="sv-tide-curve-foot"></p>' +
+                  '<p class="sv-tide-warn-acc">' + esc(t('curve.accuracy')) + '</p>' +
                 '</section>' +
                 // Wind forecast source + age (filled by renderWind into the foot)
                 '<section class="sv-tide-block">' +
@@ -752,6 +834,8 @@
                        'aria-controls="sv-tide-pane-wave" aria-selected="false" tabindex="-1">' + esc(t('tab.wave')) + '</button>' +
                   '<button type="button" role="tab" class="sv-tide-tab" id="sv-tide-tab-data" ' +
                        'aria-controls="sv-tide-pane-data" aria-selected="false" tabindex="-1">' + esc(t('tab.data')) + '</button>' +
+                  '<button type="button" role="tab" class="sv-tide-tab" id="sv-tide-tab-map" ' +
+                       'aria-controls="sv-tide-pane-map" aria-selected="false" tabindex="-1">' + esc(t('tab.map')) + '</button>' +
                 '</div>' +
                 // Marée pane
                 '<div class="sv-tide-pane sv-tide-curve" id="sv-tide-pane-tide" role="tabpanel" aria-labelledby="sv-tide-tab-tide">' +
@@ -800,10 +884,57 @@
                 // each under its own header.
                 '<div class="sv-tide-pane sv-tide-info" id="sv-tide-pane-data" role="tabpanel" aria-labelledby="sv-tide-tab-data" hidden>' +
                   dataHtml() +
+                '</div>' +
+                // Carte pane (hidden) — pick a local PMTiles file as an offline
+                // raster basemap. Pure client side: the File is range-read in the
+                // browser (no network, no CORS, no key), painted UNDER the bathy.
+                '<div class="sv-tide-pane sv-tide-info" id="sv-tide-pane-map" role="tabpanel" aria-labelledby="sv-tide-tab-map" hidden>' +
+                  // Overlay visibility toggles. Switches hide/show an overlay's
+                  // paint; they never disable its engine (see visTide/visMark).
+                  '<h3 class="sv-tide-h">' + esc(t('ov.title')) + '</h3>' +
+                  '<div class="sv-tide-ov" role="group" aria-label="' + esc(t('ov.title')) + '">' +
+                    '<button type="button" role="switch" class="sv-tide-ov-sw" id="sv-tide-ov-tide" ' +
+                         'aria-checked="' + (visTide ? 'true' : 'false') + '">' +
+                      '<span class="sv-tide-ov-track" aria-hidden="true"><span class="sv-tide-ov-knob"></span></span>' +
+                      '<span class="sv-tide-ov-lbl">' + esc(t('ov.tide')) + '</span>' +
+                    '</button>' +
+                    '<button type="button" role="switch" class="sv-tide-ov-sw" id="sv-tide-ov-cur" ' +
+                         'aria-checked="' + (visCur ? 'true' : 'false') + '">' +
+                      '<span class="sv-tide-ov-track" aria-hidden="true"><span class="sv-tide-ov-knob"></span></span>' +
+                      '<span class="sv-tide-ov-lbl">' + esc(t('ov.cur')) + '</span>' +
+                    '</button>' +
+                    '<button type="button" role="switch" class="sv-tide-ov-sw" id="sv-tide-ov-mark" ' +
+                         'aria-checked="' + (visMark ? 'true' : 'false') + '">' +
+                      '<span class="sv-tide-ov-track" aria-hidden="true"><span class="sv-tide-ov-knob"></span></span>' +
+                      '<span class="sv-tide-ov-lbl">' + esc(t('ov.mark')) + '</span>' +
+                    '</button>' +
+                  '</div>' +
+                  // Preferences: persist the auto-open-on-load choice (no URL param
+                  // needed). A role=switch like the overlay toggles.
+                  '<h3 class="sv-tide-h">' + esc(t('pref.title')) + '</h3>' +
+                  '<div class="sv-tide-ov" role="group" aria-label="' + esc(t('pref.title')) + '">' +
+                    '<button type="button" role="switch" class="sv-tide-ov-sw" id="sv-tide-ov-autoopen" ' +
+                         'aria-checked="' + (autoOpenPref() ? 'true' : 'false') + '">' +
+                      '<span class="sv-tide-ov-track" aria-hidden="true"><span class="sv-tide-ov-knob"></span></span>' +
+                      '<span class="sv-tide-ov-lbl">' + esc(t('pref.autoopen')) + '</span>' +
+                    '</button>' +
+                  '</div>' +
+                  '<h3 class="sv-tide-h">' + esc(t('map.title')) + '</h3>' +
+                  '<p class="sv-tide-map-expl">' + esc(t('map.expl')) + '</p>' +
+                  '<label class="sv-tide-map-pick" for="sv-tide-map-file">' +
+                    '<span class="sv-tide-map-pick-lbl">' + esc(t('map.pick')) + '</span>' +
+                    '<input type="file" id="sv-tide-map-file" accept=".pmtiles" ' +
+                         'aria-label="' + esc(t('map.pick')) + '">' +
+                  '</label>' +
+                  '<p class="sv-tide-map-status" id="sv-tide-map-status" role="status" aria-live="polite">' +
+                    esc(baseInfo ? '' : t('map.none')) + '</p>' +
+                  '<button type="button" class="btn btn-secondary btn-sm sv-tide-map-clear" id="sv-tide-map-clear"' +
+                       (baseInfo ? '' : ' hidden') + '>' + esc(t('map.clear')) + '</button>' +
                 '</div>';
             bindTabs();
             bindRepick();
             bindDraft();
+            bindMapTab();
             updateFaraway();
             updateWindFoot();   // refill the wind source/age line if data is already loaded
             updateWaveFoot();   // ditto for waves
@@ -817,7 +948,8 @@
                 { tab: 'sv-tide-tab-tide', pane: 'sv-tide-pane-tide' },
                 { tab: 'sv-tide-tab-wind', pane: 'sv-tide-pane-wind' },
                 { tab: 'sv-tide-tab-wave', pane: 'sv-tide-pane-wave' },
-                { tab: 'sv-tide-tab-data', pane: 'sv-tide-pane-data' }
+                { tab: 'sv-tide-tab-data', pane: 'sv-tide-pane-data' },
+                { tab: 'sv-tide-tab-map',  pane: 'sv-tide-pane-map' }
             ];
             function select(idx) {
                 tabs.forEach(function (tt, i) {
@@ -872,6 +1004,132 @@
                 syncUrl();
             });
         }
+
+        // --- Carte tab: offline PMTiles basemap ------------------------------
+        // The user picks a local .pmtiles raster archive (built from a tile
+        // pyramid). It becomes an offline basemap painted UNDER the bathy. All
+        // reading is client-side: the File is range-read in the browser via the
+        // pmtiles lib — no network, no CORS, no key. Session-only (the picked
+        // File can't survive a reload; re-pick after one).
+        function setMapStatus(msg) {
+            var el = document.getElementById('sv-tide-map-status');
+            if (el) { el.textContent = msg; }
+            var clr = document.getElementById('sv-tide-map-clear');
+            if (clr) { clr.hidden = !baseInfo; }
+        }
+        function bindMapTab() {
+            var inp = document.getElementById('sv-tide-map-file');
+            if (inp) {
+                inp.addEventListener('change', function () {
+                    var f = inp.files && inp.files[0];
+                    if (f) { loadBasemap(f); }
+                });
+            }
+            var clr = document.getElementById('sv-tide-map-clear');
+            if (clr) { clr.addEventListener('click', function () { removeBasemap(); setMapStatus(t('map.none')); }); }
+            // Overlay visibility switches — paint only, engine untouched.
+            // Tide ramp: hide the colour paint; probe + compute stay live, and OL
+            // stops fetching the hidden WMS layer's tiles (no wasted bandwidth).
+            bindOverlaySwitch('sv-tide-ov-tide', function (on) {
+                visTide = on; if (seaLayer) { seaLayer.setVisible(on); }
+            });
+            // Currents: hide the WMTS arrows. The auto-swap (updateCurrent) keeps
+            // running and honours visCur on each new layer, so re-showing picks up
+            // the current instant's overlay automatically.
+            bindOverlaySwitch('sv-tide-ov-cur', function (on) {
+                visCur = on; if (curLayer) { curLayer.setVisible(on); }
+            });
+            bindOverlaySwitch('sv-tide-ov-mark', function (on) {
+                visMark = on; if (markLayer) { markLayer.setVisible(on); }
+            });
+            // Persisted auto-open-on-load preference.
+            bindOverlaySwitch('sv-tide-ov-autoopen', function (on) { setAutoOpenPref(on); });
+            // Reflect a basemap already loaded this session (tab re-rendered).
+            if (baseInfo) { setMapStatus(baseStatusLine()); }
+        }
+        // Wire a role="switch" button: flip aria-checked + apply. Click and
+        // Space/Enter both toggle (native button gives keyboard for free).
+        function bindOverlaySwitch(id, apply) {
+            var sw = document.getElementById(id);
+            if (!sw) { return; }
+            sw.addEventListener('click', function () {
+                var on = sw.getAttribute('aria-checked') !== 'true';
+                sw.setAttribute('aria-checked', on ? 'true' : 'false');
+                apply(on);
+            });
+        }
+        // Auto-open preference: persisted in localStorage (Carte-tab toggle).
+        // storeGet returns the {_ts, v} wrapper → read .v.
+        function autoOpenPref() { var s = storeGet('autoopen'); return !!(s && s.v); }
+        function setAutoOpenPref(on) { storeSet('autoopen', !!on); }
+        // The tool auto-opens on load if the URL asks (?tide_open=) OR the user
+        // saved the preference. URL wins as an explicit one-off; the stored pref
+        // makes it sticky across reloads without carrying the param.
+        function autoOpenWanted() {
+            var op = (new URLSearchParams(window.location.search).get('tide_open') || '').toLowerCase();
+            if (op === '1' || op === 'true' || op === 'yes') { return true; }
+            return autoOpenPref();
+        }
+        function baseStatusLine() {
+            if (!baseInfo) { return t('map.none'); }
+            var b = baseInfo.bounds;
+            return t('map.loaded', {
+                name: baseInfo.name,
+                zmin: baseInfo.minZoom, zmax: baseInfo.maxZoom,
+                w: b[0].toFixed(2), s: b[1].toFixed(2), e: b[2].toFixed(2), n: b[3].toFixed(2)
+            });
+        }
+        function removeBasemap() {
+            if (baseLayer) { map.removeLayer(baseLayer); baseLayer = null; }
+            basePM = null; baseInfo = null;
+        }
+        function loadBasemap(file) {
+            setMapStatus(t('map.loading'));
+            loadPmtiles().then(function (pm) {
+                var src = new pm.FileSource(file);
+                var p = new pm.PMTiles(src);
+                return p.getHeader().then(function (h) {
+                    removeBasemap();
+                    basePM = p;
+                    baseInfo = {
+                        name: file.name,
+                        minZoom: h.minZoom, maxZoom: h.maxZoom,
+                        bounds: [h.minLon, h.minLat, h.maxLon, h.maxLat]
+                    };
+                    var xyz = new ol.source.XYZ({
+                        minZoom: h.minZoom,
+                        maxZoom: h.maxZoom,
+                        // No network: each tile is range-read from the File by getZxy.
+                        // A sea-only gap returns null → leave the tile transparent.
+                        tileLoadFunction: function (tile, url) {
+                            var parts = url.split('/');
+                            var z = +parts[parts.length - 3];
+                            var x = +parts[parts.length - 2];
+                            var y = +parts[parts.length - 1];
+                            p.getZxy(z, x, y).then(function (r) {
+                                if (!r) { tile.getImage().src = ''; return; }
+                                var blob = new Blob([r.data], { type: 'image/webp' });
+                                var u = URL.createObjectURL(blob);
+                                var img = tile.getImage();
+                                img.onload = img.onerror = function () { URL.revokeObjectURL(u); };
+                                img.src = u;
+                            }).catch(function () { tile.getImage().src = ''; });
+                        },
+                        url: '{z}/{x}/{y}'   // template only drives z/x/y; bytes come from getZxy
+                    });
+                    // zIndex 800 < sea (850): the offline chart sits UNDER the
+                    // depth ramp / seamarks, as a fallback base when online tiles
+                    // are gone. It does not replace the bathy render.
+                    baseLayer = new ol.layer.Tile({ source: xyz, zIndex: 800 });
+                    map.addLayer(baseLayer);
+                    setMapStatus(baseStatusLine());
+                });
+            }).catch(function (err) {
+                removeBasemap();
+                setMapStatus(t('map.err'));
+                if (window.console) { console.warn('tide: PMTiles load failed', err); }
+            });
+        }
         // Show the "you have panned away" hint when the map centre is far from the
         // current port (beyond the single-port flat-S validity, ~10 km).
         var FARAWAY_M = 10000;
@@ -883,106 +1141,117 @@
             el.hidden = !far;
         }
 
-        // --- M6: tide curve from Open-Meteo Marine (calibrated to RAM) --------
+        // --- FES2022 local tide engine (replaces Open-Meteo when available) ----
+        // Pick the active region by which bbox holds the map centre, load its
+        // per-port constituents once, then pick the nearest port. The returned
+        // port object is shape-compatible with the RAM port (site/S/phma/pmve/nm/
+        // x/y) PLUS the FES constituents `c` and quality `q`/`rms_cm`.
+        function fesRegionFor(lonlat) {
+            if (!fesRegion || !fesRegion.regions) { return null; }
+            var lon = lonlat[0], lat = lonlat[1];
+            var list = fesRegion.regions.regions || [];
+            for (var i = 0; i < list.length; i++) {
+                var b = list[i].bbox;
+                if (lon >= b[0] && lon <= b[2] && lat >= b[1] && lat <= b[3]) { return list[i]; }
+            }
+            return null;
+        }
+        // Load (once) the constituents file for the region holding `coord`, then
+        // resolve the nearest port. Returns a Promise<port|null>.
+        function fesPortAt(coord) {
+            var ll = ol.proj.toLonLat(coord);
+            return loadFes().then(function (fes) {
+                fesRegion = { regions: fes.regions };
+                var reg = fesRegionFor(ll);
+                if (!reg) { return null; }              // outside any shipped region
+                var load = (fesPorts && fesPorts._file === reg.file)
+                    ? Promise.resolve(fesPorts)
+                    : fetch(BASE + 'tides/' + reg.file)
+                        .then(function (r) { return r.json(); })
+                        .then(function (j) { j._file = reg.file; fesPorts = j; return j; });
+                return load.then(function (data) {
+                    fesRegion.label = reg.label; fesRegion.meta = data;
+                    var best = null, bestD = Infinity;
+                    function mk(p, xy, d) {
+                        return {
+                            site: p.site, S: Number(p.S),
+                            phma: numOrNull(p.phma), pmve: numOrNull(p.pmve), nm: numOrNull(p.nm),
+                            x: xy[0], y: xy[1], dist: d,
+                            c: p.c, q: p.q || 'UNKNOWN', rms_cm: p.rms_cm,
+                            qt: p.qt || 'UNKNOWN', dt_min: p.dt_min,
+                            fes: true
+                        };
+                    }
+                    (data.ports || []).forEach(function (p) {
+                        if (!p.c) { return; }            // dry FES cell → skip
+                        var xy = ol.proj.fromLonLat([p.lon, p.lat]);
+                        var d = geoDist(xy, coord);
+                        // ?tide_port= wins by NAME (one-shot, consumed below).
+                        if (wantPort && p.site.toLowerCase() === wantPort.toLowerCase()) {
+                            best = mk(p, xy, d); bestD = -1;
+                        } else if (bestD !== -1 && d < bestD) {
+                            bestD = d; best = mk(p, xy, d);
+                        }
+                    });
+                    wantPort = null;
+                    return best;
+                });
+            }).catch(function () { return null; });
+        }
+        // Synthesize the day's 5-min curve at the FES port via the local engine.
+        // Produces the same raw [{t, msl}] the Open-Meteo path yields, so
+        // buildSeriesFromRaw (datum, extrema) is reused unchanged. Local time =
+        // Europe/Paris; we sample at local 00:00..23:55 (UTC under the hood).
+        function buildFesRaw(date) {
+            if (!port || !port.c || !window.TideEngine) { return null; }
+            // Sample local 00:00..23:45 (15-min) of the chosen day. `date` is a
+            // local Date; new Date(y,m,d,0,0) is local midnight → ms is the right
+            // absolute instant. The engine reads getUTC* internally, so the
+            // browser's local↔UTC mapping (incl. DST) is handled for free.
+            var baseUTC = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0).getTime();
+            var raw = [];
+            for (var k = 0; k < 96; k++) {               // 15-min step, 96/day
+                var ms = baseUTC + k * 15 * 60000;
+                raw.push({ t: ms, msl: window.TideEngine.heightAt(port.c, new Date(ms)) });
+            }
+            return raw;
+        }
+
+        // --- tide curve source (FES local engine) -----------------------------
+        // One quality sub-badge: prefix label (fes.h / fes.t) + tier word +
+        // measured value. Colour by tier (green/amber/red/grey).
+        function qBadge(prefixKey, tier, val, unit) {
+            var cls = tier === 'HIGH' ? 'hi' : tier === 'MED' ? 'med' : tier === 'LOW' ? 'lo' : 'unk';
+            var valTxt = (val != null) ? ' ~' + esc(String(val)) + ' ' + unit : '';
+            return '<span class="sv-tide-qbadge sv-tide-q-' + cls + '">' +
+                esc(t(prefixKey)) + ' ' + esc(t('fes.q.' + cls)) + valTxt + '</span>';
+        }
         function destroyChart() { if (chart) { try { chart.destroy(); } catch (e) { /* */ } chart = null; } }
         // YYYY-MM-DD for a Date in local time.
         function isoDate(d) {
             return d.getFullYear() + '-' +
                 ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
         }
-        // Render the selected day. If it's already cached → instant, no network.
-        // Otherwise fetch a WINDOW (one Open-Meteo call covers ~2 weeks at weight
-        // 1.0) around the day and cache every day in it, so stepping ±days within
-        // the window costs ZERO extra calls. Keeps us well under the free limits
-        // (600/min, 10000/day, per visitor IP).
-        var WINDOW_BACK = 3;    // days fetched before curDate
-        var WINDOW_FWD  = 10;   // days after (Open-Meteo forecast horizon ~2 weeks)
-        var MAX_HORIZON_DAYS = 14;  // hard cap on end_date from TODAY (Open-Meteo
-                                    // marine horizon ~16 d; 14 stays safely inside)
+        // Render the selected day from the FES2022 local engine: synthesize the
+        // curve in the browser, no network, ANY date (no forecast horizon),
+        // fully offline. Deterministic per (port, day) and fast (~ms), so we
+        // recompute on demand rather than caching. The tide source is FES only
+        // (the per-port constituents are shipped); a point outside the shipped
+        // regions has no port (see findPort) so loadTide is never reached there.
+        var WINDOW_BACK = 3;    // days before curDate (used by the Brest current curve)
+        var WINDOW_FWD  = 10;   // days after (idem)
         function loadTide() {
-            if (!port) { return; }
+            if (!port || !port.c || !window.TideEngine) { return; }
             var date = isoDate(curDate);
-            var cached = tideCache[cacheKey(date)];
-            // Memory miss → try localStorage (survives reload + works offline).
-            if (cached === undefined) {
-                var stored = storeGet('tide.' + cacheKey(date));
-                if (stored !== undefined) { tideCache[cacheKey(date)] = cached = stored.v; }
+            ++fetchSeq;
+            var raw = buildFesRaw(curDate);
+            tide = raw ? buildSeriesFromRaw(raw, date) : null;
+            if (tide) {
+                tide.source = FES_SRC; tide.fes = true;
+                tide.q = port.q; tide.rms = port.rms_cm;
+                tide.qt = port.qt; tide.dt = port.dt_min;
             }
-            if (cached) { ++fetchSeq; tide = cached; renderCurve(); return; }
-            if (cached === null) { ++fetchSeq; showNoData(date); return; }  // known no-data
-            // Past the forecast horizon → no point calling the API (it would reject
-            // start_date too). Show "no prediction" directly.
-            if (beyondHorizon(curDate)) { ++fetchSeq; showNoData(date); return; }
-            fetchWindow();
-        }
-        // True if a day is past Open-Meteo's forecast horizon (today + cap).
-        function beyondHorizon(d) {
-            var maxEnd = new Date(); maxEnd.setHours(0, 0, 0, 0);
-            maxEnd.setDate(maxEnd.getDate() + MAX_HORIZON_DAYS);
-            var day = new Date(d); day.setHours(0, 0, 0, 0);
-            return day > maxEnd;
-        }
-        // One range request → per-day series, all cached. Days the API doesn't
-        // cover (beyond horizon) are cached as null so we never refetch them.
-        function fetchWindow() {
-            var seq = ++fetchSeq;
-            var head = document.getElementById('sv-tide-curve-head');
-            if (head) { head.textContent = t('loading'); }
-            var start = new Date(curDate); start.setDate(start.getDate() - WINDOW_BACK);
-            var end   = new Date(curDate); end.setDate(end.getDate() + WINDOW_FWD);
-            // Pre-clamp end_date to a safe cap from today (the horizon is ~today+16,
-            // requesting beyond it fails the WHOLE call). The cap can still be off if
-            // the live horizon is shorter, so requestRange also self-heals: on the
-            // API's "end_date out of allowed range" error it reads the stated max and
-            // retries once, clamped to it.
-            var maxEnd = new Date(); maxEnd.setHours(0, 0, 0, 0);
-            maxEnd.setDate(maxEnd.getDate() + MAX_HORIZON_DAYS);
-            if (end > maxEnd) { end = maxEnd; }
-            if (end < start) { end = new Date(start); }   // curDate at the very edge
-            requestRange(start, end, seq, true);
-        }
-        // Build series for [start..end] and cache per day. `allowRetry` guards the
-        // one-shot self-heal against the horizon (avoids an infinite retry loop).
-        function requestRange(start, end, seq, allowRetry) {
-            var ll = ol.proj.toLonLat([port.x, port.y]);
-            var url = OM_URL +
-                '?latitude=' + encodeURIComponent(ll[1].toFixed(4)) +
-                '&longitude=' + encodeURIComponent(ll[0].toFixed(4)) +
-                '&minutely_15=sea_level_height_msl' +
-                '&start_date=' + isoDate(start) + '&end_date=' + isoDate(end) +
-                '&timezone=' + encodeURIComponent('Europe/Paris');
-            fetch(url, { headers: { Accept: 'application/json' } })
-                .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
-                .then(function (res) {
-                    if (seq !== fetchSeq) { return; }            // superseded → drop
-                    var j = res.j;
-                    // Horizon overshoot → API states its max in `reason`; retry once.
-                    if (j && j.error && allowRetry) {
-                        var m = /from\s+\d{4}-\d{2}-\d{2}\s+to\s+(\d{4}-\d{2}-\d{2})/.exec(j.reason || '');
-                        if (m) {
-                            var cap = new Date(m[1] + 'T00:00:00');
-                            if (isFinite(cap) && cap >= start) { requestRange(start, cap, seq, false); return; }
-                        }
-                    }
-                    if (!res.ok || (j && j.error)) { return Promise.reject(j && j.reason || 'HTTP'); }
-                    var byDay = splitByDay(j);                   // { 'YYYY-MM-DD': [{t,msl}] }
-                    var d = new Date(start);
-                    while (d <= end) {
-                        var ds = isoDate(d);
-                        var raw = byDay[ds];
-                        var ser = (raw && raw.length) ? buildSeriesFromRaw(raw, ds) : null;
-                        tideCache[cacheKey(ds)] = ser;
-                        storeSet('tide.' + cacheKey(ds), ser);   // persist (incl. null = known no-data)
-                        d.setDate(d.getDate() + 1);
-                    }
-                    var sel = tideCache[cacheKey(isoDate(curDate))];
-                    if (sel) { tide = sel; renderCurve(); } else { showNoData(isoDate(curDate)); }
-                })
-                .catch(function () {
-                    if (seq !== fetchSeq) { return; }
-                    var h = document.getElementById('sv-tide-curve-head');
-                    if (h) { h.innerHTML = '<span class="sv-tide-err">' + esc(t('err.curve')) + '</span>'; }
-                });
+            renderCurve();
         }
         // Group a multi-day minutely_15 response into raw {t,msl} arrays per local
         // calendar day. Open-Meteo returns local wall-clock times (timezone=
@@ -1012,19 +1281,10 @@
         }
         // No tide data for a date (beyond the forecast horizon). Render the date
         // nav + a note, clear the plot, so the user can navigate back.
-        function showNoData(date) {
-            destroyChart();
-            tide = null;
-            var nav  = document.getElementById('sv-tide-datenav-slot');
-            var head = document.getElementById('sv-tide-curve-head');
-            var plot = document.getElementById('sv-tide-plot');
-            if (plot) { plot.innerHTML = ''; }
-            if (nav)  { nav.innerHTML = dateNavHtml(date); bindDateNav(); }
-            if (head) { head.innerHTML = '<p class="sv-tide-msg">' + esc(t('date.nodata')) + '</p>'; }
-        }
-        // Convert one day's raw {t,msl}[] → our ZH-equivalent series, calibrated to
-        // RAM. h_ZH = om_msl + offset − zh_ref, offset = NM_IGN69 − mean(om over
-        // the day); so the day's mean sea level matches RAM's NM in IGN69.
+        // Convert one day's raw {t,msl}[] → our ZH-equivalent series. The FES
+        // synthesis is about model MSL; anchor the day's mean to the port's true
+        // mean sea level in IGN69 (NM_IGN69 = zh_ref + NM_ZH, from RAM), then store
+        // ZH-equivalent so the readout/marks (h + S = water_IGN69) work unchanged.
         function buildSeriesFromRaw(raw, date) {
             if (!raw || !raw.length) { return null; }
             var sum = 0; raw.forEach(function (p) { sum += p.msl; });
@@ -1038,15 +1298,10 @@
             var ex = extrema(points);
             return {
                 port: port.site, date: date, tz: 'Europe/Paris',
-                step: 15, datum: 'ZH', unit: 'm', source: OM_SRC,
+                step: 15, datum: 'ZH', unit: 'm', source: FES_SRC,
                 points: points, highs: ex.highs, lows: ex.lows
             };
         }
-        // Date navigation: shift curDate by ±1 day (or back to today) and reload.
-        // Predictions are deterministic per (port, day) → cache the built series by
-        // "site|date" so revisiting a day is instant; a window fetch fills many
-        // days at once. Value null = known no-data (beyond horizon), never refetch.
-        function cacheKey(date) { return (port ? port.site : '?') + '|' + date; }
         // Debounce loadTide on rapid date stepping: clicking ‹/› five times fast
         // loads only the final day (cache hits render instantly; only a real fetch
         // is deferred). Update the title immediately so the UI stays responsive.
@@ -1130,15 +1385,34 @@
                         (coef != null ? ' · ' + esc(t('curve.coefApprox', { c: coef })) : '') +
                         '</span>';
                 }
+                // FES quality badges sit INLINE with the HW/LW marks (same line,
+                // same size) — height + time accuracy vs SHOM, where the skipper
+                // reads tide times.
+                if (tide.fes && tide.q) {
+                    marks += qBadge('fes.h', tide.q, tide.rms, 'cm') +
+                             qBadge('fes.t', tide.qt, tide.dt, 'min');
+                }
                 head.innerHTML = '<div class="sv-tide-marks">' + marks + '</div>';
             }
             // Footer: provenance of the curve (source + date) + a "modelled,
             // not navigation-grade" disclaimer (Open-Meteo model, calibrated to
             // RAM; surge/atmospheric effects not guaranteed).
             if (foot) {
+                // FES path: show the FES model line + a per-port quality badge
+                // (🟢/🟡/🔴 + RMS vs SHOM) + the experimental disclaimer. Open-Meteo
+                // path keeps its own model line.
+                var model = tide.fes ? t('fes.model') : t('curve.model');
+                var qhtml = '';
+                if (tide.fes && tide.q) {
+                    // Two badges: HEIGHT accuracy (cm) and TIME accuracy (min for
+                    // HW/LW). They differ — timing is usually more robust than
+                    // height (a deep ria can be LOW on height yet HIGH on time).
+                    qhtml = ' ' + qBadge('fes.h', tide.q, tide.rms, 'cm') +
+                            ' ' + qBadge('fes.t', tide.qt, tide.dt, 'min');
+                }
                 foot.innerHTML = esc(t('prov.source')) + ' : ' + srcLink(tide.source || '?') +
                     (tide.date ? '<span class="sv-tide-prov-date"> · ' + esc(t('prov.date')) + ' ' + esc(tide.date) + '</span>' : '') +
-                    ' — <em>' + esc(t('curve.model')) + '</em>';
+                    qhtml + ' — <em>' + esc(model) + '</em>';
             }
             drawPlot();
         }
@@ -1517,7 +1791,7 @@
             seaSrc.on('tileloadstart', function () { seaLoading++; updateSeaSpinner(); });
             seaSrc.on('tileloadend',   function () { seaLoading = Math.max(0, seaLoading - 1); updateSeaSpinner(); });
             seaSrc.on('tileloaderror', function () { seaLoading = Math.max(0, seaLoading - 1); updateSeaSpinner(); });
-            seaLayer = new ol.layer.Tile({ source: seaSrc, zIndex: 850, opacity: 1 });
+            seaLayer = new ol.layer.Tile({ source: seaSrc, zIndex: 850, opacity: 1, visible: visTide });
             map.addLayer(seaLayer);
         }
         var seaLoading = 0;
@@ -1772,7 +2046,7 @@
                 tileGrid: wmtsGrid3857(),
                 attributions: [CUR_SRC]
             });
-            curLayer = new ol.layer.Tile({ source: src, zIndex: 855, opacity: 0.85 });
+            curLayer = new ol.layer.Tile({ source: src, zIndex: 855, opacity: 0.85, visible: visCur });
             map.addLayer(curLayer);
             curId = id;
         }
@@ -1789,7 +2063,7 @@
                 url: SEAMARK_URL, maxZoom: SEAMARK_MAXZ,
                 attributions: [SEAMARK_SRC], crossOrigin: 'anonymous'
             });
-            markLayer = new ol.layer.Tile({ source: src, zIndex: 860 });
+            markLayer = new ol.layer.Tile({ source: src, zIndex: 860, visible: visMark });
             map.addLayer(markLayer);
         }
         function removeSeamarkLayer() {
@@ -2285,9 +2559,11 @@
         btn.setAttribute('aria-pressed', 'false');
         btn.setAttribute('aria-label', t('btn.title'));
         btn.title = t('btn.title');
-        // Inline SVG (water/wave — bi tsunami-ish) — not relying on the icon subset.
+        // Inline SVG (sailboat — bi-style) — not relying on the icon subset.
+        // Triangular sail + mast above a hull riding a small wave; reads at 16px.
         btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">' +
-            '<path d="M.036 3.314a.5.5 0 0 1 .65-.278l1.757.703a1.5 1.5 0 0 0 1.114 0l1.733-.694a2.5 2.5 0 0 1 1.857 0l1.733.694a1.5 1.5 0 0 0 1.114 0l1.733-.694a2.5 2.5 0 0 1 1.857 0l1.757.703a.5.5 0 1 1-.372.928l-1.757-.703a1.5 1.5 0 0 0-1.114 0l-1.733.694a2.5 2.5 0 0 1-1.857 0l-1.733-.694a1.5 1.5 0 0 0-1.114 0l-1.733.694a2.5 2.5 0 0 1-1.857 0L.314 3.964a.5.5 0 0 1-.278-.65m0 4a.5.5 0 0 1 .65-.278l1.757.703a1.5 1.5 0 0 0 1.114 0l1.733-.694a2.5 2.5 0 0 1 1.857 0l1.733.694a1.5 1.5 0 0 0 1.114 0l1.733-.694a2.5 2.5 0 0 1 1.857 0l1.757.703a.5.5 0 1 1-.372.928l-1.757-.703a1.5 1.5 0 0 0-1.114 0l-1.733.694a2.5 2.5 0 0 1-1.857 0l-1.733-.694a1.5 1.5 0 0 0-1.114 0l-1.733.694a2.5 2.5 0 0 1-1.857 0L.314 7.964a.5.5 0 0 1-.278-.65m0 4a.5.5 0 0 1 .65-.278l1.757.703a1.5 1.5 0 0 0 1.114 0l1.733-.694a2.5 2.5 0 0 1 1.857 0l1.733.694a1.5 1.5 0 0 0 1.114 0l1.733-.694a2.5 2.5 0 0 1 1.857 0l1.757.703a.5.5 0 1 1-.372.928l-1.757-.703a1.5 1.5 0 0 0-1.114 0l-1.733.694a2.5 2.5 0 0 1-1.857 0l-1.733-.694a1.5 1.5 0 0 0-1.114 0l-1.733.694a2.5 2.5 0 0 1-1.857 0L.314 11.964a.5.5 0 0 1-.278-.65"/></svg>';
+            '<path d="M8.5.134a.5.5 0 0 0-.875-.043L3.314 7.25a.5.5 0 0 0 .436.748H8.5zm1 .866V8h3.75a.5.5 0 0 0 .416-.777z"/>' +
+            '<path d="M1.04 10a.5.5 0 0 0-.466.683l1.225 3.184A1.5 1.5 0 0 0 3.2 14.85l.171.04a6 6 0 0 0 2.7-.004l1.929-.453a1.5 1.5 0 0 1 .68 0l1.95.458a6 6 0 0 0 2.689.003l.171-.04a1.5 1.5 0 0 0 1.401-.983l1.225-3.184A.5.5 0 0 0 15.46 10zm1.756 3.51-.787-2.046h12.382l-.787 2.046a.5.5 0 0 1-.467.328.5.5 0 0 1-.116-.013l-.171-.04a5 5 0 0 0-2.24-.003l-1.95.459a2.5 2.5 0 0 1-1.135 0l-1.928-.453a5 5 0 0 0-2.252.004l-.17.04a.5.5 0 0 1-.583-.315z"/></svg>';
         toolbar.appendChild(btn);
         btn.addEventListener('click', function () {
             if (btn.disabled) { return; }
@@ -2440,7 +2716,7 @@
         SViewer.panel.onClose(PANEL, function () {
             active = false; destroyChart(); resetWind(); resetWave();
             if (seaTimer) { clearTimeout(seaTimer); seaTimer = null; }
-            removeSeaLayer(); removeCurrentLayer(); removeSeamarkLayer(); removeWindBadge(); removeSeaSpinner(); removeProbe(); removeNautScale();
+            removeSeaLayer(); removeCurrentLayer(); removeSeamarkLayer(); removeWindBadge(); removeSeaSpinner(); removeProbe(); removeNautScale(); removeBasemap();
             btn.setAttribute('aria-pressed', 'false'); btn.classList.remove('active');
         });
 
@@ -2460,6 +2736,22 @@
                 P + '.sv-tide-pane{flex:1;min-height:0}',
                 P + '.sv-tide-pane[hidden]{display:none}',
                 P + '.sv-tide-info{overflow:auto;display:flex;flex-direction:column;gap:.4rem;padding-right:.3rem}',
+                // Carte tab: overlay visibility switches (role=switch buttons).
+                P + '.sv-tide-ov{display:flex;flex-direction:column;gap:.35rem}',
+                P + '.sv-tide-ov-sw{display:flex;align-items:center;gap:.55rem;min-height:2.4rem;padding:.2rem .3rem;background:none;border:none;cursor:pointer;font:inherit;color:var(--sv-panel-fg,#18181b);text-align:left}',
+                P + '.sv-tide-ov-sw:focus-visible{outline:2px solid #0d6efd;outline-offset:2px;border-radius:6px}',
+                P + '.sv-tide-ov-track{flex:none;position:relative;width:2.4rem;height:1.35rem;border-radius:1rem;background:var(--sv-panel-border,#ccc);transition:background .12s}',
+                P + '.sv-tide-ov-knob{position:absolute;top:.15rem;left:.15rem;width:1.05rem;height:1.05rem;border-radius:50%;background:#fff;transition:transform .12s;box-shadow:0 1px 2px rgba(0,0,0,.3)}',
+                P + '.sv-tide-ov-sw[aria-checked="true"] .sv-tide-ov-track{background:#0d6efd}',
+                P + '.sv-tide-ov-sw[aria-checked="true"] .sv-tide-ov-knob{transform:translateX(1.05rem)}',
+                P + '.sv-tide-ov-lbl{font-size:.86rem;font-weight:600}',
+                // Carte tab: offline PMTiles picker.
+                P + '.sv-tide-map-expl{font-size:.8rem;line-height:1.4;color:var(--sv-panel-fg-muted,#52525b);margin:0}',
+                P + '.sv-tide-map-pick{display:flex;flex-direction:column;gap:.25rem;font-size:.82rem;font-weight:600;color:var(--sv-panel-fg,#18181b)}',
+                P + '.sv-tide-map-pick input[type=file]{font-size:.82rem;color:var(--sv-panel-fg,#18181b)}',
+                P + '.sv-tide-map-pick input[type=file]:focus-visible{outline:2px solid #0d6efd;outline-offset:2px}',
+                P + '.sv-tide-map-status{font-size:.8rem;font-variant-numeric:tabular-nums;color:var(--sv-panel-fg,#18181b);word-break:break-word;margin:0}',
+                P + '.sv-tide-map-clear{align-self:flex-start}',
                 P + '.sv-tide-curve{min-width:0;min-height:0;display:flex;flex-direction:column}',
                 // Compact top line: icon re-pick · port name · draft slider.
                 P + '.sv-tide-topline{flex:none;display:flex;align-items:center;gap:.4rem .5rem;flex-wrap:wrap;margin-bottom:.3rem}',
@@ -2516,6 +2808,22 @@
                 '.sv-scope .sv-tide-nautscale .ol-scale-line-inner{color:var(--sv-panel-fg,#18181b);border-color:var(--sv-panel-fg,#18181b);font-weight:700;font-size:.72rem;font-variant-numeric:tabular-nums}',
                 '@media (prefers-reduced-motion:reduce){.sv-scope .sv-tide-spinner::after{animation-duration:1.6s}}',
                 P + '.sv-tide-curve-foot{flex:none;margin-top:.25rem}',
+                // FES per-port quality badge (🟢/🟡/🔴). Theme-independent tints
+                // chosen to pass contrast on both panel backgrounds.
+                // Same size as the HW/LW marks (.74rem, .1rem .45rem, radius 10) so
+                // they read as one inline row.
+                P + '.sv-tide-qbadge{font-size:.74rem;padding:.1rem .45rem;border-radius:10px;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}',
+                P + '.sv-tide-q-hi{background:rgba(25,135,84,.18);color:#0f5132}',
+                P + '.sv-tide-q-med{background:rgba(209,139,0,.18);color:#7a5200}',
+                P + '.sv-tide-q-lo{background:rgba(220,53,69,.18);color:#842029}',
+                P + '.sv-tide-q-unk{background:rgba(108,117,125,.18);color:#41464b}',
+                P + '[data-theme="dark"] .sv-tide-q-hi{color:#75d6a3}',
+                P + '[data-theme="dark"] .sv-tide-q-med{color:#f0c674}',
+                P + '[data-theme="dark"] .sv-tide-q-lo{color:#f1969e}',
+                P + '[data-theme="dark"] .sv-tide-q-unk{color:#adb5bd}',
+                // Accuracy caveat — amber, slightly emphasised, distinct from plain
+                // provenance. Theme-aware via panel vars; left bar marks it as a note.
+                P + '.sv-tide-warn-acc{font-size:.78rem;line-height:1.45;margin:.35rem 0 0;padding:.35rem .5rem;border-left:3px solid #d18b00;background:rgba(209,139,0,.10);color:var(--sv-panel-fg,#18181b)}',
                 P + '.sv-tide-msg{font-size:.85rem;color:var(--sv-panel-fg-muted,#52525b);margin:.3rem 0}',
                 P + '.sv-tide-err{font-size:.85rem;color:var(--sv-panel-fg,#18181b);margin:.3rem 0;border-left:3px solid #d9534f;padding-left:.4rem}',
                 P + '.sv-tide-block{margin:0}',
@@ -2621,5 +2929,11 @@
         // when the panel renders.
         var td = parseFloat(params.get('tide_draft'));
         if (isFinite(td)) { draft = Math.max(0, Math.min(3, td)); }
+
+        // Auto-activate on load from EITHER the URL (?tide_open=1/true/yes) OR a
+        // persisted preference (Carte-tab toggle, stored in localStorage). Opens
+        // dock + overlays without a button press. Opens REGARDLESS of zoom (the
+        // faraway hint covers a too-far-out start). Default stays button-driven.
+        if (autoOpenWanted() && !active) { open(); }
     });
 }());

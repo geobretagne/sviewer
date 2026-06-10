@@ -1,5 +1,10 @@
 # Marée (tide) — spec
 
+> **TRAVAIL EXPÉRIMENTAL — NON destiné à la navigation.** Cet outil ne remplace
+> **pas** les prédictions officielles du SHOM. Son but est l'**évaluation croisée**
+> de deux jeux de données : la **bathymétrie (DEM)** et un **modèle de marée
+> harmonique (FES2022)** — voir `MODEL.md` pour la note technique complète.
+
 Affiche l'**étendue de la mer prévue** sur une zone côtière, pour une date et une
 heure choisies. La bathymétrie SHOM (fond marin) est peinte selon le niveau de la
 mer et le **tirant d'eau** du bateau : un **dégradé de bleu** pour l'eau sûre,
@@ -8,52 +13,64 @@ gradué par tranche d'1 m d'eau **sous la quille** (bleu clair = 0–1 m, bleu m
 d'échouage), **orange** (découvert). Le niveau de la mer est donné par une
 **courbe de marée interactive** que l'utilisateur fait défiler.
 
-**Outil de visualisation de marée prédite — NON destiné à la navigation.** Le mot
-« inondation » est volontairement évité : on visualise la marée astronomique
-(niveau de mer prédit), pas une prévision de submersion (surcote, houle, fleuve
-ignorés).
+Le mot « inondation » est volontairement évité : on visualise la marée
+astronomique (niveau de mer prédit), pas une prévision de submersion (surcote,
+houle, fleuve ignorés).
 
-Voir `INVESTIGATION.md` pour la faisabilité et la physique, `PLAN.md` pour les
-incréments de construction.
+Voir `MODEL.md` pour le modèle de marée (méthode, validation, limites),
+`INVESTIGATION.md` pour la faisabilité, `PLAN.md` pour les incréments.
 
 ## Principe (la physique)
+
+**La marée est calculée localement** (dans le navigateur) par **synthèse
+harmonique** des constituants du modèle global **FES2022** (CNES/AVISO) :
+`h(t) = Σ fᵢ·Aᵢ·cos(Vᵢ + uᵢ − gᵢ)`. Les constituants par port sont **livrés**
+(fichier ~80 ko) → la prédiction fonctionne pour **n'importe quelle date** (sans
+horizon) et **hors-ligne**. Détail dans `MODEL.md`.
 
 Deux référentiels verticaux différents :
 
 | Donnée | Quantité | Zéro |
 |---|---|---|
 | Bathymétrie SHOM (WMS) | altitude du fond | **IGN69** (nivellement terrestre légal) |
-| Marée (Open-Meteo) | hauteur de surface | **MSL** (niveau moyen modèle) |
+| Marée (FES2022) | hauteur de surface | **MSL** (niveau moyen modèle) |
 
 On ramène tout en IGN69 via les **RAM** (Références Altimétriques Maritimes, SHOM,
-Licence Ouverte) :
+Licence Ouverte ; le datum `S` par port est **figé dans le fichier livré** à la
+construction) :
 
 ```
 S            = zh_ref            (RAM port : cote du zéro hydrographique en IGN69)
 NM_IGN69     = zh_ref + NM_ZH    (niveau moyen du port en IGN69)
-offset       = NM_IGN69 − moyenne(courbe Open-Meteo du jour)   // calage
-water_IGN69(t) = om_msl(t) + offset
+offset       = NM_IGN69 − moyenne(courbe FES du jour)          // calage
+water_IGN69(t) = fes_msl(t) + offset
 submergé     ⟺ fond_IGN69 < water_IGN69                        // peint par SLD GeoServer
 ```
 
-Mesuré : ΔS = 1 cm / 5 km ≪ précision Litto3D 10 cm → **S plat** honnête à
-l'échelle d'une zone de 4 milles nautiques autour d'un port unique.
+**Qualité par port, mesurée face au SHOM** : un indicateur 🟢/🟡/🔴 affiche la
+fiabilité en **hauteur** (cm) ET en **heure** (min) — fiable en mer ouverte
+(~5 cm / ±5 min), dégradé en estuaire/ria (résolution de grille). Médiane des
+14 ports bretons testés : **7 cm**. Détail + table dans `MODEL.md`.
 
 **Règle de traçabilité scientifique** : chaque donnée utilisée (origine, date,
 valeur) est affichée à l'utilisateur. Aucun nombre caché.
 
 ## Sources de données
 
-- **RAM** (port + datum) — WFS ouvert SHOM, sans clé.
-  `RAM_BDD_WLD_WGS84G_WFS:ram_3857`, GeoJSON, EPSG:3857 (= la vue → pas de
-  reprojection). Propriété `zh_ref` = S ; `phma`/`pmve`/`nm` = niveaux
-  caractéristiques.
-- **Courbe de marée** — **Open-Meteo Marine** (`marine-api.open-meteo.com`).
-  **Gratuit, sans clé, CORS ouvert → appelé DIRECTEMENT depuis le navigateur, sans
-  proxy.** `sea_level_height_msl`, pas de 15 min. Le modèle donne la bonne forme /
-  le bon timing ; son décalage absolu MSL→IGN69 est incertain → **calé sur les
-  RAM** (la moyenne du jour est ancrée sur NM_IGN69). Vérifié : water_IGN69
-  −0,62…1,75 m vs SHOM −0,73…1,65 m (~5-10 cm).
+- **Courbe de marée** — **FES2022** (CNES/LEGOS/NOVELTIS/CLS, diffusé par AVISO),
+  modèle harmonique global. **Calcul LOCAL** dans le navigateur (aucun appel
+  réseau) à partir des **constituants par port livrés** (`tides/fes-ports-*.json`,
+  34 constituants amplitude+phase, ~80 ko, extraits à la construction du dépôt FES
+  par `scripts/extract.py`). **Toute date** (sans horizon), **hors-ligne**. Calé
+  sur les RAM (datum `S` figé dans le fichier). Indicateur de qualité par port
+  (hauteur cm + heure min) face au SHOM. Voir `MODEL.md`. Le moteur de synthèse
+  (`tide-engine.js`) reproduit la formule de Darwin de **PyFES/LIBFES** (CNES,
+  BSD-3), validé maille par maille (JS vs PyFES ~1,4 cm ; JS vs SHOM ~3,8 cm à
+  Concarneau). Citation FES obligatoire affichée en Données.
+- **RAM** (datum + niveaux caractéristiques) — Références Altimétriques Maritimes
+  SHOM (Licence Ouverte). `zh_ref` = S ; `phma`/`pmve`/`nm`. Échantillonnés à
+  chaque port **à la construction** et **figés dans le fichier livré** — plus
+  aucun appel WFS au runtime. Crédit affiché en Données.
 - **Bathymétrie** — WMS GeoServer GéoBretagne `shom:bathy_5m`. Pixel = altitude du
   fond en IGN69 (`GRAY_INDEX`), nodata −99999. Recoloré à la volée par SLD inline.
 - **Courants de marée** — WMTS SHOM `COURANTS2D_WMTS_*_3857` (atlas Courants 2D),
@@ -70,15 +87,20 @@ valeur) est affichée à l'utilisateur. Aucun nombre caché.
   modèle global au-delà). Vitesse + rafales (km/h) + direction, 5 jours horaires,
   aux coordonnées du port. Chargé **paresseusement** à la première ouverture de
   l'onglet, rechargé au changement de port.
-- **Vagues** — **Open-Meteo Marine** (même hôte/endpoint que la marée, **sans clé,
+- **Vagues** — **Open-Meteo Marine** (`marine-api.open-meteo.com`, **sans clé,
   CORS ouvert**). Hauteur significative, direction, période + houle, 5 jours
   horaires, aux coordonnées du port. **Modèle global → grossier près des côtes
-  abritées** (honnête : « vague au large »). Même chargement paresseux + cache que
+  abritées** (honnête : « vague au large »). Chargement paresseux + cache comme
   le vent.
 
-SHOM SPM (prédictions officielles) écarté : clé liée à un Referer + endpoint
-`hlt` en 403 sur l'offre gratuite. WorldTides écarté : pas de cache multi-
-utilisateur (licence). Open-Meteo : non commercial, attribution CC-BY-4.0.
+**Sources de marée écartées.** SHOM SPM/SAPM (prédictions officielles) : payant,
+clé liée à un Referer ; **vignette SHOM** : sans CORS (navigateur bloqué) ET la
+réutilisation des résultats de calcul de marée est interdite par les CGU SHOM
+(produit « Marées à la carte » dédié). Open-Meteo Marine (modèle météo) : horizon
+~2 semaines + ~30–45 min d'écart au SHOM → **remplacé par FES2022** (harmonique,
+toute date, plus précis). **FES2022** retenu : usage « toute fin » pour les
+hauteurs, code de prédiction open-source (BSD-3), précision côtière. Citation
+obligatoire ; cf. `MODEL.md` pour la licence et la validation.
 
 ## Interface (4 onglets)
 
@@ -168,17 +190,13 @@ hors-ligne).
 
 ## Performance / quotas
 
-- **Fetch fenêtré** : un appel Open-Meteo couvre 14 jours (poids 1.0), découpé par
-  jour, mis en cache (`site|date`). Se déplacer dans la fenêtre = **zéro appel**.
-  Jours hors horizon mis en cache `null` (jamais re-demandés).
-- **Horizon de prévision auto-borné** : l'`end_date` est plafonné à aujourd'hui +
-  14 j (l'horizon Open-Meteo marine ≈ +16 j ; au-delà l'API rejette tout l'appel).
-  Si l'horizon réel est plus court un jour donné, la requête **s'auto-corrige** :
-  on lit la date max énoncée dans l'erreur et on relance une fois, plafonné dessus.
-  Un jour au-delà de l'horizon affiche « Pas de prévision » sans appel.
+- **Marée = calcul local, zéro réseau, zéro horizon.** La courbe est synthétisée
+  dans le navigateur à partir des constituants livrés (~ms par jour). Changer de
+  jour = re-synthèse instantanée. Pas de cache, pas de quota, **toute date** passée
+  ou future (domaine FES 1700–2100). Le fichier de constituants (~80 ko) est chargé
+  une fois à l'ouverture (paresseux) puis mis en cache par le navigateur/SW →
+  hors-ligne complet.
 - **Debounce** : navigation de date 250 ms, requête mer WMS 160 ms.
-- Limites Open-Meteo (600/min, 10000/jour, **par IP visiteur** — non partagées) :
-  intenables en usage normal.
 - WMS mer en **`ol.source.TileWMS`, tuiles 512×512** : sur grand écran haute
   résolution, une seule image plein-cadre force le serveur à calculer + seuiller un
   raster énorme (lent, gourmand). Les tuiles 512² découpent ce calcul en petits
@@ -195,9 +213,9 @@ hors-ligne).
 
 Persisté sous le préfixe `sv_tide_v1.*`, entrées emballées `{_ts, v}`, éviction
 LRU au dépassement de quota :
-- **Marée** : séries par jour (`tide.site|date`, calibrage déjà appliqué → rendu
-  sans réseau) ; port + datum par cellule de carte (`port.cell`) ; courbe de Brest
-  (`brest.date`).
+- **Marée** : **aucun cache nécessaire** — synthèse locale depuis les constituants
+  livrés, hors-ligne par construction (toute date). Seule la courbe de Brest pour
+  les courants (`brest.date`) reste un appel Open-Meteo mis en cache par jour.
 - **Vent** / **Vagues** : prévision par port (`wind.site` / `wave.site`),
   **horodatée** ; affichée d'emblée si fraîche (< 3 h) ou hors-ligne, avec un
   bandeau d'âge « peut être obsolète ». Échec réseau → repli sur le cache.
@@ -218,6 +236,7 @@ paramètres et en ajoutant `ext=tide`. Un lien partagé rouvre à l'identique.
 | `tide_t` | instant ISO local `AAAA-MM-JJTHH:MM` → jour + position du curseur |
 | `tide_draft` | tirant d'eau 0–3 m |
 | `tide_minzoom` | seuil de zoom d'activation (défaut 13) |
+| `tide_open` | `1`/`true`/`yes` → auto-ouvre l'outil au chargement (dock + superpositions), sans clic. Ouvre quel que soit le zoom (l'avertissement « éloigné » couvre un départ trop large). Absent → ouverture par bouton (défaut). Réglable aussi via `customConfig`. |
 
 ## Limites connues / non-buts
 

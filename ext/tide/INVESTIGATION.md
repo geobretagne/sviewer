@@ -1,11 +1,17 @@
 # Tide extension — investigation
 
 > **Historical feasibility note.** Written before the build. The core insight —
-> two vertical datums, RAM gives the separation — held. Two providers changed by
-> the time it shipped (see `SPEC.md`): the tide source is **Open-Meteo Marine**
-> (free/keyless/CORS, calibrated to RAM), not a SHOM-SPM proxy; the elevation
-> source is **`shom:bathy_5m`** (sea floor), not terrestrial Litto3D. The
-> "do the threshold server-side in an SLD" strategy is exactly what shipped.
+> two vertical datums, RAM gives the separation — held. The elevation source is
+> **`shom:bathy_5m`** (sea floor), not terrestrial Litto3D, and the "threshold
+> server-side in an SLD" strategy is what shipped.
+>
+> **The tide source changed twice.** First Open-Meteo Marine (free/keyless/CORS,
+> calibrated to RAM) replaced the SHOM-SPM proxy. Then, in tide 1.1, Open-Meteo
+> was itself replaced by a **local FES2022 harmonic model** (computed in-browser,
+> any date, offline, per-port quality vs SHOM) — Open-Meteo's ~2-week horizon and
+> ~30–45 min timing error vs SHOM drove the switch. **The current tide model is
+> documented in `MODEL.md`.** This note remains feasibility history; the datum
+> physics below are unchanged and still apply.
 
 Show map water extent for a date/time, by combining bathymetry (WMS) with tide
 predictions. Status: **investigation only — feasibility + unknowns, no code.**

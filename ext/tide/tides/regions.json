@@ -1,0 +1,6 @@
+{
+  "model": "FES2022",
+  "regions": [
+    { "id": "bzh", "label": "Bretagne", "bbox": [-5.2, 47.2, -2.0, 49.0], "file": "fes-ports-bzh.json" }
+  ]
+}
