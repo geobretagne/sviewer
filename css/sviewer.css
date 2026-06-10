@@ -627,6 +627,10 @@
     border-top: 1px solid var(--sv-panel-border);
     border-radius: 0;
     box-shadow: 0 -8px 24px rgb(0 0 0 / 25%);
+    /* Above the map control buttons (.sv-map-controls 8000, .sv-map-panels 8010):
+       a full-width bottom strip dragged tall must cover the corner buttons, not
+       sit under them (the base .sv-sidepanel z 5000 is below them). */
+    z-index: 8100;
     transition: height var(--sv-duration) var(--sv-ease),
                 box-shadow var(--sv-duration) var(--sv-ease);
 }
